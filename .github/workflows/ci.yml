@@ -12,6 +12,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,10 +32,25 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Domain unit tests
-        run: ./gradlew :core:domain:test
+        run: ./gradlew :core:domain:test 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
 
       - name: Assemble debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+
+      # Surface compiler and Gradle errors as annotations, readable through the
+      # REST API (check-runs/<id>/annotations) without downloading the raw log.
+      - name: Report build errors
+        if: failure()
+        run: |
+          grep -E '^e: |^\* What went wrong|^> |FAILED|error:' build.log \
+            | grep -vE '^> Task .* (UP-TO-DATE|NO-SOURCE|SKIPPED|FROM-CACHE)$' \
+            | head -n 40 > errors.txt || true
+          split -l 4 errors.txt chunk.
+          for f in chunk.*; do
+            [ -s "$f" ] || continue
+            msg=$(sed -e 's/%/%25/g' "$f" | sed -e ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=build::${msg}"
+          done
 
       - name: Upload test reports
         if: failure()
