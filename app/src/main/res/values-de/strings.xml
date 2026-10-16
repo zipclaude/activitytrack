@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="m0_placeholder">Projektgerüst. Die Zeiterfassung folgt mit Meilenstein M1.</string>
   <string name="ch_ongoing">Laufende Tätigkeiten</string>
   <string name="ch_confirm">Tätigkeitsbestätigung</string>
   <string name="ch_pause">Pausenerinnerungen</string>
@@ -8,4 +7,112 @@
   <string name="ch_day_start">Tagesbeginn</string>
   <string name="ch_day_summary">Tageszusammenfassung</string>
   <string name="ch_to_complete">Zu vervollständigende Tätigkeiten</string>
+
+  <string name="action_save">Speichern</string>
+  <string name="action_cancel">Abbrechen</string>
+  <string name="action_delete">Löschen</string>
+  <string name="action_add">Hinzufügen</string>
+  <string name="action_edit">Bearbeiten</string>
+  <string name="action_back">Zurück</string>
+  <string name="confirm_delete">\"%1$s\" löschen?</string>
+  <string name="no_items">Noch keine Einträge.</string>
+  <string name="archived_suffix">Archiviert</string>
+
+  <string name="home_no_open_entries">Keine offenen Tätigkeiten.</string>
+  <string name="entry_no_client">Kunde nicht festgelegt</string>
+  <string name="mode_work">Arbeit</string>
+  <string name="mode_travel">Unterwegs</string>
+  <string name="mode_pause">Pause</string>
+  <string name="status_suspended">Unterbrochen</string>
+  <string name="status_to_complete">Zu vervollständigen</string>
+  <string name="status_closed">Abgeschlossen</string>
+
+  <string name="setup_title">Datenordner</string>
+  <string name="setup_text">Wähle den Ordner für Anhänge, Sicherungen und Exporte, zum Beispiel Documents/ActivityTrack. Die App behält den Zugriff; die Dateien bleiben auch nach einer Deinstallation erhalten.</string>
+  <string name="setup_choose">Ordner wählen</string>
+  <string name="setup_lost">Der Zugriff auf den Datenordner ging verloren. Bitte erneut wählen.</string>
+  <string name="setup_error">Dieser Ordner kann nicht verwendet werden. Bitte einen anderen wählen.</string>
+
+  <string name="md_title">Stammdaten</string>
+  <string name="md_companies">Firmen</string>
+  <string name="md_clients">Kunden</string>
+  <string name="md_roles">Rollen</string>
+  <string name="md_presets">Tätigkeitsvorlagen</string>
+  <string name="md_places">Orte</string>
+  <string name="md_schedule">Arbeitszeiten und Mittagspause</string>
+  <string name="company_edit">Firma</string>
+  <string name="client_edit">Kunde</string>
+  <string name="role_edit">Rolle</string>
+  <string name="preset_edit">Tätigkeitsvorlage</string>
+  <string name="site_edit">Standort</string>
+  <string name="place_edit">Ort</string>
+  <string name="interval_edit">Arbeitsintervall</string>
+  <string name="lunch_edit">Mittagspause</string>
+  <string name="sites">Standorte</string>
+  <string name="clients_need_company">Lege zuerst eine Firma an.</string>
+  <string name="place_home">Zuhause</string>
+  <string name="place_other">Sonstiges</string>
+  <string name="schedule_lunch">Mittagspause %1$s</string>
+  <string name="schedule_no_lunch">Keine Mittagspause</string>
+  <string name="site_hint">Koordinaten in Dezimalgrad, z. B. 45.4642, 9.1900.</string>
+  <string name="time_hint">Uhrzeiten als HH:MM, z. B. 08:30.</string>
+
+  <string name="field_name">Name</string>
+  <string name="field_archived">Archiviert</string>
+  <string name="field_company">Firma</string>
+  <string name="field_none">Keine</string>
+  <string name="field_label">Bezeichnung</string>
+  <string name="field_lat">Breitengrad</string>
+  <string name="field_lon">Längengrad</string>
+  <string name="field_radius">Radius (m)</string>
+  <string name="field_address">Adresse</string>
+  <string name="field_kind">Art</string>
+  <string name="field_text">Text</string>
+  <string name="field_default_role">Standardrolle</string>
+  <string name="field_start">Beginn</string>
+  <string name="field_end">Ende</string>
+
+  <string name="err_blank_name">Ein Name ist erforderlich.</string>
+  <string name="err_duplicate_name">Dieser Name wird bereits verwendet.</string>
+  <string name="err_invalid_coordinates">Ungültige Koordinaten.</string>
+  <string name="err_invalid_radius">Der Radius muss zwischen 1 und 10000 m liegen.</string>
+  <string name="err_invalid_time_range">Ungültiger Zeitraum: Der Beginn muss vor dem Ende liegen.</string>
+  <string name="err_overlapping_intervals">Dieses Intervall überschneidet sich mit einem anderen.</string>
+  <string name="err_client_company_locked">Der Kunde hat bereits Tätigkeiten: Die Firma kann nicht geändert werden.</string>
+  <string name="err_in_use">Noch in Verwendung: stattdessen archivieren.</string>
+  <string name="err_generic">Vorgang nicht möglich.</string>
+
+  <string name="settings_title">Einstellungen</string>
+  <string name="settings_saved">Einstellungen gespeichert</string>
+  <string name="settings_note">Werte außerhalb des zulässigen Bereichs werden beim Speichern angepasst.</string>
+  <string name="sec_reminders">Erinnerungen</string>
+  <string name="set_confirm_interval">Bestätigungsintervall (min)</string>
+  <string name="set_max_confirmations">Maximale Bestätigungen (0 = unbegrenzt)</string>
+  <string name="set_pause_interval">Pausenerinnerung alle (min)</string>
+  <string name="set_day_start_delay">Verzögerung Tagesbeginn-Hinweis (min)</string>
+  <string name="sec_location">Standort</string>
+  <string name="set_movement">Schwelle Bewegungswarnung (m)</string>
+  <string name="set_stationary_radius">Ankunftsradius (m)</string>
+  <string name="set_stationary_min">Ankunftszeit (min)</string>
+  <string name="set_km_factor">Straßenentfernungsfaktor</string>
+  <string name="sec_reports">Berichte</string>
+  <string name="set_carry_over">Nachttätigkeiten zählen zum Starttag bis (HH:MM)</string>
+  <string name="set_round_work">Rundung Arbeit</string>
+  <string name="set_round_travel">Rundung Reise</string>
+  <string name="set_round_pause">Rundung Pause</string>
+  <string name="round_mode">Modus</string>
+  <string name="round_quantum">Takt (min)</string>
+  <string name="round_minimum">Minimum (min)</string>
+  <string name="round_ceil_tolerant">Aufrunden mit Toleranz</string>
+  <string name="round_ceil">Aufrunden</string>
+  <string name="round_floor">Abrunden</string>
+  <string name="sec_online">Onlinedienste</string>
+  <string name="set_nominatim">Adresssuche (Nominatim)</string>
+  <string name="set_osrm">Straßenentfernung (OSRM)</string>
+  <string name="set_tiles">Kartenkacheln (OpenStreetMap)</string>
+  <string name="set_endpoint">Endpunkt</string>
+  <string name="sec_storage">Speicher</string>
+  <string name="set_root">Datenordner</string>
+  <string name="set_change_root">Ändern</string>
+  <string name="set_backup_retention">Aufbewahrte Sicherungen</string>
 </resources>
