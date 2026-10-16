@@ -1,52 +1,79 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import androidx.core.net.toUri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
+import it.infraconsulting.activitytrack.ui.Screen
+import it.infraconsulting.activitytrack.ui.home.HomeScreen
+import it.infraconsulting.activitytrack.ui.masterdata.ClientScreen
+import it.infraconsulting.activitytrack.ui.masterdata.ClientsScreen
+import it.infraconsulting.activitytrack.ui.masterdata.CompaniesScreen
+import it.infraconsulting.activitytrack.ui.masterdata.CompanyScreen
+import it.infraconsulting.activitytrack.ui.masterdata.MasterDataScreen
+import it.infraconsulting.activitytrack.ui.masterdata.PlacesScreen
+import it.infraconsulting.activitytrack.ui.masterdata.PresetsScreen
+import it.infraconsulting.activitytrack.ui.masterdata.RolesScreen
+import it.infraconsulting.activitytrack.ui.masterdata.ScheduleScreen
+import it.infraconsulting.activitytrack.ui.rememberBackStack
+import it.infraconsulting.activitytrack.ui.settings.SettingsScreen
+import it.infraconsulting.activitytrack.ui.setup.SetupScreen
 
-/* M0 placeholder: the tracking UI is implemented in M1. */
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		setContent {
-			ActivityTrackTheme {
-				Scaffold { padding ->
-					Column(
-						modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
-						verticalArrangement = Arrangement.spacedBy(8.dp),
-					) {
-						Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-						Text(stringResource(R.string.m0_placeholder))
-					}
-				}
-			}
+			ActivityTrackTheme { Root() }
 		}
 	}
 }
 
+/* The data folder must be chosen (and still accessible) before anything else. */
 @Composable
-fun ActivityTrackTheme(content: @Composable () -> Unit) {
-	val ctx = LocalContext.current
-	val dark = isSystemInDarkTheme()
-	/* Dynamic color is always available from API 31; minSdk is 33. */
-	val scheme = if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
-	MaterialTheme(colorScheme = scheme, content = content)
+private fun Root() {
+	val container = (LocalContext.current.applicationContext as ActivityTrackApp).container
+	val settings by container.settings.settings.collectAsState(initial = null)
+	val s = settings ?: return
+	val root = s.rootUri
+	/* bumped after a choice: re-picking the same folder leaves rootUri unchanged */
+	var epoch by remember { mutableIntStateOf(0) }
+	val accessible = remember(root, epoch) { root != null && container.userDataDir.isAccessible(root.toUri()) }
+	if (!accessible)
+		SetupScreen(lost = root != null, onChosen = { epoch++ })
+	else
+		Navigator()
+}
+
+@Composable
+private fun Navigator() {
+	val stack = rememberBackStack()
+	val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
+	val open: (Screen) -> Unit = { stack.add(it) }
+	BackHandler(enabled = stack.size > 1, onBack = back)
+
+	when (val top = stack.last()) {
+		Screen.Home -> HomeScreen(onMasterData = { open(Screen.MasterData) }, onSettings = { open(Screen.Settings) })
+		Screen.Settings -> SettingsScreen(back)
+		Screen.MasterData -> MasterDataScreen(back, open)
+		Screen.Companies -> CompaniesScreen(back) { open(Screen.Company(it)) }
+		is Screen.Company -> CompanyScreen(top.id, back)
+		Screen.Clients -> ClientsScreen(back) { open(Screen.Client(it)) }
+		is Screen.Client -> ClientScreen(top.id, back)
+		Screen.Roles -> RolesScreen(back)
+		Screen.Presets -> PresetsScreen(back)
+		Screen.Places -> PlacesScreen(back)
+		Screen.Schedule -> ScheduleScreen(back)
+	}
 }
