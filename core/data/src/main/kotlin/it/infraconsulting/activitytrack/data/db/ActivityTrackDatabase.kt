@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
 	entities = [
@@ -30,6 +31,7 @@ import androidx.room.RoomDatabase
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
 	abstract fun entryDao(): EntryDao
+	abstract fun masterDataDao(): MasterDataDao
 
 	companion object {
 		const val FILE_NAME = "activitytrack.db"
@@ -38,6 +40,15 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		fun build(context: Context): ActivityTrackDatabase =
 			Room.databaseBuilder(context.applicationContext, ActivityTrackDatabase::class.java, FILE_NAME)
 				.setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
+				.addCallback(Seed)
 				.build()
+	}
+
+	/* Default lunch break Monday to Friday 12:30-14:00 (SPEC §5), editable afterwards. */
+	object Seed : RoomDatabase.Callback() {
+		override fun onCreate(db: SupportSQLiteDatabase) {
+			for (day in 1..5)
+				db.execSQL("INSERT INTO lunch_break (day_of_week, start_min, end_min) VALUES ($day, 750, 840)")
+		}
 	}
 }
