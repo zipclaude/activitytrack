@@ -84,6 +84,7 @@ app/src/main/res/               strings en/it/de/es, locales_config, adaptive ic
 | Date | Decision |
 |---|---|
 | 2026-10-14 | GPL-3.0-or-later; Kotlin/Compose; Room; no GMS; minSdk 33 / target 36 |
+| 2026-10-17 | compileSdk 37 (Compose 1.12 AAR metadata requires it); targetSdk stays 36 |
 | 2026-10-15 | Client → one company; role per entry; activity free text + presets, default from last 30 d on same client |
 | 2026-10-15 | Concurrent entries allowed; pause per entry; travel is an entry mode (outbound, inter-site, return), manual add allowed |
 | 2026-10-15 | Rounding: WORK CEIL_TOLERANT q=15 tol q/3; TRAVEL CEIL 5; PAUSE FLOOR 5 min 5; per-export configurable |
@@ -101,6 +102,9 @@ app/src/main/res/               strings en/it/de/es, locales_config, adaptive ic
 - AGP 9 built-in Kotlin: do not apply `org.jetbrains.kotlin.android`; use
   `kotlin.compilerOptions`; kapt incompatible → KSP only.
 - Gradle 9: JUnit Platform needs explicit launcher → domain tests use JUnit 4.
+- Raw Actions job logs are not downloadable here (blob storage blocked); CI
+  emits Gradle/compiler errors as annotations: `gh api
+  repos/zipclaude/activitytrack/check-runs/<job-id>/annotations`.
 - Room stores enums by name: renaming constants requires a migration.
 - Exported Room schemas in `core/data/schemas/` must be committed.
 - Allow-while-idle alarms are rate-limited by Doze; never schedule below ~10 min.

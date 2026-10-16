@@ -17,6 +17,7 @@ Last update: 2026-10-15. Requirements: [INSTRUCTIONS.md](INSTRUCTIONS.md), [SPEC
 | DataStore | 1.2.1 | settings |
 | AndroidX core / activity / lifecycle | 1.19.1 / 1.13.0 / 2.11.0 | |
 | JDK | 17+ (bytecode target 17) | |
+| Android SDK | compile 37, target 36, min 33 | compile 37 required by Compose 1.12 AAR metadata |
 
 Versions live in `gradle/libs.versions.toml`.
 
