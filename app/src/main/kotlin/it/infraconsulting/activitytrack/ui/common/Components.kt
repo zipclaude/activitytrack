@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -40,6 +41,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 
@@ -82,6 +84,9 @@ fun EditDialog(
 ) {
 	AlertDialog(
 		onDismissRequest = onDismiss,
+		/* the dialog handles insets itself so the buttons stay above the keyboard */
+		properties = DialogProperties(decorFitsSystemWindows = false),
+		modifier = Modifier.safeDrawingPadding(),
 		title = { Text(title) },
 		text = {
 			Column(
