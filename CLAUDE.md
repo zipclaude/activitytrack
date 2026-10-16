@@ -8,7 +8,12 @@ of every work session.
 
 - Owner: Zippo, freelancer (IT infrastructure automation, Debian, Ansible).
   Builds on Debian sid, test device OnePlus 15R / Android 16.
-- Chat in **Italian**; code, comments, commits, docs in **English**.
+- Language (permanent owner rule):
+  - **English**: internal reasoning/thinking; code, comments, commits, docs.
+  - **Italian**: interactions with the owner, answers to his direct questions,
+    non-technical topics, anything health-related. He writes mostly in Italian.
+  - Technical questions and exchanges may be in English (more immediate); he
+    welcomes picking up English vocabulary, especially idioms and set phrases.
 - Answers: technical, precise, concise, schematic; authoritative sources; no
   unrequested deep dives.
 - Indentation: tabs (`.editorconfig`); kernel style for C/C++/Rust.
