@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name" translatable="false">ActivityTrack</string>
+  <string name="m0_placeholder">Project skeleton. Time tracking UI arrives with milestone M1.</string>
+  <string name="ch_ongoing">Running activities</string>
+  <string name="ch_confirm">Activity confirmation</string>
+  <string name="ch_pause">Pause reminders</string>
+  <string name="ch_movement">Movement alerts</string>
+  <string name="ch_day_start">Start of day</string>
+  <string name="ch_day_summary">Daily summary</string>
+  <string name="ch_to_complete">Activities to complete</string>
+</resources>

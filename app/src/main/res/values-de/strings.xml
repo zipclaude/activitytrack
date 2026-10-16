@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="m0_placeholder">Projektgerüst. Die Zeiterfassung folgt mit Meilenstein M1.</string>
+  <string name="ch_ongoing">Laufende Tätigkeiten</string>
+  <string name="ch_confirm">Tätigkeitsbestätigung</string>
+  <string name="ch_pause">Pausenerinnerungen</string>
+  <string name="ch_movement">Bewegungswarnungen</string>
+  <string name="ch_day_start">Tagesbeginn</string>
+  <string name="ch_day_summary">Tageszusammenfassung</string>
+  <string name="ch_to_complete">Zu vervollständigende Tätigkeiten</string>
+</resources>
