@@ -25,9 +25,9 @@ of every work session.
   **blocked** → the project cannot be compiled or tested here.
 - Local Gradle 8.14.3 available offline (used only to generate the wrapper).
   JDK 21 present. No Android SDK, no `kotlinc`.
-- Verification strategy: write Kotlin code carefully, cross-check algorithms
-  with an independent Python script (`python3 -I`), ask the owner to run
-  `./gradlew :core:domain:test assembleDebug` and paste errors.
+- Verification strategy: push to `main` (or a PR branch) and read the CI
+  result; cross-check algorithms with an independent Python script
+  (`python3 -I`).
 - Check versions with WebSearch/WebFetch on official pages before changing
   `gradle/libs.versions.toml`.
 
@@ -35,7 +35,7 @@ of every work session.
 
 | Milestone | State |
 |---|---|
-| M0 skeleton, domain rules, Room schema | **done** (see `git log`), not yet built by owner |
+| M0 skeleton, domain rules, Room schema | **done**, CI green on 2026-10-17 (domain tests + debug APK) |
 | M1 core tracking | next |
 | M2 travel & location | — |
 | M3 widgets, tile, attachments, dictation | — |
@@ -65,19 +65,18 @@ app/src/main/res/               strings en/it/de/es, locales_config, adaptive ic
 
 ## 5. Next steps (M1)
 
-1. Get owner's build result for M0; fix compile errors first.
-2. `AppContainer` (manual DI), repositories with invariants (DESIGN §4).
-3. Settings in DataStore; SAF root selection on first run.
-4. Master data screens: companies, clients, sites, roles, presets, places,
+1. `AppContainer` (manual DI), repositories with invariants (DESIGN §4).
+2. Settings in DataStore; SAF root selection on first run.
+3. Master data screens: companies, clients, sites, roles, presets, places,
    company sites, work schedule, lunch breaks.
-5. Home: open entries list, start flow (`StartDefaults` pre-fill, client picker
+4. Home: open entries list, start flow (`StartDefaults` pre-fill, client picker
    filtered by company, activity defaults from last 30 d,
    concurrent-entry dialog), commands via state machine.
-6. Ongoing notification with actions; `ActionReceiver`.
-7. `ReminderScheduler` + `ReminderReceiver` (confirm, pause, to-complete, day
+5. Ongoing notification with actions; `ActionReceiver`.
+6. `ReminderScheduler` + `ReminderReceiver` (confirm, pause, to-complete, day
    summary); boot/time-change re-arm.
-8. Completion form; manual TRAVEL/PAUSE segment insertion; external refs.
-9. Day view (solar vs reported), CSV exporter, daily backup worker.
+7. Completion form; manual TRAVEL/PAUSE segment insertion; external refs.
+8. Day view (solar vs reported), CSV exporter, daily backup worker.
 
 ## 6. Decisions log
 
