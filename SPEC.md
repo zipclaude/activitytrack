@@ -12,7 +12,7 @@ produce reports without having to remember anything afterwards.
 |---|---|
 | License | GPL-3.0-or-later |
 | Language / UI | Kotlin, Jetpack Compose, Material 3 |
-| SDK | minSdk 33 (Android 13), targetSdk / compileSdk 36 (Android 16) |
+| SDK | minSdk 33 (Android 13), targetSdk 36 (Android 16), compileSdk 37 (required by Compose BOM 2026.09) |
 | Reference device | Android 16 phone |
 | Distribution | personal APK (sideload); no Google Play Services, no proprietary SDKs |
 | Database | SQLite via Room, app-private storage |

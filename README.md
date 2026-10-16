@@ -22,13 +22,13 @@ License: GPL-3.0-or-later (see [LICENSE](LICENSE)).
 
 ## Build (CLI, Debian)
 
-Requirements: JDK 17 or newer, Android SDK with platform 36 and build-tools.
+Requirements: JDK 17 or newer, Android SDK with platform 37 and build-tools.
 
 ```sh
 sudo apt install openjdk-21-jdk-headless
 # Android command-line tools: https://developer.android.com/studio#command-line-tools-only
 export ANDROID_HOME="$HOME/Android/Sdk"
-sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+sdkmanager "platforms;android-37" "build-tools;37.0.0" "platform-tools"
 echo "sdk.dir=$ANDROID_HOME" > local.properties
 
 ./gradlew :core:domain:test		# host JVM unit tests

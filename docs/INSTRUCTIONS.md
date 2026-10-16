@@ -112,7 +112,7 @@ reference, locality.
 |---|---|---|
 | A1 | License GPL-3.0-or-later | copyleft; compatible with Apache-2.0 / MIT / BSD dependencies |
 | A2 | Kotlin, Jetpack Compose, Material 3 | current Android standard |
-| A3 | minSdk 33, target/compile 36 | owner request; notification permission and per-app locale available natively |
+| A3 | minSdk 33, targetSdk 36, compileSdk 37 | owner request; notification permission and per-app locale available natively |
 | A4 | No Google Play Services, no proprietary SDKs (ML Kit, Firebase) | FOSS, F-Droid compatible, sideload |
 | A5 | Room over SQLite, DB in app-private storage | integrity (WAL), migrations; SQLite cannot live safely on SAF |
 | A6 | User data directory via SAF tree (attachments, backups) | externally accessible, survives uninstall |

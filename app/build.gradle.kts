@@ -5,7 +5,7 @@ plugins {
 
 android {
 	namespace = "it.infraconsulting.activitytrack"
-	compileSdk = 36
+	compileSdk = 37
 
 	defaultConfig {
 		applicationId = "it.infraconsulting.activitytrack"
