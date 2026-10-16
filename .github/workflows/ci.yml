@@ -42,9 +42,11 @@ jobs:
       - name: Report build errors
         if: failure()
         run: |
-          grep -E '^e: |^\* What went wrong|^> |FAILED|error:' build.log \
-            | grep -vE '^> Task .* (UP-TO-DATE|NO-SOURCE|SKIPPED|FROM-CACHE)$' \
-            | head -n 40 > errors.txt || true
+          {
+            grep -E '^e: |error:|FAILED$' build.log | grep -v '^> Task' || true
+            grep -A 25 '^\* What went wrong' build.log \
+              | grep -vE '^\* Try:|^> Run with|^> Get more help|^$' || true
+          } | head -n 80 > errors.txt
           split -l 4 errors.txt chunk.
           for f in chunk.*; do
             [ -s "$f" ] || continue
