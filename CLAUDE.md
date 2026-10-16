@@ -16,21 +16,27 @@ of every work session.
 - Ask before guessing on ambiguous requirements; the owner answers in numbered
   lists matching the numbered questions.
 
-## 2. Environment limits (sandbox)
+## 2. Build environments
 
-- GitHub CI (`.github/workflows/ci.yml`) builds and tests on every push: use
-  its results (`gh run list`, `gh run view --log-failed`) as the compiler.
-- Outbound network: only PyPI, crates.io, Go proxy, npm (forbidden). Maven
-  Central, `dl.google.com`, `services.gradle.org`, GitHub downloads are
-  **blocked** → the project cannot be compiled or tested here.
-- Local Gradle 8.14.3 available offline (used only to generate the wrapper).
-  JDK 21 present. No Android SDK, no `kotlinc`.
-- Owner's machine (Debian sid, `~/src/activitytrack`) has JDK 21, Android SDK
-  (platform 37) and adb; device reachable via wireless debugging
-  (`adb connect <ip>:<port>`, port changes on every enable).
-- Verification strategy: push to `main` (or a PR branch) and read the CI
-  result; cross-check algorithms with an independent Python script
-  (`python3 -I`).
+Detect where you run (`hostname`, presence of `~/Android/Sdk`).
+
+### 2.1 Owner's machine (preferred)
+- Debian sid, repo in `~/src/activitytrack`, JDK 21, Android SDK (platform 37,
+  `ANDROID_HOME=~/Android/Sdk`), adb from SDK platform-tools.
+- Build and test locally: `./gradlew :core:domain:test assembleDebug`.
+- Device: OnePlus 15R via wireless debugging. Pairing is done once; after each
+  re-enable the owner reads the new port and runs `adb connect <ip>:<port>`.
+  Then `./gradlew installDebug` and
+  `adb shell am start -n it.infraconsulting.activitytrack.debug/it.infraconsulting.activitytrack.MainActivity`.
+- Push to `main` only after a green local build; CI must stay green.
+
+### 2.2 Cloud sandbox (claude.ai session)
+- Maven Central, `dl.google.com`, `services.gradle.org` and Actions log storage
+  are blocked: no local build. Push and read CI; errors are exposed as
+  annotations: `gh api repos/zipclaude/activitytrack/check-runs/<job-id>/annotations`.
+- Cross-check algorithms with an independent Python script (`python3 -I`).
+
+### 2.3 Always
 - Check versions with WebSearch/WebFetch on official pages before changing
   `gradle/libs.versions.toml`.
 
@@ -51,7 +57,7 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 ## 4. File map
 
 ```
-SPEC.md                         functional specification (v0.4)
+SPEC.md                         functional specification (v0.6)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
 docs/DESIGN.md                  technical design, toolchain, risks
 gradle/libs.versions.toml       verified versions (2026-10-15)
@@ -104,9 +110,6 @@ app/src/main/res/               strings en/it/de/es, locales_config, adaptive ic
 - AGP 9 built-in Kotlin: do not apply `org.jetbrains.kotlin.android`; use
   `kotlin.compilerOptions`; kapt incompatible → KSP only.
 - Gradle 9: JUnit Platform needs explicit launcher → domain tests use JUnit 4.
-- Raw Actions job logs are not downloadable here (blob storage blocked); CI
-  emits Gradle/compiler errors as annotations: `gh api
-  repos/zipclaude/activitytrack/check-runs/<job-id>/annotations`.
 - Room stores enums by name: renaming constants requires a migration.
 - Exported Room schemas in `core/data/schemas/` must be committed.
 - Allow-while-idle alarms are rate-limited by Doze; never schedule below ~10 min.
