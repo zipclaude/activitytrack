@@ -25,6 +25,9 @@ of every work session.
   **blocked** → the project cannot be compiled or tested here.
 - Local Gradle 8.14.3 available offline (used only to generate the wrapper).
   JDK 21 present. No Android SDK, no `kotlinc`.
+- Owner's machine (Debian sid, `~/src/activitytrack`) has JDK 21, Android SDK
+  (platform 37) and adb; device reachable via wireless debugging
+  (`adb connect <ip>:<port>`, port changes on every enable).
 - Verification strategy: push to `main` (or a PR branch) and read the CI
   result; cross-check algorithms with an independent Python script
   (`python3 -I`).
@@ -35,7 +38,7 @@ of every work session.
 
 | Milestone | State |
 |---|---|
-| M0 skeleton, domain rules, Room schema | **done**, CI green on 2026-10-17 (domain tests + debug APK) |
+| M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
 | M1 core tracking | next |
 | M2 travel & location | — |
 | M3 widgets, tile, attachments, dictation | — |
