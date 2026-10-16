@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="m0_placeholder">Esqueleto del proyecto. La interfaz de registro llega con el hito M1.</string>
+  <string name="ch_ongoing">Actividades en curso</string>
+  <string name="ch_confirm">Confirmación de actividad</string>
+  <string name="ch_pause">Recordatorios de pausa</string>
+  <string name="ch_movement">Avisos de desplazamiento</string>
+  <string name="ch_day_start">Inicio de jornada</string>
+  <string name="ch_day_summary">Resumen diario</string>
+  <string name="ch_to_complete">Actividades por completar</string>
+</resources>

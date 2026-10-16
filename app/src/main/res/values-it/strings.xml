@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="m0_placeholder">Scheletro del progetto. L\'interfaccia di rendicontazione arriva con la milestone M1.</string>
+  <string name="ch_ongoing">Attività in corso</string>
+  <string name="ch_confirm">Conferma attività</string>
+  <string name="ch_pause">Promemoria pausa</string>
+  <string name="ch_movement">Avvisi di spostamento</string>
+  <string name="ch_day_start">Inizio giornata</string>
+  <string name="ch_day_summary">Riepilogo giornaliero</string>
+  <string name="ch_to_complete">Attività da completare</string>
+</resources>

@@ -1,0 +1,347 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+package it.infraconsulting.activitytrack.data.db
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
+import it.infraconsulting.activitytrack.domain.model.LocationKind
+import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.domain.model.SegmentSource
+
+/*
+ * Conventions:
+ * - instants are stored as UTC epoch milliseconds (suffix _utc_ms);
+ * - local times of day are stored as minutes since midnight (suffix _min);
+ * - local dates are stored as epoch days (suffix _epoch_day);
+ * - enums are stored by name (Room built-in converter);
+ * - attachment paths are relative to the user-selected data directory.
+ */
+
+/* Personal places; company and client locations are sites. */
+enum class PlaceKind { HOME, OTHER }
+
+enum class AttachmentKind { PHOTO, AUDIO, RECEIPT, FILE }
+
+enum class AbsenceKind { FULL_DAY, LATE_ENTRY, EARLY_EXIT }
+
+@Entity(tableName = "company", indices = [Index(value = ["name"], unique = true)])
+data class CompanyEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	val name: String,
+	val archived: Boolean = false,
+)
+
+@Entity(
+	tableName = "company_site",
+	foreignKeys = [
+		ForeignKey(
+			entity = CompanyEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["company_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index("company_id")],
+)
+data class CompanySiteEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "company_id") val companyId: Long,
+	val label: String,
+	val lat: Double,
+	val lon: Double,
+	@ColumnInfo(name = "radius_m") val radiusM: Int = 100,
+	val address: String? = null,
+)
+
+@Entity(
+	tableName = "client",
+	foreignKeys = [
+		ForeignKey(
+			entity = CompanyEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["company_id"],
+			onDelete = ForeignKey.RESTRICT,
+		),
+	],
+	indices = [Index(value = ["company_id", "name"], unique = true)],
+)
+data class ClientEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "company_id") val companyId: Long,
+	val name: String,
+	val archived: Boolean = false,
+)
+
+@Entity(
+	tableName = "client_site",
+	foreignKeys = [
+		ForeignKey(
+			entity = ClientEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["client_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index("client_id")],
+)
+data class ClientSiteEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "client_id") val clientId: Long,
+	val label: String,
+	val lat: Double,
+	val lon: Double,
+	@ColumnInfo(name = "radius_m") val radiusM: Int = 100,
+	val address: String? = null,
+)
+
+@Entity(tableName = "place")
+data class PlaceEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	val kind: PlaceKind,
+	val label: String,
+	val lat: Double,
+	val lon: Double,
+	@ColumnInfo(name = "radius_m") val radiusM: Int = 100,
+)
+
+@Entity(tableName = "role", indices = [Index(value = ["name"], unique = true)])
+data class RoleEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	val name: String,
+	val archived: Boolean = false,
+)
+
+@Entity(
+	tableName = "activity_preset",
+	foreignKeys = [
+		ForeignKey(
+			entity = RoleEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["default_role_id"],
+			onDelete = ForeignKey.SET_NULL,
+		),
+		ForeignKey(
+			entity = CompanyEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["company_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index("default_role_id"), Index("company_id")],
+)
+data class ActivityPresetEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	val text: String,
+	@ColumnInfo(name = "default_role_id") val defaultRoleId: Long? = null,
+	@ColumnInfo(name = "company_id") val companyId: Long? = null,
+)
+
+@Entity(
+	tableName = "time_entry",
+	foreignKeys = [
+		ForeignKey(
+			entity = CompanyEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["company_id"],
+			onDelete = ForeignKey.RESTRICT,
+		),
+		ForeignKey(
+			entity = ClientEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["client_id"],
+			onDelete = ForeignKey.RESTRICT,
+		),
+		ForeignKey(
+			entity = RoleEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["role_id"],
+			onDelete = ForeignKey.RESTRICT,
+		),
+	],
+	indices = [Index("company_id"), Index("client_id"), Index("role_id"), Index("status")],
+)
+data class TimeEntryEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	/*
+	 * Company may be known before the client (company site match, copy from
+	 * the previous entry). When client_id is set, company_id must equal the
+	 * client's company (enforced by the repository).
+	 */
+	@ColumnInfo(name = "company_id") val companyId: Long?,
+	/* null while a travel was started without a known destination */
+	@ColumnInfo(name = "client_id") val clientId: Long?,
+	@ColumnInfo(name = "role_id") val roleId: Long? = null,
+	val activity: String? = null,
+	val status: EntryStatus,
+	/* open segment kind, non-null only when status == ACTIVE */
+	val mode: SegmentKind? = null,
+	val locality: String? = null,
+	@ColumnInfo(name = "location_kind") val locationKind: LocationKind? = null,
+	val notes: String? = null,
+	@ColumnInfo(name = "zone_id") val zoneId: String,
+	@ColumnInfo(name = "last_confirmed_utc_ms") val lastConfirmedUtcMs: Long? = null,
+	@ColumnInfo(name = "unanswered_reminders") val unansweredReminders: Int = 0,
+	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
+)
+
+@Entity(
+	tableName = "segment",
+	foreignKeys = [
+		ForeignKey(
+			entity = TimeEntryEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["entry_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index(value = ["entry_id", "start_utc_ms"]), Index("end_utc_ms")],
+)
+data class SegmentEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	val kind: SegmentKind,
+	@ColumnInfo(name = "start_utc_ms") val startUtcMs: Long,
+	@ColumnInfo(name = "end_utc_ms") val endUtcMs: Long? = null,
+	@ColumnInfo(name = "zone_id") val zoneId: String,
+	val source: SegmentSource = SegmentSource.TRACKED,
+	@ColumnInfo(name = "km_estimated") val kmEstimated: Double? = null,
+	@ColumnInfo(name = "km_declared") val kmDeclared: Double? = null,
+)
+
+/* Coordinates are displayed only; they are never exported. */
+@Entity(
+	tableName = "location_sample",
+	foreignKeys = [
+		ForeignKey(
+			entity = TimeEntryEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["entry_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+		ForeignKey(
+			entity = SegmentEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["segment_id"],
+			onDelete = ForeignKey.SET_NULL,
+		),
+	],
+	indices = [Index(value = ["entry_id", "ts_utc_ms"]), Index("segment_id")],
+)
+data class LocationSampleEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	@ColumnInfo(name = "segment_id") val segmentId: Long? = null,
+	@ColumnInfo(name = "ts_utc_ms") val tsUtcMs: Long,
+	val lat: Double,
+	val lon: Double,
+	@ColumnInfo(name = "accuracy_m") val accuracyM: Float?,
+	val provider: String?,
+)
+
+@Entity(
+	tableName = "attachment",
+	foreignKeys = [
+		ForeignKey(
+			entity = TimeEntryEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["entry_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index("entry_id")],
+)
+data class AttachmentEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	val kind: AttachmentKind,
+	@ColumnInfo(name = "rel_path") val relPath: String,
+	val mime: String,
+	val transcript: String? = null,
+	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+)
+
+@Entity(
+	tableName = "expense",
+	foreignKeys = [
+		ForeignKey(
+			entity = TimeEntryEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["entry_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+		ForeignKey(
+			entity = SegmentEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["segment_id"],
+			onDelete = ForeignKey.SET_NULL,
+		),
+		ForeignKey(
+			entity = AttachmentEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["attachment_id"],
+			onDelete = ForeignKey.SET_NULL,
+		),
+	],
+	indices = [Index("entry_id"), Index("segment_id"), Index("attachment_id")],
+)
+data class ExpenseEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	@ColumnInfo(name = "segment_id") val segmentId: Long? = null,
+	/* EUR cents */
+	@ColumnInfo(name = "amount_cents") val amountCents: Long,
+	val description: String,
+	@ColumnInfo(name = "attachment_id") val attachmentId: Long? = null,
+	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+)
+
+@Entity(
+	tableName = "external_ref",
+	foreignKeys = [
+		ForeignKey(
+			entity = TimeEntryEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["entry_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index("entry_id"), Index("value")],
+)
+data class ExternalRefEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	val kind: ExternalRefKind,
+	val value: String,
+)
+
+@Entity(tableName = "absence", indices = [Index("date_epoch_day")])
+data class AbsenceEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "date_epoch_day") val dateEpochDay: Long,
+	val kind: AbsenceKind,
+	/* entry time for LATE_ENTRY, exit time for EARLY_EXIT, null for FULL_DAY */
+	@ColumnInfo(name = "time_min") val timeMin: Int? = null,
+)
+
+/* Working hours; several intervals per day of week (1 = Monday ... 7 = Sunday). */
+@Entity(tableName = "work_schedule", indices = [Index("day_of_week")])
+data class WorkScheduleEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "day_of_week") val dayOfWeek: Int,
+	@ColumnInfo(name = "start_min") val startMin: Int,
+	@ColumnInfo(name = "end_min") val endMin: Int,
+)
+
+/* Lunch break per day of week (e.g. 12:30-14:00); pause reminders are muted in it. */
+@Entity(tableName = "lunch_break", indices = [Index(value = ["day_of_week"], unique = true)])
+data class LunchBreakEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "day_of_week") val dayOfWeek: Int,
+	@ColumnInfo(name = "start_min") val startMin: Int,
+	@ColumnInfo(name = "end_min") val endMin: Int,
+)
