@@ -262,5 +262,5 @@ M0 test vectors were cross-checked with an independent Python implementation.
 | KSP 2.3.11 with AGP 9.4 built-in Kotlin | to verify at first build |
 | FGS location started from notification/widget while app in background | verify on Android 16; background location granted |
 | OxygenOS background restrictions | test reminders in Doze and with screen off |
-| Entry ending exactly at 06:00 attributed to start day | assumed, to confirm |
+| Entry ending exactly at 06:00 attributed to start day | confirmed by owner 2026-10-16 |
 | CI | GitHub Actions `.github/workflows/ci.yml`: domain tests + `assembleDebug`, APK as artifact; first run to be checked |
