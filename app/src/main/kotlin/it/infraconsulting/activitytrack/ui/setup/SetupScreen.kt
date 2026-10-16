@@ -25,6 +25,7 @@ import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.data.storage.UserDataDir
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -48,6 +49,8 @@ class DataDirViewModel(
 					dir.release(old.toUri())
 				_failed.value = false
 				onDone()
+			} catch (e: CancellationException) {
+				throw e
 			} catch (e: Exception) {
 				/* SecurityException (no persistable grant) or provider failure */
 				dir.release(tree)
