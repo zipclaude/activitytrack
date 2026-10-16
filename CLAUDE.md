@@ -45,7 +45,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | Milestone | State |
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
-| M1 core tracking | next |
+| M1 core tracking | **in progress**: steps 1–3 done (branch `worktree-m1-foundation`, 2026-10-16) |
 | M2 travel & location | — |
 | M3 widgets, tile, attachments, dictation | — |
 | M4 OCR, offline STT, XML/JSON export | — |
@@ -60,24 +60,31 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 SPEC.md                         functional specification (v0.6)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
 docs/DESIGN.md                  technical design, toolchain, risks
-gradle/libs.versions.toml       verified versions (2026-10-15)
-core/domain/…/model/            Model.kt, EntryStateMachine.kt, ExternalRef.kt
+gradle/libs.versions.toml       verified versions (2026-10-15; androidx.test 2026-10-16)
+core/domain/…/model/            Model.kt, EntryStateMachine.kt, EntryInvariants.kt, ExternalRef.kt
 core/domain/…/rounding/         Rounding.kt
 core/domain/…/report/           DayAttribution.kt, DailyReport.kt
 core/domain/…/geo/              Geo.kt (haversine)
 core/domain/…/start/            StartDefaults.kt (pre-fill rules)
-core/domain/src/test/…          RoundingTest, DailyReportTest, EntryStateMachineTest, StartDefaultsTest
-core/data/…/db/                 Entities.kt, EntryDao.kt, ActivityTrackDatabase.kt
-app/…/                          ActivityTrackApp.kt, MainActivity.kt (placeholder), notify/NotificationChannels.kt
-app/src/main/res/               strings en/it/de/es, locales_config, adaptive icon
+core/domain/…/settings/         AppSettings.kt (defaults + validated())
+core/domain/src/test/…          Rounding, DailyReport, EntryStateMachine, EntryInvariants, StartDefaults, AppSettings
+core/data/…/db/                 Entities.kt, EntryDao.kt, MasterDataDao.kt, ActivityTrackDatabase.kt (lunch seed)
+core/data/…/repo/               EntryRepository, MasterDataRepository, ValidationException
+core/data/…/settings/           SettingsRepository (Preferences DataStore)
+core/data/…/storage/            UserDataDir (SAF tree, DocumentsContract)
+core/data/src/androidTest/…     RepositoryTest (in-memory Room, run on device)
+app/…/                          ActivityTrackApp.kt, AppContainer.kt, MainActivity.kt (setup gate + navigator)
+app/…/ui/                       Navigation (own back stack), ViewModels, Theme, common/, setup/, home/,
+                                settings/, masterdata/
+app/src/test/…                  UiParsingTest
+app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
 ## 5. Next steps (M1)
 
-1. `AppContainer` (manual DI), repositories with invariants (DESIGN §4).
-2. Settings in DataStore; SAF root selection on first run.
-3. Master data screens: companies, clients, sites, roles, presets, places,
-   company sites, work schedule, lunch breaks.
+1. ~~`AppContainer`, repositories with invariants~~ done.
+2. ~~Settings in DataStore; SAF root selection on first run~~ done.
+3. ~~Master data screens~~ done (coordinates typed; map/current position in M2).
 4. Home: open entries list, start flow (`StartDefaults` pre-fill, client picker
    filtered by company, activity defaults from last 30 d,
    concurrent-entry dialog), commands via state machine.
@@ -104,6 +111,10 @@ app/src/main/res/               strings en/it/de/es, locales_config, adaptive ic
 | 2026-10-17 | Final name ActivityTrack, application ID `it.infraconsulting.activitytrack`; public GitHub repo `zipclaude/activitytrack` |
 | 2026-10-15 | No "office": company sites (pre-fill company, propose its clients); LocationKind COMPANY/CLIENT/HOME/OTHER |
 | 2026-10-15 | Lunch break per weekday (mutes pause reminders); new entry copies company of today's last entry |
+| 2026-10-16 | 06:00 carry-over boundary is inclusive (confirmed by owner) |
+| 2026-10-16 | Own back stack (Navigation 3 model) instead of the library; one ViewModel per feature; UI stays in `:app` until feature modules pay off |
+| 2026-10-16 | Default lunch break Mon–Fri 12:30–14:00 seeded at DB creation; max confirmations default 0 = unlimited; online services enabled by default |
+| 2026-10-16 | A client's company cannot change once entries reference it |
 
 ## 7. Pitfalls to remember
 
@@ -114,6 +125,12 @@ app/src/main/res/               strings en/it/de/es, locales_config, adaptive ic
 - Exported Room schemas in `core/data/schemas/` must be committed.
 - Allow-while-idle alarms are rate-limited by Doze; never schedule below ~10 min.
 - Exports must use DTOs without lat/lon.
+- `connectedDebugAndroidTest` (AGP 9.4 test engine) reports "failing tests" even
+  when all pass: read `core/data/build/reports/androidTests/` or run
+  `adb shell am instrument -w it.infraconsulting.activitytrack.core.data.test/androidx.test.runner.AndroidJUnitRunner`.
+- JUnit 4 test methods must return Unit: use `runBlocking<Unit> { }`.
+- Companion maps over sealed `data object`s must be lazy (class-init cycle → nulls).
+- Wireless adb: the phone may be dozing; screenshots come out black.
 
 ## 8. Commit format
 

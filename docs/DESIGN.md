@@ -15,6 +15,7 @@ Last update: 2026-10-15. Requirements: [INSTRUCTIONS.md](INSTRUCTIONS.md), [SPEC
 | Room | 2.8.5 | Room Gradle plugin, schemas in `core/data/schemas/` (commit them) |
 | WorkManager | 2.12.0 | |
 | DataStore | 1.2.1 | settings |
+| androidx.test runner / ext-junit | 1.7.0 / 1.3.0 | instrumented repository tests |
 | AndroidX core / activity / lifecycle | 1.19.1 / 1.13.0 / 2.11.0 | |
 | JDK | 17+ (bytecode target 17) | |
 | Android SDK | compile 37, target 36, min 33 | compile 37 required by Compose 1.12 AAR metadata |
@@ -44,8 +45,11 @@ Package root: `it.infraconsulting.activitytrack`.
 
 ### 2.1 Layers
 
-- **UI**: Compose screens, one `ViewModel` per screen exposing `StateFlow<UiState>`;
-  navigation with Navigation 3.
+- **UI**: Compose screens; one `ViewModel` per feature (setup, home, settings,
+  master data) exposing `StateFlow`s, built from `AppContainer` via
+  `appViewModel {}`. Navigation: an app-owned back stack (`ui/Navigation.kt`,
+  saved as string keys), the Navigation 3 model without the dependency while
+  the graph is small. UI lives in `:app` until feature modules pay off.
 - **Domain**: pure functions and use cases (`StartEntry`, `ApplyCommand`,
   `BuildDailyReport`, `ProposeClient`, …).
 - **Data**: repositories wrapping DAOs; every multi-row change in one Room
@@ -196,7 +200,9 @@ Notification ids derived from entry id and channel (`entryId * 16 + channelIndex
   is the only one.
 
 ### 8.3 Settings (DataStore)
-Lunch break defaults, confirmation interval, max confirmations, pause interval, movement threshold,
+`AppSettings` (domain, `validated()` clamps ranges) persisted by
+`SettingsRepository`. Lunch breaks are a table (default Mon–Fri 12:30–14:00
+seeded at DB creation). Keys: confirmation interval, max confirmations, pause interval, movement threshold,
 stationarity radius/time, day carry-over time, rounding profile, online service
 toggles and endpoints, km factor, backup retention, SAF root URI.
 
@@ -249,7 +255,8 @@ Default resources in English; `values-it`, `values-de`, `values-es`.
 | Level | Tooling | Scope |
 |---|---|---|
 | Domain | JUnit 4 + kotlin-test on host JVM | rounding, attribution, totals, state machine, geo math |
-| Data | Room in-memory DB, instrumented | DAO queries, invariants, migrations (`room-testing`) |
+| Data | Room in-memory DB, instrumented (`RepositoryTest`, on device) | repository validation and invariants; migrations (`room-testing`) later |
+| App | JUnit 4 on host JVM | input parsing, back-stack keys |
 | UI | Compose UI tests, instrumented | critical flows (start, stop, complete) |
 
 M0 test vectors were cross-checked with an independent Python implementation.
@@ -263,4 +270,6 @@ M0 test vectors were cross-checked with an independent Python implementation.
 | FGS location started from notification/widget while app in background | verify on Android 16; background location granted |
 | OxygenOS background restrictions | test reminders in Doze and with screen off |
 | Entry ending exactly at 06:00 attributed to start day | confirmed by owner 2026-10-16 |
-| CI | GitHub Actions `.github/workflows/ci.yml`: domain tests + `assembleDebug`, APK as artifact; first run to be checked |
+| Site coordinates typed by hand | until M2 (current position, map picker) |
+| CI | GitHub Actions: domain + app unit tests, instrumented tests compiled (not run), `assembleDebug`, APK artifact |
+| `connectedDebugAndroidTest` exit status | AGP 9.4 test engine fails the task with all tests green; verify via report or `am instrument` |
