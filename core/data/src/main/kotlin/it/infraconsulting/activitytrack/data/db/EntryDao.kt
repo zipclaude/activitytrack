@@ -19,11 +19,21 @@ interface EntryDao {
 	@Insert
 	suspend fun insertSegment(segment: SegmentEntity): Long
 
-	@Query("UPDATE segment SET end_utc_ms = :endUtcMs WHERE entry_id = :entryId AND end_utc_ms IS NULL")
+	/* Never closes before the segment start (wall clock moved backwards). */
+	@Query(
+		"UPDATE segment SET end_utc_ms = MAX(start_utc_ms, :endUtcMs) " +
+			"WHERE entry_id = :entryId AND end_utc_ms IS NULL",
+	)
 	suspend fun closeOpenSegment(entryId: Long, endUtcMs: Long): Int
 
 	@Query("SELECT * FROM time_entry WHERE id = :id")
 	suspend fun entry(id: Long): TimeEntryEntity?
+
+	@Query("SELECT * FROM time_entry WHERE id = :id")
+	fun observeEntry(id: Long): Flow<TimeEntryEntity?>
+
+	@Query("SELECT COUNT(*) FROM attachment WHERE entry_id = :entryId")
+	suspend fun attachmentCount(entryId: Long): Int
 
 	/* Entries that still need user attention: active, suspended or to complete. */
 	@Query("SELECT * FROM time_entry WHERE status != 'CLOSED' ORDER BY updated_utc_ms DESC")
@@ -31,6 +41,9 @@ interface EntryDao {
 
 	@Query("SELECT * FROM segment WHERE entry_id = :entryId ORDER BY start_utc_ms")
 	suspend fun segments(entryId: Long): List<SegmentEntity>
+
+	@Query("SELECT * FROM segment WHERE entry_id = :entryId ORDER BY start_utc_ms")
+	fun observeSegments(entryId: Long): Flow<List<SegmentEntity>>
 
 	/* Segments overlapping [fromUtcMs, toUtcMs); open segments always overlap. */
 	@Query(
