@@ -32,8 +32,11 @@ sealed interface Screen {
 	}
 
 	companion object {
-		private val objects = listOf(Home, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule)
-			.associateBy { it.key() }
+		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
+		private val objects by lazy {
+			listOf(Home, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule)
+				.associateBy { it.key() }
+		}
 
 		fun parse(key: String): Screen? {
 			objects[key]?.let { return it }
