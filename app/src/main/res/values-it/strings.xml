@@ -240,6 +240,13 @@
   <string name="att_stop_save">Ferma e salva</string>
   <string name="action_open">Apri</string>
   <string name="action_dictate">Detta</string>
+  <string name="dictation_listening">In ascolto…</string>
+  <string name="dictation_done">Fatto</string>
+  <string name="dictation_retry">Riprova</string>
+  <string name="dictation_no_match">Non ho riconosciuto nulla: riprova.</string>
+  <string name="dictation_network">Il riconoscimento vocale richiede la rete.</string>
+  <string name="dictation_language">La lingua non è disponibile per il riconoscimento offline.</string>
+  <string name="dictation_failed">Riconoscimento vocale non riuscito.</string>
   <string name="err_storage">La cartella dati non è utilizzabile: verificala nelle Impostazioni.</string>
   <string name="err_no_viewer">Nessuna app può aprire questo file.</string>
   <string name="confirm_delete_segment">Eliminare questo segmento?</string>

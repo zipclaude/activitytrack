@@ -18,10 +18,10 @@
   <!-- OxygenOS kills background work aggressively; sideloaded, so the direct request is allowed. -->
   <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-  <!-- Package visibility (API 30+): is a speech recognizer installed? -->
+  <!-- Package visibility (API 30+): speech recognition services for dictation. -->
   <queries>
     <intent>
-      <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+      <action android:name="android.speech.RecognitionService" />
     </intent>
   </queries>
 
