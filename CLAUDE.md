@@ -53,10 +53,10 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
 | M2 travel & location | **done**, device-tested, merged (PR #2, 2026-10-17) |
 | M3 widgets, tile, attachments, dictation | **done**, device-tested, merged (PR #3, 2026-10-17) |
-| M4 export and import | next, branch `m4-export-import` |
-| M5 external calendar sync (generic / per company; Google or CalDAV) | — |
-| M6 consultation: list, day agenda, week, month | — |
-| M7 UI polish | — |
+| M4 export and import | **implemented** (PR #4), device test pending |
+| M5 external calendar sync (generic / per company; Google or CalDAV) | **implemented** (PR #5, stacked on #4), device test pending |
+| M6 consultation: list, day agenda, week, month | **implemented** (PR #6, stacked on #5), device test pending |
+| M7 UI polish | first pass (PR #7, stacked on #6), owner review pending |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
@@ -68,6 +68,8 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 ```
 SPEC.md                         functional specification (v0.6)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
+docs/INTERCHANGE.md             generic import/export format (M4)
+docs/samples/                   interchange samples for device tests (TEST data)
 docs/DESIGN.md                  technical design, toolchain, risks
 gradle/libs.versions.toml       verified versions (2026-10-15; androidx.test 2026-10-16)
 core/domain/…/model/            Model.kt, EntryStateMachine.kt, EntryInvariants.kt, ExternalRef.kt
@@ -104,14 +106,41 @@ app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTe
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (M4, branch `m4-export-import`)
+## 5. Next steps (review with the owner, 2026-10-18)
 
-M3 merged in `main` on 2026-10-17 (PR #3). Roadmap restructured by the owner
-(2026-10-17): M4 export/import, M5 calendar sync, M6 consultation views, M7 UI
-polish; OCR and free offline STT moved to future improvements (SPEC §10).
+M4–M7 were written autonomously on 2026-10-17 evening (owner away, phone not
+available). PR stack, to merge in order after the device tests:
+#4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`.
+Install the top of the stack (`m7-ui-polish`); back up `databases/` first.
 
-1. Agree the export/import, calendar and consultation details (questions
-   asked 2026-10-17).
+### Device tests
+1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
+   export → import (report: 1 company, 2 clients, 1 site, 3 to-dos);
+   import again (all unchanged); Home "To do today" → start from to-do →
+   stop → complete → "Is the to-do done?"; To-dos screen add/done; export
+   JSON/XML with empty dates + share; company screen "Management system".
+2. **M5**: Settings → Calendar: grant, pick a Google calendar or create the
+   local one; import `docs/samples/agenda-test.xml` (11 closed entries over
+   two weeks) → "Sync 90 days" → events in the calendar app; start an
+   entry → event appears from its start; company calendar overrides.
+3. **M6**: bottom bar; Agenda list (search), day, week, month with the
+   sample data; taps open entries / days; back from a tab goes Home.
+4. **M7**: visual review of the home card (state pill, running time), green
+   start, empty state.
+5. Cleanup: restore the clean DB, delete TEST files in the data folder,
+   remove TEST events from the calendar (or the local calendar).
+
+### Provisional decisions to confirm
+- M5: on every change re-sync the last 14 days; "Sync 90 days" on demand;
+  without a target calendar nothing is created and old events are kept.
+- M5: the local calendar is green, named "ActivityTrack", on this phone only.
+- M6: tabs Home · Agenda · Report (the existing day report) · More
+  (To-dos, Import / export, Master data, Settings); agenda opens in List;
+  weeks start on Monday; one colour per company from a fixed palette.
+- M7: Material You dynamic colours kept; home start button icon-only.
+- M4: site coordinates exported only on request; running (ACTIVE) entries
+  are not imported; roles referenced by imported entries are created.
+- Open: notification icons/colours (text actions kept, see 2026-10-17).
 
 ## 6. Decisions log
 
@@ -166,6 +195,7 @@ polish; OCR and free offline STT moved to future improvements (SPEC §10).
 | 2026-10-17 | M4: connector credentials stored encrypted with the Android keystore (structure now, used by future API plugins) |
 | 2026-10-17 | M5: CalendarContract (Google via the system account, CalDAV via DAVx5); generic calendar chosen by the user, local "ActivityTrack" calendar as fallback; per-company calendar replaces the generic one; one-way app → calendar; one event per entry and day, shown from the entry start |
 | 2026-10-17 | M6/M7: bottom navigation bar (Home · Agenda · Reports · More) |
+| 2026-10-17 | Owner away: M4–M7 implemented autonomously as stacked PRs #4–#7; provisional choices listed in §5 for review |
 
 ## 7. Pitfalls to remember
 
