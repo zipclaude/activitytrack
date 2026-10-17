@@ -45,7 +45,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | Milestone | State |
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
-| M1 core tracking | **in progress**: steps 1–3 done (branch `worktree-m1-foundation`, 2026-10-16) |
+| M1 core tracking | **in progress**: steps 1–4 done (branch `worktree-m1-foundation`, 2026-10-17) |
 | M2 travel & location | — |
 | M3 widgets, tile, attachments, dictation | — |
 | M4 OCR, offline STT, XML/JSON export | — |
@@ -85,9 +85,8 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 1. ~~`AppContainer`, repositories with invariants~~ done.
 2. ~~Settings in DataStore; SAF root selection on first run~~ done.
 3. ~~Master data screens~~ done (coordinates typed; map/current position in M2).
-4. Home: open entries list, start flow (`StartDefaults` pre-fill, client picker
-   filtered by company, activity defaults from last 30 d,
-   concurrent-entry dialog), commands via state machine.
+4. ~~Home, start flow, concurrent-entry dialog, commands~~ done and tested on
+   device (2026-10-17); minimal completion dialog until step 7.
 5. Ongoing notification with actions; `ActionReceiver`.
 6. `ReminderScheduler` + `ReminderReceiver` (confirm, pause, to-complete, day
    summary); boot/time-change re-arm.
@@ -115,6 +114,8 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 | 2026-10-16 | Own back stack (Navigation 3 model) instead of the library; one ViewModel per feature; UI stays in `:app` until feature modules pay off |
 | 2026-10-16 | Default lunch break Mon–Fri 12:30–14:00 seeded at DB creation; max confirmations default 0 = unlimited; online services enabled by default |
 | 2026-10-16 | A client's company cannot change once entries reference it |
+| 2026-10-17 | New entry while another is in TRAVEL: "Is the travel completed?" Yes = STOP, No = leave running, "Suspend travel" = SUSPEND; while in WORK: close / suspend / leave; while in PAUSE: close / leave |
+| 2026-10-17 | STOP while working asks "Stop now / Start return travel"; STOP from TRAVEL stops directly. Minimal completion dialog (activity, preset, role, notes, client) until step 7 |
 
 ## 7. Pitfalls to remember
 
@@ -130,7 +131,12 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
   `adb shell am instrument -w it.infraconsulting.activitytrack.core.data.test/androidx.test.runner.AndroidJUnitRunner`.
 - JUnit 4 test methods must return Unit: use `runBlocking<Unit> { }`.
 - Companion maps over sealed `data object`s must be lazy (class-init cycle → nulls).
-- Wireless adb: the phone may be dozing; screenshots come out black.
+- Wireless adb: the phone may be dozing; screenshots come out black. The port
+  changes at every re-enable (ask the owner).
+- ViewModels must live in the back-stack entry store (`ScopedEntry`), not the
+  Activity: otherwise a reopened screen shows stale state.
+- Device UI tests that create data: back up `databases/` with `run-as` first and
+  restore afterwards (entries cannot be deleted from the UI yet).
 
 ## 8. Commit format
 
