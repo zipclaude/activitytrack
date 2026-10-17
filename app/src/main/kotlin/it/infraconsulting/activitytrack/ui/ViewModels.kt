@@ -3,7 +3,7 @@ package it.infraconsulting.activitytrack.ui
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -20,17 +20,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/* ViewModel built from the application container (manual DI). */
+/*
+ * ViewModel built from the application container (manual DI), stored in the
+ * current back-stack entry. The container comes from the context because
+ * per-entry owners provide no CreationExtras.
+ */
 @Composable
 inline fun <reified VM : ViewModel> appViewModel(
 	key: String? = null,
 	crossinline create: (AppContainer) -> VM,
-): VM = viewModel(
-	key = key,
-	factory = viewModelFactory {
-		initializer { create((this[APPLICATION_KEY] as ActivityTrackApp).container) }
-	},
-)
+): VM {
+	val container = (LocalContext.current.applicationContext as ActivityTrackApp).container
+	return viewModel(key = key, factory = viewModelFactory { initializer { create(container) } })
+}
 
 /*
  * Base for screens that write through repositories: runs an action, exposes
