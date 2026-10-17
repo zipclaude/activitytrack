@@ -46,6 +46,7 @@
   <string name="day_off_edit">Freier Tag</string>
   <string name="field_note">Notiz</string>
   <string name="err_invalid_date">Ungültiges Datum.</string>
+  <string name="err_invalid_time">Ungültige Uhrzeit: hh:mm verwenden, z. B. 08:30.</string>
   <string name="late_entry_title">Späterer Arbeitsbeginn</string>
   <string name="late_entry_hint">Beginn am %1$s. Wird als späterer Beginn erfasst; starte die Tätigkeit, wenn du anfängst.</string>
   <string name="field_time">Uhrzeit (hh:mm)</string>

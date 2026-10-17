@@ -22,5 +22,6 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		BLANK_VALUE,
 		NOT_MANUAL,			/* only manual segments can be deleted */
 		INVALID_DATE,
+		INVALID_TIME,			/* a single time of day, not a range */
 	}
 }

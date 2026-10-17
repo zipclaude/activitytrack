@@ -421,7 +421,7 @@ class RepositoryTest {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(setOf(today, tomorrow), entries.handledDays(today, tomorrow, zone))
 		assertEquals(
-			Reason.INVALID_TIME_RANGE,
+			Reason.INVALID_TIME,
 			reason { entries.recordAbsence(today, it.infraconsulting.activitytrack.data.db.AbsenceKind.FULL_DAY, 600) },
 		)
 	}

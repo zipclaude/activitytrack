@@ -53,6 +53,7 @@
   <string name="day_off_edit">Day off</string>
   <string name="field_note">Note</string>
   <string name="err_invalid_date">Invalid date.</string>
+  <string name="err_invalid_time">Invalid time: use hh:mm, e.g. 08:30.</string>
   <string name="late_entry_title">Late entry</string>
   <string name="late_entry_hint">Entry time on %1$s. Recorded as a late entry; start the activity when you begin.</string>
   <string name="field_time">Time (hh:mm)</string>

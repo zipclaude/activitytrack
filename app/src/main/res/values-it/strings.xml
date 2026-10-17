@@ -46,6 +46,7 @@
   <string name="day_off_edit">Giorno libero</string>
   <string name="field_note">Nota</string>
   <string name="err_invalid_date">Data non valida.</string>
+  <string name="err_invalid_time">Ora non valida: usa hh:mm, es. 08:30.</string>
   <string name="late_entry_title">Entrata in ritardo</string>
   <string name="late_entry_hint">Ora di entrata del %1$s. Viene registrata come entrata in ritardo; avvia l\'attività quando inizi.</string>
   <string name="field_time">Ora (hh:mm)</string>

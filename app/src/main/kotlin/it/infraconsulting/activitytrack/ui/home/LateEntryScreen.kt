@@ -35,7 +35,7 @@ import java.time.LocalTime
 class LateEntryViewModel(private val entries: EntryRepository) : ActionViewModel() {
 	fun save(day: LocalDate, time: String, done: () -> Unit) = run(done) {
 		val min = parseHhMm(time)?.takeIf { it < 24 * 60 }
-			?: throw ValidationException(ValidationException.Reason.INVALID_TIME_RANGE)
+			?: throw ValidationException(ValidationException.Reason.INVALID_TIME)
 		entries.recordAbsence(day, AbsenceKind.LATE_ENTRY, min)
 	}
 }
