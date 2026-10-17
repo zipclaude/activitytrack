@@ -66,7 +66,7 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 ## 4. File map
 
 ```
-SPEC.md                         functional specification (v0.6)
+SPEC.md                         functional specification (v0.7)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
 docs/INTERCHANGE.md             generic import/export format (M4)
 docs/samples/                   interchange samples for device tests (TEST data)

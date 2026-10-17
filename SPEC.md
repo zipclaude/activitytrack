@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.6 (2026-10-17). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.7 (2026-10-17, M4–M7 added). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -154,14 +154,53 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
 
 ## 7. Quick interaction
 
-Ongoing notification with actions, confirmation notifications with actions,
-Glance widgets (4×1 status + recent clients, 1×1 toggle), Quick Settings tile,
-dynamic app shortcuts, quick expense (amount, description, photo).
+- Ongoing notification with actions, confirmation notifications with actions.
+- Command buttons as coloured icons: start/resume green (play), stop red
+  (stop), pause yellow (pause), suspend orange (moon), travel blue (car).
+- Glance widgets: 4×1 (running entry with its commands and €, or recent
+  clients), 1×1 WORK/PAUSE toggle; Quick Settings tile with the same toggle
+  (added from Settings: some launchers do not list it).
+- Launcher shortcuts: the 4 most recent clients and "Expense".
+- Nothing that needs a confirmation starts outside the app: widgets and
+  shortcuts open the start screen with the client picked.
+- Client fields are searchable combo boxes (case and accents ignored).
+- Dictation of the activity text through the system speech recognizer; its
+  language is a setting (default Italian).
+- Completion with the client only, after a confirmation (leave empty / copy
+  the last activity on the client / edit).
 
-## 8. Export
+## 8. Export, import and integrations
 
-`Exporter` interface with in-app implementations (no dynamic code loading),
-output through SAF. CSV first; XML / JSON plug-ins for management systems later.
+- **Interchange model** (docs/INTERCHANGE.md): companies, clients, sites,
+  roles, presets, to-dos, entries with segments, expenses and references,
+  absences, days off; every section optional; never location samples.
+- **Connectors**: plugins compiled into the app, one per company (management
+  system); the generic XML / JSON plugin first, API or web-service plugins
+  later. Settings per company; secrets encrypted with the Android keystore.
+- **Import** is idempotent (external codes, uids); on conflicts the app data
+  wins and the report lists them; invalid records are skipped with a reason.
+- **Export**: CSV report rows or the interchange (JSON / XML) with sections,
+  period, company and client filters; to the data folder and the share sheet.
+- **To-dos**: planned activities (title, client, due date/time, priority,
+  notes, references), imported or created in the app; an entry can start from
+  a to-do (pre-filled, references copied); completing it asks whether the
+  to-do is done; home shows the to-dos due today.
+- **Backup restore**: a daily backup replaces all data after a safety backup.
+
+### 8.1 Calendar sync
+
+One-way to the phone's calendars (Google account or CalDAV via DAVx5): one
+event per entry and report day, from the entry start (a running entry ends
+"now"), title "Client – Activity", rounded times, km, references and notes in
+the description, locality as location. A generic calendar (chosen, or a local
+"ActivityTrack" one) and optionally one per company, which replaces it.
+
+### 8.2 Consultation and navigation
+
+Bottom navigation: Home · Agenda · Report · More. The agenda shows the
+report lines and the to-dos due as a list (with search), a day or week
+timeline (concurrent entries side by side) and a month grid with reported
+hours; one colour per company; taps open the entry or the day.
 
 ## 9. Milestones
 
