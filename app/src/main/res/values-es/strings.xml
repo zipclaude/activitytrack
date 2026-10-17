@@ -4,6 +4,7 @@
   <string name="ch_confirm">Confirmación de actividad</string>
   <string name="ch_pause">Recordatorios de pausa</string>
   <string name="ch_movement">Avisos de desplazamiento</string>
+  <string name="ch_arrival">Avisos de llegada</string>
   <string name="ch_day_start">Inicio de jornada</string>
   <string name="ch_day_summary">Resumen diario</string>
   <string name="ch_to_complete">Actividades por completar</string>
@@ -164,6 +165,15 @@
   <string name="notif_confirm_title">¿Sigues con %1$s?</string>
   <string name="notif_confirm_text">Última confirmación a las %1$s</string>
   <string name="notif_stop_at">Parar a las %1$s</string>
+  <string name="notif_moved_title">¿Te alejaste de %1$s?</string>
+  <string name="notif_moved_text">Salida a las %1$s</string>
+  <string name="notif_travel_from">Viaje desde las %1$s</string>
+  <string name="notif_ignore">Ignorar</string>
+  <string name="notif_arrived_title">¿Llegaste?</string>
+  <string name="notif_arrived_text">%1$s · parado desde las %2$s</string>
+  <string name="notif_work_at_client">Trabajo en %1$s desde las %2$s</string>
+  <string name="notif_work_from">Trabajo desde las %1$s</string>
+  <string name="notif_still_travelling">Sigo de viaje</string>
   <string name="notif_pause_title">¿Sigues en pausa?</string>
   <string name="notif_summary_title">Hoy</string>
   <string name="notif_summary_text">Real %1$s · declarado %2$s</string>

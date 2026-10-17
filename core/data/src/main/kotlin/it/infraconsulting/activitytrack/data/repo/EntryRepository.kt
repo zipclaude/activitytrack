@@ -69,6 +69,7 @@ class EntryRepository(
 	val clientLastUse = dao.observeClientLastUse()
 
 	fun entry(id: Long) = dao.observeEntry(id)
+	suspend fun find(id: Long): TimeEntryEntity? = dao.entry(id)
 	fun segments(entryId: Long) = dao.observeSegments(entryId)
 
 	/*
@@ -128,13 +129,17 @@ class EntryRepository(
 		return id
 	}
 
-	/* State-machine command; COMPLETE goes through [complete]. */
-	suspend fun apply(entryId: Long, cmd: EntryCommand) {
+	/*
+	 * State-machine command; COMPLETE goes through [complete]. [atUtcMs]
+	 * backdates the transition (detected departure or arrival), clamped
+	 * between the latest recorded boundary and now.
+	 */
+	suspend fun apply(entryId: Long, cmd: EntryCommand, atUtcMs: Long? = null) {
 		require(cmd != EntryCommand.COMPLETE) { "use complete()" }
 		db.withTransaction {
 			val e = load(entryId)
 			val t = EntryStateMachine.apply(EntryState(e.status, e.mode), cmd)
-			val at = writeInstant(entryId)
+			val at = writeInstant(entryId, atUtcMs)
 			if (t.closeOpenSegment)
 				check(dao.closeOpenSegment(entryId, at) == 1) { "entry $entryId: no open segment to close" }
 			t.openSegment?.let {
@@ -152,6 +157,27 @@ class EntryRepository(
 			)
 			verify(entryId)
 		}
+	}
+
+	/*
+	 * "Arrived?" at a client site during TRAVEL: the travelling entry takes
+	 * that client (and its company) when it has none, then switches to WORK
+	 * at the arrival time (owner decision 2026-10-17).
+	 */
+	suspend fun arriveAtClient(entryId: Long, clientId: Long, atUtcMs: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (e.clientId == null) {
+			val client = master.client(clientId) ?: throw ValidationException(Reason.NOT_FOUND, "client $clientId")
+			dao.updateEntry(
+				e.copy(
+					clientId = clientId,
+					companyId = client.companyId,
+					locationKind = LocationKind.CLIENT,
+					updatedUtcMs = clock.millis(),
+				),
+			)
+		}
+		apply(entryId, EntryCommand.WORK, atUtcMs)
 	}
 
 	/* "Still working?" answered yes. */
@@ -307,12 +333,14 @@ class EntryRepository(
 	}
 
 	/*
-	 * Instant for segment transitions: now, but never before the latest
-	 * recorded boundary, so a backwards clock change cannot create overlaps.
+	 * Instant for segment transitions: now (or [requested], not later than
+	 * now), but never before the latest recorded boundary, so neither a
+	 * backwards clock change nor a backdated command can create overlaps.
 	 */
-	private suspend fun writeInstant(entryId: Long): Long {
+	private suspend fun writeInstant(entryId: Long, requested: Long? = null): Long {
 		val latest = dao.segments(entryId).maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: it.startUtcMs) }
-		return maxOf(clock.millis(), latest ?: Long.MIN_VALUE)
+		val now = clock.millis()
+		return maxOf(requested?.let { minOf(it, now) } ?: now, latest ?: Long.MIN_VALUE)
 	}
 
 	private suspend fun verify(entryId: Long) {

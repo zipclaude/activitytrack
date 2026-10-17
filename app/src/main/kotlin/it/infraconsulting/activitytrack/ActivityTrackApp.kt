@@ -3,6 +3,7 @@ package it.infraconsulting.activitytrack
 
 import android.app.Application
 import it.infraconsulting.activitytrack.backup.BackupWorker
+import it.infraconsulting.activitytrack.location.TrackingMonitor
 import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.notify.NotificationSync
 import it.infraconsulting.activitytrack.reminders.ReminderScheduler
@@ -21,6 +22,8 @@ class ActivityTrackApp : Application() {
 		private set
 	lateinit var reminders: ReminderScheduler
 		private set
+	lateinit var tracking: TrackingMonitor
+		private set
 
 	override fun onCreate() {
 		super.onCreate()
@@ -28,6 +31,7 @@ class ActivityTrackApp : Application() {
 		NotificationChannels.register(this)
 		notificationSync = NotificationSync(this, container, appScope).also { it.start() }
 		reminders = ReminderScheduler(this, container).also { it.start(appScope) }
+		tracking = TrackingMonitor(this, container)
 		BackupWorker.schedule(this)
 	}
 }

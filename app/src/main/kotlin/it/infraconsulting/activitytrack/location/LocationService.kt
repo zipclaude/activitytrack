@@ -45,7 +45,10 @@ class LocationService : Service() {
 		val app = application as ActivityTrackApp
 		/* the process scope: the stop fix of a travel may arrive after the service ended */
 		tracker = LocationTracker(this) { fix, provider, segmentId ->
-			app.appScope.launch { app.container.locations.record(fix, provider, segmentId) }
+			app.appScope.launch {
+				app.container.locations.record(fix, provider, segmentId)
+				app.tracking.evaluate()
+			}
 		}
 		instance = this
 	}
