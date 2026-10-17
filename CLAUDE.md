@@ -51,7 +51,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
 | M1 core tracking | **implemented** (steps 1–8, PR #1, branch `worktree-m1-foundation`, 2026-10-17); device-tested (steps 1–9, 2026-10-17) |
-| M2 travel & location | — |
+| M2 travel & location | in progress, branch `m2-location` |
 | M3 widgets, tile, attachments, dictation | — |
 | M4 OCR, offline STT, XML/JSON export | — |
 
@@ -137,6 +137,12 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 | 2026-10-17 | Notification STOP stops at once (no return-travel question); confirm reminder offers "Stop at <last confirmation>" |
 | 2026-10-17 | CSV: stable English header, adds work hours, km and expenses on the first day of a split entry, UTF-8 BOM; export range ≤ 1 year |
 | 2026-10-17 | Backup restore not implemented in M1 (manual: replace the DB from the zip) |
+| 2026-10-17 | Map: MapLibre Native Android (osmdroid archived 2024-11-20), raster tiles from the configured endpoint |
+| 2026-10-17 | Location service stays on during PAUSE (movement alerts too) |
+| 2026-10-17 | Arrival closes/switches at the start of the stop (first fix of the stationary run); movement "Start travel" backdated to the first fix beyond the threshold |
+| 2026-10-17 | "Arrived?" near a client site assigns that client to the travelling entry and switches it to WORK (no new entry) |
+| 2026-10-17 | Day-start "Late entry at…" records only the LATE_ENTRY absence; manual days off = list of dates (no ranges yet) |
+| 2026-10-17 | Holidays: Italian national + Easter Monday + 4 October from 2026 (L. 151/2025); patron saints as manual days off |
 
 ## 7. Pitfalls to remember
 

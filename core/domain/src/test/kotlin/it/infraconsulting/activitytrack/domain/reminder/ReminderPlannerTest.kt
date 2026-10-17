@@ -104,4 +104,38 @@ class ReminderPlannerTest {
 		val p = ReminderPlanner(ReminderConfig(Duration.ofMinutes(30), 0, Duration.ofMinutes(15)), emptyList(), emptyList(), zone)
 		assertNull(p.next(emptyList(), null, at(wed, 10, 0)))
 	}
+
+	private val thu = wed.plusDays(1)
+	private val dayOff = ReminderPlanner(
+		ReminderConfig(Duration.ofMinutes(30), maxConfirmations = 3, pauseInterval = Duration.ofMinutes(15)),
+		lunchBreaks = emptyList(),
+		schedule = listOf(DayWindow(3, 9 * 60, 13 * 60), DayWindow(3, 14 * 60, 18 * 60), DayWindow(4, 9 * 60, 17 * 60)),
+		zone = zone,
+		isDayOff = { it == wed },
+	)
+
+	private fun dayStarts(p: ReminderPlanner, st: DayStartState, now: Instant) =
+		p.planned(emptyList(), lastSummaryDay = null, now, st).filterIsInstance<Reminder.DayStart>()
+
+	@Test
+	fun dayStartAfterFirstIntervalPlusDelay() {
+		val st = DayStartState(lastShown = null, handled = emptySet())
+		assertEquals(listOf(Reminder.DayStart(wed, at(wed, 9, 15))), dayStarts(planner, st, at(wed, 8, 0)))
+		/* still due at 17:59, no longer once the working hours are over */
+		assertTrue(planner.due(emptyList(), null, at(wed, 17, 59), st).contains(Reminder.DayStart(wed, at(wed, 9, 15))))
+		assertEquals(listOf(Reminder.DayStart(thu, at(thu, 9, 15))), dayStarts(planner, st, at(wed, 18, 0)))
+	}
+
+	@Test
+	fun dayStartSkipsHandledShownAndDaysOff() {
+		val next = listOf(Reminder.DayStart(thu, at(thu, 9, 15)))
+		assertEquals(next, dayStarts(planner, DayStartState(null, setOf(wed)), at(wed, 8, 0)))
+		assertEquals(next, dayStarts(planner, DayStartState(wed, emptySet()), at(wed, 8, 0)))
+		assertEquals(next, dayStarts(dayOff, DayStartState(null, emptySet()), at(wed, 8, 0)))
+	}
+
+	@Test
+	fun noDayStartWithoutState() {
+		assertTrue(planner.planned(emptyList(), null, at(wed, 10, 0)).none { it is Reminder.DayStart })
+	}
 }
