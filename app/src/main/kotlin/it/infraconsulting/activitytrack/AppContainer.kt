@@ -3,6 +3,8 @@ package it.infraconsulting.activitytrack
 
 import android.content.Context
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
+import it.infraconsulting.activitytrack.data.geo.Nominatim
+import it.infraconsulting.activitytrack.data.geo.Osrm
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.LocationRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
@@ -31,6 +33,14 @@ class AppContainer(context: Context) {
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
 	val backup: DatabaseBackup by lazy { DatabaseBackup(database, appContext.cacheDir) }
 	val locations: LocationRepository by lazy { LocationRepository(database) }
+
+	/* Nominatim policy: identify the application (no personal contact). */
+	private val userAgent: String by lazy {
+		val version = appContext.packageManager.getPackageInfo(appContext.packageName, 0).versionName.orEmpty()
+		"ActivityTrack/$version (+https://github.com/zipclaude/activitytrack)"
+	}
+	val nominatim: Nominatim by lazy { Nominatim(userAgent) }
+	val osrm: Osrm by lazy { Osrm(userAgent) }
 
 	/* System clock that follows time-zone changes (Clock.systemDefaultZone() captures the zone once). */
 	private object DefaultZoneClock : Clock() {
