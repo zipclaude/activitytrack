@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
+import it.infraconsulting.activitytrack.ui.ScopedEntry
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.home.HomeScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientScreen
@@ -64,7 +65,12 @@ private fun Navigator() {
 	val open: (Screen) -> Unit = { stack.add(it) }
 	BackHandler(enabled = stack.size > 1, onBack = back)
 
-	when (val top = stack.last()) {
+	ScopedEntry(stack) { top -> Destination(top, back, open) }
+}
+
+@Composable
+private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
+	when (top) {
 		Screen.Home -> HomeScreen(
 			onStart = { open(Screen.Start) },
 			onMasterData = { open(Screen.MasterData) },
