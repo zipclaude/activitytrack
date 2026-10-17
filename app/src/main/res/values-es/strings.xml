@@ -120,6 +120,8 @@
   <string name="set_pause_interval">Intervalo de recordatorio de pausa (min)</string>
   <string name="set_day_start_delay">Retraso del aviso de inicio de jornada (min)</string>
   <string name="sec_location">Ubicación</string>
+  <string name="sec_dictation">Dictado</string>
+  <string name="set_dictation_language">Idioma de dictado</string>
   <string name="set_movement">Umbral de aviso de desplazamiento (m)</string>
   <string name="set_stationary_radius">Radio de llegada (m)</string>
   <string name="set_stationary_min">Tiempo de llegada (min)</string>

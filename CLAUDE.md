@@ -152,6 +152,8 @@ M2 merged in `main` on 2026-10-17 (PR #2). M3 per SPEC §7, DESIGN §9–10:
 | 2026-10-17 | M3: no expense action on the notification (3-action limit); expenses from app, widget, shortcut |
 | 2026-10-17 | M3: dictation through the system recognizer (Google on the OnePlus) accepted; free offline STT stays in M4 |
 | 2026-10-17 | M3: voice notes without length limit, explicit stop |
+| 2026-10-17 | Dictation language is a setting (it/en/de/es, default Italian), not the phone locale (en-IT is no recognizer language); SpeechRecognizer with in-app dialog, on-device first |
+| 2026-10-17 | QS tile added from Settings (StatusBarManager.requestAddTileService): the OxygenOS panel editor does not list it |
 
 ## 7. Pitfalls to remember
 

@@ -33,6 +33,8 @@ data class AppSettings(
 	val osrm: OnlineService = OnlineService(true, "https://router.project-osrm.org"),
 	val tiles: OnlineService = OnlineService(true, "https://tile.openstreetmap.org/{z}/{x}/{y}.png"),
 	val rounding: ReportRounding = ReportRounding.DEFAULT,
+	/* speech recognition language, independent of the phone language (owner decision 2026-10-17) */
+	val dictationLanguage: String = "it-IT",
 ) {
 	fun validated(): AppSettings = copy(
 		confirmIntervalMin = confirmIntervalMin.coerceIn(10, 240),
@@ -49,11 +51,15 @@ data class AppSettings(
 		osrm = osrm.copy(endpoint = osrm.endpoint.trim().trimEnd('/')),
 		tiles = tiles.copy(endpoint = tiles.endpoint.trim()),
 		rounding = ReportRounding(rule(rounding.work), rule(rounding.travel), rule(rounding.pause)),
+		dictationLanguage = dictationLanguage.takeIf { it in DICTATION_LANGUAGES } ?: "it-IT",
 	)
 
 	companion object {
 		/* Quanta accepted by export profiles (SPEC §4.3). */
 		val QUANTA_MIN = listOf(1L, 5L, 15L, 30L, 60L)
+
+		/* BCP 47 tags the recognizers know; a phone locale like en-IT is not one of them */
+		val DICTATION_LANGUAGES = listOf("it-IT", "en-US", "de-DE", "es-ES")
 
 		private fun rule(r: RoundingRule): RoundingRule {
 			val q = r.quantum.toMinutes().takeIf { it in QUANTA_MIN } ?: 15L

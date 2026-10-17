@@ -130,6 +130,8 @@
   <string name="set_pause_interval">Pause reminder interval (min)</string>
   <string name="set_day_start_delay">Start-of-day prompt delay (min)</string>
   <string name="sec_location">Location</string>
+  <string name="sec_dictation">Dictation</string>
+  <string name="set_dictation_language">Dictation language</string>
   <string name="set_movement">Movement alert threshold (m)</string>
   <string name="set_stationary_radius">Arrival radius (m)</string>
   <string name="set_stationary_min">Arrival time (min)</string>

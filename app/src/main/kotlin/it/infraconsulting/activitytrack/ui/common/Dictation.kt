@@ -22,12 +22,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
 import java.util.Locale
 
@@ -77,6 +79,8 @@ fun DictationInput(label: String, value: String, onChange: (String) -> Unit) {
 @Composable
 private fun DictationDialog(onText: (String) -> Unit, onCancel: () -> Unit) {
 	val context = LocalContext.current
+	val container = (context.applicationContext as ActivityTrackApp).container
+	val language = produceState<String?>(null) { value = container.settings.current().dictationLanguage }.value
 	var partial by remember { mutableStateOf("") }
 	var error by remember { mutableStateOf<Int?>(null) }
 	/* on-device first; the default service once on-device fails for the language */
@@ -85,7 +89,9 @@ private fun DictationDialog(onText: (String) -> Unit, onCancel: () -> Unit) {
 	val holder = remember { arrayOfNulls<SpeechRecognizer>(1) }
 
 	/* a new recognizer per session (start, retry, fallback) */
-	DisposableEffect(session) {
+	DisposableEffect(session, language) {
+		if (language == null)
+			return@DisposableEffect onDispose {}
 		val r = if (onDevice) SpeechRecognizer.createOnDeviceSpeechRecognizer(context) else SpeechRecognizer.createSpeechRecognizer(context)
 		holder[0] = r
 		r.setRecognitionListener(object : RecognitionListener {
@@ -115,7 +121,7 @@ private fun DictationDialog(onText: (String) -> Unit, onCancel: () -> Unit) {
 					error = code
 			}
 		})
-		r.startListening(recognizerIntent(context))
+		r.startListening(recognizerIntent(context, language, preferOffline = onDevice))
 		onDispose {
 			r.cancel()
 			r.destroy()
@@ -145,12 +151,14 @@ private fun DictationDialog(onText: (String) -> Unit, onCancel: () -> Unit) {
 	)
 }
 
-private fun recognizerIntent(context: Context): Intent =
+/* The language comes from the settings: phone locales like en-IT are not recognizer languages. */
+private fun recognizerIntent(context: Context, language: String, preferOffline: Boolean): Intent =
 	Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
 		.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-		.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+		.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
 		.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-		.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+		/* the fallback service may use the network when the offline pack is missing */
+		.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, preferOffline)
 		.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
 
 private fun firstResult(b: Bundle?): String? =

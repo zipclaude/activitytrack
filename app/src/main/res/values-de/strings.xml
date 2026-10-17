@@ -120,6 +120,8 @@
   <string name="set_pause_interval">Pausenerinnerung alle (min)</string>
   <string name="set_day_start_delay">Verzögerung Tagesbeginn-Hinweis (min)</string>
   <string name="sec_location">Standort</string>
+  <string name="sec_dictation">Diktat</string>
+  <string name="set_dictation_language">Diktiersprache</string>
   <string name="set_movement">Schwelle Bewegungswarnung (m)</string>
   <string name="set_stationary_radius">Ankunftsradius (m)</string>
   <string name="set_stationary_min">Ankunftszeit (min)</string>
