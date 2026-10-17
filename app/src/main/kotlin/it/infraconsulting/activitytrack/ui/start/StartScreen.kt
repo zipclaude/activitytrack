@@ -33,6 +33,7 @@ import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.location.CurrentPosition
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
+import it.infraconsulting.activitytrack.ui.common.DictationInput
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
@@ -111,7 +112,7 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null) {
 								listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
 								null,
 							) { id -> id?.let(vm::applyPreset) }
-						TextInput(stringResource(R.string.field_activity), f.activity, vm::setActivity, singleLine = false)
+						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity)
 						ChoiceField(
 							stringResource(R.string.field_role),
 							listOf<Pair<Long?, String>>(null to none) +

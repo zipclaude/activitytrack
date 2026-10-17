@@ -236,6 +236,7 @@
   <string name="att_record_failed">Das Mikrofon ist nicht verfügbar.</string>
   <string name="att_stop_save">Stoppen und speichern</string>
   <string name="action_open">Öffnen</string>
+  <string name="action_dictate">Diktieren</string>
   <string name="err_storage">Der Datenordner ist nicht nutzbar: in den Einstellungen prüfen.</string>
   <string name="err_no_viewer">Keine App kann diese Datei öffnen.</string>
   <string name="confirm_delete_segment">Diesen Abschnitt löschen?</string>

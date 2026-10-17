@@ -236,6 +236,7 @@
   <string name="att_record_failed">Il microfono non è disponibile.</string>
   <string name="att_stop_save">Ferma e salva</string>
   <string name="action_open">Apri</string>
+  <string name="action_dictate">Detta</string>
   <string name="err_storage">La cartella dati non è utilizzabile: verificala nelle Impostazioni.</string>
   <string name="err_no_viewer">Nessuna app può aprire questo file.</string>
   <string name="confirm_delete_segment">Eliminare questo segmento?</string>

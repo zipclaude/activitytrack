@@ -236,6 +236,7 @@
   <string name="att_record_failed">El micrófono no está disponible.</string>
   <string name="att_stop_save">Detener y guardar</string>
   <string name="action_open">Abrir</string>
+  <string name="action_dictate">Dictar</string>
   <string name="err_storage">La carpeta de datos no se puede usar: revísala en Ajustes.</string>
   <string name="err_no_viewer">Ninguna app puede abrir este archivo.</string>
   <string name="confirm_delete_segment">¿Eliminar este tramo?</string>
