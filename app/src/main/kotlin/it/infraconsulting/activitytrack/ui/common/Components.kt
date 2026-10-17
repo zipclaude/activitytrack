@@ -209,6 +209,8 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.OVERLAPPING_INTERVALS -> R.string.err_overlapping_intervals
 		Reason.CLIENT_COMPANY_LOCKED -> R.string.err_client_company_locked
 		Reason.IN_USE -> R.string.err_in_use
+		Reason.COMPLETION_INCOMPLETE -> R.string.err_completion_incomplete
+		Reason.CLIENT_REQUIRED -> R.string.err_client_required
 		else -> R.string.err_generic
 	},
 )

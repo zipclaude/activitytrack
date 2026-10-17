@@ -29,6 +29,7 @@ import it.infraconsulting.activitytrack.ui.masterdata.ScheduleScreen
 import it.infraconsulting.activitytrack.ui.rememberBackStack
 import it.infraconsulting.activitytrack.ui.settings.SettingsScreen
 import it.infraconsulting.activitytrack.ui.setup.SetupScreen
+import it.infraconsulting.activitytrack.ui.start.StartScreen
 
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,7 +65,12 @@ private fun Navigator() {
 	BackHandler(enabled = stack.size > 1, onBack = back)
 
 	when (val top = stack.last()) {
-		Screen.Home -> HomeScreen(onMasterData = { open(Screen.MasterData) }, onSettings = { open(Screen.Settings) })
+		Screen.Home -> HomeScreen(
+			onStart = { open(Screen.Start) },
+			onMasterData = { open(Screen.MasterData) },
+			onSettings = { open(Screen.Settings) },
+		)
+		Screen.Start -> StartScreen(back)
 		Screen.Settings -> SettingsScreen(back)
 		Screen.MasterData -> MasterDataScreen(back, open)
 		Screen.Companies -> CompaniesScreen(back) { open(Screen.Company(it)) }

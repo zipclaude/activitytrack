@@ -13,6 +13,7 @@ import androidx.compose.runtime.toMutableStateList
  */
 sealed interface Screen {
 	data object Home : Screen
+	data object Start : Screen
 	data object Settings : Screen
 	data object MasterData : Screen
 	data object Companies : Screen
@@ -34,7 +35,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule)
+			listOf(Home, Start, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule)
 				.associateBy { it.key() }
 		}
 
