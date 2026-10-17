@@ -95,6 +95,10 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 		_state.value = ExchangeState.Idle
 	}
 
+	fun invalidRange() {
+		_state.value = ExchangeState.InvalidRange
+	}
+
 	fun export(
 		format: OutFormat,
 		from: LocalDate?,
@@ -199,10 +203,13 @@ fun ExportScreen(onBack: () -> Unit) {
 		uri?.let { vm.import(context, it) }
 	}
 	val run = { share: Boolean ->
-		vm.export(
-			format, from.takeIf { it.isNotBlank() }?.let(::parseDate), to.takeIf { it.isNotBlank() }?.let(::parseDate),
-			companyId, clientId, sections, coordinates, share, locale,
-		)
+		/* an empty date means "no limit", a malformed one is an error, never "no limit" */
+		val f = from.takeIf { it.isNotBlank() }?.let(::parseDate)
+		val t = to.takeIf { it.isNotBlank() }?.let(::parseDate)
+		if ((from.isNotBlank() && f == null) || (to.isNotBlank() && t == null))
+			vm.invalidRange()
+		else
+			vm.export(format, f, t, companyId, clientId, sections, coordinates, share, locale)
 	}
 
 	/* the share sheet opens once per export */
