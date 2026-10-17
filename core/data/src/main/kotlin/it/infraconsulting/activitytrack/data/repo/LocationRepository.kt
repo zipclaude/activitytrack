@@ -16,7 +16,10 @@ class LocationRepository(db: ActivityTrackDatabase) {
 	private val dao = db.locationDao()
 	private val entries = db.entryDao()
 
-	suspend fun record(fix: Fix, provider: String?, segmentId: Long? = null) {
+	suspend fun record(fix: Fix, provider: String?, segmentId: Long? = null, nowMs: Long = System.currentTimeMillis()) {
+		/* a cached fix handed out at (re)start keeps its old time: it would look like a move */
+		if (nowMs - fix.atMs > MAX_AGE_MS)
+			return
 		val targets = if (segmentId != null)
 			listOfNotNull(entries.segment(segmentId))
 		else
@@ -56,5 +59,7 @@ class LocationRepository(db: ActivityTrackDatabase) {
 	private companion object {
 		/* rare provider fixes without accuracy count as mediocre, not as exact */
 		const val UNKNOWN_ACCURACY_M = 100.0
+		/* fresh fixes are seconds old; the periodic interval is 5 min */
+		const val MAX_AGE_MS = 2 * 60_000L
 	}
 }
