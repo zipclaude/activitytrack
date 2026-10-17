@@ -30,6 +30,7 @@
   <string name="mode_work">Working</string>
   <string name="mode_travel">Travelling</string>
   <string name="mode_pause">On pause</string>
+  <string name="tile_start">Start</string>
   <string name="status_suspended">Suspended</string>
   <string name="status_to_complete">To complete</string>
   <string name="status_closed">Closed</string>
