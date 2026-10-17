@@ -1,12 +1,19 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+
+/* Newest entry creation time per client (client picker order). */
+data class ClientLastUse(
+	@ColumnInfo(name = "client_id") val clientId: Long,
+	@ColumnInfo(name = "last_ms") val lastMs: Long,
+)
 
 @Dao
 interface EntryDao {
@@ -65,6 +72,25 @@ interface EntryDao {
 			"ORDER BY created_utc_ms DESC LIMIT 1",
 	)
 	suspend fun lastWithCompanySince(sinceUtcMs: Long): TimeEntryEntity?
+
+	@Query(
+		"SELECT client_id, MAX(created_utc_ms) AS last_ms FROM time_entry " +
+			"WHERE client_id IS NOT NULL GROUP BY client_id",
+	)
+	fun observeClientLastUse(): Flow<List<ClientLastUse>>
+
+	/* Segments of every entry that is not CLOSED (home screen timers). */
+	@Query(
+		"SELECT segment.* FROM segment JOIN time_entry ON time_entry.id = segment.entry_id " +
+			"WHERE time_entry.status != 'CLOSED' ORDER BY segment.entry_id, segment.start_utc_ms",
+	)
+	fun observeOpenEntrySegments(): Flow<List<SegmentEntity>>
+
+	@Query(
+		"SELECT * FROM time_entry WHERE status = 'SUSPENDED' AND id != :excludeId " +
+			"ORDER BY updated_utc_ms DESC LIMIT 1",
+	)
+	suspend fun mostRecentSuspended(excludeId: Long): TimeEntryEntity?
 
 	@Transaction
 	suspend fun startEntry(entry: TimeEntryEntity, first: SegmentEntity): Long {

@@ -15,8 +15,14 @@ import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.Segment
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
+import it.infraconsulting.activitytrack.domain.geo.GeoPoint
+import it.infraconsulting.activitytrack.domain.start.KnownSite
+import it.infraconsulting.activitytrack.domain.start.StartDefaults
+import it.infraconsulting.activitytrack.domain.start.StartProposal
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 
 /* Data for a new entry; only the client is required, except for a TRAVEL start. */
 data class StartRequest(
@@ -28,6 +34,9 @@ data class StartRequest(
 	val locality: String? = null,
 	val locationKind: LocationKind? = null,
 )
+
+/* Defaults proposed when a client is picked. */
+data class ClientDefaults(val activity: String?, val roleId: Long?)
 
 /* Descriptive fields of an entry, edited in the completion form. */
 data class EntryDetails(
@@ -54,11 +63,42 @@ class EntryRepository(
 	private val master = db.masterDataDao()
 
 	val openEntries = dao.observeOpenEntries()
+	val openEntrySegments = dao.observeOpenEntrySegments()
+	val clientLastUse = dao.observeClientLastUse()
 
 	fun entry(id: Long) = dao.observeEntry(id)
 	fun segments(entryId: Long) = dao.observeSegments(entryId)
 
-	suspend fun start(req: StartRequest): Long = db.withTransaction {
+	/*
+	 * Pre-fill for a new entry (SPEC §2.1). [position] stays null until
+	 * location tracking exists (M2): then today's latest company is proposed.
+	 */
+	suspend fun startProposal(sites: List<KnownSite>, position: GeoPoint? = null): StartProposal {
+		val startOfToday = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant().toEpochMilli()
+		val previous = dao.lastWithCompanySince(startOfToday)?.companyId
+		return StartDefaults.propose(position, sites, previous)
+	}
+
+	/* Activity and role of the last entry on [clientId] in the last 30 days. */
+	suspend fun clientDefaults(clientId: Long): ClientDefaults? {
+		val since = clock.millis() - DEFAULTS_WINDOW.toMillis()
+		return dao.lastOnClient(clientId, since)?.let { ClientDefaults(it.activity, it.roleId) }
+	}
+
+	/* Suspended entry to propose for resumption after [stoppedId] was stopped. */
+	suspend fun suspendedToResume(stoppedId: Long): TimeEntryEntity? = dao.mostRecentSuspended(stoppedId)
+
+	/*
+	 * Start a new entry and, in the same transaction, apply the commands chosen
+	 * for the entries already ACTIVE (STOP or SUSPEND; absent = leave running).
+	 */
+	suspend fun start(req: StartRequest, others: Map<Long, EntryCommand> = emptyMap()): Long =
+		db.withTransaction {
+			others.forEach { (id, cmd) -> apply(id, cmd) }
+			startEntry(req)
+		}
+
+	private suspend fun startEntry(req: StartRequest): Long {
 		if (req.clientId == null && req.mode != SegmentKind.TRAVEL)
 			throw ValidationException(Reason.CLIENT_REQUIRED)
 		val companyId = companyFor(req.companyId, req.clientId)
@@ -83,7 +123,7 @@ class EntryRepository(
 			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = now, zoneId = zone),
 		)
 		verify(id)
-		id
+		return id
 	}
 
 	/* State-machine command; COMPLETE goes through [complete]. */
@@ -183,6 +223,10 @@ class EntryRepository(
 			throw ValidationException(Reason.OVERLAPPING_SEGMENTS, x.message)
 		}
 		id
+	}
+
+	private companion object {
+		val DEFAULTS_WINDOW: Duration = Duration.ofDays(30)
 	}
 
 	private suspend fun load(entryId: Long): TimeEntryEntity =
