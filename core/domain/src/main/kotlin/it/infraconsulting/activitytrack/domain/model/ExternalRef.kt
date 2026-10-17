@@ -11,8 +11,9 @@ enum class ExternalRefKind {
 
 object ExternalRefClassifier {
 	private val URL_RE = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://\\S+$")
+	/* Both braces escaped: Android's ICU regex rejects a bare '}' that the JVM accepts. */
 	private val UUID_RE =
-		Regex("^\\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}?$")
+		Regex("^\\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\}?$")
 	/* Ticket-like codes: optional alphabetic prefix, separator, digits (INC0012345, JIRA-42, #1234). */
 	private val TICKET_RE = Regex("^#?([A-Za-z][A-Za-z0-9_]*[-_ ]?)?[0-9]+$")
 
