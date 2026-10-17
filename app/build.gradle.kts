@@ -14,6 +14,10 @@ android {
 		versionCode = 1
 		versionName = "0.1.0"
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+		/* personal APK for the owner's phone: native libraries (MapLibre) only for arm64 */
+		ndk {
+			abiFilters += "arm64-v8a"
+		}
 	}
 
 	buildTypes {
@@ -56,6 +60,7 @@ dependencies {
 	implementation(libs.androidx.compose.material3)
 	implementation(libs.androidx.work.runtime.ktx)
 	implementation(libs.androidx.datastore.preferences)
+	implementation(libs.maplibre.android)
 	debugImplementation(libs.androidx.compose.ui.tooling)
 
 	testImplementation(libs.kotlin.test.junit)

@@ -147,6 +147,7 @@ class RepositoryTest {
 		entries.apply(id, EntryCommand.STOP)
 		val details = EntryDetails(acme, client, null, "  ", null, null, null)
 		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, details) })
+		assertNull(entries.lastActivity(client))
 		/* the failed completion rolled back */
 		assertEquals(EntryStatus.TO_COMPLETE, db.entryDao().entry(id)?.status)
 		entries.complete(id, details.copy(activity = "Patch Tuesday"))
@@ -333,7 +334,7 @@ class RepositoryTest {
 		val out = java.io.ByteArrayOutputStream()
 		val m = it.infraconsulting.activitytrack.data.storage.DatabaseBackup(db, ctx.cacheDir)
 			.writeZip("test", clock.instant(), out)
-		assertEquals(1, m.dbVersion)
+		assertEquals(ActivityTrackDatabase.VERSION, m.dbVersion)
 		val names = ArrayList<String>()
 		var header = ByteArray(0)
 		java.util.zip.ZipInputStream(out.toByteArray().inputStream()).use { zip ->
@@ -352,5 +353,103 @@ class RepositoryTest {
 	fun clientLastUse() = runBlocking<Unit> {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(listOf(client to clock.millis()), entries.clientLastUse.first().map { it.clientId to it.lastMs })
+	}
+
+	@Test
+	fun backdatedCommandsAreClamped() = runBlocking<Unit> {
+		val t0 = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		/* departure detected 10 min after the start */
+		entries.apply(id, EntryCommand.TRAVEL, t0 + 10 * 60_000)
+		/* an arrival before the travel start is clamped to it; one in the future to now */
+		clock.advance(30)
+		entries.apply(id, EntryCommand.WORK, t0)
+		entries.apply(id, EntryCommand.PAUSE, clock.millis() + 3_600_000)
+		val segs = db.entryDao().segments(id)
+		assertEquals(listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.WORK, SegmentKind.PAUSE), segs.map { it.kind })
+		assertEquals(t0 + 10 * 60_000, segs[0].endUtcMs)
+		assertEquals(segs[1].startUtcMs, segs[1].endUtcMs)
+		assertEquals(clock.millis(), segs[3].startUtcMs)
+	}
+
+	@Test
+	fun arrivalAssignsClientToTravellingEntry() = runBlocking<Unit> {
+		val t0 = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.TRAVEL, null))
+		clock.advance(40)
+		entries.arriveAtClient(id, client, t0 + 25 * 60_000)
+		val e = db.entryDao().entry(id)!!
+		assertEquals(client, e.clientId)
+		assertEquals(acme, e.companyId)
+		assertEquals(SegmentKind.WORK, e.mode)
+		assertEquals(t0 + 25 * 60_000, db.entryDao().segments(id).last().startUtcMs)
+	}
+
+	@Test
+	fun samplesAreTaggedWithTheOpenSegment() = runBlocking<Unit> {
+		val locations = LocationRepository(db)
+		val a = entries.start(StartRequest(SegmentKind.WORK, client))
+		val fix = it.infraconsulting.activitytrack.domain.geo.Fix(
+			clock.millis(), it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.4, 12.3), 8.0,
+		)
+		locations.record(fix, "fused", nowMs = fix.atMs)
+		val seg = db.entryDao().segments(a).single()
+		assertEquals(listOf(fix), locations.fixesOfSegment(seg.id))
+		/* a stale cached fix is dropped */
+		locations.record(fix.copy(atMs = fix.atMs - 600_000), "fused", nowMs = fix.atMs)
+		assertEquals(1, locations.fixesOfSegment(seg.id).size)
+		/* a stopped entry gets no periodic samples, but an explicit segment still does */
+		entries.apply(a, EntryCommand.STOP)
+		locations.record(fix.copy(atMs = fix.atMs + 1), "fused", nowMs = fix.atMs + 1)
+		assertEquals(1, locations.fixesOfSegment(seg.id).size)
+		locations.record(fix.copy(atMs = fix.atMs + 2), "gps", seg.id, nowMs = fix.atMs + 2)
+		assertEquals(2, locations.fixesOfSegment(seg.id).size)
+	}
+
+	@Test
+	fun absencesAndEntriesHandleDays() = runBlocking<Unit> {
+		val zone = ZoneOffset.UTC
+		val today = java.time.LocalDate.now(clock)
+		val tomorrow = today.plusDays(1)
+		assertEquals(emptySet(), entries.handledDays(today, tomorrow, zone))
+		entries.recordAbsence(tomorrow, it.infraconsulting.activitytrack.data.db.AbsenceKind.LATE_ENTRY, 10 * 60)
+		/* recording the same kind again replaces it */
+		entries.recordAbsence(tomorrow, it.infraconsulting.activitytrack.data.db.AbsenceKind.LATE_ENTRY, 11 * 60)
+		assertEquals(1, db.entryDao().absencesBetween(tomorrow.toEpochDay(), tomorrow.toEpochDay()).size)
+		assertEquals(setOf(tomorrow), entries.handledDays(today, tomorrow, zone))
+		entries.start(StartRequest(SegmentKind.WORK, client))
+		assertEquals(setOf(today, tomorrow), entries.handledDays(today, tomorrow, zone))
+		assertEquals(
+			Reason.INVALID_TIME,
+			reason { entries.recordAbsence(today, it.infraconsulting.activitytrack.data.db.AbsenceKind.FULL_DAY, 600) },
+		)
+	}
+
+	@Test
+	fun backdatedTravelTakesTheLaterSamples() = runBlocking<Unit> {
+		val locations = LocationRepository(db)
+		val t0 = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		val p = it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.4, 12.3)
+		for (m in listOf(0L, 5L, 10L, 15L)) {
+			clock.now = Instant.ofEpochMilli(t0 + m * 60_000)
+			locations.record(it.infraconsulting.activitytrack.domain.geo.Fix(clock.millis(), p, 8.0), "fused", nowMs = clock.millis())
+		}
+		entries.apply(id, EntryCommand.TRAVEL, t0 + 10 * 60_000)
+		val (work, travel) = db.entryDao().segments(id)
+		assertEquals(2, locations.fixesOfSegment(work.id).size)
+		assertEquals(2, locations.fixesOfSegment(travel.id).size)
+	}
+
+	@Test
+	fun completionWithClientOnlyAfterConfirmation() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		entries.apply(id, EntryCommand.STOP)
+		val d = EntryDetails(acme, client, null, null, null, null, null)
+		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, d) })
+		entries.complete(id, d, allowEmpty = true)
+		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(id)!!.status)
+		assertNull(db.entryDao().entry(id)!!.activity)
 	}
 }

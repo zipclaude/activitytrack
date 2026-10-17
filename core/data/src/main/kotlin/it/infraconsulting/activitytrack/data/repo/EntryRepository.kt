@@ -2,22 +2,25 @@
 package it.infraconsulting.activitytrack.data.repo
 
 import androidx.room.withTransaction
+import it.infraconsulting.activitytrack.data.db.AbsenceEntity
+import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
-import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
+import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryInvariants
 import it.infraconsulting.activitytrack.domain.model.EntryState
 import it.infraconsulting.activitytrack.domain.model.EntryStateMachine
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
 import it.infraconsulting.activitytrack.domain.model.InvariantViolationException
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.Segment
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
-import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.start.KnownSite
 import it.infraconsulting.activitytrack.domain.start.StartDefaults
 import it.infraconsulting.activitytrack.domain.start.StartProposal
@@ -25,6 +28,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import kotlinx.coroutines.flow.first
 
 /* Data for a new entry; only the client is required, except for a TRAVEL start. */
 data class StartRequest(
@@ -69,17 +74,21 @@ class EntryRepository(
 	val clientLastUse = dao.observeClientLastUse()
 
 	fun entry(id: Long) = dao.observeEntry(id)
+	suspend fun find(id: Long): TimeEntryEntity? = dao.entry(id)
 	fun segments(entryId: Long) = dao.observeSegments(entryId)
 
 	/*
-	 * Pre-fill for a new entry (SPEC §2.1). [position] stays null until
-	 * location tracking exists (M2): then today's latest company is proposed.
+	 * Pre-fill for a new entry (SPEC §2.1): the site containing [position],
+	 * else today's latest company.
 	 */
 	suspend fun startProposal(sites: List<KnownSite>, position: GeoPoint? = null): StartProposal {
 		val startOfToday = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant().toEpochMilli()
 		val previous = dao.lastWithCompanySince(startOfToday)?.companyId
 		return StartDefaults.propose(position, sites, previous)
 	}
+
+	/* Activity text of the last entry on [clientId], however old (completion "copy last"). */
+	suspend fun lastActivity(clientId: Long): String? = dao.lastOnClient(clientId, Long.MIN_VALUE)?.activity
 
 	/* Activity and role of the last entry on [clientId] in the last 30 days. */
 	suspend fun clientDefaults(clientId: Long): ClientDefaults? {
@@ -128,17 +137,24 @@ class EntryRepository(
 		return id
 	}
 
-	/* State-machine command; COMPLETE goes through [complete]. */
-	suspend fun apply(entryId: Long, cmd: EntryCommand) {
+	/*
+	 * State-machine command; COMPLETE goes through [complete]. [atUtcMs]
+	 * backdates the transition (detected departure or arrival), clamped
+	 * between the latest recorded boundary and now.
+	 */
+	suspend fun apply(entryId: Long, cmd: EntryCommand, atUtcMs: Long? = null) {
 		require(cmd != EntryCommand.COMPLETE) { "use complete()" }
 		db.withTransaction {
 			val e = load(entryId)
 			val t = EntryStateMachine.apply(EntryState(e.status, e.mode), cmd)
-			val at = writeInstant(entryId)
+			val at = writeInstant(entryId, atUtcMs)
 			if (t.closeOpenSegment)
 				check(dao.closeOpenSegment(entryId, at) == 1) { "entry $entryId: no open segment to close" }
 			t.openSegment?.let {
-				dao.insertSegment(SegmentEntity(entryId = entryId, kind = it, startUtcMs = at, zoneId = clock.zone.id))
+				val segId = dao.insertSegment(SegmentEntity(entryId = entryId, kind = it, startUtcMs = at, zoneId = clock.zone.id))
+				/* e.g. "travel from 10:05" tapped at 10:20: the fixes since 10:05 are part of the travel */
+				if (atUtcMs != null)
+					dao.retagSamples(entryId, segId, at)
 			}
 			val resumed = t.openSegment != null
 			dao.updateEntry(
@@ -152,6 +168,63 @@ class EntryRepository(
 			)
 			verify(entryId)
 		}
+	}
+
+	val absences = dao.observeAbsences()
+
+	/*
+	 * Absence of [date]: FULL_DAY without time, LATE_ENTRY / EARLY_EXIT with
+	 * a local time; recording a kind again replaces it.
+	 */
+	suspend fun recordAbsence(date: LocalDate, kind: AbsenceKind, timeMin: Int?) = db.withTransaction {
+		val valid = when (kind) {
+			AbsenceKind.FULL_DAY -> timeMin == null
+			AbsenceKind.LATE_ENTRY, AbsenceKind.EARLY_EXIT -> timeMin != null && timeMin in 0 until 24 * 60
+		}
+		if (!valid)
+			throw ValidationException(Reason.INVALID_TIME)
+		dao.deleteAbsence(date.toEpochDay(), kind)
+		dao.insertAbsence(AbsenceEntity(dateEpochDay = date.toEpochDay(), kind = kind, timeMin = timeMin))
+	}
+
+	/*
+	 * Days in [from, to] that need no day-start prompt: an entry started or
+	 * an absence recorded on them; today too while an entry is still ACTIVE
+	 * (e.g. started before midnight).
+	 */
+	suspend fun handledDays(from: LocalDate, to: LocalDate, zone: ZoneId): Set<LocalDate> {
+		val out = HashSet<LocalDate>()
+		dao.absencesBetween(from.toEpochDay(), to.toEpochDay()).forEach { out += LocalDate.ofEpochDay(it.dateEpochDay) }
+		val fromMs = from.atStartOfDay(zone).toInstant().toEpochMilli()
+		val toMs = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+		dao.entryStartsBetween(fromMs, toMs).forEach { out += Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+		val today = LocalDate.now(clock.withZone(zone))
+		if (today in from..to && dao.observeOpenEntries().first().any { it.status == EntryStatus.ACTIVE })
+			out += today
+		return out
+	}
+
+	/*
+	 * "Arrived?" at a client site during TRAVEL: the travelling entry takes
+	 * that client (and its company) when it has none, then switches to WORK
+	 * at the arrival time (owner decision 2026-10-17).
+	 */
+	suspend fun arriveAtClient(entryId: Long, clientId: Long, atUtcMs: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (e.clientId == clientId)
+			dao.updateEntry(e.copy(locationKind = LocationKind.CLIENT, updatedUtcMs = clock.millis()))
+		if (e.clientId == null) {
+			val client = master.client(clientId) ?: throw ValidationException(Reason.NOT_FOUND, "client $clientId")
+			dao.updateEntry(
+				e.copy(
+					clientId = clientId,
+					companyId = client.companyId,
+					locationKind = LocationKind.CLIENT,
+					updatedUtcMs = clock.millis(),
+				),
+			)
+		}
+		apply(entryId, EntryCommand.WORK, atUtcMs)
 	}
 
 	/* "Still working?" answered yes. */
@@ -213,15 +286,16 @@ class EntryRepository(
 	}
 
 	/*
-	 * TO_COMPLETE -> CLOSED. Requires a client and at least an activity text
-	 * (typed or dictated) or one attachment (voice note, photo, file).
+	 * TO_COMPLETE -> CLOSED. Requires a client; without activity text and
+	 * attachments only when the user confirmed it ([allowEmpty]: the work
+	 * is obvious from the client, owner decision 2026-10-17).
 	 */
-	suspend fun complete(entryId: Long, d: EntryDetails) = db.withTransaction {
+	suspend fun complete(entryId: Long, d: EntryDetails, allowEmpty: Boolean = false) = db.withTransaction {
 		updateDetails(entryId, d)
 		val e = load(entryId)
 		if (e.clientId == null)
 			throw ValidationException(Reason.CLIENT_REQUIRED)
-		if (e.activity == null && dao.attachmentCount(entryId) == 0)
+		if (!allowEmpty && e.activity == null && dao.attachmentCount(entryId) == 0)
 			throw ValidationException(Reason.COMPLETION_INCOMPLETE)
 		val t = EntryStateMachine.apply(EntryState(e.status, e.mode), EntryCommand.COMPLETE)
 		dao.updateEntry(e.copy(status = t.next.status, mode = t.next.mode, updatedUtcMs = clock.millis()))
@@ -307,12 +381,14 @@ class EntryRepository(
 	}
 
 	/*
-	 * Instant for segment transitions: now, but never before the latest
-	 * recorded boundary, so a backwards clock change cannot create overlaps.
+	 * Instant for segment transitions: now (or [requested], not later than
+	 * now), but never before the latest recorded boundary, so neither a
+	 * backwards clock change nor a backdated command can create overlaps.
 	 */
-	private suspend fun writeInstant(entryId: Long): Long {
+	private suspend fun writeInstant(entryId: Long, requested: Long? = null): Long {
 		val latest = dao.segments(entryId).maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: it.startUtcMs) }
-		return maxOf(clock.millis(), latest ?: Long.MIN_VALUE)
+		val now = clock.millis()
+		return maxOf(requested?.let { minOf(it, now) } ?: now, latest ?: Long.MIN_VALUE)
 	}
 
 	private suspend fun verify(entryId: Long) {

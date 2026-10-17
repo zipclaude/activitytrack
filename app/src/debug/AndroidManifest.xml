@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: simulated positions for device tests (Developer options →
+     "Select mock location app" → ActivityTrack debug). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+  <uses-permission
+      android:name="android.permission.ACCESS_MOCK_LOCATION"
+      tools:ignore="MockLocation,ProtectedPermissions" />
+
+  <application>
+    <!-- DUMP is held by the adb shell only: no other app can move the position. -->
+    <receiver
+        android:name=".debug.MockLocationReceiver"
+        android:exported="true"
+        android:permission="android.permission.DUMP" />
+  </application>
+</manifest>

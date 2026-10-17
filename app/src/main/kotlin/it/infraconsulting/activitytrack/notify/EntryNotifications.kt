@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Icon
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
@@ -13,6 +14,7 @@ import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.ui.common.commandStyle
 
 /* An open entry as notifications need it. */
 data class EntryInfo(
@@ -32,8 +34,11 @@ object NotificationIds {
 	const val ONGOING = 0
 	const val CONFIRM = 1
 	const val PAUSE = 2
+	const val MOVEMENT = 3
+	const val ARRIVAL = 4
 	const val TO_COMPLETE = 6
 	const val DAY_SUMMARY = 5	/* global, entry 0 */
+	const val DAY_START = 7		/* global, entry 0 */
 
 	fun of(entryId: Long, slot: Int): Int = (entryId * 16 + slot).toInt()
 }
@@ -75,6 +80,13 @@ object EntryNotifications {
 		},
 	)
 
+	/*
+	 * Icon of a command action. Standard templates show action text only
+	 * (Android 7+); Wear OS and some launchers show the icon.
+	 */
+	fun commandIcon(context: Context, cmd: EntryCommand): Icon? =
+		commandStyle(cmd)?.let { Icon.createWithResource(context, it.icon) }
+
 	/* Ongoing notification of an ACTIVE entry: mode, chronometer of the open segment, commands. */
 	fun ongoing(context: Context, info: EntryInfo): Notification {
 		val e = info.entry
@@ -93,7 +105,7 @@ object EntryNotifications {
 		for (cmd in ongoingActions(e.mode))
 			b.addAction(
 				Notification.Action.Builder(
-					null,
+					commandIcon(context, cmd),
 					commandLabel(context, cmd, e.mode),
 					ActionReceiver.command(context, e.id, cmd),
 				).build(),
@@ -134,6 +146,11 @@ object EntryNotifications {
 						nm.cancel(NotificationIds.of(id, NotificationIds.CONFIRM))
 					else
 						nm.cancel(NotificationIds.of(id, NotificationIds.PAUSE))
+					/* movement prompts belong to WORK, arrival prompts to TRAVEL */
+					if (info.entry.mode != SegmentKind.WORK)
+						nm.cancel(NotificationIds.of(id, NotificationIds.MOVEMENT))
+					if (info.entry.mode != SegmentKind.TRAVEL)
+						nm.cancel(NotificationIds.of(id, NotificationIds.ARRIVAL))
 				}
 				EntryStatus.TO_COMPLETE -> {
 					cancelAll(nm, id)
@@ -145,7 +162,10 @@ object EntryNotifications {
 	}
 
 	private fun cancelAll(nm: NotificationManager, entryId: Long) {
-		for (slot in listOf(NotificationIds.ONGOING, NotificationIds.CONFIRM, NotificationIds.PAUSE, NotificationIds.TO_COMPLETE))
+		for (slot in listOf(
+			NotificationIds.ONGOING, NotificationIds.CONFIRM, NotificationIds.PAUSE,
+			NotificationIds.MOVEMENT, NotificationIds.ARRIVAL, NotificationIds.TO_COMPLETE,
+		))
 			nm.cancel(NotificationIds.of(entryId, slot))
 	}
 }

@@ -35,19 +35,23 @@ sealed interface Screen {
 	data object Presets : Screen
 	data object Places : Screen
 	data object Schedule : Screen
+	data object DaysOff : Screen
+	/* late entry for a day, from the day-start prompt */
+	data class LateEntry(val epochDay: Long) : Screen
 
 	/* Stable string form, used to save the back stack across process death. */
 	fun key(): String = when (this) {
 		is Entry -> "entry/$id"
 		is Company -> "company/$id"
 		is Client -> "client/$id"
+		is LateEntry -> "late/$epochDay"
 		else -> this::class.simpleName!!
 	}
 
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule)
+			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff)
 				.associateBy { it.key() }
 		}
 
@@ -59,6 +63,7 @@ sealed interface Screen {
 				"entry" -> Entry(n)
 				"company" -> Company(n)
 				"client" -> Client(n)
+				"late" -> LateEntry(n)
 				else -> null
 			}
 		}

@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -42,8 +43,10 @@ import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
+import it.infraconsulting.activitytrack.ui.common.CommandIconButton
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
+import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import java.time.Instant
 import java.time.ZoneId
@@ -242,9 +245,18 @@ private fun EntryCardView(
 				style = MaterialTheme.typography.bodySmall,
 			)
 
-			FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				for ((cmd, label) in commands(e.status, e.mode))
-					OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
+			FlowRow(
+				horizontalArrangement = Arrangement.spacedBy(12.dp),
+				verticalArrangement = Arrangement.spacedBy(8.dp),
+				itemVerticalAlignment = Alignment.CenterVertically,
+			) {
+				for ((cmd, label) in commands(e.status, e.mode)) {
+					val style = commandStyle(cmd)
+					if (style != null)
+						CommandIconButton(style, stringResource(label), { onCommand(cmd) })
+					else
+						OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
+				}
 				if (e.status == EntryStatus.TO_COMPLETE)
 					Button(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
 			}

@@ -47,6 +47,10 @@ abstract class ActionViewModel : ViewModel() {
 		_error.value = null
 	}
 
+	protected fun fail(reason: ValidationException.Reason) {
+		_error.value = reason
+	}
+
 	protected fun run(onSuccess: () -> Unit = {}, action: suspend () -> Unit) {
 		viewModelScope.launch {
 			try {

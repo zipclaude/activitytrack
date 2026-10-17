@@ -152,6 +152,14 @@ Algorithms to add:
 ### 6.2 Location service (M2)
 - `LocationService`: `foregroundServiceType="location"`, started on entry start
   or resume, stopped when no entry is ACTIVE (optionally paused during PAUSE).
+- Its notification is the ongoing notification of one ACTIVE entry
+  (`startForeground` with that id), switched when that entry leaves ACTIVE;
+  `NotificationSync` drives the running instance in process.
+- Fixes: one sample per ACTIVE entry tagged with its open segment; TRAVEL
+  start/stop fixes are high accuracy and tagged with the TRAVEL segment.
+- `TrackingMonitor` evaluates after every fix: departure (2 consecutive away
+  fixes, time of the first) during WORK, stop (stationary run, time of its
+  first fix) during TRAVEL; commands are backdated to those times.
 - Provider: `LocationManager.FUSED_PROVIDER` when present, else GPS + network.
   `LocationRequestCompat` interval 5 min, quality balanced; temporary
   high-accuracy request for start/stop fixes of TRAVEL.
@@ -176,7 +184,8 @@ Algorithms to add:
 | `ongoing` | LOW | one per ACTIVE entry: client, mode, chronometer; actions Pause/Resume, Travel/Work, Stop, Expense |
 | `confirm` | DEFAULT | "Still on <client>?" — Yes / Pause / Stop at last confirmation |
 | `pause` | DEFAULT | "Still on pause?" — Resume / Stop |
-| `movement` | HIGH, sound | moved > X m — Start travel / Ignore / Stop |
+| `movement` | HIGH, sound | moved > X m — Travel from <departure> / Ignore / Stop at <departure> |
+| `arrival` | DEFAULT | stopped while travelling — work at <client> / stop at home / work from <arrival>; still travelling |
 | `day_start` | DEFAULT | Absence / Late entry / Start entry |
 | `day_summary` | LOW | solar vs reported totals |
 | `to_complete` | DEFAULT | open the completion form |
@@ -279,7 +288,7 @@ M0 test vectors were cross-checked with an independent Python implementation.
 | FGS location started from notification/widget while app in background | verify on Android 16; background location granted |
 | OxygenOS background restrictions | test reminders in Doze and with screen off |
 | Entry ending exactly at 06:00 attributed to start day | confirmed by owner 2026-10-16 |
-| Site coordinates typed by hand | until M2 (current position, map picker) |
+| Site coordinates typed by hand | solved in M2 (current position, MapLibre picker) |
 | Inexact reminder alarm in Doze | setWindow when awake, setAndAllowWhileIdle when idle at scheduling; a device entering Doze later may delay a reminder to the next maintenance window; verify on OxygenOS |
 | M1 steps 5–8 | implemented, host-tested; device test pending |
 | CI | GitHub Actions: domain + app unit tests, instrumented tests compiled (not run), `assembleDebug`, APK artifact |
