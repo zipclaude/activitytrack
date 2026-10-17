@@ -8,8 +8,12 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,6 +29,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
+import it.infraconsulting.activitytrack.ui.LocalBottomBar
 import java.text.Normalizer
 
 /* Top bar with optional back button; no icon library, plain glyphs. */
@@ -72,6 +78,9 @@ fun ScreenScaffold(
 				actions = actions,
 			)
 		},
+		/* under the bottom bar the navigation-bar inset is already taken */
+		contentWindowInsets = if (LocalBottomBar.current) WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+			else ScaffoldDefaults.contentWindowInsets,
 		content = content,
 	)
 }

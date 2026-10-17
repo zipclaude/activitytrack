@@ -111,11 +111,6 @@ class HomeViewModel(
 fun HomeScreen(
 	onStart: () -> Unit,
 	onOpenEntry: (Long) -> Unit,
-	onDay: () -> Unit,
-	onMasterData: () -> Unit,
-	onSettings: () -> Unit,
-	onTodos: () -> Unit,
-	onExchange: () -> Unit,
 	onStartTodo: (Long) -> Unit,
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData) }
@@ -134,35 +129,6 @@ fun HomeScreen(
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
 		onBack = null,
-		actions = {
-			TextButton(onClick = onDay) { Text(stringResource(R.string.day_title)) }
-			/* the other destinations would squeeze the title (long in de/it) */
-			Box {
-				var menu by remember { mutableStateOf(false) }
-				val more = stringResource(R.string.action_more)
-				IconButton(onClick = { menu = true }, modifier = Modifier.semantics { contentDescription = more }) {
-					Text("⋮", style = MaterialTheme.typography.titleLarge)
-				}
-				DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.todo_title)) },
-						onClick = { menu = false; onTodos() },
-					)
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.export_title)) },
-						onClick = { menu = false; onExchange() },
-					)
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.md_title)) },
-						onClick = { menu = false; onMasterData() },
-					)
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.settings_title)) },
-						onClick = { menu = false; onSettings() },
-					)
-				}
-			}
-		},
 	) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 			LazyColumn(
