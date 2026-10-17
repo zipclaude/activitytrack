@@ -3,6 +3,7 @@ package it.infraconsulting.activitytrack.domain.reminder
 
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.domain.time.atMinute
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -90,7 +91,7 @@ class ReminderPlanner(
 		val lunch = lunchBreaks.firstOrNull {
 			it.dayOfWeek == local.dayOfWeek.value && min >= it.startMin && min < it.endMin
 		} ?: return t
-		return local.toLocalDate().atStartOfDay(zone).plusMinutes(lunch.endMin.toLong()).toInstant()
+		return local.toLocalDate().atMinute(lunch.endMin, zone)
 	}
 
 	/* Today's summary unless already shown, otherwise the next day with working hours (within a week). */
@@ -101,7 +102,7 @@ class ReminderPlanner(
 			if (day == lastSummaryDay)
 				continue
 			val end = schedule.filter { it.dayOfWeek == day.dayOfWeek.value }.maxOfOrNull { it.endMin } ?: continue
-			val at = day.atStartOfDay(zone).plusMinutes(end.toLong()).toInstant()
+			val at = day.atMinute(end, zone)
 			/* a past summary of an earlier day is never shown late */
 			if (day == today || at.isAfter(now))
 				return Reminder.DaySummary(day, at)

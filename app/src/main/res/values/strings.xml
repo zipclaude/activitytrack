@@ -159,7 +159,6 @@
   <string name="running_suspend">Suspend it</string>
   <string name="travel_done_title">Is the travel completed?</string>
   <string name="travel_suspend">Suspend travel</string>
-  <string name="complete_title">Complete \"%1$s\"</string>
   <string name="err_completion_incomplete">Describe the activity.</string>
   <string name="err_client_required">Choose a client.</string>
   <string name="notif_to_complete_title">Activity to complete</string>
@@ -169,4 +168,28 @@
   <string name="notif_pause_title">Still on pause?</string>
   <string name="notif_summary_title">Today</string>
   <string name="notif_summary_text">Solar %1$s · reported %2$s</string>
+  <string name="entry_title">Activity</string>
+  <string name="field_locality">Locality</string>
+  <string name="field_location_kind">Where</string>
+  <string name="segments">Times</string>
+  <string name="add_travel">+ Travel</string>
+  <string name="add_pause">+ Pause</string>
+  <string name="segment_manual">manual</string>
+  <string name="external_refs">External references</string>
+  <string name="external_ref_new">Ticket, URL or code</string>
+  <string name="confirm_delete_segment">Delete this segment?</string>
+  <string name="field_date">Date (yyyy-mm-dd)</string>
+  <string name="field_km">km</string>
+  <string name="segment_hint">An end before the start falls on the next day.</string>
+  <string name="ref_ticket">Ticket</string>
+  <string name="ref_url">Link</string>
+  <string name="ref_uuid">UUID</string>
+  <string name="ref_other">Reference</string>
+  <string name="loc_company">Company site</string>
+  <string name="loc_client">Client site</string>
+  <string name="loc_home">Home</string>
+  <string name="loc_other">Elsewhere</string>
+  <string name="err_blank_value">A value is required.</string>
+  <string name="err_invalid_segment">Invalid segment: check date and times; it must be in the past.</string>
+  <string name="err_overlapping_segments">The segment overlaps time already recorded.</string>
 </resources>

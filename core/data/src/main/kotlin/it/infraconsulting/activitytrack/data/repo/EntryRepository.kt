@@ -3,7 +3,9 @@ package it.infraconsulting.activitytrack.data.repo
 
 import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
+import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
+import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
@@ -257,6 +259,34 @@ class EntryRepository(
 			throw ValidationException(Reason.OVERLAPPING_SEGMENTS, x.message)
 		}
 		id
+	}
+
+	fun externalRefs(entryId: Long) = dao.observeExternalRefs(entryId)
+
+	/* External reference; kind classified from the value (URL / UUID / TICKET / OTHER). */
+	suspend fun addExternalRef(entryId: Long, value: String): Long = db.withTransaction {
+		val v = value.trim().ifEmpty { throw ValidationException(Reason.BLANK_VALUE) }
+		val e = load(entryId)
+		val id = dao.insertExternalRef(ExternalRefEntity(entryId = entryId, kind = ExternalRefClassifier.classify(v), value = v))
+		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
+		id
+	}
+
+	suspend fun removeExternalRef(entryId: Long, refId: Long) = db.withTransaction {
+		val e = load(entryId)
+		dao.deleteExternalRef(refId)
+		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
+	}
+
+	/* Only segments added by hand can be removed; tracked time stays exact (A13). */
+	suspend fun deleteManualSegment(segmentId: Long) = db.withTransaction {
+		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
+		if (s.source != SegmentSource.MANUAL)
+			throw ValidationException(Reason.NOT_MANUAL)
+		val e = load(s.entryId)
+		dao.deleteSegment(segmentId)
+		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
+		verify(s.entryId)
 	}
 
 	private companion object {

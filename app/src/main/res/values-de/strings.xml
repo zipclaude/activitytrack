@@ -148,7 +148,6 @@
   <string name="running_suspend">Unterbrechen</string>
   <string name="travel_done_title">Ist die Reise abgeschlossen?</string>
   <string name="travel_suspend">Reise unterbrechen</string>
-  <string name="complete_title">\"%1$s\" vervollständigen</string>
   <string name="err_completion_incomplete">Beschreibe die Tätigkeit.</string>
   <string name="err_client_required">Wähle einen Kunden.</string>
   <string name="notif_to_complete_title">Tätigkeit vervollständigen</string>
@@ -158,4 +157,28 @@
   <string name="notif_pause_title">Noch in Pause?</string>
   <string name="notif_summary_title">Heute</string>
   <string name="notif_summary_text">Tatsächlich %1$s · gemeldet %2$s</string>
+  <string name="entry_title">Tätigkeit</string>
+  <string name="field_locality">Ort</string>
+  <string name="field_location_kind">Wo</string>
+  <string name="segments">Zeiten</string>
+  <string name="add_travel">+ Reise</string>
+  <string name="add_pause">+ Pause</string>
+  <string name="segment_manual">manuell</string>
+  <string name="external_refs">Externe Referenzen</string>
+  <string name="external_ref_new">Ticket, URL oder Code</string>
+  <string name="confirm_delete_segment">Diesen Abschnitt löschen?</string>
+  <string name="field_date">Datum (jjjj-mm-tt)</string>
+  <string name="field_km">km</string>
+  <string name="segment_hint">Ein Ende vor dem Beginn fällt auf den Folgetag.</string>
+  <string name="ref_ticket">Ticket</string>
+  <string name="ref_url">Link</string>
+  <string name="ref_uuid">UUID</string>
+  <string name="ref_other">Referenz</string>
+  <string name="loc_company">Firmenstandort</string>
+  <string name="loc_client">Kundenstandort</string>
+  <string name="loc_home">Zuhause</string>
+  <string name="loc_other">Anderswo</string>
+  <string name="err_blank_value">Ein Wert ist erforderlich.</string>
+  <string name="err_invalid_segment">Ungültiger Abschnitt: Datum und Uhrzeiten prüfen; er muss in der Vergangenheit liegen.</string>
+  <string name="err_overlapping_segments">Der Abschnitt überschneidet sich mit bereits erfasster Zeit.</string>
 </resources>

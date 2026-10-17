@@ -35,7 +35,7 @@ class UiParsingTest {
 	@Test
 	fun backStackKeysRoundTrip() {
 		val all = listOf(
-			Screen.Home, Screen.Start, Screen.Settings, Screen.MasterData, Screen.Companies, Screen.Company(7),
+			Screen.Home, Screen.Start, Screen.Entry(3), Screen.Settings, Screen.MasterData, Screen.Companies, Screen.Company(7),
 			Screen.Clients, Screen.Client(42), Screen.Roles, Screen.Presets, Screen.Places, Screen.Schedule,
 		)
 		all.forEach { assertEquals(it, Screen.parse(it.key())) }

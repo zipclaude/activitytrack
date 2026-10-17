@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
-import it.infraconsulting.activitytrack.data.repo.EntryDetails
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
@@ -95,17 +94,20 @@ class HomeViewModel(
 		entries.apply(id, EntryCommand.WORK)
 	}
 
-	fun complete(id: Long, d: EntryDetails, done: () -> Unit) = run(done) { entries.complete(id, d) }
 }
 
 /* Open entries with their commands; the start flow is a separate screen. */
 @Composable
-fun HomeScreen(onStart: () -> Unit, onMasterData: () -> Unit, onSettings: () -> Unit) {
+fun HomeScreen(
+	onStart: () -> Unit,
+	onOpenEntry: (Long) -> Unit,
+	onMasterData: () -> Unit,
+	onSettings: () -> Unit,
+) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData) }
 	val cards by vm.cards.collectAsState()
 	val resume by vm.resume.collectAsState()
 	var stopping by remember { mutableStateOf<EntryCard?>(null) }
-	var completing by remember { mutableStateOf<EntryCard?>(null) }
 
 	/* elapsed times refresh every 30 s; the DB keeps exact timestamps */
 	val now by produceState(System.currentTimeMillis()) {
@@ -141,7 +143,7 @@ fun HomeScreen(onStart: () -> Unit, onMasterData: () -> Unit, onSettings: () -> 
 							else
 								vm.command(c.entry.id, cmd)
 						},
-						onComplete = { vm.clearError(); completing = c },
+						onOpen = { onOpenEntry(c.entry.id) },
 					)
 				}
 			}
@@ -178,7 +180,6 @@ fun HomeScreen(onStart: () -> Unit, onMasterData: () -> Unit, onSettings: () -> 
 		)
 	}
 
-	completing?.let { c -> CompleteDialog(c, vm) { completing = null } }
 }
 
 @Composable
@@ -186,11 +187,11 @@ private fun EntryCardView(
 	card: EntryCard,
 	now: Long,
 	onCommand: (EntryCommand) -> Unit,
-	onComplete: () -> Unit,
+	onOpen: () -> Unit,
 ) {
 	val e = card.entry
 	val zone = ZoneId.of(e.zoneId)
-	Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+	Card(onClick = onOpen, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
 		Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
 			if (card.client != null && card.company != null)
 				Text(card.company, style = MaterialTheme.typography.labelMedium)
@@ -221,7 +222,7 @@ private fun EntryCardView(
 				for ((cmd, label) in commands(e.status, e.mode))
 					OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
 				if (e.status == EntryStatus.TO_COMPLETE)
-					Button(onClick = onComplete) { Text(stringResource(R.string.cmd_complete)) }
+					Button(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
 			}
 		}
 	}
