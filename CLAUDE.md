@@ -159,6 +159,13 @@ polish; OCR and free offline STT moved to future improvements (SPEC §10).
 | 2026-10-17 | Dictation language is a setting (it/en/de/es, default Italian), not the phone locale (en-IT is no recognizer language); SpeechRecognizer with in-app dialog, on-device first |
 | 2026-10-17 | QS tile added from Settings (StatusBarManager.requestAddTileService): the OxygenOS panel editor does not list it |
 | 2026-10-17 | Roadmap: M4 export/import, M5 calendar sync, M6 consultation views, M7 UI polish; OCR and free offline STT to future improvements |
+| 2026-10-17 | M4: in-app connector plugins (no dynamic loading), one per company; generic XML/JSON plugin first, later API/web-service plugins per management system; interchange model covers everything, partial content allowed |
+| 2026-10-17 | M4: to-do activities imported from connectors (company, client, title, notes, refs, due date/time, priority); an entry starts from a to-do; completion asks "mark as done?"; several entries per to-do; home shows "to do today" |
+| 2026-10-17 | M4: import is idempotent (external codes / uids); on conflict the app data wins and the import report lists the conflict (non-blocking) |
+| 2026-10-17 | M4: exports also go to the share sheet; filters period + company + client; entries linked to a to-do carry its external code and the done flag |
+| 2026-10-17 | M4: connector credentials stored encrypted with the Android keystore (structure now, used by future API plugins) |
+| 2026-10-17 | M5: CalendarContract (Google via the system account, CalDAV via DAVx5); generic calendar chosen by the user, local "ActivityTrack" calendar as fallback; per-company calendar replaces the generic one; one-way app → calendar; one event per entry and day, shown from the entry start |
+| 2026-10-17 | M6/M7: bottom navigation bar (Home · Agenda · Reports · More) |
 
 ## 7. Pitfalls to remember
 
