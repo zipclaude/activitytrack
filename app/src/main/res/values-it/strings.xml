@@ -152,4 +152,10 @@
   <string name="err_completion_incomplete">Descrivi l\'attività.</string>
   <string name="err_client_required">Scegli un cliente.</string>
   <string name="notif_to_complete_title">Attività da completare</string>
+  <string name="notif_confirm_title">Ancora su %1$s?</string>
+  <string name="notif_confirm_text">Ultima conferma alle %1$s</string>
+  <string name="notif_stop_at">Stop alle %1$s</string>
+  <string name="notif_pause_title">Ancora in pausa?</string>
+  <string name="notif_summary_title">Oggi</string>
+  <string name="notif_summary_text">Solare %1$s · rendicontato %2$s</string>
 </resources>

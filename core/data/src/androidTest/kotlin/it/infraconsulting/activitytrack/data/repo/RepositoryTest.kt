@@ -258,6 +258,31 @@ class RepositoryTest {
 	}
 
 	@Test
+	fun pauseReminderMovesBase() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		entries.apply(id, EntryCommand.PAUSE)
+		clock.advance(20)
+		entries.markPauseReminded(id)
+		val e = db.entryDao().entry(id)!!
+		assertEquals(clock.millis(), e.lastConfirmedUtcMs)
+		assertEquals(1, e.unansweredReminders)
+	}
+
+	@Test
+	fun reportDaysWithCarryOver() = runBlocking<Unit> {
+		/* clock is UTC; 22:00 -> 04:30 next day stays on the start day (carry-over 06:00) */
+		clock.now = Instant.parse("2026-10-14T22:00:00Z")
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.now = Instant.parse("2026-10-15T04:30:00Z")
+		entries.apply(id, EntryCommand.STOP)
+		val reports = ReportRepository(db, clock)
+		val d14 = java.time.LocalDate.of(2026, 10, 14)
+		val days = reports.days(d14, d14.plusDays(1), ZoneOffset.UTC, it.infraconsulting.activitytrack.domain.rounding.ReportRounding.DEFAULT, 360)
+		assertEquals(listOf(d14), days.map { it.day })
+		assertEquals(java.time.Duration.ofMinutes(390), days.single().solar)
+	}
+
+	@Test
 	fun clientLastUse() = runBlocking<Unit> {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(listOf(client to clock.millis()), entries.clientLastUse.first().map { it.clientId to it.lastMs })

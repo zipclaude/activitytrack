@@ -163,4 +163,10 @@
   <string name="err_completion_incomplete">Describe the activity.</string>
   <string name="err_client_required">Choose a client.</string>
   <string name="notif_to_complete_title">Activity to complete</string>
+  <string name="notif_confirm_title">Still on %1$s?</string>
+  <string name="notif_confirm_text">Last confirmation at %1$s</string>
+  <string name="notif_stop_at">Stop at %1$s</string>
+  <string name="notif_pause_title">Still on pause?</string>
+  <string name="notif_summary_title">Today</string>
+  <string name="notif_summary_text">Solar %1$s · reported %2$s</string>
 </resources>

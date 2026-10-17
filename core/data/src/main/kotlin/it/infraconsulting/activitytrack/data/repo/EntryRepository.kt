@@ -175,10 +175,22 @@ class EntryRepository(
 		verify(entryId)
 	}
 
-	/* A reminder about [entryId] was posted and not answered yet. */
+	/* A confirmation reminder about [entryId] was posted and not answered yet. */
 	suspend fun markReminded(entryId: Long) = db.withTransaction {
 		val e = load(entryId)
 		dao.updateEntry(e.copy(unansweredReminders = e.unansweredReminders + 1, updatedUtcMs = clock.millis()))
+	}
+
+	/*
+	 * A pause reminder was posted: the next one counts from now (lunch-break
+	 * postponement can then never repeat at the same instant).
+	 */
+	suspend fun markPauseReminded(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		val now = clock.millis()
+		dao.updateEntry(
+			e.copy(lastConfirmedUtcMs = now, unansweredReminders = e.unansweredReminders + 1, updatedUtcMs = now),
+		)
 	}
 
 	suspend fun updateDetails(entryId: Long, d: EntryDetails) = db.withTransaction {

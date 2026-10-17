@@ -152,4 +152,10 @@
   <string name="err_completion_incomplete">Beschreibe die Tätigkeit.</string>
   <string name="err_client_required">Wähle einen Kunden.</string>
   <string name="notif_to_complete_title">Tätigkeit vervollständigen</string>
+  <string name="notif_confirm_title">Noch bei %1$s?</string>
+  <string name="notif_confirm_text">Zuletzt bestätigt um %1$s</string>
+  <string name="notif_stop_at">Stopp um %1$s</string>
+  <string name="notif_pause_title">Noch in Pause?</string>
+  <string name="notif_summary_title">Heute</string>
+  <string name="notif_summary_text">Tatsächlich %1$s · gemeldet %2$s</string>
 </resources>

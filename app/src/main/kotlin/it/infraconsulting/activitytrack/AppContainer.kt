@@ -5,6 +5,7 @@ import android.content.Context
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
+import it.infraconsulting.activitytrack.data.repo.ReportRepository
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.data.storage.UserDataDir
 import java.time.Clock
@@ -23,6 +24,7 @@ class AppContainer(context: Context) {
 	val database: ActivityTrackDatabase by lazy { ActivityTrackDatabase.build(appContext) }
 	val masterData: MasterDataRepository by lazy { MasterDataRepository(database) }
 	val entries: EntryRepository by lazy { EntryRepository(database, clock) }
+	val reports: ReportRepository by lazy { ReportRepository(database, clock) }
 	val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
 
