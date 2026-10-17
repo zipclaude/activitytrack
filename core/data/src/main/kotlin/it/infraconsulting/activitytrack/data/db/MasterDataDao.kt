@@ -6,6 +6,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 /* Companies, clients, sites, places, roles, presets, schedules. */
@@ -155,4 +156,16 @@ interface MasterDataDao {
 
 	@Insert
 	suspend fun insertLunchBreak(l: LunchBreakEntity): Long
+
+	@Query("SELECT * FROM day_off ORDER BY date_epoch_day DESC")
+	fun observeDaysOff(): Flow<List<DayOffEntity>>
+
+	@Query("SELECT date_epoch_day FROM day_off WHERE date_epoch_day BETWEEN :from AND :to")
+	suspend fun daysOffBetween(from: Long, to: Long): List<Long>
+
+	@Upsert
+	suspend fun upsertDayOff(d: DayOffEntity)
+
+	@Delete
+	suspend fun deleteDayOff(d: DayOffEntity)
 }

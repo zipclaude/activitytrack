@@ -333,7 +333,7 @@ class RepositoryTest {
 		val out = java.io.ByteArrayOutputStream()
 		val m = it.infraconsulting.activitytrack.data.storage.DatabaseBackup(db, ctx.cacheDir)
 			.writeZip("test", clock.instant(), out)
-		assertEquals(1, m.dbVersion)
+		assertEquals(ActivityTrackDatabase.VERSION, m.dbVersion)
 		val names = ArrayList<String>()
 		var header = ByteArray(0)
 		java.util.zip.ZipInputStream(out.toByteArray().inputStream()).use { zip ->
