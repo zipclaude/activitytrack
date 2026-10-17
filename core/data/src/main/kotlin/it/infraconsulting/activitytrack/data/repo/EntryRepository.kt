@@ -182,7 +182,7 @@ class EntryRepository(
 			AbsenceKind.LATE_ENTRY, AbsenceKind.EARLY_EXIT -> timeMin != null && timeMin in 0 until 24 * 60
 		}
 		if (!valid)
-			throw ValidationException(Reason.INVALID_TIME_RANGE)
+			throw ValidationException(Reason.INVALID_TIME)
 		dao.deleteAbsence(date.toEpochDay(), kind)
 		dao.insertAbsence(AbsenceEntity(dateEpochDay = date.toEpochDay(), kind = kind, timeMin = timeMin))
 	}
