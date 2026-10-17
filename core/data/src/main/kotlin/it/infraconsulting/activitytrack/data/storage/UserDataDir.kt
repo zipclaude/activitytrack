@@ -32,9 +32,19 @@ class UserDataDir(context: Context) {
 		runCatching { resolver.releasePersistableUriPermission(tree, RW) }
 	}
 
-	/* False when the permission was revoked or the tree was never persisted. */
+	/*
+	 * False when the permission was revoked, the tree was never persisted, or
+	 * the folder is gone: a grant survives renaming or deleting the folder.
+	 */
 	fun isAccessible(tree: Uri): Boolean =
-		resolver.persistedUriPermissions.any { it.uri == tree && it.isReadPermission && it.isWritePermission }
+		resolver.persistedUriPermissions.any { it.uri == tree && it.isReadPermission && it.isWritePermission } &&
+			exists(tree)
+
+	/* The provider reports a missing document as null or as an exception, depending on the version. */
+	private fun exists(tree: Uri): Boolean = runCatching {
+		val root = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+		resolver.query(root, arrayOf(Document.COLUMN_DOCUMENT_ID), null, null, null)?.use { it.moveToFirst() } ?: false
+	}.getOrDefault(false)
 
 	/* Creates the missing sub-directories; returns their document URIs. */
 	suspend fun ensureLayout(tree: Uri): Map<Sub, Uri> = withContext(Dispatchers.IO) {
