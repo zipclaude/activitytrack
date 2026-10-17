@@ -6,6 +6,7 @@ import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.StartRequest
+import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
@@ -46,6 +47,9 @@ class StartViewModel(
 	private val master: MasterDataRepository,
 	/* picked outside the app (widget, shortcut): wins over every proposal */
 	private val pickedClientId: Long?,
+	/* started from a to-do: company, client and activity come from it */
+	private val todoId: Long?,
+	private val todos: TodoRepository,
 	private val position: suspend () -> GeoPoint?,
 ) : ActionViewModel() {
 	private val _form = MutableStateFlow(StartForm())
@@ -81,6 +85,16 @@ class StartViewModel(
 			val p = entries.startProposal(sites)
 			_form.update { it.copy(ready = true, companyId = p.companyId, clientId = p.clientId, locationKind = p.locationKind) }
 			p.clientId?.let { applyDefaults(it) }
+			todoId?.let { todos.find(it) }?.let { t ->
+				_form.update {
+					it.copy(
+						companyId = t.companyId, clientId = t.clientId ?: it.clientId, clientTouched = true,
+						activity = t.title, activityTouched = true,
+					)
+				}
+				t.clientId?.let { applyDefaults(it) }
+				return@launch
+			}
 			if (pickedClientId != null) {
 				master.client(pickedClientId)?.let { c ->
 					_form.update { it.copy(clientId = c.id, companyId = c.companyId, clientTouched = true) }
@@ -182,6 +196,7 @@ class StartViewModel(
 					roleId = f.roleId,
 					activity = f.activity,
 					locationKind = f.locationKind,
+					todoId = todoId,
 				),
 				HashMap(decisions),
 			)

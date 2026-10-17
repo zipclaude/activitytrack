@@ -40,6 +40,9 @@ sealed interface Screen {
 	data object DaysOff : Screen
 	/* expense for the most recent open entry (widget, shortcut) */
 	data object QuickExpense : Screen
+	data object Todos : Screen
+	/* start flow pre-filled from a to-do */
+	data class StartFromTodo(val todoId: Long) : Screen
 	/* late entry for a day, from the day-start prompt */
 	data class LateEntry(val epochDay: Long) : Screen
 
@@ -50,13 +53,14 @@ sealed interface Screen {
 		is Client -> "client/$id"
 		is LateEntry -> "late/$epochDay"
 		is StartFor -> "start/$clientId"
+		is StartFromTodo -> "start-todo/$todoId"
 		else -> this::class.simpleName!!
 	}
 
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense)
+			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos)
 				.associateBy { it.key() }
 		}
 
@@ -70,6 +74,7 @@ sealed interface Screen {
 				"client" -> Client(n)
 				"late" -> LateEntry(n)
 				"start" -> StartFor(n)
+				"start-todo" -> StartFromTodo(n)
 				else -> null
 			}
 		}

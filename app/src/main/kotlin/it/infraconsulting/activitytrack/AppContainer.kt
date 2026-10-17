@@ -12,6 +12,7 @@ import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.LocationRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
+import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.data.storage.DatabaseBackup
 import it.infraconsulting.activitytrack.data.storage.UserDataDir
@@ -45,6 +46,7 @@ class AppContainer(context: Context) {
 	}
 	val nominatim: Nominatim by lazy { Nominatim(userAgent) }
 	val exporter: Exporter by lazy { Exporter(database) }
+	val todos: TodoRepository by lazy { TodoRepository(database, clock) }
 	val importer: Importer by lazy { Importer(database, clock) }
 
 	/* "ActivityTrack/<version>" written into interchange files */
