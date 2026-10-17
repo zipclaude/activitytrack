@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.data.db
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -25,9 +26,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		AbsenceEntity::class,
 		WorkScheduleEntity::class,
 		LunchBreakEntity::class,
+		DayOffEntity::class,
 	],
-	version = 1,
+	version = ActivityTrackDatabase.VERSION,
 	exportSchema = true,
+	autoMigrations = [
+		AutoMigration(from = 1, to = 2),	/* day_off */
+	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
 	abstract fun entryDao(): EntryDao
@@ -35,6 +40,9 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 
 	companion object {
 		const val FILE_NAME = "activitytrack.db"
+
+		/* bump together with an AutoMigration or Migration, and commit the new schema */
+		const val VERSION = 2
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =
