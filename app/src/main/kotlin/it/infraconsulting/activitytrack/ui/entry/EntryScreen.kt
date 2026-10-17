@@ -176,6 +176,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					AddButton { vm.addRef(newRef) { newRef = "" } }
 				}
 			}
+			item { AttachmentsSection(initial.id, zone) }
 		}
 
 		/* outside the list: a validation error must stay visible above the buttons */

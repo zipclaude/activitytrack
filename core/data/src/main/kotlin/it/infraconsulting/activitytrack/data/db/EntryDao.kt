@@ -136,6 +136,15 @@ interface EntryDao {
 	@Query("SELECT COUNT(*) FROM attachment")
 	suspend fun attachmentTotal(): Int
 
+	@Insert
+	suspend fun insertAttachment(a: AttachmentEntity): Long
+
+	@Query("SELECT * FROM attachment WHERE entry_id = :entryId ORDER BY created_utc_ms")
+	fun observeAttachments(entryId: Long): Flow<List<AttachmentEntity>>
+
+	@Query("DELETE FROM attachment WHERE id = :id")
+	suspend fun deleteAttachment(id: Long)
+
 	/* Samples taken after a backdated transition belong to the segment opened by it. */
 	@Query("UPDATE location_sample SET segment_id = :segmentId WHERE entry_id = :entryId AND ts_utc_ms >= :fromUtcMs")
 	suspend fun retagSamples(entryId: Long, segmentId: Long, fromUtcMs: Long)
