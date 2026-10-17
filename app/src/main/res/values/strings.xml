@@ -284,6 +284,11 @@
   <string name="day_empty">No time recorded on this day.</string>
   <string name="day_line_fmt">Work %1$s → %2$s · Travel %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / export</string>
+  <string name="connector_title">Management system</string>
+  <string name="connector_external_code">Code in the management system</string>
+  <string name="connector_plugin">Connector</string>
+  <string name="connector_not_set">Not set</string>
+  <string name="connector_generic_hint">Exchange through JSON / XML files from Import / export.</string>
   <string name="todo_title">To-dos</string>
   <string name="todo_due_today">To do today</string>
   <string name="todo_today">today</string>

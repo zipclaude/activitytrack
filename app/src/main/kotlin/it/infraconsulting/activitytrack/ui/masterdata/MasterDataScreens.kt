@@ -152,6 +152,7 @@ fun CompanyScreen(id: Long, onBack: () -> Unit) {
 		},
 	) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+			company?.let { c -> item { ConnectorSection(c, vm) } }
 			item {
 				Row {
 					SectionHeader(stringResource(R.string.sites))

@@ -3,6 +3,7 @@ package it.infraconsulting.activitytrack
 
 import android.app.Application
 import it.infraconsulting.activitytrack.backup.BackupWorker
+import it.infraconsulting.activitytrack.connect.SecretStore
 import it.infraconsulting.activitytrack.location.TrackingMonitor
 import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.notify.NotificationSync
@@ -25,6 +26,9 @@ class ActivityTrackApp : Application() {
 		private set
 	lateinit var tracking: TrackingMonitor
 		private set
+
+	/* connector secrets, keystore-encrypted (M4) */
+	val secrets: SecretStore by lazy { SecretStore(this) }
 
 	override fun onCreate() {
 		super.onCreate()
