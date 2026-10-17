@@ -50,8 +50,8 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | Milestone | State |
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
-| M1 core tracking | **implemented** (steps 1–8, PR #1, branch `worktree-m1-foundation`, 2026-10-17); device-tested (steps 1–9, 2026-10-17) |
-| M2 travel & location | — |
+| M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
+| M2 travel & location | **implemented and device-tested** (branch `m2-location`, PR #2, 2026-10-17); merge pending owner OK |
 | M3 widgets, tile, attachments, dictation | — |
 | M4 OCR, offline STT, XML/JSON export | — |
 
@@ -72,13 +72,15 @@ core/domain/…/export/           Export.kt (ExportRow, Exporter, ExportRows), C
 core/domain/…/time/             LocalMinutes.kt (DST-safe LocalDate.atMinute)
 core/domain/…/rounding/         Rounding.kt
 core/domain/…/report/           DayAttribution.kt, DailyReport.kt
-core/domain/…/geo/              Geo.kt (haversine)
-core/domain/…/start/            StartDefaults.kt (pre-fill rules), ClientPicker.kt
+core/domain/…/geo/              Geo.kt (haversine), Tracking.kt (Fix, Movement, Stationarity, KmEstimate)
+core/domain/…/calendar/         ItalianHolidays.kt (Easter, 4 Oct from 2026)
+core/domain/…/start/            StartDefaults.kt (pre-fill, nearestContaining), ClientPicker.kt, ArrivalAdvice.kt
 core/domain/…/settings/         AppSettings.kt (defaults + validated())
 core/domain/src/test/…          Rounding, DailyReport, EntryStateMachine, EntryInvariants, StartDefaults,
                                 ClientPicker, AppSettings, ReminderPlanner, CsvExporter, LocalMinutes
 core/data/…/db/                 Entities.kt, EntryDao.kt, MasterDataDao.kt, ActivityTrackDatabase.kt (lunch seed)
-core/data/…/repo/               EntryRepository, MasterDataRepository, ReportRepository, ValidationException
+core/data/…/repo/               EntryRepository, MasterDataRepository, ReportRepository, LocationRepository, ValidationException
+core/data/…/geo/                GeoClients.kt (Nominatim, Osrm; HttpURLConnection + org.json)
 core/data/…/settings/           SettingsRepository (Preferences DataStore)
 core/data/…/storage/            UserDataDir (SAF tree, DocumentsContract), DatabaseBackup (VACUUM INTO + zip)
 core/data/src/androidTest/…     RepositoryTest (in-memory Room, run on device)
@@ -88,27 +90,44 @@ app/…/ui/                       Navigation (own back stack, per-entry ViewMode
 app/…/notify/                   NotificationChannels, EntryNotifications, NotificationSync, ActionReceiver, EntryLinks
 app/…/reminders/                ReminderScheduler, ReminderNotifications, ReminderReceiver + BootReceiver
 app/…/backup/                   BackupWorker (WorkManager, daily)
+app/…/location/                 LocationService (FGS), LocationTracker, TrackingMonitor, TrackingNotifications,
+                                GeoEnrichWorker, CurrentPosition
 app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTest
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (M1)
+## 5. Next steps (M2, branch `m2-location`, draft PR #2)
 
-1. ~~`AppContainer`, repositories with invariants~~ done.
-2. ~~Settings in DataStore; SAF root selection on first run~~ done.
-3. ~~Master data screens~~ done (coordinates typed; map/current position in M2).
-4. ~~Home, start flow, concurrent-entry dialog, commands~~ done and tested on
-   device (2026-10-17); minimal completion dialog until step 7.
-5. ~~Ongoing notification, `ActionReceiver`~~ done.
-6. ~~Reminders, boot/time-change re-arm~~ done.
-7. ~~Entry screen (completion), manual segments, external refs~~ done.
-8. ~~Day view, CSV export, daily backup~~ done.
-9. ~~Device test of steps 5–8~~ done (2026-10-17): instrumented 19/19,
-   notification actions, dismiss + re-post, reminders, boot re-arm, entry
-   screen, day view, CSV, backup. Fixes: ICU regex, re-post on foreground,
-   visible validation error, lost data folder, home overflow menu.
-   Device still has `TEST_` data and reminder intervals at 10 min.
-10. Then merge PR #1 and start M2 (location, day-start prompt).
+M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
+
+1. ~~Domain: movement, stationarity, km, holidays, day-start, arrival advice~~ done.
+2. ~~DB v2 `day_off` + auto-migration test~~ done.
+3. ~~`LocationService` + `LocationTracker`, permissions UI~~ done.
+4. ~~Movement / arrival prompts, backdated commands~~ done.
+5. ~~`GeoEnrichWorker`: OSRM km, Nominatim locality~~ done.
+6. ~~Start proposal from position; site current position + MapLibre picker~~ done.
+7. ~~Day-start prompt, absences, days off~~ done.
+8. **Device test** (all M2 code is untested on device): back up `databases/`
+   first; `am instrument` (RepositoryTest new cases, MigrationTest,
+   GeoClientsTest); v1 → v2 migration of the real DB; permissions flow
+   (in use, "all the time", battery); FGS notification switching between
+   entries; samples while walking/driving; movement and arrival prompts;
+   OSRM km and locality after a travel; map picker; day-start prompt.
+9. Open questions for the owner are listed in the PR #2 description/comments.
+9a. ~~**Owner request 2026-10-17**~~ done (`ui/common/CommandButtons.kt`, `ic_cmd_*`), to check on device: coloured command buttons — Start green,
+   Stop red, Pause yellow, Suspend orange, Travel blue. Start/Stop/Pause as
+   coloured media icons (play, stop, pause) instead of text; a standard icon
+   for Suspend if one exists; a stylised car for Travel; reuse them in the
+   notifications.
+9b. ~~Device cleanup~~ done: clean DB v2 restored, "Arrival time" 15 min. The
+   owner resets "Select mock location app" to None in Developer options.
+9c. ~~Remaining device tests~~ done (2026-10-17): coloured buttons, client-only
+   completion (empty / copy last / back), reboot with an ACTIVE entry (FGS
+   restarted by BootReceiver, fixes every 5 min with "Allow all the time"),
+   day off suppresses the prompt, day-start prompt and "Absent today",
+   late-entry screen (fix: INVALID_TIME message). Locality language checked
+   against Nominatim from the host only.
+10. Then mark PR #2 ready, merge, start M3.
 
 ## 6. Decisions log
 
@@ -137,6 +156,17 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 | 2026-10-17 | Notification STOP stops at once (no return-travel question); confirm reminder offers "Stop at <last confirmation>" |
 | 2026-10-17 | CSV: stable English header, adds work hours, km and expenses on the first day of a split entry, UTF-8 BOM; export range ≤ 1 year |
 | 2026-10-17 | Backup restore not implemented in M1 (manual: replace the DB from the zip) |
+| 2026-10-17 | Map: MapLibre Native Android (osmdroid archived 2024-11-20), raster tiles from the configured endpoint |
+| 2026-10-17 | Location service stays on during PAUSE (movement alerts too) |
+| 2026-10-17 | Arrival closes/switches at the start of the stop (first fix of the stationary run); movement "Start travel" backdated to the first fix beyond the threshold |
+| 2026-10-17 | "Arrived?" near a client site assigns that client to the travelling entry and switches it to WORK (no new entry) |
+| 2026-10-17 | Day-start "Late entry at…" records only the LATE_ENTRY absence; manual days off = list of dates (no ranges yet) |
+| 2026-10-17 | Holidays: Italian national + Easter Monday + 4 October from 2026 (L. 151/2025); patron saints as manual days off |
+| 2026-10-17 | The location service's notification is the ongoing notification of one ACTIVE entry (no extra notification; not dismissible while tracking) |
+| 2026-10-17 | Completion with the client only, after confirmation (leave empty / copy last activity on the client / edit) |
+| 2026-10-17 | Arrival at a site of the entry's own client sets location kind CLIENT |
+| 2026-10-17 | Locality from Nominatim in the local language (no accept-language), not the phone language (provisional, owner away) |
+| 2026-10-17 | Coloured icon buttons in the app; notifications keep text actions, icons attached for Wear/launchers (provisional, owner away) |
 
 ## 7. Pitfalls to remember
 
@@ -169,6 +199,11 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
   cannot read the shade; ask the owner to tap notification actions.
 - WorkManager ignores `cmd jobscheduler run -f` before schedule; use Settings →
   "Back up now" (`BackupWorker.runNow`).
+- Coordinates in URLs: format with `Locale.ROOT` (Italian locale writes `45,4`).
+- A location FGS started from the background without "Allow all the time"
+  throws `SecurityException`: `LocationService.update` catches it and stops.
+- Notification `NotificationManager.cancel` is ignored for the FGS notification:
+  switch with `startForeground(newId)` first, then cancel the old id.
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 

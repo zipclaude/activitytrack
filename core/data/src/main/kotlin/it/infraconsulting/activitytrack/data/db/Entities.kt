@@ -328,6 +328,13 @@ data class AbsenceEntity(
 	@ColumnInfo(name = "time_min") val timeMin: Int? = null,
 )
 
+/* A manual day off (holiday not in the national calendar, leave): no day-start prompt. */
+@Entity(tableName = "day_off")
+data class DayOffEntity(
+	@PrimaryKey @ColumnInfo(name = "date_epoch_day") val dateEpochDay: Long,
+	val note: String? = null,
+)
+
 /* Working hours; several intervals per day of week (1 = Monday ... 7 = Sunday). */
 @Entity(tableName = "work_schedule", indices = [Index("day_of_week")])
 data class WorkScheduleEntity(

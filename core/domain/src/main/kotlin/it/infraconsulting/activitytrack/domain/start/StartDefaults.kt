@@ -58,13 +58,7 @@ object StartDefaults {
 		sites: List<KnownSite>,
 		previousCompanyToday: Long?,
 	): StartProposal {
-		val match = position?.let { p ->
-			sites
-				.map { it to Geo.distanceM(p, it.point) }
-				.filter { (s, d) -> d <= s.radiusM }
-				.minByOrNull { (_, d) -> d }
-				?.first
-		}
+		val match = position?.let { nearestContaining(it, sites) }
 
 		return when (match) {
 			is KnownSite.Client ->
@@ -82,3 +76,11 @@ object StartDefaults {
 		else
 			StartProposal(null, null, kind, ProposalSource.NONE)
 }
+
+/* The nearest site whose radius contains [p], if any. */
+fun nearestContaining(p: GeoPoint, sites: List<KnownSite>): KnownSite? =
+	sites
+		.map { it to Geo.distanceM(p, it.point) }
+		.filter { (s, d) -> d <= s.radiusM }
+		.minByOrNull { (_, d) -> d }
+		?.first

@@ -32,6 +32,7 @@ dependencies {
 
 	testImplementation(libs.kotlin.test.junit)
 	androidTestImplementation(libs.kotlin.test.junit)
+	androidTestImplementation(libs.androidx.room.testing)
 	androidTestImplementation(libs.androidx.test.runner)
 	androidTestImplementation(libs.androidx.test.ext.junit)
 }

@@ -7,6 +7,7 @@
   <string name="ch_confirm">Activity confirmation</string>
   <string name="ch_pause">Pause reminders</string>
   <string name="ch_movement">Movement alerts</string>
+  <string name="ch_arrival">Arrival prompts</string>
   <string name="ch_day_start">Start of day</string>
   <string name="ch_day_summary">Daily summary</string>
   <string name="ch_to_complete">Activities to complete</string>
@@ -48,6 +49,19 @@
   <string name="md_presets">Activity presets</string>
   <string name="md_places">Places</string>
   <string name="md_schedule">Working hours and lunch break</string>
+  <string name="md_days_off">Days off</string>
+  <string name="day_off_edit">Day off</string>
+  <string name="field_note">Note</string>
+  <string name="err_invalid_date">Invalid date.</string>
+  <string name="err_invalid_time">Invalid time: use hh:mm, e.g. 08:30.</string>
+  <string name="late_entry_title">Late entry</string>
+  <string name="late_entry_hint">Entry time on %1$s. Recorded as a late entry; start the activity when you begin.</string>
+  <string name="field_time">Time (hh:mm)</string>
+  <string name="notif_day_start_title">No activity yet today</string>
+  <string name="notif_day_start_text">Record an absence, a late entry or start an activity.</string>
+  <string name="action_absence">Absent today</string>
+  <string name="action_late_entry">Late entry…</string>
+  <string name="action_start_entry">Start activity</string>
   <string name="company_edit">Company</string>
   <string name="client_edit">Client</string>
   <string name="role_edit">Role</string>
@@ -63,6 +77,10 @@
   <string name="schedule_lunch">Lunch break %1$s</string>
   <string name="schedule_no_lunch">No lunch break</string>
   <string name="site_hint">Coordinates in decimal degrees, e.g. 45.4642, 9.1900.</string>
+  <string name="site_current_position">Current position</string>
+  <string name="site_map">Map</string>
+  <string name="position_unavailable">Position not available: check location access and that the device is outdoors or online.</string>
+  <string name="map_use_point">Use this point</string>
   <string name="time_hint">Times as HH:MM, e.g. 08:30.</string>
 
   <!-- fields -->
@@ -124,6 +142,15 @@
   <string name="set_endpoint">Endpoint</string>
   <string name="sec_storage">Storage</string>
   <string name="set_root">Data folder</string>
+  <string name="perm_location">Location access</string>
+  <string name="perm_location_always">Allowed all the time</string>
+  <string name="perm_location_in_use">Only while in use: tracking stops when started from a notification</string>
+  <string name="perm_denied">Not allowed</string>
+  <string name="perm_grant">Allow</string>
+  <string name="perm_allow_always">Allow always</string>
+  <string name="perm_battery">Battery optimisation</string>
+  <string name="perm_battery_unrestricted">Unrestricted</string>
+  <string name="perm_battery_optimized">Optimised: the system may stop tracking</string>
   <string name="set_change_root">Change</string>
   <string name="set_backup_retention">Backups kept</string>
   <!-- tracking -->
@@ -135,6 +162,11 @@
   <string name="cmd_suspend">Suspend</string>
   <string name="cmd_stop">Stop</string>
   <string name="cmd_complete">Complete</string>
+  <string name="empty_activity_title">No activity description</string>
+  <string name="empty_activity_text">Complete with the client only?</string>
+  <string name="empty_activity_leave">Leave it empty</string>
+  <string name="empty_activity_copy">Copy the last one: %1$s</string>
+  <string name="empty_activity_edit">Back to editing</string>
   <string name="cmd_reopen">Reopen</string>
   <string name="since_fmt">%1$s since %2$s</string>
   <string name="totals_fmt">Work %1$s · Travel %2$s</string>
@@ -166,6 +198,15 @@
   <string name="notif_confirm_title">Still on %1$s?</string>
   <string name="notif_confirm_text">Last confirmation at %1$s</string>
   <string name="notif_stop_at">Stop at %1$s</string>
+  <string name="notif_moved_title">Moved away from %1$s?</string>
+  <string name="notif_moved_text">Left at %1$s</string>
+  <string name="notif_travel_from">Travel from %1$s</string>
+  <string name="notif_ignore">Ignore</string>
+  <string name="notif_arrived_title">Arrived?</string>
+  <string name="notif_arrived_text">%1$s · stopped at %2$s</string>
+  <string name="notif_work_at_client">Work at %1$s from %2$s</string>
+  <string name="notif_work_from">Work from %1$s</string>
+  <string name="notif_still_travelling">Still travelling</string>
   <string name="notif_pause_title">Still on pause?</string>
   <string name="notif_summary_title">Today</string>
   <string name="notif_summary_text">Solar %1$s · reported %2$s</string>

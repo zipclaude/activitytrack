@@ -136,6 +136,25 @@ interface EntryDao {
 	@Query("SELECT COUNT(*) FROM attachment")
 	suspend fun attachmentTotal(): Int
 
+	/* Samples taken after a backdated transition belong to the segment opened by it. */
+	@Query("UPDATE location_sample SET segment_id = :segmentId WHERE entry_id = :entryId AND ts_utc_ms >= :fromUtcMs")
+	suspend fun retagSamples(entryId: Long, segmentId: Long, fromUtcMs: Long)
+
+	@Insert
+	suspend fun insertAbsence(a: AbsenceEntity): Long
+
+	@Query("DELETE FROM absence WHERE date_epoch_day = :day AND kind = :kind")
+	suspend fun deleteAbsence(day: Long, kind: AbsenceKind)
+
+	@Query("SELECT * FROM absence WHERE date_epoch_day BETWEEN :fromDay AND :toDay ORDER BY date_epoch_day")
+	suspend fun absencesBetween(fromDay: Long, toDay: Long): List<AbsenceEntity>
+
+	@Query("SELECT * FROM absence ORDER BY date_epoch_day DESC")
+	fun observeAbsences(): Flow<List<AbsenceEntity>>
+
+	@Query("SELECT created_utc_ms FROM time_entry WHERE created_utc_ms >= :fromMs AND created_utc_ms < :toMs")
+	suspend fun entryStartsBetween(fromMs: Long, toMs: Long): List<Long>
+
 	@Transaction
 	suspend fun startEntry(entry: TimeEntryEntity, first: SegmentEntity): Long {
 		val id = insertEntry(entry)

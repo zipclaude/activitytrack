@@ -6,13 +6,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -22,23 +26,28 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.location.CurrentPosition
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.TextInput
+import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.reasonText
 
 @Composable
 fun StartScreen(onBack: () -> Unit) {
-	val vm = appViewModel { StartViewModel(it.entries, it.masterData) }
+	val context = LocalContext.current.applicationContext
+	val vm = appViewModel { StartViewModel(it.entries, it.masterData) { CurrentPosition.get(context) } }
 	val f by vm.form.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val clients by vm.clients.collectAsState()
@@ -111,11 +120,15 @@ fun StartScreen(onBack: () -> Unit) {
 					}
 				}
 			}
+			/* green play (owner request); the label stays for accessibility */
+			val start = commandStyle(if (f.mode == SegmentKind.TRAVEL) EntryCommand.TRAVEL else EntryCommand.WORK)!!
+			val label = stringResource(R.string.start_action)
 			Button(
 				onClick = { vm.requestStart(onBack) },
 				enabled = f.canStart && pending.isEmpty(),
-				modifier = Modifier.fillMaxWidth().padding(16.dp),
-			) { Text(stringResource(R.string.start_action)) }
+				colors = ButtonDefaults.buttonColors(containerColor = start.container, contentColor = start.content),
+				modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
+			) { Icon(painterResource(start.icon), contentDescription = label, modifier = Modifier.size(32.dp)) }
 		}
 	}
 

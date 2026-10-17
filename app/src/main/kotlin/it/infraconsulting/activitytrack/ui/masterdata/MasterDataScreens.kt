@@ -49,11 +49,11 @@ import java.time.DayOfWeek
 import java.time.format.TextStyle
 
 @Composable
-private fun masterDataViewModel() = appViewModel { MasterDataViewModel(it.masterData) }
+internal fun masterDataViewModel() = appViewModel { MasterDataViewModel(it.masterData) }
 
 /* Asks before running [action]; returns the trigger. */
 @Composable
-private fun confirmDelete(name: String, action: () -> Unit): () -> Unit {
+internal fun confirmDelete(name: String, action: () -> Unit): () -> Unit {
 	var ask by remember { mutableStateOf(false) }
 	if (ask)
 		AlertDialog(
@@ -83,6 +83,7 @@ fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
 				Screen.Presets to R.string.md_presets,
 				Screen.Places to R.string.md_places,
 				Screen.Schedule to R.string.md_schedule,
+				Screen.DaysOff to R.string.md_days_off,
 			)
 			items(sections) { (screen, label) -> ClickableRow(stringResource(label)) { onOpen(screen) } }
 		}
