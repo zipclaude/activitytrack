@@ -143,6 +143,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 			onSettings = { open(Screen.Settings) },
 		)
 		Screen.Start -> StartScreen(back)
+		is Screen.StartFor -> StartScreen(back, top.clientId)
 		is Screen.Entry -> EntryScreen(top.id, back)
 		Screen.Day -> DayScreen(back, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
 		Screen.Export -> ExportScreen(back)

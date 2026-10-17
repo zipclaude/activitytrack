@@ -44,6 +44,8 @@ data class RunningEntry(val entry: TimeEntryEntity, val title: String)
 class StartViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
+	/* picked outside the app (widget, shortcut): wins over every proposal */
+	private val pickedClientId: Long?,
 	private val position: suspend () -> GeoPoint?,
 ) : ActionViewModel() {
 	private val _form = MutableStateFlow(StartForm())
@@ -79,6 +81,12 @@ class StartViewModel(
 			val p = entries.startProposal(sites)
 			_form.update { it.copy(ready = true, companyId = p.companyId, clientId = p.clientId, locationKind = p.locationKind) }
 			p.clientId?.let { applyDefaults(it) }
+			if (pickedClientId != null) {
+				master.client(pickedClientId)?.let { c ->
+					_form.update { it.copy(clientId = c.id, companyId = c.companyId, clientTouched = true) }
+					applyDefaults(c.id)
+				}
+			}
 			val here = position() ?: return@launch
 			val q = entries.startProposal(sites, here)
 			if (q == p || _form.value.clientTouched)
