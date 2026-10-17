@@ -1,13 +1,19 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
-import androidx.core.net.toUri
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -64,8 +70,24 @@ private fun Navigator() {
 	val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
 	val open: (Screen) -> Unit = { stack.add(it) }
 	BackHandler(enabled = stack.size > 1, onBack = back)
+	RequestNotificationPermission()
 
 	ScopedEntry(stack) { top -> Destination(top, back, open) }
+}
+
+/* POST_NOTIFICATIONS is a runtime permission from API 33; asked once per launch while missing. */
+@Composable
+private fun RequestNotificationPermission() {
+	val context = LocalContext.current
+	val app = context.applicationContext as ActivityTrackApp
+	val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+		if (granted) app.notificationSync.refresh()
+	}
+	LaunchedEffect(Unit) {
+		val perm = Manifest.permission.POST_NOTIFICATIONS
+		if (ContextCompat.checkSelfPermission(context, perm) != PackageManager.PERMISSION_GRANTED)
+			launcher.launch(perm)
+	}
 }
 
 @Composable

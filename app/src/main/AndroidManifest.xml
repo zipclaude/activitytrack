@@ -25,5 +25,10 @@
       </intent-filter>
     </activity>
 
+    <!-- Notification actions; explicit intents only. -->
+    <receiver
+        android:name=".notify.ActionReceiver"
+        android:exported="false" />
+
   </application>
 </manifest>
