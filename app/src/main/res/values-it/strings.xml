@@ -216,6 +216,15 @@
   <string name="external_refs">Riferimenti esterni</string>
   <string name="external_ref_new">Ticket, URL o codice</string>
   <string name="attachments">Allegati</string>
+  <string name="expenses">Spese</string>
+  <string name="expense_add">Aggiungi spesa</string>
+  <string name="expense_amount">Importo (€)</string>
+  <string name="expense_description">Descrizione</string>
+  <string name="expense_receipt">Foto dello scontrino</string>
+  <string name="expense_receipt_again">Rifai la foto dello scontrino</string>
+  <string name="expense_no_entry">Nessuna attività aperta a cui aggiungere la spesa.</string>
+  <string name="err_invalid_amount">Inserisci un importo maggiore di zero.</string>
+  <string name="shortcut_expense">Spesa</string>
   <string name="att_photo">Foto</string>
   <string name="att_audio">Nota vocale</string>
   <string name="att_receipt">Scontrino</string>

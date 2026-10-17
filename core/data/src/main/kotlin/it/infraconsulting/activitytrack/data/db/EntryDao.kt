@@ -137,6 +137,18 @@ interface EntryDao {
 	suspend fun attachmentTotal(): Int
 
 	@Insert
+	suspend fun insertExpense(e: ExpenseEntity): Long
+
+	@Query("SELECT * FROM expense WHERE entry_id = :entryId ORDER BY created_utc_ms")
+	fun observeExpenses(entryId: Long): Flow<List<ExpenseEntity>>
+
+	@Query("DELETE FROM expense WHERE id = :id")
+	suspend fun deleteExpense(id: Long)
+
+	@Query("SELECT * FROM attachment WHERE id = :id")
+	suspend fun attachment(id: Long): AttachmentEntity?
+
+	@Insert
 	suspend fun insertAttachment(a: AttachmentEntity): Long
 
 	@Query("SELECT * FROM attachment WHERE entry_id = :entryId ORDER BY created_utc_ms")

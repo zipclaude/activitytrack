@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static launcher shortcut: quick expense (DESIGN §10). The debug variant overrides the package. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+  <shortcut
+      android:shortcutId="expense"
+      android:enabled="true"
+      android:icon="@drawable/ic_shortcut_expense"
+      android:shortcutShortLabel="@string/shortcut_expense">
+    <intent
+        android:action="android.intent.action.VIEW"
+        android:targetPackage="it.infraconsulting.activitytrack.debug"
+        android:targetClass="it.infraconsulting.activitytrack.MainActivity">
+      <extra
+          android:name="it.infraconsulting.activitytrack.extra.SCREEN"
+          android:value="QuickExpense" />
+    </intent>
+  </shortcut>
+</shortcuts>

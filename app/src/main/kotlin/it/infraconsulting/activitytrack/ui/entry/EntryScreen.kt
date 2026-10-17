@@ -176,6 +176,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					AddButton { vm.addRef(newRef) { newRef = "" } }
 				}
 			}
+			item { ExpensesSection(initial.id) }
 			item { AttachmentsSection(initial.id, zone) }
 		}
 

@@ -216,6 +216,15 @@
   <string name="external_refs">Referencias externas</string>
   <string name="external_ref_new">Ticket, URL o código</string>
   <string name="attachments">Adjuntos</string>
+  <string name="expenses">Gastos</string>
+  <string name="expense_add">Añadir gasto</string>
+  <string name="expense_amount">Importe (€)</string>
+  <string name="expense_description">Descripción</string>
+  <string name="expense_receipt">Foto del recibo</string>
+  <string name="expense_receipt_again">Repetir foto del recibo</string>
+  <string name="expense_no_entry">No hay actividad abierta para añadir el gasto.</string>
+  <string name="err_invalid_amount">Introduce un importe mayor que cero.</string>
+  <string name="shortcut_expense">Gasto</string>
   <string name="att_photo">Foto</string>
   <string name="att_audio">Nota de voz</string>
   <string name="att_receipt">Recibo</string>

@@ -182,6 +182,14 @@ class StatusWidget : GlanceAppWidget() {
 				}
 			}
 			if (s.entryId != null) {
+				Spacer(GlanceModifier.width(6.dp))
+				Box(
+					modifier = GlanceModifier.size(40.dp).cornerRadius(20.dp).background(GlanceTheme.colors.secondaryContainer)
+						.clickable(openScreen(context, Screen.QuickExpense)),
+					contentAlignment = Alignment.Center,
+				) {
+					Text("€", style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer, fontWeight = FontWeight.Bold, fontSize = 18.sp))
+				}
 				for (cmd in ongoingActions(s.mode)) {
 					Spacer(GlanceModifier.width(6.dp))
 					CommandCircle(

@@ -27,6 +27,7 @@ import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
 import it.infraconsulting.activitytrack.ui.ScopedEntry
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.entry.EntryScreen
+import it.infraconsulting.activitytrack.ui.entry.QuickExpenseScreen
 import it.infraconsulting.activitytrack.ui.home.HomeScreen
 import it.infraconsulting.activitytrack.ui.home.LateEntryScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientScreen
@@ -158,6 +159,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		Screen.Places -> PlacesScreen(back)
 		Screen.Schedule -> ScheduleScreen(back)
 		Screen.DaysOff -> DaysOffScreen(back)
+		Screen.QuickExpense -> QuickExpenseScreen(back)
 		is Screen.LateEntry -> LateEntryScreen(top.epochDay, back)
 	}
 }

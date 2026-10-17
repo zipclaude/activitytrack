@@ -227,6 +227,15 @@
   <string name="external_refs">External references</string>
   <string name="external_ref_new">Ticket, URL or code</string>
   <string name="attachments">Attachments</string>
+  <string name="expenses">Expenses</string>
+  <string name="expense_add">Add expense</string>
+  <string name="expense_amount">Amount (€)</string>
+  <string name="expense_description">Description</string>
+  <string name="expense_receipt">Receipt photo</string>
+  <string name="expense_receipt_again">Retake receipt photo</string>
+  <string name="expense_no_entry">No open activity to add the expense to.</string>
+  <string name="err_invalid_amount">Enter an amount greater than zero.</string>
+  <string name="shortcut_expense">Expense</string>
   <string name="att_photo">Photo</string>
   <string name="att_audio">Voice note</string>
   <string name="att_receipt">Receipt</string>
