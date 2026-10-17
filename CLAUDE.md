@@ -154,6 +154,15 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
   restore afterwards (entries cannot be deleted from the UI yet).
 - Local wall-clock times: build `LocalDate.atTime(...)` / `atMinute`, never
   `atStartOfDay().plusMinutes()` (wrong on DST days).
+- Regexes run on ICU on Android: escape both braces (`\\{`, `\\}`); a bare `}`
+  passes JVM unit tests and crashes on device.
+- API 34+: users can dismiss `setOngoing` notifications; `MainActivity.onStart`
+  re-posts them (owner's choice, no foreground service).
+- Never tap the notification shade by coordinates: OxygenOS layout shifts and a
+  miss hits "clear all" (owner's notifications lost, 2026-10-17). `uiautomator`
+  cannot read the shade; ask the owner to tap notification actions.
+- WorkManager ignores `cmd jobscheduler run -f` before schedule; use Settings →
+  "Back up now" (`BackupWorker.runNow`).
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 
