@@ -52,7 +52,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
 | M2 travel & location | **done**, device-tested, merged (PR #2, 2026-10-17) |
-| M3 widgets, tile, attachments, dictation | in progress, branch `m3-quick-input` |
+| M3 widgets, tile, attachments, dictation | **implemented and device-tested** (branch `m3-quick-input`, PR #3, 2026-10-17); merge pending owner OK |
 | M4 OCR, offline STT, XML/JSON export | — |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
@@ -92,6 +92,10 @@ app/…/reminders/                ReminderScheduler, ReminderNotifications, Remi
 app/…/backup/                   BackupWorker (WorkManager, daily)
 app/…/location/                 LocationService (FGS), LocationTracker, TrackingMonitor, TrackingNotifications,
                                 GeoEnrichWorker, CurrentPosition
+app/…/quick/                    ClientShortcuts, QuickToggle, ToggleTileService, Widgets (Glance 4×1, 1×1)
+app/…/ui/entry/                 EntryScreen, Attachments, Expenses (+ QuickExpenseScreen)
+app/…/ui/common/                Components (SearchableChoiceField), CommandButtons, MapPicker, Dictation
+app/src/debug/                  MockLocationReceiver (adb-driven fused test provider), debug shortcuts.xml
 app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTest
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
@@ -107,7 +111,11 @@ M2 merged in `main` on 2026-10-17 (PR #2). M3 per SPEC §7, DESIGN §9–10:
    SAF `attachments/<yyyy>/<entryId>/<uuid>.<ext>`.
 5. Expenses (EUR, description, receipt photo) and quick expense screen.
 6. Dictation of the activity text (`RecognizerIntent`, prefer offline).
-7. Device test (back up `databases/` first), docs, PR.
+7. ~~Device test~~ done (2026-10-17): start-for-client link, client combo box
+   (owner request), shortcuts, QS tile (added from Settings), widgets 4×1 and
+   1×1, attachments (photo, voice note, file), expenses with receipt, quick
+   expense, dictation (SpeechRecognizer, language setting). Instrumented 29/29.
+8. Next: merge PR #3, then M4 (OCR receipts, offline STT, XML/JSON export).
 
 ## 6. Decisions log
 
