@@ -58,6 +58,15 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
+	/*
+	 * From API 34 the user can dismiss ongoing notifications; re-post them
+	 * whenever the app comes to the foreground (ONLY_ALERT_ONCE keeps it silent).
+	 */
+	override fun onStart() {
+		super.onStart()
+		(application as ActivityTrackApp).notificationSync.refresh()
+	}
+
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
 		EntryLinks.entryOf(intent)?.let { deepLink.value = it }
