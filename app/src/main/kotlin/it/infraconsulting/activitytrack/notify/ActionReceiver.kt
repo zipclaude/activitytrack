@@ -8,9 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import it.infraconsulting.activitytrack.ActivityTrackApp
+import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,10 +25,14 @@ import kotlinx.coroutines.launch
  */
 class ActionReceiver : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
+		val app = context.applicationContext as ActivityTrackApp
+		if (intent.action == ACTION_ABSENT) {
+			absent(context, app, intent, goAsync())
+			return
+		}
 		val entryId = intent.getLongExtra(EXTRA_ENTRY, -1)
 		if (entryId < 0)
 			return
-		val app = context.applicationContext as ActivityTrackApp
 		val entries = app.container.entries
 		val pending = goAsync()
 		scope.launch {
@@ -59,8 +65,30 @@ class ActionReceiver : BroadcastReceiver() {
 		}
 	}
 
+	/* Day-start prompt answered "absent today": FULL_DAY absence, prompt dismissed. */
+	private fun absent(context: Context, app: ActivityTrackApp, intent: Intent, pending: PendingResult) {
+		val epochDay = intent.getLongExtra(EXTRA_DAY, Long.MIN_VALUE)
+		if (epochDay == Long.MIN_VALUE) {
+			pending.finish()
+			return
+		}
+		val day = LocalDate.ofEpochDay(epochDay)
+		scope.launch {
+			try {
+				app.container.entries.recordAbsence(day, AbsenceKind.FULL_DAY, null)
+				context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(0, NotificationIds.DAY_START))
+			} catch (e: ValidationException) {
+				Log.w(TAG, "rejected: ${e.message}")
+			} finally {
+				pending.finish()
+			}
+		}
+	}
+
 	companion object {
 		private const val TAG = "ActionReceiver"
+		private const val ACTION_ABSENT = "it.infraconsulting.activitytrack.action.ABSENT"
+		private const val EXTRA_DAY = "day"
 		private const val ACTION_COMMAND = "it.infraconsulting.activitytrack.action.COMMAND"
 		private const val ACTION_CONFIRM = "it.infraconsulting.activitytrack.action.CONFIRM"
 		private const val ACTION_STOP_AT_LAST = "it.infraconsulting.activitytrack.action.STOP_AT_LAST"
@@ -128,6 +156,15 @@ class ActionReceiver : BroadcastReceiver() {
 				putExtra(EXTRA_CLIENT, clientId)
 				putExtra(EXTRA_AT, atMs)
 			}
+
+		/* global action (entry 0); request code outside every entry range */
+		fun absentAllDay(context: Context, day: LocalDate): PendingIntent =
+			PendingIntent.getBroadcast(
+				context,
+				-1,
+				Intent(context, ActionReceiver::class.java).setAction(ACTION_ABSENT).putExtra(EXTRA_DAY, day.toEpochDay()),
+				PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+			)
 
 		fun dismissArrival(context: Context, entryId: Long): PendingIntent =
 			intent(context, ACTION_DISMISS, entryId, (entryId * 16 + 7).toInt())

@@ -36,6 +36,7 @@ object NotificationIds {
 	const val ARRIVAL = 4
 	const val TO_COMPLETE = 6
 	const val DAY_SUMMARY = 5	/* global, entry 0 */
+	const val DAY_START = 7		/* global, entry 0 */
 
 	fun of(entryId: Long, slot: Int): Int = (entryId * 16 + slot).toInt()
 }

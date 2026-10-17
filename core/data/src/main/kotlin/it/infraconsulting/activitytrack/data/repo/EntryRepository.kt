@@ -2,22 +2,25 @@
 package it.infraconsulting.activitytrack.data.repo
 
 import androidx.room.withTransaction
+import it.infraconsulting.activitytrack.data.db.AbsenceEntity
+import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
-import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
+import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryInvariants
 import it.infraconsulting.activitytrack.domain.model.EntryState
 import it.infraconsulting.activitytrack.domain.model.EntryStateMachine
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
 import it.infraconsulting.activitytrack.domain.model.InvariantViolationException
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.Segment
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
-import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.start.KnownSite
 import it.infraconsulting.activitytrack.domain.start.StartDefaults
 import it.infraconsulting.activitytrack.domain.start.StartProposal
@@ -25,6 +28,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import kotlinx.coroutines.flow.first
 
 /* Data for a new entry; only the client is required, except for a TRAVEL start. */
 data class StartRequest(
@@ -157,6 +162,40 @@ class EntryRepository(
 			)
 			verify(entryId)
 		}
+	}
+
+	val absences = dao.observeAbsences()
+
+	/*
+	 * Absence of [date]: FULL_DAY without time, LATE_ENTRY / EARLY_EXIT with
+	 * a local time; recording a kind again replaces it.
+	 */
+	suspend fun recordAbsence(date: LocalDate, kind: AbsenceKind, timeMin: Int?) = db.withTransaction {
+		val valid = when (kind) {
+			AbsenceKind.FULL_DAY -> timeMin == null
+			AbsenceKind.LATE_ENTRY, AbsenceKind.EARLY_EXIT -> timeMin != null && timeMin in 0 until 24 * 60
+		}
+		if (!valid)
+			throw ValidationException(Reason.INVALID_TIME_RANGE)
+		dao.deleteAbsence(date.toEpochDay(), kind)
+		dao.insertAbsence(AbsenceEntity(dateEpochDay = date.toEpochDay(), kind = kind, timeMin = timeMin))
+	}
+
+	/*
+	 * Days in [from, to] that need no day-start prompt: an entry started or
+	 * an absence recorded on them; today too while an entry is still ACTIVE
+	 * (e.g. started before midnight).
+	 */
+	suspend fun handledDays(from: LocalDate, to: LocalDate, zone: ZoneId): Set<LocalDate> {
+		val out = HashSet<LocalDate>()
+		dao.absencesBetween(from.toEpochDay(), to.toEpochDay()).forEach { out += LocalDate.ofEpochDay(it.dateEpochDay) }
+		val fromMs = from.atStartOfDay(zone).toInstant().toEpochMilli()
+		val toMs = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+		dao.entryStartsBetween(fromMs, toMs).forEach { out += Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+		val today = LocalDate.now(clock.withZone(zone))
+		if (today in from..to && dao.observeOpenEntries().first().any { it.status == EntryStatus.ACTIVE })
+			out += today
+		return out
 	}
 
 	/*

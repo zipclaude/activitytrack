@@ -402,4 +402,23 @@ class RepositoryTest {
 		locations.record(fix.copy(atMs = fix.atMs + 2), "gps", seg.id)
 		assertEquals(2, locations.fixesOfSegment(seg.id).size)
 	}
+
+	@Test
+	fun absencesAndEntriesHandleDays() = runBlocking<Unit> {
+		val zone = ZoneOffset.UTC
+		val today = java.time.LocalDate.now(clock)
+		val tomorrow = today.plusDays(1)
+		assertEquals(emptySet(), entries.handledDays(today, tomorrow, zone))
+		entries.recordAbsence(tomorrow, it.infraconsulting.activitytrack.data.db.AbsenceKind.LATE_ENTRY, 10 * 60)
+		/* recording the same kind again replaces it */
+		entries.recordAbsence(tomorrow, it.infraconsulting.activitytrack.data.db.AbsenceKind.LATE_ENTRY, 11 * 60)
+		assertEquals(1, db.entryDao().absencesBetween(tomorrow.toEpochDay(), tomorrow.toEpochDay()).size)
+		assertEquals(setOf(tomorrow), entries.handledDays(today, tomorrow, zone))
+		entries.start(StartRequest(SegmentKind.WORK, client))
+		assertEquals(setOf(today, tomorrow), entries.handledDays(today, tomorrow, zone))
+		assertEquals(
+			Reason.INVALID_TIME_RANGE,
+			reason { entries.recordAbsence(today, it.infraconsulting.activitytrack.data.db.AbsenceKind.FULL_DAY, 600) },
+		)
+	}
 }

@@ -6,11 +6,14 @@ import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.ClientSiteEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.db.CompanySiteEntity
+import it.infraconsulting.activitytrack.data.db.DayOffEntity
 import it.infraconsulting.activitytrack.data.db.PlaceEntity
 import it.infraconsulting.activitytrack.data.db.RoleEntity
 import it.infraconsulting.activitytrack.data.db.WorkScheduleEntity
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
+import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.ui.ActionViewModel
+import it.infraconsulting.activitytrack.ui.common.parseDate
 import kotlinx.coroutines.flow.StateFlow
 
 /*
@@ -25,6 +28,7 @@ class MasterDataViewModel(private val repo: MasterDataRepository) : ActionViewMo
 	val places = repo.places.state(emptyList())
 	val schedule = repo.schedule.state(emptyList())
 	val lunchBreaks = repo.lunchBreaks.state(emptyList())
+	val daysOff = repo.daysOff.state(emptyList())
 
 	private val companySiteFlows = HashMap<Long, StateFlow<List<CompanySiteEntity>>>()
 	private val clientSiteFlows = HashMap<Long, StateFlow<List<ClientSiteEntity>>>()
@@ -53,4 +57,8 @@ class MasterDataViewModel(private val repo: MasterDataRepository) : ActionViewMo
 	fun delete(s: WorkScheduleEntity, done: () -> Unit) = run(done) { repo.deleteSchedule(s) }
 	fun setLunch(day: Int, start: Int, end: Int, done: () -> Unit) = run(done) { repo.setLunchBreak(day, start, end) }
 	fun clearLunch(day: Int, done: () -> Unit) = run(done) { repo.clearLunchBreak(day) }
+	fun saveDayOff(date: String, note: String, done: () -> Unit) = run(done) {
+		repo.saveDayOff(parseDate(date) ?: throw ValidationException(ValidationException.Reason.INVALID_DATE), note)
+	}
+	fun delete(d: DayOffEntity, done: () -> Unit) = run(done) { repo.deleteDayOff(d) }
 }
