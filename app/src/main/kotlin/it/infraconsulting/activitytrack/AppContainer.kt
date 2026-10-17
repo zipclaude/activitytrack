@@ -5,6 +5,7 @@ import android.content.Context
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.geo.Nominatim
 import it.infraconsulting.activitytrack.data.geo.Osrm
+import it.infraconsulting.activitytrack.data.repo.AttachmentRepository
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.LocationRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
@@ -33,6 +34,7 @@ class AppContainer(context: Context) {
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
 	val backup: DatabaseBackup by lazy { DatabaseBackup(database, appContext.cacheDir) }
 	val locations: LocationRepository by lazy { LocationRepository(database) }
+	val attachments: AttachmentRepository by lazy { AttachmentRepository(database, userDataDir, clock) }
 
 	/* Nominatim policy: identify the application (no personal contact). */
 	private val userAgent: String by lazy {

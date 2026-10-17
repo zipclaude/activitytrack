@@ -23,5 +23,7 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		NOT_MANUAL,			/* only manual segments can be deleted */
 		INVALID_DATE,
 		INVALID_TIME,			/* a single time of day, not a range */
+		STORAGE,			/* the user data folder cannot be read or written */
+		NO_VIEWER,			/* no app can open the file */
 	}
 }
