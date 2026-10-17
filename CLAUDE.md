@@ -51,7 +51,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
-| M2 travel & location | **implemented** (steps 1–7, branch `m2-location`, draft PR #2, 2026-10-17); device test pending |
+| M2 travel & location | **implemented and device-tested** (branch `m2-location`, PR #2, 2026-10-17); merge pending owner OK |
 | M3 widgets, tile, attachments, dictation | — |
 | M4 OCR, offline STT, XML/JSON export | — |
 
@@ -119,13 +119,14 @@ M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
    coloured media icons (play, stop, pause) instead of text; a standard icon
    for Suspend if one exists; a stylised car for Travel; reuse them in the
    notifications.
-9b. Device state left by the 2026-10-17 test: `TEST_` data (restore the DB
-   backup in `/tmp/user/1000/at-backup-*`), "Arrival time" 5 min, ActivityTrack
-   selected as mock location app (owner resets it to "None").
-9c. Still to test on device: client-only completion dialog, coloured buttons,
-   day-start prompt, days off screen, late entry screen, start of tracking
-   from a notification action with "Allow all the time", reboot with an
-   ACTIVE entry (service restart), locality in the local language.
+9b. ~~Device cleanup~~ done: clean DB v2 restored, "Arrival time" 15 min. The
+   owner resets "Select mock location app" to None in Developer options.
+9c. ~~Remaining device tests~~ done (2026-10-17): coloured buttons, client-only
+   completion (empty / copy last / back), reboot with an ACTIVE entry (FGS
+   restarted by BootReceiver, fixes every 5 min with "Allow all the time"),
+   day off suppresses the prompt, day-start prompt and "Absent today",
+   late-entry screen (fix: INVALID_TIME message). Locality language checked
+   against Nominatim from the host only.
 10. Then mark PR #2 ready, merge, start M3.
 
 ## 6. Decisions log
