@@ -392,14 +392,17 @@ class RepositoryTest {
 		val fix = it.infraconsulting.activitytrack.domain.geo.Fix(
 			clock.millis(), it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.4, 12.3), 8.0,
 		)
-		locations.record(fix, "fused")
+		locations.record(fix, "fused", nowMs = fix.atMs)
 		val seg = db.entryDao().segments(a).single()
 		assertEquals(listOf(fix), locations.fixesOfSegment(seg.id))
+		/* a stale cached fix is dropped */
+		locations.record(fix.copy(atMs = fix.atMs - 600_000), "fused", nowMs = fix.atMs)
+		assertEquals(1, locations.fixesOfSegment(seg.id).size)
 		/* a stopped entry gets no periodic samples, but an explicit segment still does */
 		entries.apply(a, EntryCommand.STOP)
-		locations.record(fix.copy(atMs = fix.atMs + 1), "fused")
+		locations.record(fix.copy(atMs = fix.atMs + 1), "fused", nowMs = fix.atMs + 1)
 		assertEquals(1, locations.fixesOfSegment(seg.id).size)
-		locations.record(fix.copy(atMs = fix.atMs + 2), "gps", seg.id)
+		locations.record(fix.copy(atMs = fix.atMs + 2), "gps", seg.id, nowMs = fix.atMs + 2)
 		assertEquals(2, locations.fixesOfSegment(seg.id).size)
 	}
 
@@ -430,7 +433,7 @@ class RepositoryTest {
 		val p = it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.4, 12.3)
 		for (m in listOf(0L, 5L, 10L, 15L)) {
 			clock.now = Instant.ofEpochMilli(t0 + m * 60_000)
-			locations.record(it.infraconsulting.activitytrack.domain.geo.Fix(clock.millis(), p, 8.0), "fused")
+			locations.record(it.infraconsulting.activitytrack.domain.geo.Fix(clock.millis(), p, 8.0), "fused", nowMs = clock.millis())
 		}
 		entries.apply(id, EntryCommand.TRAVEL, t0 + 10 * 60_000)
 		val (work, travel) = db.entryDao().segments(id)
