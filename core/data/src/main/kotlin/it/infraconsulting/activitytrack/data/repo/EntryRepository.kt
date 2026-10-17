@@ -87,6 +87,9 @@ class EntryRepository(
 		return StartDefaults.propose(position, sites, previous)
 	}
 
+	/* Activity text of the last entry on [clientId], however old (completion "copy last"). */
+	suspend fun lastActivity(clientId: Long): String? = dao.lastOnClient(clientId, Long.MIN_VALUE)?.activity
+
 	/* Activity and role of the last entry on [clientId] in the last 30 days. */
 	suspend fun clientDefaults(clientId: Long): ClientDefaults? {
 		val since = clock.millis() - DEFAULTS_WINDOW.toMillis()
@@ -208,6 +211,8 @@ class EntryRepository(
 	 */
 	suspend fun arriveAtClient(entryId: Long, clientId: Long, atUtcMs: Long) = db.withTransaction {
 		val e = load(entryId)
+		if (e.clientId == clientId)
+			dao.updateEntry(e.copy(locationKind = LocationKind.CLIENT, updatedUtcMs = clock.millis()))
 		if (e.clientId == null) {
 			val client = master.client(clientId) ?: throw ValidationException(Reason.NOT_FOUND, "client $clientId")
 			dao.updateEntry(
@@ -281,15 +286,16 @@ class EntryRepository(
 	}
 
 	/*
-	 * TO_COMPLETE -> CLOSED. Requires a client and at least an activity text
-	 * (typed or dictated) or one attachment (voice note, photo, file).
+	 * TO_COMPLETE -> CLOSED. Requires a client; without activity text and
+	 * attachments only when the user confirmed it ([allowEmpty]: the work
+	 * is obvious from the client, owner decision 2026-10-17).
 	 */
-	suspend fun complete(entryId: Long, d: EntryDetails) = db.withTransaction {
+	suspend fun complete(entryId: Long, d: EntryDetails, allowEmpty: Boolean = false) = db.withTransaction {
 		updateDetails(entryId, d)
 		val e = load(entryId)
 		if (e.clientId == null)
 			throw ValidationException(Reason.CLIENT_REQUIRED)
-		if (e.activity == null && dao.attachmentCount(entryId) == 0)
+		if (!allowEmpty && e.activity == null && dao.attachmentCount(entryId) == 0)
 			throw ValidationException(Reason.COMPLETION_INCOMPLETE)
 		val t = EntryStateMachine.apply(EntryState(e.status, e.mode), EntryCommand.COMPLETE)
 		dao.updateEntry(e.copy(status = t.next.status, mode = t.next.mode, updatedUtcMs = clock.millis()))

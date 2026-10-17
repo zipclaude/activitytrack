@@ -161,6 +161,11 @@
   <string name="cmd_suspend">Suspend</string>
   <string name="cmd_stop">Stop</string>
   <string name="cmd_complete">Complete</string>
+  <string name="empty_activity_title">No activity description</string>
+  <string name="empty_activity_text">Complete with the client only?</string>
+  <string name="empty_activity_leave">Leave it empty</string>
+  <string name="empty_activity_copy">Copy the last one: %1$s</string>
+  <string name="empty_activity_edit">Back to editing</string>
   <string name="cmd_reopen">Reopen</string>
   <string name="since_fmt">%1$s since %2$s</string>
   <string name="totals_fmt">Work %1$s · Travel %2$s</string>

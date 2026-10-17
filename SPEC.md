@@ -77,8 +77,9 @@ mode   : WORK | TRAVEL | PAUSE      (only when ACTIVE)
 - Pause affects only the entry it is started on.
 - STOP offers *close* or *start return travel*; the return travel belongs to
   the same entry and the entry is closed on arrival.
-- Completion requires at least one of: activity text, dictation, voice note,
-  attachment.
+- Completion requires the client. Without activity text, dictation, voice
+  note or attachment the app asks: leave it empty, copy the last activity on
+  the same client, or go back to editing.
 - TRAVEL and PAUSE segments can be added manually afterwards (time and km).
 
 ### 3.2 Other entry data
