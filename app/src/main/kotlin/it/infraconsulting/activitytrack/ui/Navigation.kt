@@ -38,6 +38,8 @@ sealed interface Screen {
 	data object Places : Screen
 	data object Schedule : Screen
 	data object DaysOff : Screen
+	/* expense for the most recent open entry (widget, shortcut) */
+	data object QuickExpense : Screen
 	/* late entry for a day, from the day-start prompt */
 	data class LateEntry(val epochDay: Long) : Screen
 
@@ -54,7 +56,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff)
+			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense)
 				.associateBy { it.key() }
 		}
 

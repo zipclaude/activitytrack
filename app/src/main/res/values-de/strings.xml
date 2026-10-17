@@ -216,6 +216,15 @@
   <string name="external_refs">Externe Referenzen</string>
   <string name="external_ref_new">Ticket, URL oder Code</string>
   <string name="attachments">Anhänge</string>
+  <string name="expenses">Ausgaben</string>
+  <string name="expense_add">Ausgabe hinzufügen</string>
+  <string name="expense_amount">Betrag (€)</string>
+  <string name="expense_description">Beschreibung</string>
+  <string name="expense_receipt">Belegfoto</string>
+  <string name="expense_receipt_again">Belegfoto neu aufnehmen</string>
+  <string name="expense_no_entry">Keine offene Tätigkeit für die Ausgabe.</string>
+  <string name="err_invalid_amount">Einen Betrag größer als null eingeben.</string>
+  <string name="shortcut_expense">Ausgabe</string>
   <string name="att_photo">Foto</string>
   <string name="att_audio">Sprachnotiz</string>
   <string name="att_receipt">Beleg</string>
