@@ -273,6 +273,11 @@
   <string name="day_empty">No hay tiempo registrado este día.</string>
   <string name="day_line_fmt">Trabajo %1$s → %2$s · Viaje %3$s → %4$s · Pausa %5$s → %6$s</string>
   <string name="export_title">Importar / exportar</string>
+  <string name="connector_title">Sistema de gestión</string>
+  <string name="connector_external_code">Código en el sistema de gestión</string>
+  <string name="connector_plugin">Conector</string>
+  <string name="connector_not_set">Sin definir</string>
+  <string name="connector_generic_hint">Intercambio con archivos JSON / XML desde Importar / exportar.</string>
   <string name="todo_title">Pendientes</string>
   <string name="todo_due_today">Pendientes de hoy</string>
   <string name="todo_today">hoy</string>
