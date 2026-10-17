@@ -111,8 +111,9 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 M4–M7 were written autonomously on 2026-10-17 evening (owner away, phone not
 available). PR stack, to merge in order after the device tests:
-#4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`.
-Install the top of the stack (`m7-ui-polish`); back up `databases/` first.
+#4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`
+→ #8 `m8-hardening` (review fixes, backup restore, SPEC/DESIGN, user manual).
+Install the top of the stack (`m8-hardening`); back up `databases/` first.
 
 ### Device tests
 1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
@@ -128,7 +129,10 @@ Install the top of the stack (`m7-ui-polish`); back up `databases/` first.
    sample data; taps open entries / days; back from a tab goes Home.
 4. **M7**: visual review of the home card (state pill, running time), green
    start, empty state.
-5. Cleanup: restore the clean DB, delete TEST files in the data folder,
+5. **Restore**: Import / export → "Restore backup" with a daily backup zip
+   (confirm dialog, "-before-restore" zip written, app restarts with the old data).
+6. Read `docs/MANUALE.md` against the app.
+7. Cleanup: restore the clean DB, delete TEST files in the data folder,
    remove TEST events from the calendar (or the local calendar).
 
 ### Provisional decisions to confirm
