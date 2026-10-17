@@ -159,6 +159,28 @@ class EntryRepository(
 		dao.updateEntry(e.copy(lastConfirmedUtcMs = now, unansweredReminders = 0, updatedUtcMs = now))
 	}
 
+	/*
+	 * STOP backdated to the last confirmation ("stop when I last said yes").
+	 * The open segment ends at max(open start, last confirmation), never in
+	 * the future; without a confirmation it behaves as a plain STOP.
+	 */
+	suspend fun stopAtLastConfirmation(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		val t = EntryStateMachine.apply(EntryState(e.status, e.mode), EntryCommand.STOP)
+		val now = clock.millis()
+		val at = minOf(e.lastConfirmedUtcMs ?: now, now)
+		if (t.closeOpenSegment)
+			check(dao.closeOpenSegment(entryId, at) == 1) { "entry $entryId: no open segment to close" }
+		dao.updateEntry(e.copy(status = t.next.status, mode = t.next.mode, updatedUtcMs = now))
+		verify(entryId)
+	}
+
+	/* A reminder about [entryId] was posted and not answered yet. */
+	suspend fun markReminded(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		dao.updateEntry(e.copy(unansweredReminders = e.unansweredReminders + 1, updatedUtcMs = clock.millis()))
+	}
+
 	suspend fun updateDetails(entryId: Long, d: EntryDetails) = db.withTransaction {
 		val e = load(entryId)
 		dao.updateEntry(

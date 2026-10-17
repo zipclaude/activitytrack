@@ -151,4 +151,5 @@
   <string name="complete_title">Completa \"%1$s\"</string>
   <string name="err_completion_incomplete">Descrivi l\'attività.</string>
   <string name="err_client_required">Scegli un cliente.</string>
+  <string name="notif_to_complete_title">Attività da completare</string>
 </resources>

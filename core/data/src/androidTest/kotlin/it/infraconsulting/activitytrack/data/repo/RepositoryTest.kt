@@ -242,6 +242,22 @@ class RepositoryTest {
 	}
 
 	@Test
+	fun stopAtLastConfirmationBackdates() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		entries.confirm(id)
+		val confirmed = clock.millis()
+		clock.advance(45)
+		entries.markReminded(id)
+		entries.markReminded(id)
+		assertEquals(2, db.entryDao().entry(id)?.unansweredReminders)
+		entries.stopAtLastConfirmation(id)
+		val e = db.entryDao().entry(id)!!
+		assertEquals(EntryStatus.TO_COMPLETE, e.status)
+		assertEquals(confirmed, db.entryDao().segments(id).single().endUtcMs)
+	}
+
+	@Test
 	fun clientLastUse() = runBlocking<Unit> {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(listOf(client to clock.millis()), entries.clientLastUse.first().map { it.clientId to it.lastMs })
