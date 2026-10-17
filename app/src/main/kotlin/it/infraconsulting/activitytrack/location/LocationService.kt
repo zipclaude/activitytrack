@@ -97,10 +97,14 @@ class LocationService : Service() {
 			tracker.current(seg, highAccuracy = true)
 		for (seg in openTravel - now)
 			tracker.current(seg, highAccuracy = true)
+		if ((openTravel - now).isNotEmpty())
+			GeoEnrichWorker.enqueue(this)
 		openTravel = now
 	}
 
 	private fun stop() {
+		/* entries just stopped may need a locality proposal */
+		GeoEnrichWorker.enqueue(this)
 		ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
 		fgsEntry?.let { cancelOngoing(it) }
 		fgsEntry = null

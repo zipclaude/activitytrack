@@ -43,6 +43,16 @@ class LocationRepository(db: ActivityTrackDatabase) {
 			Fix(it.tsUtcMs, GeoPoint(it.lat, it.lon), it.accuracyM?.toDouble() ?: UNKNOWN_ACCURACY_M)
 		}
 
+	suspend fun travelWithoutKm(): List<SegmentEntity> = dao.travelWithoutKm()
+
+	suspend fun setKmEstimated(segmentId: Long, km: Double) = dao.setKmEstimated(segmentId, km)
+
+	suspend fun entriesWithoutLocality(): List<Long> = dao.entriesWithoutLocality()
+
+	suspend fun localityPoint(entryId: Long): GeoPoint? = dao.localitySample(entryId)?.let { GeoPoint(it.lat, it.lon) }
+
+	suspend fun proposeLocality(entryId: Long, locality: String, nowMs: Long) = dao.proposeLocality(entryId, locality, nowMs)
+
 	private companion object {
 		/* rare provider fixes without accuracy count as mediocre, not as exact */
 		const val UNKNOWN_ACCURACY_M = 100.0
