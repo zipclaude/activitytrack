@@ -174,12 +174,12 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					AddButton { vm.addRef(newRef) { newRef = "" } }
 				}
 			}
-			if (error != null)
-				item {
-					Text(reasonText(error!!), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
-				}
 		}
 
+		/* outside the list: a validation error must stay visible above the buttons */
+		error?.let {
+			Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp))
+		}
 		Row(
 			modifier = Modifier.fillMaxWidth().padding(16.dp),
 			horizontalArrangement = Arrangement.spacedBy(8.dp),
