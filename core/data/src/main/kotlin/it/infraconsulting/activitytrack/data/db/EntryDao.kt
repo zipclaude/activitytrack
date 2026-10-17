@@ -136,6 +136,10 @@ interface EntryDao {
 	@Query("SELECT COUNT(*) FROM attachment")
 	suspend fun attachmentTotal(): Int
 
+	/* Samples taken after a backdated transition belong to the segment opened by it. */
+	@Query("UPDATE location_sample SET segment_id = :segmentId WHERE entry_id = :entryId AND ts_utc_ms >= :fromUtcMs")
+	suspend fun retagSamples(entryId: Long, segmentId: Long, fromUtcMs: Long)
+
 	@Insert
 	suspend fun insertAbsence(a: AbsenceEntity): Long
 

@@ -148,7 +148,10 @@ class EntryRepository(
 			if (t.closeOpenSegment)
 				check(dao.closeOpenSegment(entryId, at) == 1) { "entry $entryId: no open segment to close" }
 			t.openSegment?.let {
-				dao.insertSegment(SegmentEntity(entryId = entryId, kind = it, startUtcMs = at, zoneId = clock.zone.id))
+				val segId = dao.insertSegment(SegmentEntity(entryId = entryId, kind = it, startUtcMs = at, zoneId = clock.zone.id))
+				/* e.g. "travel from 10:05" tapped at 10:20: the fixes since 10:05 are part of the travel */
+				if (atUtcMs != null)
+					dao.retagSamples(entryId, segId, at)
 			}
 			val resumed = t.openSegment != null
 			dao.updateEntry(
