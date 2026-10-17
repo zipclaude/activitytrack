@@ -1,0 +1,166 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+package it.infraconsulting.activitytrack.ui.start
+
+import androidx.lifecycle.viewModelScope
+import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import it.infraconsulting.activitytrack.data.repo.EntryRepository
+import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
+import it.infraconsulting.activitytrack.data.repo.StartRequest
+import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.model.LocationKind
+import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.domain.start.ClientChoice
+import it.infraconsulting.activitytrack.domain.start.ClientPicker
+import it.infraconsulting.activitytrack.ui.ActionViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+data class StartForm(
+	val ready: Boolean = false,
+	val mode: SegmentKind = SegmentKind.WORK,
+	val companyId: Long? = null,		/* client filter; null = all companies */
+	val clientId: Long? = null,
+	val roleId: Long? = null,
+	val activity: String = "",
+	val locationKind: LocationKind = LocationKind.OTHER,
+	/* user edits win over the per-client defaults */
+	val activityTouched: Boolean = false,
+	val roleTouched: Boolean = false,
+) {
+	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
+}
+
+/* A running entry the user must decide about before the new one starts. */
+data class RunningEntry(val entry: TimeEntryEntity, val title: String)
+
+class StartViewModel(
+	private val entries: EntryRepository,
+	private val master: MasterDataRepository,
+) : ActionViewModel() {
+	private val _form = MutableStateFlow(StartForm())
+	val form = _form.asStateFlow()
+
+	val companies = master.companies.state(emptyList())
+	val roles = master.roles.state(emptyList())
+	val presets = master.presets.state(emptyList())
+
+	private val allChoices = combine(master.clients, entries.clientLastUse) { clients, uses ->
+		val last = uses.associate { it.clientId to it.lastMs }
+		clients.map { ClientChoice(it.id, it.companyId, it.name, it.archived, last[it.id]) }
+	}.state(emptyList())
+
+	/* Clients shown for the current company filter, most recent first. */
+	val clients = combine(allChoices, _form) { all, f -> ClientPicker.order(all, f.companyId, f.clientId) }
+		.state(emptyList())
+
+	/* Running entries still to be asked about (head = current dialog). */
+	private val _pending = MutableStateFlow<List<RunningEntry>>(emptyList())
+	val pending = _pending.asStateFlow()
+	private val decisions = HashMap<Long, EntryCommand>()
+	private var onStarted: () -> Unit = {}
+
+	init {
+		viewModelScope.launch {
+			val p = entries.startProposal(master.knownSites())
+			_form.update { it.copy(ready = true, companyId = p.companyId, clientId = p.clientId, locationKind = p.locationKind) }
+			p.clientId?.let { applyDefaults(it) }
+		}
+	}
+
+	fun setMode(mode: SegmentKind) = _form.update { it.copy(mode = mode) }
+
+	/* Changing the company filter drops a client of another company. */
+	fun setCompany(companyId: Long?) = _form.update { f ->
+		val keep = f.clientId?.let { id -> allChoices.value.firstOrNull { it.id == id } }
+			?.takeIf { companyId == null || it.companyId == companyId }
+		f.copy(companyId = companyId, clientId = keep?.id)
+	}
+
+	fun setClient(clientId: Long?) {
+		val c = allChoices.value.firstOrNull { it.id == clientId }
+		_form.update { it.copy(clientId = clientId, companyId = c?.companyId ?: it.companyId) }
+		if (clientId != null)
+			viewModelScope.launch { applyDefaults(clientId) }
+	}
+
+	fun setActivity(text: String) = _form.update { it.copy(activity = text, activityTouched = true) }
+	fun setRole(roleId: Long?) = _form.update { it.copy(roleId = roleId, roleTouched = true) }
+
+	fun applyPreset(presetId: Long) {
+		val p = presets.value.firstOrNull { it.id == presetId } ?: return
+		_form.update {
+			it.copy(
+				activity = p.text,
+				activityTouched = true,
+				roleId = if (it.roleTouched || p.defaultRoleId == null) it.roleId else p.defaultRoleId,
+			)
+		}
+	}
+
+	/* Activity and role of the last entry on the client (30 d), unless edited. */
+	private suspend fun applyDefaults(clientId: Long) {
+		val d = entries.clientDefaults(clientId) ?: return
+		_form.update { f ->
+			if (f.clientId != clientId)
+				f
+			else
+				f.copy(
+					activity = if (f.activityTouched) f.activity else d.activity.orEmpty(),
+					roleId = if (f.roleTouched) f.roleId else d.roleId,
+				)
+		}
+	}
+
+	/* Start, asking first about every ACTIVE entry (SPEC §3.1). */
+	fun requestStart(onDone: () -> Unit) {
+		onStarted = onDone
+		decisions.clear()
+		viewModelScope.launch {
+			val clients = master.clients.first().associateBy { it.id }
+			val companies = master.companies.first().associateBy { it.id }
+			val active = entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+			_pending.value = active.map { e ->
+				RunningEntry(e, e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name }.orEmpty())
+			}
+			if (active.isEmpty())
+				doStart()
+		}
+	}
+
+	/* Decision for the head of the queue: STOP, SUSPEND, or null = leave running. */
+	fun decide(cmd: EntryCommand?) {
+		val head = _pending.value.firstOrNull() ?: return
+		if (cmd != null)
+			decisions[head.entry.id] = cmd
+		_pending.value = _pending.value.drop(1)
+		if (_pending.value.isEmpty())
+			doStart()
+	}
+
+	fun cancelStart() {
+		_pending.value = emptyList()
+		decisions.clear()
+	}
+
+	private fun doStart() {
+		val f = _form.value
+		run(onStarted) {
+			entries.start(
+				StartRequest(
+					mode = f.mode,
+					clientId = f.clientId,
+					companyId = if (f.clientId == null) f.companyId else null,
+					roleId = f.roleId,
+					activity = f.activity,
+					locationKind = f.locationKind,
+				),
+				HashMap(decisions),
+			)
+		}
+	}
+}
