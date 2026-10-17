@@ -452,4 +452,17 @@ class RepositoryTest {
 		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(id)!!.status)
 		assertNull(db.entryDao().entry(id)!!.activity)
 	}
+
+	@Test
+	fun expensesNeedAmountAndDescription() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.TRAVEL, client))
+		assertEquals(Reason.INVALID_AMOUNT, reason { entries.addExpense(id, 0, "fuel") })
+		assertEquals(Reason.BLANK_VALUE, reason { entries.addExpense(id, 1250, "  ") })
+		val e = entries.addExpense(id, 1250, " fuel ")
+		val row = entries.expenses(id).first().single()
+		assertEquals(e, row.id)
+		assertEquals("fuel", row.description)
+		/* tied to the open TRAVEL segment */
+		assertEquals(db.entryDao().segments(id).single().id, row.segmentId)
+	}
 }

@@ -10,15 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
@@ -37,17 +33,18 @@ import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.location.CurrentPosition
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
+import it.infraconsulting.activitytrack.ui.common.DictationInput
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
-import it.infraconsulting.activitytrack.ui.common.SectionHeader
+import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.reasonText
 
 @Composable
-fun StartScreen(onBack: () -> Unit) {
+fun StartScreen(onBack: () -> Unit, clientId: Long? = null) {
 	val context = LocalContext.current.applicationContext
-	val vm = appViewModel { StartViewModel(it.entries, it.masterData) { CurrentPosition.get(context) } }
+	val vm = appViewModel { StartViewModel(it.entries, it.masterData, clientId) { CurrentPosition.get(context) } }
 	val f by vm.form.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val clients by vm.clients.collectAsState()
@@ -87,14 +84,21 @@ fun StartScreen(onBack: () -> Unit) {
 						) { vm.setCompany(it) }
 					}
 				}
-				item { SectionHeader(stringResource(R.string.field_client)) }
-				if (f.mode == SegmentKind.TRAVEL)
-					item { ClientRow(stringResource(R.string.client_unknown), f.clientId == null) { vm.setClient(null) } }
 				if (clients.isEmpty())
 					item { EmptyText(stringResource(R.string.start_no_clients)) }
-				items(clients, key = { it.id }) { c ->
-					ClientRow(c.name, f.clientId == c.id) { vm.setClient(c.id) }
-				}
+				else
+					item {
+						/* combo box (owner request): type to search, or pick from the dropdown; most recent first */
+						val unknown = stringResource(R.string.client_unknown)
+						Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+							SearchableChoiceField(
+								stringResource(R.string.field_client),
+								(if (f.mode == SegmentKind.TRAVEL) listOf<Pair<Long?, String>>(null to unknown) else emptyList()) +
+									clients.map { it.id to it.name },
+								f.clientId,
+							) { vm.setClient(it) }
+						}
+					}
 				item {
 					Column(
 						modifier = Modifier.padding(16.dp),
@@ -108,7 +112,7 @@ fun StartScreen(onBack: () -> Unit) {
 								listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
 								null,
 							) { id -> id?.let(vm::applyPreset) }
-						TextInput(stringResource(R.string.field_activity), f.activity, vm::setActivity, singleLine = false)
+						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity)
 						ChoiceField(
 							stringResource(R.string.field_role),
 							listOf<Pair<Long?, String>>(null to none) +
@@ -133,20 +137,6 @@ fun StartScreen(onBack: () -> Unit) {
 	}
 
 	pending.firstOrNull()?.let { r -> RunningDialog(r, vm) }
-}
-
-@Composable
-private fun ClientRow(name: String, selected: Boolean, onClick: () -> Unit) {
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
-			.padding(horizontal = 16.dp, vertical = 4.dp),
-		verticalAlignment = Alignment.CenterVertically,
-	) {
-		RadioButton(selected = selected, onClick = null)
-		Text(name, modifier = Modifier.padding(start = 12.dp))
-	}
 }
 
 /*

@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
+import java.text.Normalizer
 
 /* Top bar with optional back button; no icon library, plain glyphs. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,17 +122,62 @@ fun TextInput(
 	keyboardType: KeyboardType = KeyboardType.Text,
 	isError: Boolean = false,
 	singleLine: Boolean = true,
+	trailing: (@Composable () -> Unit)? = null,
 ) {
 	OutlinedTextField(
 		value = value,
 		onValueChange = onChange,
 		label = { Text(label) },
+		trailingIcon = trailing,
 		singleLine = singleLine,
 		isError = isError,
 		keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
 		modifier = Modifier.fillMaxWidth(),
 	)
 }
+
+/*
+ * Editable combo box (owner request 2026-10-17): typing filters the options
+ * (case and accents ignored), the dropdown lists the matches in the given
+ * order. Leaving the field restores the selected label if nothing was picked.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> SearchableChoiceField(label: String, options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
+	val selectedText = options.firstOrNull { it.first == selected }?.second.orEmpty()
+	var text by remember(selectedText) { mutableStateOf(selectedText) }
+	var expanded by remember { mutableStateOf(false) }
+	val query = fold(text)
+	/* the full list while the field shows the current choice, matches once the user types */
+	val shown = if (text == selectedText) options else options.filter { fold(it.second).contains(query) }
+	ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+		OutlinedTextField(
+			value = text,
+			onValueChange = { text = it; expanded = true },
+			singleLine = true,
+			label = { Text(label) },
+			trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+				.onFocusChanged { if (!it.isFocused) text = selectedText },
+		)
+		ExposedDropdownMenu(expanded = expanded && shown.isNotEmpty(), onDismissRequest = { expanded = false }) {
+			shown.forEach { (value, optionText) ->
+				DropdownMenuItem(
+					text = { Text(optionText) },
+					onClick = {
+						onSelect(value)
+						text = optionText
+						expanded = false
+					},
+				)
+			}
+		}
+	}
+}
+
+/* Lower case without diacritics, for searching names ("Négoce" ~ "nego"). */
+fun fold(s: String): String =
+	Normalizer.normalize(s.trim(), Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
 
 /* Read-only dropdown; [options] pairs a value with its label. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -217,6 +264,9 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.OVERLAPPING_SEGMENTS -> R.string.err_overlapping_segments
 		Reason.INVALID_DATE -> R.string.err_invalid_date
 		Reason.INVALID_TIME -> R.string.err_invalid_time
+		Reason.STORAGE -> R.string.err_storage
+		Reason.NO_VIEWER -> R.string.err_no_viewer
+		Reason.INVALID_AMOUNT -> R.string.err_invalid_amount
 		else -> R.string.err_generic
 	},
 )

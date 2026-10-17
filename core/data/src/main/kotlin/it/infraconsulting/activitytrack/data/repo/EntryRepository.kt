@@ -5,6 +5,8 @@ import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.data.db.AbsenceEntity
 import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
+import it.infraconsulting.activitytrack.data.db.AttachmentEntity
+import it.infraconsulting.activitytrack.data.db.ExpenseEntity
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
@@ -171,6 +173,39 @@ class EntryRepository(
 	}
 
 	val absences = dao.observeAbsences()
+
+	fun expenses(entryId: Long) = dao.observeExpenses(entryId)
+
+	/*
+	 * Expense in EUR (SPEC §4): positive amount, description required, an
+	 * optional receipt attachment. Tied to the open segment when the entry
+	 * is ACTIVE (e.g. fuel during a travel).
+	 */
+	suspend fun addExpense(entryId: Long, amountCents: Long, description: String, receiptId: Long? = null): Long =
+		db.withTransaction {
+			if (amountCents <= 0)
+				throw ValidationException(Reason.INVALID_AMOUNT)
+			val text = description.trim().ifEmpty { throw ValidationException(Reason.BLANK_VALUE) }
+			val e = load(entryId)
+			val open = if (e.status == EntryStatus.ACTIVE) dao.segments(entryId).lastOrNull { it.endUtcMs == null } else null
+			val now = clock.millis()
+			val id = dao.insertExpense(
+				ExpenseEntity(
+					entryId = entryId,
+					segmentId = open?.id,
+					amountCents = amountCents,
+					description = text,
+					attachmentId = receiptId,
+					createdUtcMs = now,
+				),
+			)
+			dao.updateEntry(e.copy(updatedUtcMs = now))
+			id
+		}
+
+	suspend fun deleteExpense(expenseId: Long) = dao.deleteExpense(expenseId)
+
+	suspend fun attachment(id: Long): AttachmentEntity? = dao.attachment(id)
 
 	/*
 	 * Absence of [date]: FULL_DAY without time, LATE_ENTRY / EARLY_EXIT with

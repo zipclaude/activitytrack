@@ -22,6 +22,8 @@ import androidx.compose.runtime.toMutableStateList
 sealed interface Screen {
 	data object Home : Screen
 	data object Start : Screen
+	/* start flow with a client already picked (widget, shortcut) */
+	data class StartFor(val clientId: Long) : Screen
 	data class Entry(val id: Long) : Screen
 	data object Day : Screen
 	data object Export : Screen
@@ -36,6 +38,8 @@ sealed interface Screen {
 	data object Places : Screen
 	data object Schedule : Screen
 	data object DaysOff : Screen
+	/* expense for the most recent open entry (widget, shortcut) */
+	data object QuickExpense : Screen
 	/* late entry for a day, from the day-start prompt */
 	data class LateEntry(val epochDay: Long) : Screen
 
@@ -45,13 +49,14 @@ sealed interface Screen {
 		is Company -> "company/$id"
 		is Client -> "client/$id"
 		is LateEntry -> "late/$epochDay"
+		is StartFor -> "start/$clientId"
 		else -> this::class.simpleName!!
 	}
 
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff)
+			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense)
 				.associateBy { it.key() }
 		}
 
@@ -64,6 +69,7 @@ sealed interface Screen {
 				"company" -> Company(n)
 				"client" -> Client(n)
 				"late" -> LateEntry(n)
+				"start" -> StartFor(n)
 				else -> null
 			}
 		}

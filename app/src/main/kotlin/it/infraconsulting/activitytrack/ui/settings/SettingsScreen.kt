@@ -109,6 +109,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 	var nominatimOn by remember { mutableStateOf(initial.nominatim.enabled) }
 	var osrmOn by remember { mutableStateOf(initial.osrm.enabled) }
 	var tilesOn by remember { mutableStateOf(initial.tiles.enabled) }
+	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
 	var work by remember { mutableStateOf(initial.rounding.work) }
 	var travel by remember { mutableStateOf(initial.rounding.travel) }
 	var pause by remember { mutableStateOf(initial.rounding.pause) }
@@ -135,6 +136,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 		nominatim = OnlineService(nominatimOn, text[F.NOMINATIM].orEmpty()),
 		osrm = OnlineService(osrmOn, text[F.OSRM].orEmpty()),
 		tiles = OnlineService(tilesOn, text[F.TILES].orEmpty()),
+		dictationLanguage = dictation,
 		rounding = ReportRounding(
 			work.copy(minimum = minutes(F.WORK_MIN, work.minimum)),
 			travel.copy(minimum = minutes(F.TRAVEL_MIN, travel.minimum)),
@@ -159,10 +161,21 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 
 			SectionHeader(stringResource(R.string.sec_location))
 			LocationPermissionRows()
+			AddTileRow()
 			field(F.MOVEMENT, R.string.set_movement)
 			field(F.ST_RADIUS, R.string.set_stationary_radius)
 			field(F.ST_MIN, R.string.set_stationary_min)
 			field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
+
+			SectionHeader(stringResource(R.string.sec_dictation))
+			/* language names in their own language, as in the system pickers */
+			ChoiceField(
+				stringResource(R.string.set_dictation_language),
+				AppSettings.DICTATION_LANGUAGES.map { tag ->
+					tag to java.util.Locale.forLanguageTag(tag).let { it.getDisplayLanguage(it).replaceFirstChar(Char::titlecase) }
+				},
+				dictation,
+			) { dictation = it }
 
 			SectionHeader(stringResource(R.string.sec_reports))
 			field(F.CARRY_OVER, R.string.set_carry_over, KeyboardType.Text)
