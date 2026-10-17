@@ -33,6 +33,9 @@ class MasterDataRepository(private val db: ActivityTrackDatabase) {
 	val schedule = dao.observeSchedule()
 	val lunchBreaks = dao.observeLunchBreaks()
 
+	suspend fun company(id: Long): CompanyEntity? = dao.company(id)
+	suspend fun client(id: Long): ClientEntity? = dao.client(id)
+
 	fun companySites(companyId: Long) = dao.observeCompanySites(companyId)
 	fun clientSites(clientId: Long) = dao.observeClientSites(clientId)
 

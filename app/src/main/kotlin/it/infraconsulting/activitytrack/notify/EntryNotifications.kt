@@ -32,6 +32,8 @@ object NotificationIds {
 	const val ONGOING = 0
 	const val CONFIRM = 1
 	const val PAUSE = 2
+	const val MOVEMENT = 3
+	const val ARRIVAL = 4
 	const val TO_COMPLETE = 6
 	const val DAY_SUMMARY = 5	/* global, entry 0 */
 
@@ -134,6 +136,11 @@ object EntryNotifications {
 						nm.cancel(NotificationIds.of(id, NotificationIds.CONFIRM))
 					else
 						nm.cancel(NotificationIds.of(id, NotificationIds.PAUSE))
+					/* movement prompts belong to WORK, arrival prompts to TRAVEL */
+					if (info.entry.mode != SegmentKind.WORK)
+						nm.cancel(NotificationIds.of(id, NotificationIds.MOVEMENT))
+					if (info.entry.mode != SegmentKind.TRAVEL)
+						nm.cancel(NotificationIds.of(id, NotificationIds.ARRIVAL))
 				}
 				EntryStatus.TO_COMPLETE -> {
 					cancelAll(nm, id)
@@ -145,7 +152,10 @@ object EntryNotifications {
 	}
 
 	private fun cancelAll(nm: NotificationManager, entryId: Long) {
-		for (slot in listOf(NotificationIds.ONGOING, NotificationIds.CONFIRM, NotificationIds.PAUSE, NotificationIds.TO_COMPLETE))
+		for (slot in listOf(
+			NotificationIds.ONGOING, NotificationIds.CONFIRM, NotificationIds.PAUSE,
+			NotificationIds.MOVEMENT, NotificationIds.ARRIVAL, NotificationIds.TO_COMPLETE,
+		))
 			nm.cancel(NotificationIds.of(entryId, slot))
 	}
 }

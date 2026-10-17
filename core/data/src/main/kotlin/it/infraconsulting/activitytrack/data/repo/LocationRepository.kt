@@ -3,6 +3,7 @@ package it.infraconsulting.activitytrack.data.repo
 
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.LocationSampleEntity
+import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.domain.geo.Fix
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 
@@ -34,6 +35,8 @@ class LocationRepository(db: ActivityTrackDatabase) {
 			)
 		})
 	}
+
+	suspend fun activeOpenSegments(): List<SegmentEntity> = dao.activeOpenSegments()
 
 	suspend fun fixesOfSegment(segmentId: Long): List<Fix> =
 		dao.samplesOfSegment(segmentId).map {

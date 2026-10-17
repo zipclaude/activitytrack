@@ -7,6 +7,7 @@
   <string name="ch_confirm">Activity confirmation</string>
   <string name="ch_pause">Pause reminders</string>
   <string name="ch_movement">Movement alerts</string>
+  <string name="ch_arrival">Arrival prompts</string>
   <string name="ch_day_start">Start of day</string>
   <string name="ch_day_summary">Daily summary</string>
   <string name="ch_to_complete">Activities to complete</string>
@@ -175,6 +176,15 @@
   <string name="notif_confirm_title">Still on %1$s?</string>
   <string name="notif_confirm_text">Last confirmation at %1$s</string>
   <string name="notif_stop_at">Stop at %1$s</string>
+  <string name="notif_moved_title">Moved away from %1$s?</string>
+  <string name="notif_moved_text">Left at %1$s</string>
+  <string name="notif_travel_from">Travel from %1$s</string>
+  <string name="notif_ignore">Ignore</string>
+  <string name="notif_arrived_title">Arrived?</string>
+  <string name="notif_arrived_text">%1$s · stopped at %2$s</string>
+  <string name="notif_work_at_client">Work at %1$s from %2$s</string>
+  <string name="notif_work_from">Work from %1$s</string>
+  <string name="notif_still_travelling">Still travelling</string>
   <string name="notif_pause_title">Still on pause?</string>
   <string name="notif_summary_title">Today</string>
   <string name="notif_summary_text">Solar %1$s · reported %2$s</string>

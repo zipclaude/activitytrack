@@ -353,4 +353,53 @@ class RepositoryTest {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(listOf(client to clock.millis()), entries.clientLastUse.first().map { it.clientId to it.lastMs })
 	}
+
+	@Test
+	fun backdatedCommandsAreClamped() = runBlocking<Unit> {
+		val t0 = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		/* departure detected 10 min after the start */
+		entries.apply(id, EntryCommand.TRAVEL, t0 + 10 * 60_000)
+		/* an arrival before the travel start is clamped to it; one in the future to now */
+		clock.advance(30)
+		entries.apply(id, EntryCommand.WORK, t0)
+		entries.apply(id, EntryCommand.PAUSE, clock.millis() + 3_600_000)
+		val segs = db.entryDao().segments(id)
+		assertEquals(listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.WORK, SegmentKind.PAUSE), segs.map { it.kind })
+		assertEquals(t0 + 10 * 60_000, segs[0].endUtcMs)
+		assertEquals(segs[1].startUtcMs, segs[1].endUtcMs)
+		assertEquals(clock.millis(), segs[3].startUtcMs)
+	}
+
+	@Test
+	fun arrivalAssignsClientToTravellingEntry() = runBlocking<Unit> {
+		val t0 = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.TRAVEL, null))
+		clock.advance(40)
+		entries.arriveAtClient(id, client, t0 + 25 * 60_000)
+		val e = db.entryDao().entry(id)!!
+		assertEquals(client, e.clientId)
+		assertEquals(acme, e.companyId)
+		assertEquals(SegmentKind.WORK, e.mode)
+		assertEquals(t0 + 25 * 60_000, db.entryDao().segments(id).last().startUtcMs)
+	}
+
+	@Test
+	fun samplesAreTaggedWithTheOpenSegment() = runBlocking<Unit> {
+		val locations = LocationRepository(db)
+		val a = entries.start(StartRequest(SegmentKind.WORK, client))
+		val fix = it.infraconsulting.activitytrack.domain.geo.Fix(
+			clock.millis(), it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.4, 12.3), 8.0,
+		)
+		locations.record(fix, "fused")
+		val seg = db.entryDao().segments(a).single()
+		assertEquals(listOf(fix), locations.fixesOfSegment(seg.id))
+		/* a stopped entry gets no periodic samples, but an explicit segment still does */
+		entries.apply(a, EntryCommand.STOP)
+		locations.record(fix.copy(atMs = fix.atMs + 1), "fused")
+		assertEquals(1, locations.fixesOfSegment(seg.id).size)
+		locations.record(fix.copy(atMs = fix.atMs + 2), "gps", seg.id)
+		assertEquals(2, locations.fixesOfSegment(seg.id).size)
+	}
 }

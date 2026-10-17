@@ -4,6 +4,7 @@
   <string name="ch_confirm">Tätigkeitsbestätigung</string>
   <string name="ch_pause">Pausenerinnerungen</string>
   <string name="ch_movement">Bewegungswarnungen</string>
+  <string name="ch_arrival">Ankunftsabfragen</string>
   <string name="ch_day_start">Tagesbeginn</string>
   <string name="ch_day_summary">Tageszusammenfassung</string>
   <string name="ch_to_complete">Zu vervollständigende Tätigkeiten</string>
@@ -164,6 +165,15 @@
   <string name="notif_confirm_title">Noch bei %1$s?</string>
   <string name="notif_confirm_text">Zuletzt bestätigt um %1$s</string>
   <string name="notif_stop_at">Stopp um %1$s</string>
+  <string name="notif_moved_title">Von %1$s entfernt?</string>
+  <string name="notif_moved_text">Losgefahren um %1$s</string>
+  <string name="notif_travel_from">Reise ab %1$s</string>
+  <string name="notif_ignore">Ignorieren</string>
+  <string name="notif_arrived_title">Angekommen?</string>
+  <string name="notif_arrived_text">%1$s · Halt seit %2$s</string>
+  <string name="notif_work_at_client">Arbeit bei %1$s ab %2$s</string>
+  <string name="notif_work_from">Arbeit ab %1$s</string>
+  <string name="notif_still_travelling">Noch unterwegs</string>
   <string name="notif_pause_title">Noch in Pause?</string>
   <string name="notif_summary_title">Heute</string>
   <string name="notif_summary_text">Tatsächlich %1$s · gemeldet %2$s</string>
