@@ -194,4 +194,56 @@ class RepositoryTest {
 			seeded.close()
 		}
 	}
+
+	@Test
+	fun startHandlesConcurrentEntriesAtomically() = runBlocking<Unit> {
+		val a = entries.start(StartRequest(SegmentKind.WORK, client))
+		val b = entries.start(StartRequest(SegmentKind.TRAVEL, null, other))
+		clock.advance(20)
+		val c = entries.start(
+			StartRequest(SegmentKind.WORK, client),
+			mapOf(a to EntryCommand.SUSPEND, b to EntryCommand.STOP),
+		)
+		val dao = db.entryDao()
+		assertEquals(EntryStatus.SUSPENDED, dao.entry(a)?.status)
+		assertEquals(EntryStatus.TO_COMPLETE, dao.entry(b)?.status)
+		assertEquals(EntryStatus.ACTIVE, dao.entry(c)?.status)
+
+		/* an illegal command for another entry rolls back the new start too */
+		val before = dao.observeOpenEntries().first().size
+		assertFailsWith<IllegalTransitionException> {
+			runBlocking { entries.start(StartRequest(SegmentKind.WORK, client), mapOf(a to EntryCommand.SUSPEND)) }
+		}
+		assertEquals(before, dao.observeOpenEntries().first().size)
+
+		/* a is the only suspended entry; b was stopped */
+		assertEquals(a, entries.suspendedToResume(b)?.id)
+		assertNull(entries.suspendedToResume(a))
+	}
+
+	@Test
+	fun clientDefaultsWithinThirtyDays() = runBlocking<Unit> {
+		val role = master.saveRole(it.infraconsulting.activitytrack.data.db.RoleEntity(name = "Consultant"))
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, roleId = role, activity = "Firewall review"))
+		assertEquals(ClientDefaults("Firewall review", role), entries.clientDefaults(client))
+		clock.advance(31L * 24 * 60)
+		assertNull(entries.clientDefaults(client))
+		entries.apply(id, EntryCommand.STOP)
+	}
+
+	@Test
+	fun proposalUsesTodaysCompany() = runBlocking<Unit> {
+		assertNull(entries.startProposal(emptyList()).companyId)
+		entries.start(StartRequest(SegmentKind.WORK, client))
+		assertEquals(acme, entries.startProposal(emptyList()).companyId)
+		/* next day: no company yet */
+		clock.advance(24 * 60)
+		assertNull(entries.startProposal(emptyList()).companyId)
+	}
+
+	@Test
+	fun clientLastUse() = runBlocking<Unit> {
+		entries.start(StartRequest(SegmentKind.WORK, client))
+		assertEquals(listOf(client to clock.millis()), entries.clientLastUse.first().map { it.clientId to it.lastMs })
+	}
 }
