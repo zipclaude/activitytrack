@@ -52,8 +52,12 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
 | M2 travel & location | **done**, device-tested, merged (PR #2, 2026-10-17) |
-| M3 widgets, tile, attachments, dictation | **implemented and device-tested** (branch `m3-quick-input`, PR #3, 2026-10-17); merge pending owner OK |
-| M4 OCR, offline STT, XML/JSON export | — |
+| M3 widgets, tile, attachments, dictation | **done**, device-tested, merged (PR #3, 2026-10-17) |
+| M4 export and import | next, branch `m4-export-import` |
+| M5 external calendar sync (generic / per company; Google or CalDAV) | — |
+| M6 consultation: list, day agenda, week, month | — |
+| M7 UI polish | — |
+| Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
 mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
@@ -100,22 +104,14 @@ app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTe
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (M3, branch `m3-quick-input`)
+## 5. Next steps (M4, branch `m4-export-import`)
 
-M2 merged in `main` on 2026-10-17 (PR #2). M3 per SPEC §7, DESIGN §9–10:
+M3 merged in `main` on 2026-10-17 (PR #3). Roadmap restructured by the owner
+(2026-10-17): M4 export/import, M5 calendar sync, M6 consultation views, M7 UI
+polish; OCR and free offline STT moved to future improvements (SPEC §10).
 
-1. Start-for-client deep link (`Screen.StartFor`), dynamic shortcuts (top 4 clients).
-2. Quick Settings tile: WORK/PAUSE toggle of the most recent ACTIVE entry.
-3. Glance 1.2.0 widgets: 4×1 (state, coloured actions, recent clients, expense), 1×1 toggle.
-4. Attachments: photo (system camera), voice note (`MediaRecorder` .m4a), file;
-   SAF `attachments/<yyyy>/<entryId>/<uuid>.<ext>`.
-5. Expenses (EUR, description, receipt photo) and quick expense screen.
-6. Dictation of the activity text (`RecognizerIntent`, prefer offline).
-7. ~~Device test~~ done (2026-10-17): start-for-client link, client combo box
-   (owner request), shortcuts, QS tile (added from Settings), widgets 4×1 and
-   1×1, attachments (photo, voice note, file), expenses with receipt, quick
-   expense, dictation (SpeechRecognizer, language setting). Instrumented 29/29.
-8. Next: merge PR #3, then M4 (OCR receipts, offline STT, XML/JSON export).
+1. Agree the export/import, calendar and consultation details (questions
+   asked 2026-10-17).
 
 ## 6. Decisions log
 
@@ -162,6 +158,7 @@ M2 merged in `main` on 2026-10-17 (PR #2). M3 per SPEC §7, DESIGN §9–10:
 | 2026-10-17 | M3: voice notes without length limit, explicit stop |
 | 2026-10-17 | Dictation language is a setting (it/en/de/es, default Italian), not the phone locale (en-IT is no recognizer language); SpeechRecognizer with in-app dialog, on-device first |
 | 2026-10-17 | QS tile added from Settings (StatusBarManager.requestAddTileService): the OxygenOS panel editor does not list it |
+| 2026-10-17 | Roadmap: M4 export/import, M5 calendar sync, M6 consultation views, M7 UI polish; OCR and free offline STT to future improvements |
 
 ## 7. Pitfalls to remember
 

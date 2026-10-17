@@ -171,4 +171,14 @@ output through SAF. CSV first; XML / JSON plug-ins for management systems later.
 | M1 | master data, entries and state machine UI, pauses, reminders, schedules, rounding, CSV export, SAF directory, daily backup |
 | M2 | travel and location, locality, site proposal, movement alerts, day-start prompt |
 | M3 | widgets, tile, shortcuts, quick expenses, attachments, dictation |
-| M4 | OCR, offline speech-to-text, XML/JSON exporters |
+| M4 | export and import (XML / JSON exporters, import; details to agree) |
+| M5 | external calendar sync: a generic calendar for the app and/or one per company (Google Calendar or CalDAV) |
+| M6 | consultation of saved entries: list, day agenda, week and month calendars |
+| M7 | user interface polish |
+
+Owner priorities (2026-10-17): M4 → M7 in this order.
+
+## 10. Future improvements (to do)
+
+- OCR of receipts (tesseract4android) to pre-fill expenses.
+- Offline speech-to-text with free software (Vosk / whisper.cpp).
