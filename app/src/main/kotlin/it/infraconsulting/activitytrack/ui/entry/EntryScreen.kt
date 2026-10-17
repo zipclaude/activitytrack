@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
@@ -192,6 +193,16 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 		}
 	}
 
+	val emptyPrompt by vm.emptyPrompt.collectAsState()
+	emptyPrompt?.let { p ->
+		EmptyActivityDialog(
+			lastActivity = p.lastActivity,
+			onEmpty = { vm.completeEmpty(onBack) },
+			onCopy = { vm.completeCopyingLast(onBack) },
+			onEdit = vm::dismissEmptyPrompt,
+		)
+	}
+
 	adding?.let { kind ->
 		val firstDay = segments.firstOrNull()?.let { Instant.ofEpochMilli(it.startUtcMs).atZone(zone).toLocalDate() }
 			?: LocalDate.now(zone)
@@ -248,6 +259,27 @@ private fun ManualSegmentDialog(
 			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal)
 		Text(stringResource(R.string.segment_hint), style = MaterialTheme.typography.bodySmall)
 	}
+}
+
+/* "No activity description": leave it empty, copy the last one on this client, or go back. */
+@Composable
+private fun EmptyActivityDialog(lastActivity: String?, onEmpty: () -> Unit, onCopy: () -> Unit, onEdit: () -> Unit) {
+	AlertDialog(
+		onDismissRequest = onEdit,
+		title = { Text(stringResource(R.string.empty_activity_title)) },
+		text = {
+			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+				Text(stringResource(R.string.empty_activity_text))
+				TextButton(onClick = onEmpty) { Text(stringResource(R.string.empty_activity_leave)) }
+				if (lastActivity != null)
+					TextButton(onClick = onCopy) {
+						Text(stringResource(R.string.empty_activity_copy, lastActivity), maxLines = 2, overflow = TextOverflow.Ellipsis)
+					}
+				TextButton(onClick = onEdit) { Text(stringResource(R.string.empty_activity_edit)) }
+			}
+		},
+		confirmButton = {},
+	)
 }
 
 @Composable

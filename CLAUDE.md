@@ -114,6 +114,11 @@ M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
    entries; samples while walking/driving; movement and arrival prompts;
    OSRM km and locality after a travel; map picker; day-start prompt.
 9. Open questions for the owner are listed in the PR #2 description/comments.
+9a. **Owner request 2026-10-17**: coloured command buttons — Start green,
+   Stop red, Pause yellow, Suspend orange, Travel blue. Start/Stop/Pause as
+   coloured media icons (play, stop, pause) instead of text; a standard icon
+   for Suspend if one exists; a stylised car for Travel; reuse them in the
+   notifications.
 10. Then mark PR #2 ready, merge, start M3.
 
 ## 6. Decisions log
@@ -150,6 +155,8 @@ M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
 | 2026-10-17 | Day-start "Late entry at…" records only the LATE_ENTRY absence; manual days off = list of dates (no ranges yet) |
 | 2026-10-17 | Holidays: Italian national + Easter Monday + 4 October from 2026 (L. 151/2025); patron saints as manual days off |
 | 2026-10-17 | The location service's notification is the ongoing notification of one ACTIVE entry (no extra notification; not dismissible while tracking) |
+| 2026-10-17 | Completion with the client only, after confirmation (leave empty / copy last activity on the client / edit) |
+| 2026-10-17 | Arrival at a site of the entry's own client sets location kind CLIENT |
 
 ## 7. Pitfalls to remember
 

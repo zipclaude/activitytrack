@@ -147,6 +147,7 @@ class RepositoryTest {
 		entries.apply(id, EntryCommand.STOP)
 		val details = EntryDetails(acme, client, null, "  ", null, null, null)
 		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, details) })
+		assertNull(entries.lastActivity(client))
 		/* the failed completion rolled back */
 		assertEquals(EntryStatus.TO_COMPLETE, db.entryDao().entry(id)?.status)
 		entries.complete(id, details.copy(activity = "Patch Tuesday"))
@@ -439,5 +440,16 @@ class RepositoryTest {
 		val (work, travel) = db.entryDao().segments(id)
 		assertEquals(2, locations.fixesOfSegment(work.id).size)
 		assertEquals(2, locations.fixesOfSegment(travel.id).size)
+	}
+
+	@Test
+	fun completionWithClientOnlyAfterConfirmation() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		entries.apply(id, EntryCommand.STOP)
+		val d = EntryDetails(acme, client, null, null, null, null, null)
+		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, d) })
+		entries.complete(id, d, allowEmpty = true)
+		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(id)!!.status)
+		assertNull(db.entryDao().entry(id)!!.activity)
 	}
 }
