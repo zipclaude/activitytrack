@@ -1,0 +1,74 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+package it.infraconsulting.activitytrack.reminders
+
+import android.app.Notification
+import android.content.Context
+import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.notify.ActionReceiver
+import it.infraconsulting.activitytrack.notify.EntryInfo
+import it.infraconsulting.activitytrack.notify.EntryLinks
+import it.infraconsulting.activitytrack.notify.EntryNotifications
+import it.infraconsulting.activitytrack.notify.NotificationChannels
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+
+/* Reminder notifications (DESIGN §7): confirm, pause, day summary. */
+object ReminderNotifications {
+	private fun action(label: String, intent: android.app.PendingIntent) =
+		Notification.Action.Builder(null, label, intent).build()
+
+	/* "Still on X?" — Yes / Pause / Stop at the last confirmation. */
+	fun confirm(context: Context, info: EntryInfo): Notification {
+		val e = info.entry
+		val last = e.lastConfirmedUtcMs
+		val b = Notification.Builder(context, NotificationChannels.CONFIRM)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(context.getString(R.string.notif_confirm_title, info.title))
+			.setContentIntent(EntryLinks.openEntry(context, e.id))
+			.setAutoCancel(true)
+			.setCategory(Notification.CATEGORY_REMINDER)
+			.addAction(action(context.getString(R.string.action_yes), ActionReceiver.confirm(context, e.id)))
+			.addAction(action(context.getString(R.string.cmd_pause), ActionReceiver.command(context, e.id, EntryCommand.PAUSE)))
+		if (last != null) {
+			val hhmm = clock(last)
+			b.setContentText(context.getString(R.string.notif_confirm_text, hhmm))
+			b.addAction(
+				action(context.getString(R.string.notif_stop_at, hhmm), ActionReceiver.stopAtLastConfirmation(context, e.id)),
+			)
+		}
+		return b.build()
+	}
+
+	/* "Still on pause?" — Resume / Stop. */
+	fun pause(context: Context, info: EntryInfo): Notification {
+		val id = info.entry.id
+		return Notification.Builder(context, NotificationChannels.PAUSE)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(context.getString(R.string.notif_pause_title))
+			.setContentText(info.title)
+			.setContentIntent(EntryLinks.openEntry(context, id))
+			.setAutoCancel(true)
+			.setCategory(Notification.CATEGORY_REMINDER)
+			.addAction(action(context.getString(R.string.cmd_resume), ActionReceiver.command(context, id, EntryCommand.WORK)))
+			.addAction(action(context.getString(R.string.cmd_stop), ActionReceiver.command(context, id, EntryCommand.STOP)))
+			.build()
+	}
+
+	fun daySummary(context: Context, solar: Duration, reported: Duration): Notification =
+		Notification.Builder(context, NotificationChannels.DAY_SUMMARY)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(context.getString(R.string.notif_summary_title))
+			.setContentText(context.getString(R.string.notif_summary_text, hm(solar), hm(reported)))
+			.setContentIntent(EntryNotifications.openAppIntent(context, 1))
+			.setAutoCancel(true)
+			.build()
+
+	private fun clock(ms: Long): String {
+		val t = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalTime()
+		return "%02d:%02d".format(t.hour, t.minute)
+	}
+
+	fun hm(d: Duration): String = "%d:%02d".format(d.toHours(), d.toMinutesPart())
+}

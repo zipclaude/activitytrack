@@ -92,6 +92,17 @@ interface EntryDao {
 	)
 	suspend fun mostRecentSuspended(excludeId: Long): TimeEntryEntity?
 
+	/* Every segment of the entries having at least one segment overlapping [fromUtcMs, toUtcMs). */
+	@Query(
+		"SELECT * FROM segment WHERE entry_id IN (" +
+			"SELECT DISTINCT entry_id FROM segment WHERE start_utc_ms < :toUtcMs " +
+			"AND (end_utc_ms IS NULL OR end_utc_ms > :fromUtcMs)) ORDER BY entry_id, start_utc_ms",
+	)
+	suspend fun segmentsOfEntriesTouching(fromUtcMs: Long, toUtcMs: Long): List<SegmentEntity>
+
+	@Query("SELECT * FROM time_entry WHERE id IN (:ids)")
+	suspend fun entries(ids: List<Long>): List<TimeEntryEntity>
+
 	@Transaction
 	suspend fun startEntry(entry: TimeEntryEntity, first: SegmentEntity): Long {
 		val id = insertEntry(entry)

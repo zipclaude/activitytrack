@@ -4,6 +4,7 @@
   <!-- M0/M1: notifications only. Location, audio and network permissions are
        added by the milestones that use them. -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
   <application
       android:name=".ActivityTrackApp"
@@ -29,6 +30,24 @@
     <receiver
         android:name=".notify.ActionReceiver"
         android:exported="false" />
+
+    <!-- Single reminder alarm (DESIGN §6.1). -->
+    <receiver
+        android:name=".reminders.ReminderReceiver"
+        android:exported="false" />
+
+    <!-- Re-arm after reboot, update, clock or time-zone change; these system
+         broadcasts are exempt from the implicit-broadcast limits. -->
+    <receiver
+        android:name=".reminders.BootReceiver"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        <action android:name="android.intent.action.TIME_SET" />
+        <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+      </intent-filter>
+    </receiver>
 
   </application>
 </manifest>
