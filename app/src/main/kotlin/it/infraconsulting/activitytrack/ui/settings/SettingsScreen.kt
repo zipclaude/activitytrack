@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.backup.BackupWorker
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.domain.rounding.ReportRounding
 import it.infraconsulting.activitytrack.domain.rounding.RoundingMode
@@ -179,6 +180,12 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			SectionHeader(stringResource(R.string.sec_storage))
 			DataDirRow(initial.rootUri)
 			field(F.RETENTION, R.string.set_backup_retention)
+			val context = androidx.compose.ui.platform.LocalContext.current
+			val started = stringResource(R.string.backup_started)
+			TextButton(onClick = {
+				BackupWorker.runNow(context)
+				scope.launch { snackbar.showSnackbar(started) }
+			}) { Text(stringResource(R.string.backup_now)) }
 
 			Text(
 				stringResource(R.string.settings_note),

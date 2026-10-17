@@ -15,6 +15,11 @@ data class ClientLastUse(
 	@ColumnInfo(name = "last_ms") val lastMs: Long,
 )
 
+data class ExpenseTotal(
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	@ColumnInfo(name = "cents") val cents: Long,
+)
+
 @Dao
 interface EntryDao {
 	@Insert
@@ -120,6 +125,16 @@ interface EntryDao {
 
 	@Query("DELETE FROM external_ref WHERE id = :id")
 	suspend fun deleteExternalRef(id: Long)
+
+	/* Any entry change bumps updated_utc_ms (invariant 4): a cheap "something changed" signal. */
+	@Query("SELECT MAX(updated_utc_ms) FROM time_entry")
+	fun observeLastChange(): Flow<Long?>
+
+	@Query("SELECT entry_id, SUM(amount_cents) AS cents FROM expense WHERE entry_id IN (:entryIds) GROUP BY entry_id")
+	suspend fun expenseTotals(entryIds: List<Long>): List<ExpenseTotal>
+
+	@Query("SELECT COUNT(*) FROM attachment")
+	suspend fun attachmentTotal(): Int
 
 	@Transaction
 	suspend fun startEntry(entry: TimeEntryEntity, first: SegmentEntity): Long {

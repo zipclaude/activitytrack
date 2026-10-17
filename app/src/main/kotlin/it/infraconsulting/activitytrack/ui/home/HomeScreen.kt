@@ -101,6 +101,7 @@ class HomeViewModel(
 fun HomeScreen(
 	onStart: () -> Unit,
 	onOpenEntry: (Long) -> Unit,
+	onDay: () -> Unit,
 	onMasterData: () -> Unit,
 	onSettings: () -> Unit,
 ) {
@@ -121,6 +122,7 @@ fun HomeScreen(
 		title = stringResource(R.string.app_name),
 		onBack = null,
 		actions = {
+			TextButton(onClick = onDay) { Text(stringResource(R.string.day_title)) }
 			TextButton(onClick = onMasterData) { Text(stringResource(R.string.md_title)) }
 			TextButton(onClick = onSettings) { Text(stringResource(R.string.settings_title)) }
 		},

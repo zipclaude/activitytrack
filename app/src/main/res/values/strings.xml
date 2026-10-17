@@ -192,4 +192,23 @@
   <string name="err_blank_value">A value is required.</string>
   <string name="err_invalid_segment">Invalid segment: check date and times; it must be in the past.</string>
   <string name="err_overlapping_segments">The segment overlaps time already recorded.</string>
+  <string name="day_title">Day</string>
+  <string name="day_today">Today</string>
+  <string name="day_solar">Solar</string>
+  <string name="day_reported">Reported</string>
+  <string name="day_empty">No time recorded on this day.</string>
+  <string name="day_line_fmt">Work %1$s → %2$s · Travel %3$s → %4$s · Pause %5$s → %6$s</string>
+  <string name="export_title">Export</string>
+  <string name="export_from">From (yyyy-mm-dd)</string>
+  <string name="export_to">To (yyyy-mm-dd)</string>
+  <string name="export_hint">One line per activity and day, rounded as in Settings. The file goes to the export folder of the data folder; coordinates are never exported.</string>
+  <string name="export_csv">Export CSV</string>
+  <string name="export_invalid">Invalid range: dates as yyyy-mm-dd, at most one year.</string>
+  <string name="export_failed">Export failed: check the data folder.</string>
+  <string name="backup_now">Back up now</string>
+  <string name="backup_started">Backup started</string>
+  <plurals name="export_done">
+    <item quantity="one">%1$d line written to %2$s</item>
+    <item quantity="other">%1$d lines written to %2$s</item>
+  </plurals>
 </resources>

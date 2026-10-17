@@ -11,6 +11,16 @@ import kotlinx.coroutines.flow.Flow
 /* Companies, clients, sites, places, roles, presets, schedules. */
 @Dao
 interface MasterDataDao {
+	/* name lookups for reports */
+	@Query("SELECT * FROM company")
+	suspend fun allCompanies(): List<CompanyEntity>
+
+	@Query("SELECT * FROM client")
+	suspend fun allClients(): List<ClientEntity>
+
+	@Query("SELECT * FROM role")
+	suspend fun allRoles(): List<RoleEntity>
+
 	/* companies */
 	@Query("SELECT * FROM company ORDER BY archived, name COLLATE NOCASE")
 	fun observeCompanies(): Flow<List<CompanyEntity>>

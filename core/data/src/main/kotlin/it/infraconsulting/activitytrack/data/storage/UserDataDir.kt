@@ -46,6 +46,36 @@ class UserDataDir(context: Context) {
 		}
 	}
 
+	/* A document in one of the sub-directories. */
+	data class DocFile(val name: String, val uri: Uri)
+
+	/* Creates [name] in [sub]; the provider may adjust the name if it already exists. */
+	suspend fun createFile(tree: Uri, sub: Sub, name: String, mime: String): Uri = withContext(Dispatchers.IO) {
+		val dir = ensureLayout(tree).getValue(sub)
+		DocumentsContract.createDocument(resolver, dir, mime, name) ?: error("cannot create $name")
+	}
+
+	/* Truncating output stream on [uri]; the caller closes it. */
+	suspend fun openOutput(uri: Uri): java.io.OutputStream = withContext(Dispatchers.IO) {
+		resolver.openOutputStream(uri, "wt") ?: error("cannot open $uri")
+	}
+
+	suspend fun list(tree: Uri, sub: Sub): List<DocFile> = withContext(Dispatchers.IO) {
+		val dir = ensureLayout(tree).getValue(sub)
+		val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getDocumentId(dir))
+		val proj = arrayOf(Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME)
+		val out = ArrayList<DocFile>()
+		resolver.query(children, proj, null, null, null)?.use { c ->
+			while (c.moveToNext())
+				out += DocFile(c.getString(1), DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0)))
+		}
+		out
+	}
+
+	suspend fun delete(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+		DocumentsContract.deleteDocument(resolver, uri)
+	}
+
 	/* Directory child of [parent] named [name], if any. */
 	private fun findChild(tree: Uri, parent: Uri, name: String): Uri? {
 		val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getDocumentId(parent))

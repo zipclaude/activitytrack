@@ -181,4 +181,24 @@
   <string name="err_blank_value">Se necesita un valor.</string>
   <string name="err_invalid_segment">Tramo no válido: revisa fecha y horas; debe estar en el pasado.</string>
   <string name="err_overlapping_segments">El tramo se solapa con tiempo ya registrado.</string>
+  <string name="day_title">Día</string>
+  <string name="day_today">Hoy</string>
+  <string name="day_solar">Real</string>
+  <string name="day_reported">Declarado</string>
+  <string name="day_empty">No hay tiempo registrado este día.</string>
+  <string name="day_line_fmt">Trabajo %1$s → %2$s · Viaje %3$s → %4$s · Pausa %5$s → %6$s</string>
+  <string name="export_title">Exportar</string>
+  <string name="export_from">Desde (aaaa-mm-dd)</string>
+  <string name="export_to">Hasta (aaaa-mm-dd)</string>
+  <string name="export_hint">Una línea por actividad y día, redondeada según los Ajustes. El archivo va a la carpeta export de la carpeta de datos; las coordenadas nunca se exportan.</string>
+  <string name="export_csv">Exportar CSV</string>
+  <string name="export_invalid">Rango no válido: fechas como aaaa-mm-dd, como máximo un año.</string>
+  <string name="export_failed">La exportación falló: revisa la carpeta de datos.</string>
+  <string name="backup_now">Hacer copia ahora</string>
+  <string name="backup_started">Copia iniciada</string>
+  <plurals name="export_done">
+    <item quantity="one">%1$d línea escrita en %2$s</item>
+    <item quantity="many">%1$d de líneas escritas en %2$s</item>
+    <item quantity="other">%1$d líneas escritas en %2$s</item>
+  </plurals>
 </resources>
