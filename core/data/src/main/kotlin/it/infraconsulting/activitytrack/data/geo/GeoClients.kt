@@ -4,7 +4,6 @@ package it.infraconsulting.activitytrack.data.geo
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.URLEncoder
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -50,8 +49,12 @@ class Nominatim(private val userAgent: String) {
 		override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String?>?) = size > CACHE_SIZE
 	}
 
-	/* Locality (city, town, village...) at [p] in [language]; null when the place has none. */
-	suspend fun locality(endpoint: String, p: GeoPoint, language: String): String? = mutex.withLock {
+	/*
+	 * Locality (city, town, village...) at [p] in the local language: the
+	 * text goes into reports for local clients, whatever the phone language
+	 * (no accept-language; provisional choice 2026-10-17). Null when none.
+	 */
+	suspend fun locality(endpoint: String, p: GeoPoint): String? = mutex.withLock {
 		val key = String.format(Locale.ROOT, "%.3f,%.3f", p.lat, p.lon)
 		if (cache.containsKey(key))
 			return@withLock cache[key]
@@ -60,8 +63,7 @@ class Nominatim(private val userAgent: String) {
 			delay(wait)
 		lastRequestMs = System.currentTimeMillis()
 		val url = endpoint.trimEnd('/') + "/reverse?format=jsonv2&zoom=14" +
-			"&lat=${coord(p.lat)}&lon=${coord(p.lon)}" +
-			"&accept-language=" + URLEncoder.encode(language, "UTF-8")
+			"&lat=${coord(p.lat)}&lon=${coord(p.lon)}"
 		parseLocality(getJson(url, userAgent)).also { cache[key] = it }
 	}
 
