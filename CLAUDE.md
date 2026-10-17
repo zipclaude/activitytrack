@@ -45,7 +45,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | Milestone | State |
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
-| M1 core tracking | **in progress**: steps 1–4 done (branch `worktree-m1-foundation`, 2026-10-17) |
+| M1 core tracking | **implemented** (steps 1–8, PR #1, branch `worktree-m1-foundation`, 2026-10-17); steps 5–8 still to test on device |
 | M2 travel & location | — |
 | M3 widgets, tile, attachments, dictation | — |
 | M4 OCR, offline STT, XML/JSON export | — |
@@ -62,21 +62,28 @@ docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1�
 docs/DESIGN.md                  technical design, toolchain, risks
 gradle/libs.versions.toml       verified versions (2026-10-15; androidx.test 2026-10-16)
 core/domain/…/model/            Model.kt, EntryStateMachine.kt, EntryInvariants.kt, ExternalRef.kt
+core/domain/…/reminder/         ReminderPlanner.kt (confirm, pause + lunch mute, day summary)
+core/domain/…/export/           Export.kt (ExportRow, Exporter, ExportRows), CsvExporter.kt
+core/domain/…/time/             LocalMinutes.kt (DST-safe LocalDate.atMinute)
 core/domain/…/rounding/         Rounding.kt
 core/domain/…/report/           DayAttribution.kt, DailyReport.kt
 core/domain/…/geo/              Geo.kt (haversine)
-core/domain/…/start/            StartDefaults.kt (pre-fill rules)
+core/domain/…/start/            StartDefaults.kt (pre-fill rules), ClientPicker.kt
 core/domain/…/settings/         AppSettings.kt (defaults + validated())
-core/domain/src/test/…          Rounding, DailyReport, EntryStateMachine, EntryInvariants, StartDefaults, AppSettings
+core/domain/src/test/…          Rounding, DailyReport, EntryStateMachine, EntryInvariants, StartDefaults,
+                                ClientPicker, AppSettings, ReminderPlanner, CsvExporter, LocalMinutes
 core/data/…/db/                 Entities.kt, EntryDao.kt, MasterDataDao.kt, ActivityTrackDatabase.kt (lunch seed)
-core/data/…/repo/               EntryRepository, MasterDataRepository, ValidationException
+core/data/…/repo/               EntryRepository, MasterDataRepository, ReportRepository, ValidationException
 core/data/…/settings/           SettingsRepository (Preferences DataStore)
-core/data/…/storage/            UserDataDir (SAF tree, DocumentsContract)
+core/data/…/storage/            UserDataDir (SAF tree, DocumentsContract), DatabaseBackup (VACUUM INTO + zip)
 core/data/src/androidTest/…     RepositoryTest (in-memory Room, run on device)
 app/…/                          ActivityTrackApp.kt, AppContainer.kt, MainActivity.kt (setup gate + navigator)
-app/…/ui/                       Navigation (own back stack), ViewModels, Theme, common/, setup/, home/,
-                                settings/, masterdata/
-app/src/test/…                  UiParsingTest
+app/…/ui/                       Navigation (own back stack, per-entry ViewModel stores), ViewModels, Theme,
+                                common/, setup/, home/, start/, entry/, report/ (day, export), settings/, masterdata/
+app/…/notify/                   NotificationChannels, EntryNotifications, NotificationSync, ActionReceiver, EntryLinks
+app/…/reminders/                ReminderScheduler, ReminderNotifications, ReminderReceiver + BootReceiver
+app/…/backup/                   BackupWorker (WorkManager, daily)
+app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTest
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
@@ -87,11 +94,15 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 3. ~~Master data screens~~ done (coordinates typed; map/current position in M2).
 4. ~~Home, start flow, concurrent-entry dialog, commands~~ done and tested on
    device (2026-10-17); minimal completion dialog until step 7.
-5. Ongoing notification with actions; `ActionReceiver`.
-6. `ReminderScheduler` + `ReminderReceiver` (confirm, pause, to-complete, day
-   summary); boot/time-change re-arm.
-7. Completion form; manual TRAVEL/PAUSE segment insertion; external refs.
-8. Day view (solar vs reported), CSV exporter, daily backup worker.
+5. ~~Ongoing notification, `ActionReceiver`~~ done.
+6. ~~Reminders, boot/time-change re-arm~~ done.
+7. ~~Entry screen (completion), manual segments, external refs~~ done.
+8. ~~Day view, CSV export, daily backup~~ done.
+9. **Device test of steps 5–8** (owner gives the phone): instrumented tests via
+   `am instrument`; notifications and actions, reminders (lower the intervals
+   to 10 min), reboot re-arm, entry screen, day view, export file, backup zip.
+   Back up `databases/` with `run-as` first.
+10. Then merge PR #1 and start M2 (location, day-start prompt).
 
 ## 6. Decisions log
 
@@ -116,6 +127,10 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 | 2026-10-16 | A client's company cannot change once entries reference it |
 | 2026-10-17 | New entry while another is in TRAVEL: "Is the travel completed?" Yes = STOP, No = leave running, "Suspend travel" = SUSPEND; while in WORK: close / suspend / leave; while in PAUSE: close / leave |
 | 2026-10-17 | STOP while working asks "Stop now / Start return travel"; STOP from TRAVEL stops directly. Minimal completion dialog (activity, preset, role, notes, client) until step 7 |
+| 2026-10-17 | Pause reminders count from the previous pause reminder (lunch postponement cannot repeat); TO_COMPLETE = persistent notification, no periodic nag; day summary at the end of the day's last working interval, none on days without working hours |
+| 2026-10-17 | Notification STOP stops at once (no return-travel question); confirm reminder offers "Stop at <last confirmation>" |
+| 2026-10-17 | CSV: stable English header, adds work hours, km and expenses on the first day of a split entry, UTF-8 BOM; export range ≤ 1 year |
+| 2026-10-17 | Backup restore not implemented in M1 (manual: replace the DB from the zip) |
 
 ## 7. Pitfalls to remember
 
@@ -137,6 +152,10 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
   Activity: otherwise a reopened screen shows stale state.
 - Device UI tests that create data: back up `databases/` with `run-as` first and
   restore afterwards (entries cannot be deleted from the UI yet).
+- Local wall-clock times: build `LocalDate.atTime(...)` / `atMinute`, never
+  `atStartOfDay().plusMinutes()` (wrong on DST days).
+- The worktree guard rejects complex shell lines that mention git or run
+  interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 
 ## 8. Commit format
 
