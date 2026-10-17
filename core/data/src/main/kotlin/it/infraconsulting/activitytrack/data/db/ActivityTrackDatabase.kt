@@ -41,6 +41,8 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 	abstract fun entryDao(): EntryDao
 	abstract fun masterDataDao(): MasterDataDao
 	abstract fun locationDao(): LocationDao
+	abstract fun todoDao(): TodoDao
+	abstract fun interchangeDao(): InterchangeDao
 
 	companion object {
 		const val FILE_NAME = "activitytrack.db"

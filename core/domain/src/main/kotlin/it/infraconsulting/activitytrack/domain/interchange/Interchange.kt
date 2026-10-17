@@ -52,6 +52,8 @@ data class XSite(
 	val lat: Double? = null,
 	val lon: Double? = null,
 	val radiusM: Int? = null,
+	/* for client sites: the client's company, when client keys repeat across companies */
+	val companyKey: String? = null,
 )
 
 @Serializable
