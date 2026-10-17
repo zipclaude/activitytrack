@@ -31,8 +31,12 @@ jobs:
       # Also validates the checksum of gradle-wrapper.jar.
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: Domain unit tests
-        run: ./gradlew :core:domain:test 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+      - name: Unit tests
+        run: ./gradlew :core:domain:test :app:testDebugUnitTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+
+      # Instrumented tests need a device; CI only keeps them compiling.
+      - name: Compile instrumented tests
+        run: ./gradlew :core:data:assembleDebugAndroidTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
 
       - name: Assemble debug APK
         run: ./gradlew assembleDebug 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"

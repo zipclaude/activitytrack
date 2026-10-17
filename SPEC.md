@@ -95,7 +95,7 @@ integrations carry only the locality text.
 
 ### 4.1 Day attribution
 
-If an entry ends no later than **06:00** (configurable) of the day after its
+If an entry ends no later than **06:00** (inclusive, configurable) of the day after its
 start day, all its time is attributed to the start day. Otherwise every segment
 is split at local midnight and each part goes to its own day. Elapsed time is
 real (DST transitions are handled).

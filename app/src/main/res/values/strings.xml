@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name" translatable="false">ActivityTrack</string>
-  <string name="m0_placeholder">Project skeleton. Time tracking UI arrives with milestone M1.</string>
+
+  <!-- notification channels -->
   <string name="ch_ongoing">Running activities</string>
   <string name="ch_confirm">Activity confirmation</string>
   <string name="ch_pause">Pause reminders</string>
@@ -9,4 +10,206 @@
   <string name="ch_day_start">Start of day</string>
   <string name="ch_day_summary">Daily summary</string>
   <string name="ch_to_complete">Activities to complete</string>
+
+  <!-- actions -->
+  <string name="action_save">Save</string>
+  <string name="action_cancel">Cancel</string>
+  <string name="action_delete">Delete</string>
+  <string name="action_add">Add</string>
+  <string name="action_edit">Edit</string>
+  <string name="action_back">Back</string>
+  <string name="action_more">More</string>
+  <string name="confirm_delete">Delete \"%1$s\"?</string>
+  <string name="no_items">Nothing here yet.</string>
+  <string name="archived_suffix">Archived</string>
+
+  <!-- home -->
+  <string name="home_no_open_entries">No open activities.</string>
+  <string name="entry_no_client">Client not set</string>
+  <string name="mode_work">Working</string>
+  <string name="mode_travel">Travelling</string>
+  <string name="mode_pause">On pause</string>
+  <string name="status_suspended">Suspended</string>
+  <string name="status_to_complete">To complete</string>
+  <string name="status_closed">Closed</string>
+
+  <!-- data folder -->
+  <string name="setup_title">Data folder</string>
+  <string name="setup_text">Choose the folder for attachments, backups and exports, for example Documents/ActivityTrack. The app keeps access to it; the files stay there even if the app is uninstalled.</string>
+  <string name="setup_choose">Choose folder</string>
+  <string name="setup_lost">Access to the data folder was lost. Choose it again.</string>
+  <string name="setup_error">This folder cannot be used. Choose another one.</string>
+
+  <!-- master data -->
+  <string name="md_title">Master data</string>
+  <string name="md_companies">Companies</string>
+  <string name="md_clients">Clients</string>
+  <string name="md_roles">Roles</string>
+  <string name="md_presets">Activity presets</string>
+  <string name="md_places">Places</string>
+  <string name="md_schedule">Working hours and lunch break</string>
+  <string name="company_edit">Company</string>
+  <string name="client_edit">Client</string>
+  <string name="role_edit">Role</string>
+  <string name="preset_edit">Activity preset</string>
+  <string name="site_edit">Site</string>
+  <string name="place_edit">Place</string>
+  <string name="interval_edit">Working interval</string>
+  <string name="lunch_edit">Lunch break</string>
+  <string name="sites">Sites</string>
+  <string name="clients_need_company">Create a company first.</string>
+  <string name="place_home">Home</string>
+  <string name="place_other">Other</string>
+  <string name="schedule_lunch">Lunch break %1$s</string>
+  <string name="schedule_no_lunch">No lunch break</string>
+  <string name="site_hint">Coordinates in decimal degrees, e.g. 45.4642, 9.1900.</string>
+  <string name="time_hint">Times as HH:MM, e.g. 08:30.</string>
+
+  <!-- fields -->
+  <string name="field_name">Name</string>
+  <string name="field_archived">Archived</string>
+  <string name="field_company">Company</string>
+  <string name="field_none">None</string>
+  <string name="field_label">Label</string>
+  <string name="field_lat">Latitude</string>
+  <string name="field_lon">Longitude</string>
+  <string name="field_radius">Radius (m)</string>
+  <string name="field_address">Address</string>
+  <string name="field_kind">Kind</string>
+  <string name="field_text">Text</string>
+  <string name="field_default_role">Default role</string>
+  <string name="field_start">Start</string>
+  <string name="field_end">End</string>
+
+  <!-- validation errors -->
+  <string name="err_blank_name">A name is required.</string>
+  <string name="err_duplicate_name">This name is already used.</string>
+  <string name="err_invalid_coordinates">Invalid coordinates.</string>
+  <string name="err_invalid_radius">The radius must be between 1 and 10000 m.</string>
+  <string name="err_invalid_time_range">Invalid time range: the start must precede the end.</string>
+  <string name="err_overlapping_intervals">This interval overlaps another one.</string>
+  <string name="err_client_company_locked">The client already has activities: its company cannot change.</string>
+  <string name="err_in_use">Still in use: archive it instead.</string>
+  <string name="err_generic">Operation not possible.</string>
+
+  <!-- settings -->
+  <string name="settings_title">Settings</string>
+  <string name="settings_saved">Settings saved</string>
+  <string name="settings_note">Values outside the allowed range are adjusted when saving.</string>
+  <string name="sec_reminders">Reminders</string>
+  <string name="set_confirm_interval">Confirmation interval (min)</string>
+  <string name="set_max_confirmations">Maximum confirmations (0 = unlimited)</string>
+  <string name="set_pause_interval">Pause reminder interval (min)</string>
+  <string name="set_day_start_delay">Start-of-day prompt delay (min)</string>
+  <string name="sec_location">Location</string>
+  <string name="set_movement">Movement alert threshold (m)</string>
+  <string name="set_stationary_radius">Arrival radius (m)</string>
+  <string name="set_stationary_min">Arrival time (min)</string>
+  <string name="set_km_factor">Road distance factor</string>
+  <string name="sec_reports">Reports</string>
+  <string name="set_carry_over">Night activities belong to the start day until (HH:MM)</string>
+  <string name="set_round_work">Work rounding</string>
+  <string name="set_round_travel">Travel rounding</string>
+  <string name="set_round_pause">Pause rounding</string>
+  <string name="round_mode">Mode</string>
+  <string name="round_quantum">Quantum (min)</string>
+  <string name="round_minimum">Minimum (min)</string>
+  <string name="round_ceil_tolerant">Up, with tolerance</string>
+  <string name="round_ceil">Up</string>
+  <string name="round_floor">Down</string>
+  <string name="sec_online">Online services</string>
+  <string name="set_nominatim">Address lookup (Nominatim)</string>
+  <string name="set_osrm">Road distance (OSRM)</string>
+  <string name="set_tiles">Map tiles (OpenStreetMap)</string>
+  <string name="set_endpoint">Endpoint</string>
+  <string name="sec_storage">Storage</string>
+  <string name="set_root">Data folder</string>
+  <string name="set_change_root">Change</string>
+  <string name="set_backup_retention">Backups kept</string>
+  <!-- tracking -->
+  <string name="home_start">Start activity</string>
+  <string name="cmd_work">Work</string>
+  <string name="cmd_resume">Resume</string>
+  <string name="cmd_travel">Travel</string>
+  <string name="cmd_pause">Pause</string>
+  <string name="cmd_suspend">Suspend</string>
+  <string name="cmd_stop">Stop</string>
+  <string name="cmd_complete">Complete</string>
+  <string name="cmd_reopen">Reopen</string>
+  <string name="since_fmt">%1$s since %2$s</string>
+  <string name="totals_fmt">Work %1$s · Travel %2$s</string>
+  <string name="stop_title">Stop \"%1$s\"</string>
+  <string name="stop_now">Stop now</string>
+  <string name="stop_return">Start return travel</string>
+  <string name="resume_title">Resume \"%1$s\"?</string>
+  <string name="action_yes">Yes</string>
+  <string name="action_no">No</string>
+  <string name="start_title">New activity</string>
+  <string name="all_companies">All companies</string>
+  <string name="field_client">Client</string>
+  <string name="client_unknown">Not known yet</string>
+  <string name="start_no_clients">No clients for this company.</string>
+  <string name="field_preset">Preset</string>
+  <string name="field_activity">Activity</string>
+  <string name="field_role">Role</string>
+  <string name="field_notes">Notes</string>
+  <string name="start_action">Start</string>
+  <string name="running_title">\"%1$s\" is running</string>
+  <string name="running_close">Close it</string>
+  <string name="running_leave">Leave it running</string>
+  <string name="running_suspend">Suspend it</string>
+  <string name="travel_done_title">Is the travel completed?</string>
+  <string name="travel_suspend">Suspend travel</string>
+  <string name="err_completion_incomplete">Describe the activity.</string>
+  <string name="err_client_required">Choose a client.</string>
+  <string name="notif_to_complete_title">Activity to complete</string>
+  <string name="notif_confirm_title">Still on %1$s?</string>
+  <string name="notif_confirm_text">Last confirmation at %1$s</string>
+  <string name="notif_stop_at">Stop at %1$s</string>
+  <string name="notif_pause_title">Still on pause?</string>
+  <string name="notif_summary_title">Today</string>
+  <string name="notif_summary_text">Solar %1$s · reported %2$s</string>
+  <string name="entry_title">Activity</string>
+  <string name="field_locality">Locality</string>
+  <string name="field_location_kind">Where</string>
+  <string name="segments">Times</string>
+  <string name="add_travel">+ Travel</string>
+  <string name="add_pause">+ Pause</string>
+  <string name="segment_manual">manual</string>
+  <string name="external_refs">External references</string>
+  <string name="external_ref_new">Ticket, URL or code</string>
+  <string name="confirm_delete_segment">Delete this segment?</string>
+  <string name="field_date">Date (yyyy-mm-dd)</string>
+  <string name="field_km">km</string>
+  <string name="segment_hint">An end before the start falls on the next day.</string>
+  <string name="ref_ticket">Ticket</string>
+  <string name="ref_url">Link</string>
+  <string name="ref_uuid">UUID</string>
+  <string name="ref_other">Reference</string>
+  <string name="loc_company">Company site</string>
+  <string name="loc_client">Client site</string>
+  <string name="loc_home">Home</string>
+  <string name="loc_other">Elsewhere</string>
+  <string name="err_blank_value">A value is required.</string>
+  <string name="err_invalid_segment">Invalid segment: check date and times; it must be in the past.</string>
+  <string name="err_overlapping_segments">The segment overlaps time already recorded.</string>
+  <string name="day_title">Day</string>
+  <string name="day_today">Today</string>
+  <string name="day_solar">Solar</string>
+  <string name="day_reported">Reported</string>
+  <string name="day_empty">No time recorded on this day.</string>
+  <string name="day_line_fmt">Work %1$s → %2$s · Travel %3$s → %4$s · Pause %5$s → %6$s</string>
+  <string name="export_title">Export</string>
+  <string name="export_from">From (yyyy-mm-dd)</string>
+  <string name="export_to">To (yyyy-mm-dd)</string>
+  <string name="export_hint">One line per activity and day, rounded as in Settings. The file goes to the export folder of the data folder; coordinates are never exported.</string>
+  <string name="export_csv">Export CSV</string>
+  <string name="export_invalid">Invalid range: dates as yyyy-mm-dd, at most one year.</string>
+  <string name="export_failed">Export failed: check the data folder.</string>
+  <string name="backup_now">Back up now</string>
+  <string name="backup_started">Backup started</string>
+  <plurals name="export_done">
+    <item quantity="one">%1$d line written to %2$s</item>
+    <item quantity="other">%1$d lines written to %2$s</item>
+  </plurals>
 </resources>
