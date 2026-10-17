@@ -247,6 +247,7 @@
   <string name="att_record_failed">The microphone is not available.</string>
   <string name="att_stop_save">Stop and save</string>
   <string name="action_open">Open</string>
+  <string name="action_dictate">Dictate</string>
   <string name="err_storage">The data folder cannot be used: check it in Settings.</string>
   <string name="err_no_viewer">No app can open this file.</string>
   <string name="confirm_delete_segment">Delete this segment?</string>

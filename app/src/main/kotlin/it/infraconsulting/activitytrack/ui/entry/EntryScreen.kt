@@ -40,6 +40,7 @@ import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.ClickableRow
+import it.infraconsulting.activitytrack.ui.common.DictationInput
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
@@ -122,7 +123,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 								if (roleId == null) roleId = p.defaultRoleId
 							}
 						}
-					TextInput(stringResource(R.string.field_activity), activity, { activity = it }, singleLine = false)
+					DictationInput(stringResource(R.string.field_activity), activity) { activity = it }
 					ChoiceField(
 						stringResource(R.string.field_role),
 						listOf<Pair<Long?, String>>(null to none) +

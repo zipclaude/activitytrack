@@ -122,11 +122,13 @@ fun TextInput(
 	keyboardType: KeyboardType = KeyboardType.Text,
 	isError: Boolean = false,
 	singleLine: Boolean = true,
+	trailing: (@Composable () -> Unit)? = null,
 ) {
 	OutlinedTextField(
 		value = value,
 		onValueChange = onChange,
 		label = { Text(label) },
+		trailingIcon = trailing,
 		singleLine = singleLine,
 		isError = isError,
 		keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
