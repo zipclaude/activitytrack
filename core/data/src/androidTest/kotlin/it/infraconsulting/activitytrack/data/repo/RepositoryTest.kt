@@ -307,6 +307,48 @@ class RepositoryTest {
 	}
 
 	@Test
+	fun exportRowsCarryNamesRefsAndKm() = runBlocking<Unit> {
+		val start = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Audit"))
+		entries.addExternalRef(id, "OPS-7")
+		clock.advance(120)
+		entries.apply(id, EntryCommand.STOP)
+		entries.addManualSegment(id, SegmentKind.TRAVEL, start - 1_800_000, start, kmDeclared = 12.5)
+		val day = java.time.LocalDate.of(2026, 10, 14)
+		val rows = ReportRepository(db, clock).exportRows(
+			day, day, ZoneOffset.UTC, it.infraconsulting.activitytrack.domain.rounding.ReportRounding.DEFAULT, 360,
+		)
+		val r = rows.single()
+		assertEquals(listOf("Acme", "Bank", "Audit"), listOf(r.company, r.client, r.activity))
+		assertEquals(listOf("OPS-7"), r.externalRefs)
+		assertEquals(12.5, r.km)
+		assertEquals(java.time.Duration.ofMinutes(120), r.work)
+		assertEquals(java.time.Duration.ofMinutes(30), r.travel)
+	}
+
+	@Test
+	fun backupZipHasDatabaseAndManifest() = runBlocking<Unit> {
+		entries.start(StartRequest(SegmentKind.WORK, client))
+		val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+		val out = java.io.ByteArrayOutputStream()
+		val m = it.infraconsulting.activitytrack.data.storage.DatabaseBackup(db, ctx.cacheDir)
+			.writeZip("test", clock.instant(), out)
+		assertEquals(1, m.dbVersion)
+		val names = ArrayList<String>()
+		var header = ByteArray(0)
+		java.util.zip.ZipInputStream(out.toByteArray().inputStream()).use { zip ->
+			while (true) {
+				val e = zip.nextEntry ?: break
+				names += e.name
+				if (e.name == ActivityTrackDatabase.FILE_NAME)
+					header = zip.readBytes().copyOf(15)
+			}
+		}
+		assertEquals(listOf(ActivityTrackDatabase.FILE_NAME, "manifest.json"), names)
+		assertEquals("SQLite format 3", String(header, Charsets.US_ASCII))
+	}
+
+	@Test
 	fun clientLastUse() = runBlocking<Unit> {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(listOf(client to clock.millis()), entries.clientLastUse.first().map { it.clientId to it.lastMs })

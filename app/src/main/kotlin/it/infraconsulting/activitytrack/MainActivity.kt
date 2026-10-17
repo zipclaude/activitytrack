@@ -38,6 +38,8 @@ import it.infraconsulting.activitytrack.ui.masterdata.PresetsScreen
 import it.infraconsulting.activitytrack.ui.masterdata.RolesScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ScheduleScreen
 import it.infraconsulting.activitytrack.ui.rememberBackStack
+import it.infraconsulting.activitytrack.ui.report.DayScreen
+import it.infraconsulting.activitytrack.ui.report.ExportScreen
 import it.infraconsulting.activitytrack.ui.settings.SettingsScreen
 import it.infraconsulting.activitytrack.ui.setup.SetupScreen
 import it.infraconsulting.activitytrack.ui.start.StartScreen
@@ -118,11 +120,14 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		Screen.Home -> HomeScreen(
 			onStart = { open(Screen.Start) },
 			onOpenEntry = { open(Screen.Entry(it)) },
+			onDay = { open(Screen.Day) },
 			onMasterData = { open(Screen.MasterData) },
 			onSettings = { open(Screen.Settings) },
 		)
 		Screen.Start -> StartScreen(back)
 		is Screen.Entry -> EntryScreen(top.id, back)
+		Screen.Day -> DayScreen(back, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
+		Screen.Export -> ExportScreen(back)
 		Screen.Settings -> SettingsScreen(back)
 		Screen.MasterData -> MasterDataScreen(back, open)
 		Screen.Companies -> CompaniesScreen(back) { open(Screen.Company(it)) }

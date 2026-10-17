@@ -181,4 +181,23 @@
   <string name="err_blank_value">Ein Wert ist erforderlich.</string>
   <string name="err_invalid_segment">Ungültiger Abschnitt: Datum und Uhrzeiten prüfen; er muss in der Vergangenheit liegen.</string>
   <string name="err_overlapping_segments">Der Abschnitt überschneidet sich mit bereits erfasster Zeit.</string>
+  <string name="day_title">Tag</string>
+  <string name="day_today">Heute</string>
+  <string name="day_solar">Tatsächlich</string>
+  <string name="day_reported">Gemeldet</string>
+  <string name="day_empty">An diesem Tag wurde keine Zeit erfasst.</string>
+  <string name="day_line_fmt">Arbeit %1$s → %2$s · Reise %3$s → %4$s · Pause %5$s → %6$s</string>
+  <string name="export_title">Export</string>
+  <string name="export_from">Von (jjjj-mm-tt)</string>
+  <string name="export_to">Bis (jjjj-mm-tt)</string>
+  <string name="export_hint">Eine Zeile pro Tätigkeit und Tag, gerundet wie in den Einstellungen. Die Datei landet im Ordner export des Datenordners; Koordinaten werden nie exportiert.</string>
+  <string name="export_csv">CSV exportieren</string>
+  <string name="export_invalid">Ungültiger Zeitraum: Datum als jjjj-mm-tt, höchstens ein Jahr.</string>
+  <string name="export_failed">Export fehlgeschlagen: Datenordner prüfen.</string>
+  <string name="backup_now">Jetzt sichern</string>
+  <string name="backup_started">Sicherung gestartet</string>
+  <plurals name="export_done">
+    <item quantity="one">%1$d Zeile in %2$s geschrieben</item>
+    <item quantity="other">%1$d Zeilen in %2$s geschrieben</item>
+  </plurals>
 </resources>

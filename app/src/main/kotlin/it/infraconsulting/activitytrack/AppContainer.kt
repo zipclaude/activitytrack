@@ -7,6 +7,7 @@ import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
+import it.infraconsulting.activitytrack.data.storage.DatabaseBackup
 import it.infraconsulting.activitytrack.data.storage.UserDataDir
 import java.time.Clock
 import java.time.Instant
@@ -27,6 +28,7 @@ class AppContainer(context: Context) {
 	val reports: ReportRepository by lazy { ReportRepository(database, clock) }
 	val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
+	val backup: DatabaseBackup by lazy { DatabaseBackup(database, appContext.cacheDir) }
 
 	/* System clock that follows time-zone changes (Clock.systemDefaultZone() captures the zone once). */
 	private object DefaultZoneClock : Clock() {
