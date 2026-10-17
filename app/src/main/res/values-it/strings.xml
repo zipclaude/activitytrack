@@ -25,6 +25,7 @@
   <string name="mode_work">In lavoro</string>
   <string name="mode_travel">In trasferta</string>
   <string name="mode_pause">In pausa</string>
+  <string name="tile_start">Avvia</string>
   <string name="status_suspended">Sospesa</string>
   <string name="status_to_complete">Da completare</string>
   <string name="status_closed">Chiusa</string>

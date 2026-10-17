@@ -25,6 +25,7 @@
   <string name="mode_work">Trabajando</string>
   <string name="mode_travel">De viaje</string>
   <string name="mode_pause">En pausa</string>
+  <string name="tile_start">Iniciar</string>
   <string name="status_suspended">Suspendida</string>
   <string name="status_to_complete">Por completar</string>
   <string name="status_closed">Cerrada</string>

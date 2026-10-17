@@ -6,6 +6,7 @@ import android.content.Context
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.location.LocationService
+import it.infraconsulting.activitytrack.quick.ToggleTileService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -53,6 +54,7 @@ class NotificationSync(
 			}.combine(tick) { infos, _ -> infos }.conflate().collect { infos ->
 				EntryNotifications.sync(context, infos, previous)
 				LocationService.sync(context, infos)
+				ToggleTileService.refresh(context)
 				previous = infos.map { it.id }.toSet()
 			}
 		}
