@@ -6,6 +6,7 @@ import it.infraconsulting.activitytrack.backup.BackupWorker
 import it.infraconsulting.activitytrack.location.TrackingMonitor
 import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.notify.NotificationSync
+import it.infraconsulting.activitytrack.quick.ClientShortcuts
 import it.infraconsulting.activitytrack.reminders.ReminderScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ class ActivityTrackApp : Application() {
 		notificationSync = NotificationSync(this, container, appScope).also { it.start() }
 		reminders = ReminderScheduler(this, container).also { it.start(appScope) }
 		tracking = TrackingMonitor(this, container)
+		ClientShortcuts(this, container).start(appScope)
 		BackupWorker.schedule(this)
 	}
 }

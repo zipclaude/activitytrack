@@ -45,9 +45,9 @@ import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.reasonText
 
 @Composable
-fun StartScreen(onBack: () -> Unit) {
+fun StartScreen(onBack: () -> Unit, clientId: Long? = null) {
 	val context = LocalContext.current.applicationContext
-	val vm = appViewModel { StartViewModel(it.entries, it.masterData) { CurrentPosition.get(context) } }
+	val vm = appViewModel { StartViewModel(it.entries, it.masterData, clientId) { CurrentPosition.get(context) } }
 	val f by vm.form.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val clients by vm.clients.collectAsState()
