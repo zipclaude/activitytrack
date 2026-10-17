@@ -14,6 +14,10 @@ android {
 		versionCode = 1
 		versionName = "0.1.0"
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+		/* personal APK for the owner's phone: native libraries (MapLibre) only for arm64 */
+		ndk {
+			abiFilters += "arm64-v8a"
+		}
 	}
 
 	buildTypes {
