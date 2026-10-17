@@ -148,7 +148,6 @@
   <string name="running_suspend">Suspenderla</string>
   <string name="travel_done_title">¿Ha terminado el viaje?</string>
   <string name="travel_suspend">Suspender viaje</string>
-  <string name="complete_title">Completar \"%1$s\"</string>
   <string name="err_completion_incomplete">Describe la actividad.</string>
   <string name="err_client_required">Elige un cliente.</string>
   <string name="notif_to_complete_title">Actividad por completar</string>
@@ -158,4 +157,28 @@
   <string name="notif_pause_title">¿Sigues en pausa?</string>
   <string name="notif_summary_title">Hoy</string>
   <string name="notif_summary_text">Real %1$s · declarado %2$s</string>
+  <string name="entry_title">Actividad</string>
+  <string name="field_locality">Localidad</string>
+  <string name="field_location_kind">Dónde</string>
+  <string name="segments">Tiempos</string>
+  <string name="add_travel">+ Viaje</string>
+  <string name="add_pause">+ Pausa</string>
+  <string name="segment_manual">manual</string>
+  <string name="external_refs">Referencias externas</string>
+  <string name="external_ref_new">Ticket, URL o código</string>
+  <string name="confirm_delete_segment">¿Eliminar este tramo?</string>
+  <string name="field_date">Fecha (aaaa-mm-dd)</string>
+  <string name="field_km">km</string>
+  <string name="segment_hint">Un fin anterior al inicio cae al día siguiente.</string>
+  <string name="ref_ticket">Ticket</string>
+  <string name="ref_url">Enlace</string>
+  <string name="ref_uuid">UUID</string>
+  <string name="ref_other">Referencia</string>
+  <string name="loc_company">Sede de la empresa</string>
+  <string name="loc_client">Sede del cliente</string>
+  <string name="loc_home">Casa</string>
+  <string name="loc_other">Otro lugar</string>
+  <string name="err_blank_value">Se necesita un valor.</string>
+  <string name="err_invalid_segment">Tramo no válido: revisa fecha y horas; debe estar en el pasado.</string>
+  <string name="err_overlapping_segments">El tramo se solapa con tiempo ya registrado.</string>
 </resources>

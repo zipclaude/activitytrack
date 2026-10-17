@@ -103,6 +103,24 @@ interface EntryDao {
 	@Query("SELECT * FROM time_entry WHERE id IN (:ids)")
 	suspend fun entries(ids: List<Long>): List<TimeEntryEntity>
 
+	@Query("SELECT * FROM segment WHERE id = :id")
+	suspend fun segment(id: Long): SegmentEntity?
+
+	@Query("DELETE FROM segment WHERE id = :id")
+	suspend fun deleteSegment(id: Long)
+
+	@Query("SELECT * FROM external_ref WHERE entry_id = :entryId ORDER BY id")
+	fun observeExternalRefs(entryId: Long): Flow<List<ExternalRefEntity>>
+
+	@Query("SELECT * FROM external_ref WHERE entry_id IN (:entryIds) ORDER BY entry_id, id")
+	suspend fun externalRefs(entryIds: List<Long>): List<ExternalRefEntity>
+
+	@Insert
+	suspend fun insertExternalRef(ref: ExternalRefEntity): Long
+
+	@Query("DELETE FROM external_ref WHERE id = :id")
+	suspend fun deleteExternalRef(id: Long)
+
 	@Transaction
 	suspend fun startEntry(entry: TimeEntryEntity, first: SegmentEntity): Long {
 		val id = insertEntry(entry)

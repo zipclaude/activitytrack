@@ -22,6 +22,7 @@ import androidx.compose.runtime.toMutableStateList
 sealed interface Screen {
 	data object Home : Screen
 	data object Start : Screen
+	data class Entry(val id: Long) : Screen
 	data object Settings : Screen
 	data object MasterData : Screen
 	data object Companies : Screen
@@ -35,6 +36,7 @@ sealed interface Screen {
 
 	/* Stable string form, used to save the back stack across process death. */
 	fun key(): String = when (this) {
+		is Entry -> "entry/$id"
 		is Company -> "company/$id"
 		is Client -> "client/$id"
 		else -> this::class.simpleName!!
@@ -52,6 +54,7 @@ sealed interface Screen {
 			val (kind, id) = key.split('/').takeIf { it.size == 2 } ?: return null
 			val n = id.toLongOrNull() ?: return null
 			return when (kind) {
+				"entry" -> Entry(n)
 				"company" -> Company(n)
 				"client" -> Client(n)
 				else -> null

@@ -19,5 +19,7 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		INVALID_SEGMENT,
 		OVERLAPPING_SEGMENTS,
 		NOT_FOUND,
+		BLANK_VALUE,
+		NOT_MANUAL,			/* only manual segments can be deleted */
 	}
 }

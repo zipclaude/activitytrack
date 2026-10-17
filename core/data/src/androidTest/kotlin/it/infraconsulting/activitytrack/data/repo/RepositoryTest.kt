@@ -11,6 +11,7 @@ import it.infraconsulting.activitytrack.data.db.WorkScheduleEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
 import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import java.time.Clock
@@ -280,6 +281,29 @@ class RepositoryTest {
 		val days = reports.days(d14, d14.plusDays(1), ZoneOffset.UTC, it.infraconsulting.activitytrack.domain.rounding.ReportRounding.DEFAULT, 360)
 		assertEquals(listOf(d14), days.map { it.day })
 		assertEquals(java.time.Duration.ofMinutes(390), days.single().solar)
+	}
+
+	@Test
+	fun externalRefsAndManualSegmentDeletion() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		entries.addExternalRef(id, " INC0012345 ")
+		entries.addExternalRef(id, "https://jira.example.com/browse/OPS-1")
+		assertEquals(Reason.BLANK_VALUE, reason { entries.addExternalRef(id, "  ") })
+		val refs = entries.externalRefs(id).first()
+		assertEquals(
+			listOf(ExternalRefKind.TICKET to "INC0012345", ExternalRefKind.URL to "https://jira.example.com/browse/OPS-1"),
+			refs.map { it.kind to it.value },
+		)
+		entries.removeExternalRef(id, refs[0].id)
+		assertEquals(1, entries.externalRefs(id).first().size)
+
+		val start = clock.millis()
+		clock.advance(60)
+		val manual = entries.addManualSegment(id, SegmentKind.TRAVEL, start - 3_600_000, start)
+		val tracked = db.entryDao().segments(id).first { it.id != manual }
+		assertEquals(Reason.NOT_MANUAL, reason { entries.deleteManualSegment(tracked.id) })
+		entries.deleteManualSegment(manual)
+		assertEquals(listOf(tracked.id), db.entryDao().segments(id).map { it.id })
 	}
 
 	@Test

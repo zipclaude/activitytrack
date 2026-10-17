@@ -211,6 +211,9 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.IN_USE -> R.string.err_in_use
 		Reason.COMPLETION_INCOMPLETE -> R.string.err_completion_incomplete
 		Reason.CLIENT_REQUIRED -> R.string.err_client_required
+		Reason.BLANK_VALUE -> R.string.err_blank_value
+		Reason.INVALID_SEGMENT -> R.string.err_invalid_segment
+		Reason.OVERLAPPING_SEGMENTS -> R.string.err_overlapping_segments
 		else -> R.string.err_generic
 	},
 )

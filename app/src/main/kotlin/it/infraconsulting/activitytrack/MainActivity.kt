@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,12 +18,15 @@ import androidx.core.net.toUri
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
 import it.infraconsulting.activitytrack.ui.ScopedEntry
 import it.infraconsulting.activitytrack.ui.Screen
+import it.infraconsulting.activitytrack.ui.entry.EntryScreen
 import it.infraconsulting.activitytrack.ui.home.HomeScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientsScreen
@@ -39,18 +43,28 @@ import it.infraconsulting.activitytrack.ui.setup.SetupScreen
 import it.infraconsulting.activitytrack.ui.start.StartScreen
 
 class MainActivity : ComponentActivity() {
+	/* entry to open, from a notification (consumed by the navigator) */
+	private val deepLink = mutableStateOf<Long?>(null)
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
+		if (savedInstanceState == null)
+			deepLink.value = EntryLinks.entryOf(intent)
 		setContent {
-			ActivityTrackTheme { Root() }
+			ActivityTrackTheme { Root(deepLink.value) { deepLink.value = null } }
 		}
+	}
+
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		EntryLinks.entryOf(intent)?.let { deepLink.value = it }
 	}
 }
 
 /* The data folder must be chosen (and still accessible) before anything else. */
 @Composable
-private fun Root() {
+private fun Root(deepLink: Long?, consumeDeepLink: () -> Unit) {
 	val container = (LocalContext.current.applicationContext as ActivityTrackApp).container
 	val settings by container.settings.settings.collectAsState(initial = null)
 	val s = settings ?: return
@@ -61,14 +75,22 @@ private fun Root() {
 	if (!accessible)
 		SetupScreen(lost = root != null, onChosen = { epoch++ })
 	else
-		Navigator()
+		Navigator(deepLink, consumeDeepLink)
 }
 
 @Composable
-private fun Navigator() {
+private fun Navigator(deepLink: Long?, consumeDeepLink: () -> Unit) {
 	val stack = rememberBackStack()
 	val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
 	val open: (Screen) -> Unit = { stack.add(it) }
+	LaunchedEffect(deepLink) {
+		if (deepLink != null) {
+			val target = Screen.Entry(deepLink)
+			if (stack.last() != target)
+				stack.add(target)
+			consumeDeepLink()
+		}
+	}
 	BackHandler(enabled = stack.size > 1, onBack = back)
 	RequestNotificationPermission()
 
@@ -95,10 +117,12 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 	when (top) {
 		Screen.Home -> HomeScreen(
 			onStart = { open(Screen.Start) },
+			onOpenEntry = { open(Screen.Entry(it)) },
 			onMasterData = { open(Screen.MasterData) },
 			onSettings = { open(Screen.Settings) },
 		)
 		Screen.Start -> StartScreen(back)
+		is Screen.Entry -> EntryScreen(top.id, back)
 		Screen.Settings -> SettingsScreen(back)
 		Screen.MasterData -> MasterDataScreen(back, open)
 		Screen.Companies -> CompaniesScreen(back) { open(Screen.Company(it)) }
