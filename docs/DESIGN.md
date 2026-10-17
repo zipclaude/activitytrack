@@ -132,7 +132,12 @@ Algorithms to add:
 - One `ReminderScheduler` computes the earliest due time among: entry
   confirmations (per ACTIVE WORK/TRAVEL entry: `last_confirmed + interval`),
   pause reminders (15 min, skipping the lunch break), day start (+15 min), end of
-  day summary, TO_COMPLETE nags.
+  day summary. Implemented as the pure `ReminderPlanner` (domain): confirm at
+  `last_confirmed + interval * (unanswered + 1)` up to the maximum; pause at
+  `last_confirmed + interval`, where each pause reminder moves `last_confirmed`
+  (a time inside the lunch break is postponed to its end); day summary at the
+  end of the last working interval, once per day. TO_COMPLETE entries keep a
+  persistent notification instead of periodic nags.
 - It arms a **single** alarm with `AlarmManager.setWindow(RTC_WAKEUP, t, 2 min)`;
   `setAndAllowWhileIdle` when the device may be in Doze. No
   `SCHEDULE_EXACT_ALARM`. Allow-while-idle alarms are rate-limited by the system
@@ -195,7 +200,7 @@ Notification ids derived from entry id and channel (`entryId * 16 + channelIndex
 ### 8.2 Backup and restore
 - Snapshot: `VACUUM INTO '<cache>/snapshot.db'`, zipped with `manifest.json`
   (app version, DB version, timestamp, attachment count); retention N (default 14).
-- Restore: close Room, replace the DB file from the zip, run migrations on open.
+- Restore (not in M1): close Room, replace the DB file from the zip, run migrations on open.
 - `android:allowBackup="false"`: Android cloud backup disabled, the SAF backup
   is the only one.
 
@@ -241,7 +246,11 @@ interface Exporter {
 
 `ExportRow` is built from `DailyReport` lines and **excludes coordinates**.
 Default CSV profile: UTF-8, `;` separator, decimal comma for Italian locale.
-Columns: start date, start time, end date, end time, pause hours, travel hours,
+Header (stable, English): start_date, start_time, end_date, end_time,
+work_hours, pause_hours, travel_hours, company, client, role, activity, km,
+expenses_eur, notes, external_refs, locality. UTF-8 with BOM, CRLF, RFC 4180
+quoting; km and expenses on the first day of an entry split at midnight.
+Original column list: start date, start time, end date, end time, pause hours, travel hours,
 company, client, role, activity, km, expenses total, notes, external refs,
 locality. Rounding and column set configurable per export profile.
 
@@ -271,5 +280,7 @@ M0 test vectors were cross-checked with an independent Python implementation.
 | OxygenOS background restrictions | test reminders in Doze and with screen off |
 | Entry ending exactly at 06:00 attributed to start day | confirmed by owner 2026-10-16 |
 | Site coordinates typed by hand | until M2 (current position, map picker) |
+| Inexact reminder alarm in Doze | setWindow when awake, setAndAllowWhileIdle when idle at scheduling; a device entering Doze later may delay a reminder to the next maintenance window; verify on OxygenOS |
+| M1 steps 5–8 | implemented, host-tested; device test pending |
 | CI | GitHub Actions: domain + app unit tests, instrumented tests compiled (not run), `assembleDebug`, APK artifact |
 | `connectedDebugAndroidTest` exit status | AGP 9.4 test engine fails the task with all tests green; verify via report or `am instrument` |
