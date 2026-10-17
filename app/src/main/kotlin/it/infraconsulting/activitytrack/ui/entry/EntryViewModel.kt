@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.data.repo.EntryDetails
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
+import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
@@ -18,6 +19,7 @@ class EntryViewModel(
 	val entryId: Long,
 	private val entries: EntryRepository,
 	master: MasterDataRepository,
+	private val todos: TodoRepository,
 ) : ActionViewModel() {
 	val entry = entries.entry(entryId).state(null)
 	val segments = entries.segments(entryId).state(emptyList())
@@ -39,7 +41,7 @@ class EntryViewModel(
 			try {
 				entries.complete(entryId, d)
 				clearError()
-				done()
+				finished(done)
 			} catch (e: ValidationException) {
 				if (e.reason == ValidationException.Reason.COMPLETION_INCOMPLETE)
 					_emptyPrompt.value = EmptyActivityPrompt(d, d.clientId?.let { entries.lastActivity(it) })
@@ -52,13 +54,34 @@ class EntryViewModel(
 	fun completeEmpty(done: () -> Unit) {
 		val p = _emptyPrompt.value ?: return
 		_emptyPrompt.value = null
-		run(done) { entries.complete(entryId, p.details, allowEmpty = true) }
+		run { entries.complete(entryId, p.details, allowEmpty = true); finished(done) }
 	}
 
 	fun completeCopyingLast(done: () -> Unit) {
 		val p = _emptyPrompt.value ?: return
 		_emptyPrompt.value = null
-		run(done) { entries.complete(entryId, p.details.copy(activity = p.lastActivity)) }
+		run { entries.complete(entryId, p.details.copy(activity = p.lastActivity)); finished(done) }
+	}
+
+	/* Completed an entry started from an open to-do: "mark the to-do as done?" (owner decision). */
+	data class TodoDonePrompt(val todoId: Long, val title: String, val done: () -> Unit)
+
+	private val _todoPrompt = MutableStateFlow<TodoDonePrompt?>(null)
+	val todoPrompt = _todoPrompt.asStateFlow()
+
+	private suspend fun finished(done: () -> Unit) {
+		val t = entries.find(entryId)?.todoId?.let { todos.find(it) }
+		if (t != null && !t.done) _todoPrompt.value = TodoDonePrompt(t.id, t.title, done) else done()
+	}
+
+	fun answerTodo(markDone: Boolean) {
+		val p = _todoPrompt.value ?: return
+		_todoPrompt.value = null
+		viewModelScope.launch {
+			if (markDone)
+				todos.setDone(p.todoId, true)
+			p.done()
+		}
 	}
 
 	fun dismissEmptyPrompt() {

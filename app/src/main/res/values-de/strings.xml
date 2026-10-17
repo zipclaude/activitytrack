@@ -273,6 +273,21 @@
   <string name="day_empty">An diesem Tag wurde keine Zeit erfasst.</string>
   <string name="day_line_fmt">Arbeit %1$s → %2$s · Reise %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / Export</string>
+  <string name="todo_title">Aufgaben</string>
+  <string name="todo_due_today">Heute fällig</string>
+  <string name="todo_today">heute</string>
+  <string name="todo_start">Tätigkeit starten</string>
+  <string name="todo_mark_done">Als erledigt markieren</string>
+  <string name="todo_reopen">Als offen markieren</string>
+  <string name="todo_edit">Aufgabe bearbeiten</string>
+  <string name="todo_show_done">Erledigte anzeigen</string>
+  <string name="todo_field_title">Titel</string>
+  <string name="todo_field_due">Fällig am (jjjj-mm-tt)</string>
+  <string name="todo_field_time">Uhrzeit (hh:mm)</string>
+  <string name="todo_field_priority">Priorität (1 = höchste)</string>
+  <string name="todo_field_refs">Referenzen (eine pro Zeile)</string>
+  <string name="todo_done_question">Ist die Aufgabe erledigt?</string>
+  <string name="todo_later">Nein, später</string>
   <string name="export_all">Alle</string>
   <string name="export_section">Export</string>
   <string name="export_sections">Inhalt</string>

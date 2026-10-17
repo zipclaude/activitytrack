@@ -273,6 +273,21 @@
   <string name="day_empty">Nessun tempo registrato in questo giorno.</string>
   <string name="day_line_fmt">Lavoro %1$s → %2$s · Viaggio %3$s → %4$s · Pausa %5$s → %6$s</string>
   <string name="export_title">Importa / esporta</string>
+  <string name="todo_title">Da fare</string>
+  <string name="todo_due_today">Da fare oggi</string>
+  <string name="todo_today">oggi</string>
+  <string name="todo_start">Avvia attività</string>
+  <string name="todo_mark_done">Segna come fatta</string>
+  <string name="todo_reopen">Segna come da fare</string>
+  <string name="todo_edit">Modifica</string>
+  <string name="todo_show_done">Mostra anche le fatte</string>
+  <string name="todo_field_title">Titolo</string>
+  <string name="todo_field_due">Scadenza (aaaa-mm-gg)</string>
+  <string name="todo_field_time">Ora (hh:mm)</string>
+  <string name="todo_field_priority">Priorità (1 = massima)</string>
+  <string name="todo_field_refs">Riferimenti (uno per riga)</string>
+  <string name="todo_done_question">L\'attività da fare è conclusa?</string>
+  <string name="todo_later">No, ci tornerò</string>
   <string name="export_all">Tutti</string>
   <string name="export_section">Esporta</string>
   <string name="export_sections">Contenuto</string>

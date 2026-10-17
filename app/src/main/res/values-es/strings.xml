@@ -273,6 +273,21 @@
   <string name="day_empty">No hay tiempo registrado este día.</string>
   <string name="day_line_fmt">Trabajo %1$s → %2$s · Viaje %3$s → %4$s · Pausa %5$s → %6$s</string>
   <string name="export_title">Importar / exportar</string>
+  <string name="todo_title">Pendientes</string>
+  <string name="todo_due_today">Pendientes de hoy</string>
+  <string name="todo_today">hoy</string>
+  <string name="todo_start">Iniciar actividad</string>
+  <string name="todo_mark_done">Marcar como hecha</string>
+  <string name="todo_reopen">Marcar como pendiente</string>
+  <string name="todo_edit">Editar pendiente</string>
+  <string name="todo_show_done">Mostrar las hechas</string>
+  <string name="todo_field_title">Título</string>
+  <string name="todo_field_due">Fecha límite (aaaa-mm-dd)</string>
+  <string name="todo_field_time">Hora (hh:mm)</string>
+  <string name="todo_field_priority">Prioridad (1 = máxima)</string>
+  <string name="todo_field_refs">Referencias (una por línea)</string>
+  <string name="todo_done_question">¿Está hecho el pendiente?</string>
+  <string name="todo_later">No, volveré</string>
   <string name="export_all">Todos</string>
   <string name="export_section">Exportar</string>
   <string name="export_sections">Contenido</string>

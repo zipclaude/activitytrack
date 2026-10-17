@@ -140,6 +140,10 @@ class EntryRepository(
 			),
 			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = now, zoneId = zone),
 		)
+		/* the to-do's tickets become the entry's external references */
+		req.todoId?.let { db.todoDao().byId(it) }?.refs?.lines()?.filter(String::isNotBlank)?.forEach {
+			dao.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(it), value = it.trim()))
+		}
 		verify(id)
 		return id
 	}

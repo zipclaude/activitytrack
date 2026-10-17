@@ -284,6 +284,21 @@
   <string name="day_empty">No time recorded on this day.</string>
   <string name="day_line_fmt">Work %1$s → %2$s · Travel %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / export</string>
+  <string name="todo_title">To-dos</string>
+  <string name="todo_due_today">To do today</string>
+  <string name="todo_today">today</string>
+  <string name="todo_start">Start activity</string>
+  <string name="todo_mark_done">Mark as done</string>
+  <string name="todo_reopen">Mark as not done</string>
+  <string name="todo_edit">Edit to-do</string>
+  <string name="todo_show_done">Show done ones</string>
+  <string name="todo_field_title">Title</string>
+  <string name="todo_field_due">Due date (yyyy-mm-dd)</string>
+  <string name="todo_field_time">Due time (hh:mm)</string>
+  <string name="todo_field_priority">Priority (1 = highest)</string>
+  <string name="todo_field_refs">References (one per line)</string>
+  <string name="todo_done_question">Is the to-do done?</string>
+  <string name="todo_later">No, I will come back</string>
   <string name="export_all">All</string>
   <string name="export_section">Export</string>
   <string name="export_sections">Content</string>
