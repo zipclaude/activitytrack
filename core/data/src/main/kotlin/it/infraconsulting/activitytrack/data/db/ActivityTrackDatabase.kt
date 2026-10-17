@@ -37,6 +37,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 abstract class ActivityTrackDatabase : RoomDatabase() {
 	abstract fun entryDao(): EntryDao
 	abstract fun masterDataDao(): MasterDataDao
+	abstract fun locationDao(): LocationDao
 
 	companion object {
 		const val FILE_NAME = "activitytrack.db"

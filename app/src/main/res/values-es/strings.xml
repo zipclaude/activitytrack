@@ -114,6 +114,15 @@
   <string name="set_endpoint">Endpoint</string>
   <string name="sec_storage">Almacenamiento</string>
   <string name="set_root">Carpeta de datos</string>
+  <string name="perm_location">Acceso a la ubicación</string>
+  <string name="perm_location_always">Permitido siempre</string>
+  <string name="perm_location_in_use">Solo durante el uso: sin ubicación al iniciar desde notificaciones</string>
+  <string name="perm_denied">No permitido</string>
+  <string name="perm_grant">Permitir</string>
+  <string name="perm_allow_always">Permitir siempre</string>
+  <string name="perm_battery">Optimización de batería</string>
+  <string name="perm_battery_unrestricted">Sin restricciones</string>
+  <string name="perm_battery_optimized">Optimizada: el sistema puede detener el registro</string>
   <string name="set_change_root">Cambiar</string>
   <string name="set_backup_retention">Copias conservadas</string>
   <string name="home_start">Iniciar actividad</string>

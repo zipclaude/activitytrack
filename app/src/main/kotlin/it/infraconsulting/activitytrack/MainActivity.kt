@@ -103,23 +103,31 @@ private fun Navigator(deepLink: Long?, consumeDeepLink: () -> Unit) {
 		}
 	}
 	BackHandler(enabled = stack.size > 1, onBack = back)
-	RequestNotificationPermission()
+	RequestRuntimePermissions()
 
 	ScopedEntry(stack) { top -> Destination(top, back, open) }
 }
 
-/* POST_NOTIFICATIONS is a runtime permission from API 33; asked once per launch while missing. */
+/*
+ * Notifications (runtime from API 33) and location while in use, asked once
+ * per launch while missing; the system shows the dialogs one after the
+ * other. "Allow all the time" is a separate step in Settings.
+ */
 @Composable
-private fun RequestNotificationPermission() {
+private fun RequestRuntimePermissions() {
 	val context = LocalContext.current
 	val app = context.applicationContext as ActivityTrackApp
-	val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-		if (granted) app.notificationSync.refresh()
+	val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+		if (result.values.any { it }) app.notificationSync.refresh()
 	}
 	LaunchedEffect(Unit) {
-		val perm = Manifest.permission.POST_NOTIFICATIONS
-		if (ContextCompat.checkSelfPermission(context, perm) != PackageManager.PERMISSION_GRANTED)
-			launcher.launch(perm)
+		val missing = listOf(
+			Manifest.permission.POST_NOTIFICATIONS,
+			Manifest.permission.ACCESS_FINE_LOCATION,
+			Manifest.permission.ACCESS_COARSE_LOCATION,
+		).filter { ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED }
+		if (missing.isNotEmpty())
+			launcher.launch(missing.toTypedArray())
 	}
 }
 

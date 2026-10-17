@@ -114,6 +114,15 @@
   <string name="set_endpoint">Endpoint</string>
   <string name="sec_storage">Archiviazione</string>
   <string name="set_root">Cartella dati</string>
+  <string name="perm_location">Accesso alla posizione</string>
+  <string name="perm_location_always">Consentito sempre</string>
+  <string name="perm_location_in_use">Solo durante l\'uso: il tracciamento non parte dalle notifiche</string>
+  <string name="perm_denied">Non consentito</string>
+  <string name="perm_grant">Consenti</string>
+  <string name="perm_allow_always">Consenti sempre</string>
+  <string name="perm_battery">Ottimizzazione batteria</string>
+  <string name="perm_battery_unrestricted">Senza restrizioni</string>
+  <string name="perm_battery_optimized">Ottimizzata: il sistema può interrompere il tracciamento</string>
   <string name="set_change_root">Cambia</string>
   <string name="set_backup_retention">Backup conservati</string>
   <string name="home_start">Avvia attività</string>
