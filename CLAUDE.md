@@ -114,6 +114,8 @@ available). PR stack, to merge in order after the device tests:
 #4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`
 → #8 `m8-hardening` (review fixes, backup restore, SPEC/DESIGN, user manual).
 Install the top of the stack (`m8-hardening`); back up `databases/` first.
+Branch `beta` = copy of `m8-hardening` for device tests; CI builds it on push
+and publishes the `app-debug` APK artifact (14 days).
 
 ### Device tests
 1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
