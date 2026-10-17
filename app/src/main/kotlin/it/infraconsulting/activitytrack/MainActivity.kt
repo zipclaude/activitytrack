@@ -13,8 +13,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -22,16 +20,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
 import it.infraconsulting.activitytrack.ui.ScopedEntry
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.entry.EntryScreen
 import it.infraconsulting.activitytrack.ui.home.HomeScreen
+import it.infraconsulting.activitytrack.ui.home.LateEntryScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientsScreen
 import it.infraconsulting.activitytrack.ui.masterdata.CompaniesScreen
 import it.infraconsulting.activitytrack.ui.masterdata.CompanyScreen
+import it.infraconsulting.activitytrack.ui.masterdata.DaysOffScreen
 import it.infraconsulting.activitytrack.ui.masterdata.MasterDataScreen
 import it.infraconsulting.activitytrack.ui.masterdata.PlacesScreen
 import it.infraconsulting.activitytrack.ui.masterdata.PresetsScreen
@@ -46,13 +48,13 @@ import it.infraconsulting.activitytrack.ui.start.StartScreen
 
 class MainActivity : ComponentActivity() {
 	/* entry to open, from a notification (consumed by the navigator) */
-	private val deepLink = mutableStateOf<Long?>(null)
+	private val deepLink = mutableStateOf<Screen?>(null)
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		if (savedInstanceState == null)
-			deepLink.value = EntryLinks.entryOf(intent)
+			deepLink.value = EntryLinks.screenOf(intent)
 		setContent {
 			ActivityTrackTheme { Root(deepLink.value) { deepLink.value = null } }
 		}
@@ -69,13 +71,13 @@ class MainActivity : ComponentActivity() {
 
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
-		EntryLinks.entryOf(intent)?.let { deepLink.value = it }
+		EntryLinks.screenOf(intent)?.let { deepLink.value = it }
 	}
 }
 
 /* The data folder must be chosen (and still accessible) before anything else. */
 @Composable
-private fun Root(deepLink: Long?, consumeDeepLink: () -> Unit) {
+private fun Root(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 	val container = (LocalContext.current.applicationContext as ActivityTrackApp).container
 	val settings by container.settings.settings.collectAsState(initial = null)
 	val s = settings ?: return
@@ -90,15 +92,14 @@ private fun Root(deepLink: Long?, consumeDeepLink: () -> Unit) {
 }
 
 @Composable
-private fun Navigator(deepLink: Long?, consumeDeepLink: () -> Unit) {
+private fun Navigator(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 	val stack = rememberBackStack()
 	val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
 	val open: (Screen) -> Unit = { stack.add(it) }
 	LaunchedEffect(deepLink) {
 		if (deepLink != null) {
-			val target = Screen.Entry(deepLink)
-			if (stack.last() != target)
-				stack.add(target)
+			if (stack.last() != deepLink)
+				stack.add(deepLink)
 			consumeDeepLink()
 		}
 	}
@@ -155,5 +156,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		Screen.Presets -> PresetsScreen(back)
 		Screen.Places -> PlacesScreen(back)
 		Screen.Schedule -> ScheduleScreen(back)
+		Screen.DaysOff -> DaysOffScreen(back)
+		is Screen.LateEntry -> LateEntryScreen(top.epochDay, back)
 	}
 }

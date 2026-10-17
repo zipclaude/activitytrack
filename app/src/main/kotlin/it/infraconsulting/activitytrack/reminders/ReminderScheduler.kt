@@ -11,6 +11,8 @@ import android.util.Log
 import androidx.core.content.edit
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.domain.calendar.ItalianHolidays
+import it.infraconsulting.activitytrack.domain.reminder.DayStartState
 import it.infraconsulting.activitytrack.domain.reminder.DayWindow
 import it.infraconsulting.activitytrack.domain.reminder.Reminder
 import it.infraconsulting.activitytrack.domain.reminder.ReminderConfig
@@ -50,37 +52,59 @@ class ReminderScheduler(
 				container.settings.settings,
 				container.masterData.lunchBreaks,
 				container.masterData.schedule,
-			) { _, _, _, _ -> }.conflate().collect { reschedule() }
+				combine(container.entries.absences, container.masterData.daysOff) { _, _ -> },
+			) { _, _, _, _, _ -> }.conflate().collect { reschedule() }
 		}
 	}
 
-	private suspend fun state(): Triple<ReminderPlanner, List<ReminderEntry>, LocalDate?> {
+	private class Plan(
+		val planner: ReminderPlanner,
+		val entries: List<ReminderEntry>,
+		val lastSummary: LocalDate?,
+		val dayStart: DayStartState,
+	) {
+		fun due(now: Instant) = planner.due(entries, lastSummary, now, dayStart)
+		fun next(now: Instant) = planner.next(entries, lastSummary, now, dayStart)
+	}
+
+	private suspend fun state(): Plan {
 		val s = container.settings.current()
 		val zone = ZoneId.systemDefault()
+		/* the planner looks at most a week ahead */
+		val today = LocalDate.now(zone)
+		val horizon = today.plusDays(8)
+		val daysOff = container.masterData.daysOffBetween(today, horizon)
 		val planner = ReminderPlanner(
 			ReminderConfig(
 				Duration.ofMinutes(s.confirmIntervalMin.toLong()),
 				s.maxConfirmations,
 				Duration.ofMinutes(s.pauseIntervalMin.toLong()),
+				Duration.ofMinutes(s.dayStartDelayMin.toLong()),
 			),
 			container.masterData.lunchBreaks.first().map { DayWindow(it.dayOfWeek, it.startMin, it.endMin) },
 			container.masterData.schedule.first().map { DayWindow(it.dayOfWeek, it.startMin, it.endMin) },
 			zone,
+			isDayOff = { it in daysOff || ItalianHolidays.isHoliday(it) },
 		)
 		val entries = container.entries.openEntries.first().map {
 			ReminderEntry(it.id, it.status, it.mode, it.lastConfirmedUtcMs, it.unansweredReminders)
 		}
 		val last = prefs.getLong(KEY_SUMMARY_DAY, Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let(LocalDate::ofEpochDay)
-		return Triple(planner, entries, last)
+		val lastDayStart = prefs.getLong(KEY_DAY_START, Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let(LocalDate::ofEpochDay)
+		val handled = container.entries.handledDays(today, horizon, zone)
+		/* the day got handled after the prompt (entry, absence): the prompt is moot */
+		if (today in handled)
+			context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(0, NotificationIds.DAY_START))
+		return Plan(planner, entries, last, DayStartState(lastDayStart, handled))
 	}
 
 	suspend fun reschedule() = lock.withLock {
-		val (planner, entries, last) = state()
+		val plan = state()
 		val now = Instant.now()
 		val am = context.getSystemService(AlarmManager::class.java)
 		val pi = alarmIntent()
 		/* something already due (e.g. after boot): fire soon, still through the receiver */
-		val next = if (planner.due(entries, last, now).isNotEmpty()) now.plusSeconds(5) else planner.next(entries, last, now)
+		val next = if (plan.due(now).isNotEmpty()) now.plusSeconds(5) else plan.next(now)
 		if (next == null) {
 			am.cancel(pi)
 			return@withLock
@@ -96,9 +120,8 @@ class ReminderScheduler(
 	/* Posts the due reminders, records them, re-arms. */
 	suspend fun fire() {
 		lock.withLock {
-			val (planner, entries, last) = state()
 			val now = Instant.now()
-			val due = planner.due(entries, last, now)
+			val due = state().due(now)
 			if (due.isEmpty())
 				return@withLock
 			val infos = entryInfos()
@@ -117,8 +140,10 @@ class ReminderScheduler(
 						postSummary(nm, r.day)
 						prefs.edit { putLong(KEY_SUMMARY_DAY, r.day.toEpochDay()) }
 					}
-					/* not planned yet: no DayStartState is passed (M2 step 8) */
-					is Reminder.DayStart -> {}
+					is Reminder.DayStart -> {
+						nm.notify(NotificationIds.of(0, NotificationIds.DAY_START), ReminderNotifications.dayStart(context, r.day))
+						prefs.edit { putLong(KEY_DAY_START, r.day.toEpochDay()) }
+					}
 				}
 			}
 		}
@@ -156,6 +181,7 @@ class ReminderScheduler(
 	private companion object {
 		const val TAG = "ReminderScheduler"
 		const val KEY_SUMMARY_DAY = "last_summary_day"
+		const val KEY_DAY_START = "last_day_start"
 		const val WINDOW_MS = 2 * 60_000L
 	}
 }

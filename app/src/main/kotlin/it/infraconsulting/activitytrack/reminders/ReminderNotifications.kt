@@ -10,8 +10,10 @@ import it.infraconsulting.activitytrack.notify.EntryInfo
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.notify.EntryNotifications
 import it.infraconsulting.activitytrack.notify.NotificationChannels
+import it.infraconsulting.activitytrack.ui.Screen
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 /* Reminder notifications (DESIGN §7): confirm, pause, day summary. */
@@ -55,6 +57,25 @@ object ReminderNotifications {
 			.addAction(action(context.getString(R.string.cmd_stop), ActionReceiver.command(context, id, EntryCommand.STOP)))
 			.build()
 	}
+
+	/* No activity yet on a working day: absent / late entry… / start (SPEC §5). */
+	fun dayStart(context: Context, day: LocalDate): Notification =
+		Notification.Builder(context, NotificationChannels.DAY_START)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(context.getString(R.string.notif_day_start_title))
+			.setContentText(context.getString(R.string.notif_day_start_text))
+			.setContentIntent(EntryNotifications.openAppIntent(context, 2))
+			.setAutoCancel(true)
+			.setCategory(Notification.CATEGORY_REMINDER)
+			.addAction(action(context.getString(R.string.action_absence), ActionReceiver.absentAllDay(context, day)))
+			.addAction(
+				action(
+					context.getString(R.string.action_late_entry),
+					EntryLinks.openScreen(context, Screen.LateEntry(day.toEpochDay()), 3),
+				),
+			)
+			.addAction(action(context.getString(R.string.action_start_entry), EntryLinks.openScreen(context, Screen.Start, 4)))
+			.build()
 
 	fun daySummary(context: Context, solar: Duration, reported: Duration): Notification =
 		Notification.Builder(context, NotificationChannels.DAY_SUMMARY)

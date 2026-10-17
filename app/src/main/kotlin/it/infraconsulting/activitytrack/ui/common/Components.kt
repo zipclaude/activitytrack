@@ -215,6 +215,7 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.BLANK_VALUE -> R.string.err_blank_value
 		Reason.INVALID_SEGMENT -> R.string.err_invalid_segment
 		Reason.OVERLAPPING_SEGMENTS -> R.string.err_overlapping_segments
+		Reason.INVALID_DATE -> R.string.err_invalid_date
 		else -> R.string.err_generic
 	},
 )

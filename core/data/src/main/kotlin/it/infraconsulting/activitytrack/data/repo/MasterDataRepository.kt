@@ -9,14 +9,16 @@ import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.ClientSiteEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.db.CompanySiteEntity
+import it.infraconsulting.activitytrack.data.db.DayOffEntity
 import it.infraconsulting.activitytrack.data.db.LunchBreakEntity
 import it.infraconsulting.activitytrack.data.db.PlaceEntity
+import it.infraconsulting.activitytrack.data.db.PlaceKind
 import it.infraconsulting.activitytrack.data.db.RoleEntity
 import it.infraconsulting.activitytrack.data.db.WorkScheduleEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.start.KnownSite
-import it.infraconsulting.activitytrack.data.db.PlaceKind
+import java.time.LocalDate
 
 /*
  * Master data with input validation. Names are trimmed; unique-index and
@@ -32,6 +34,15 @@ class MasterDataRepository(private val db: ActivityTrackDatabase) {
 	val presets = dao.observePresets()
 	val schedule = dao.observeSchedule()
 	val lunchBreaks = dao.observeLunchBreaks()
+	val daysOff = dao.observeDaysOff()
+
+	suspend fun daysOffBetween(from: LocalDate, to: LocalDate): Set<LocalDate> =
+		dao.daysOffBetween(from.toEpochDay(), to.toEpochDay()).map(LocalDate::ofEpochDay).toSet()
+
+	suspend fun saveDayOff(date: LocalDate, note: String?) =
+		dao.upsertDayOff(DayOffEntity(date.toEpochDay(), note?.trim()?.ifEmpty { null }))
+
+	suspend fun deleteDayOff(d: DayOffEntity) = dao.deleteDayOff(d)
 
 	suspend fun company(id: Long): CompanyEntity? = dao.company(id)
 	suspend fun client(id: Long): ClientEntity? = dao.client(id)
