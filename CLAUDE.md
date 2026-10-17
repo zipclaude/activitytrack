@@ -45,7 +45,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | Milestone | State |
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
-| M1 core tracking | **implemented** (steps 1–8, PR #1, branch `worktree-m1-foundation`, 2026-10-17); steps 5–8 still to test on device |
+| M1 core tracking | **implemented** (steps 1–8, PR #1, branch `worktree-m1-foundation`, 2026-10-17); device-tested (steps 1–9, 2026-10-17) |
 | M2 travel & location | — |
 | M3 widgets, tile, attachments, dictation | — |
 | M4 OCR, offline STT, XML/JSON export | — |
@@ -98,10 +98,11 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 6. ~~Reminders, boot/time-change re-arm~~ done.
 7. ~~Entry screen (completion), manual segments, external refs~~ done.
 8. ~~Day view, CSV export, daily backup~~ done.
-9. **Device test of steps 5–8** (owner gives the phone): instrumented tests via
-   `am instrument`; notifications and actions, reminders (lower the intervals
-   to 10 min), reboot re-arm, entry screen, day view, export file, backup zip.
-   Back up `databases/` with `run-as` first.
+9. ~~Device test of steps 5–8~~ done (2026-10-17): instrumented 19/19,
+   notification actions, dismiss + re-post, reminders, boot re-arm, entry
+   screen, day view, CSV, backup. Fixes: ICU regex, re-post on foreground,
+   visible validation error, lost data folder, home overflow menu.
+   Device still has `TEST_` data and reminder intervals at 10 min.
 10. Then merge PR #1 and start M2 (location, day-start prompt).
 
 ## 6. Decisions log
