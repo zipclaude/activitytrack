@@ -43,6 +43,7 @@ import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
+import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.clockOf
@@ -100,7 +101,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
 					Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary)
 					val coNames = companies.associate { it.id to it.name }
-					ChoiceField(
+					SearchableChoiceField(
 						stringResource(R.string.field_client),
 						listOf<Pair<Long?, String>>(null to none) +
 							clients.filter { !it.archived || it.id == clientId }

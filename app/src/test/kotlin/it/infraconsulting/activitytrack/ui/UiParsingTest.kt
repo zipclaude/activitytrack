@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui
 
+import it.infraconsulting.activitytrack.ui.common.fold
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseDecimal
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
@@ -41,5 +42,11 @@ class UiParsingTest {
 		all.forEach { assertEquals(it, Screen.parse(it.key())) }
 		assertNull(Screen.parse("company/x"))
 		assertNull(Screen.parse("unknown"))
+	}
+
+	@Test
+	fun searchFolding() {
+		assertEquals("negoce sa", fold(" Négoce SA "))
+		assertEquals(true, fold("Città di Trento").contains(fold("citta")))
 	}
 }
