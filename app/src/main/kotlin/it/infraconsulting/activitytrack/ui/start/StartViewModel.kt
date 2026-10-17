@@ -6,6 +6,7 @@ import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.StartRequest
+import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.LocationKind
@@ -31,6 +32,8 @@ data class StartForm(
 	/* user edits win over the per-client defaults */
 	val activityTouched: Boolean = false,
 	val roleTouched: Boolean = false,
+	/* a late position-based proposal must not override a picked company or client */
+	val clientTouched: Boolean = false,
 ) {
 	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
 }
@@ -41,6 +44,7 @@ data class RunningEntry(val entry: TimeEntryEntity, val title: String)
 class StartViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
+	private val position: suspend () -> GeoPoint?,
 ) : ActionViewModel() {
 	private val _form = MutableStateFlow(StartForm())
 	val form = _form.asStateFlow()
@@ -64,11 +68,23 @@ class StartViewModel(
 	private val decisions = HashMap<Long, EntryCommand>()
 	private var onStarted: () -> Unit = {}
 
+	/*
+	 * The proposal without position is shown at once; when a fix arrives
+	 * (SPEC §2.1, M2) a site match refines it unless the user already
+	 * picked a company or client.
+	 */
 	init {
 		viewModelScope.launch {
-			val p = entries.startProposal(master.knownSites())
+			val sites = master.knownSites()
+			val p = entries.startProposal(sites)
 			_form.update { it.copy(ready = true, companyId = p.companyId, clientId = p.clientId, locationKind = p.locationKind) }
 			p.clientId?.let { applyDefaults(it) }
+			val here = position() ?: return@launch
+			val q = entries.startProposal(sites, here)
+			if (q == p || _form.value.clientTouched)
+				return@launch
+			_form.update { it.copy(companyId = q.companyId, clientId = q.clientId, locationKind = q.locationKind) }
+			q.clientId?.let { applyDefaults(it) }
 		}
 	}
 
@@ -78,12 +94,12 @@ class StartViewModel(
 	fun setCompany(companyId: Long?) = _form.update { f ->
 		val keep = f.clientId?.let { id -> allChoices.value.firstOrNull { it.id == id } }
 			?.takeIf { companyId == null || it.companyId == companyId }
-		f.copy(companyId = companyId, clientId = keep?.id)
+		f.copy(companyId = companyId, clientId = keep?.id, clientTouched = true)
 	}
 
 	fun setClient(clientId: Long?) {
 		val c = allChoices.value.firstOrNull { it.id == clientId }
-		_form.update { it.copy(clientId = clientId, companyId = c?.companyId ?: it.companyId) }
+		_form.update { it.copy(clientId = clientId, companyId = c?.companyId ?: it.companyId, clientTouched = true) }
 		if (clientId != null)
 			viewModelScope.launch { applyDefaults(clientId) }
 	}

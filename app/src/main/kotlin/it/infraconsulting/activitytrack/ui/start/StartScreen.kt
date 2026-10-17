@@ -22,12 +22,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.location.CurrentPosition
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.EmptyText
@@ -38,7 +40,8 @@ import it.infraconsulting.activitytrack.ui.common.reasonText
 
 @Composable
 fun StartScreen(onBack: () -> Unit) {
-	val vm = appViewModel { StartViewModel(it.entries, it.masterData) }
+	val context = LocalContext.current.applicationContext
+	val vm = appViewModel { StartViewModel(it.entries, it.masterData) { CurrentPosition.get(context) } }
 	val f by vm.form.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val clients by vm.clients.collectAsState()

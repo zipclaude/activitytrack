@@ -78,8 +78,8 @@ class EntryRepository(
 	fun segments(entryId: Long) = dao.observeSegments(entryId)
 
 	/*
-	 * Pre-fill for a new entry (SPEC §2.1). [position] stays null until
-	 * location tracking exists (M2): then today's latest company is proposed.
+	 * Pre-fill for a new entry (SPEC §2.1): the site containing [position],
+	 * else today's latest company.
 	 */
 	suspend fun startProposal(sites: List<KnownSite>, position: GeoPoint? = null): StartProposal {
 		val startOfToday = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant().toEpochMilli()

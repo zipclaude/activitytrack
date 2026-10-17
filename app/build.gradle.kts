@@ -56,6 +56,7 @@ dependencies {
 	implementation(libs.androidx.compose.material3)
 	implementation(libs.androidx.work.runtime.ktx)
 	implementation(libs.androidx.datastore.preferences)
+	implementation(libs.maplibre.android)
 	debugImplementation(libs.androidx.compose.ui.tooling)
 
 	testImplementation(libs.kotlin.test.junit)
