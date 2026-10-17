@@ -157,6 +157,8 @@ M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
 | 2026-10-17 | The location service's notification is the ongoing notification of one ACTIVE entry (no extra notification; not dismissible while tracking) |
 | 2026-10-17 | Completion with the client only, after confirmation (leave empty / copy last activity on the client / edit) |
 | 2026-10-17 | Arrival at a site of the entry's own client sets location kind CLIENT |
+| 2026-10-17 | Locality from Nominatim in the local language (no accept-language), not the phone language (provisional, owner away) |
+| 2026-10-17 | Coloured icon buttons in the app; notifications keep text actions, icons attached for Wear/launchers (provisional, owner away) |
 
 ## 7. Pitfalls to remember
 

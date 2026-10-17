@@ -13,7 +13,6 @@ import androidx.work.WorkerParameters
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.domain.geo.KmEstimate
 import java.io.IOException
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import org.json.JSONException
 
@@ -37,10 +36,9 @@ class GeoEnrichWorker(context: Context, params: WorkerParameters) : CoroutineWor
 				locations.setKmEstimated(seg.id, KmEstimate.km(fixes, s.kmFactor, road ?: List(fixes.size - 1) { null }))
 			}
 			if (s.nominatim.enabled) {
-				val language = Locale.getDefault().toLanguageTag()
 				for (entryId in locations.entriesWithoutLocality()) {
 					val p = locations.localityPoint(entryId) ?: continue
-					c.nominatim.locality(s.nominatim.endpoint, p, language)
+					c.nominatim.locality(s.nominatim.endpoint, p)
 						?.let { locations.proposeLocality(entryId, it, System.currentTimeMillis()) }
 				}
 			}
