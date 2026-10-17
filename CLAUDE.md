@@ -69,6 +69,7 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 SPEC.md                         functional specification (v0.7)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
 docs/INTERCHANGE.md             generic import/export format (M4)
+docs/MANUALE.md                 user manual in Italian (owner request; keep it in step with each version)
 docs/samples/                   interchange samples for device tests (TEST data)
 docs/DESIGN.md                  technical design, toolchain, risks
 gradle/libs.versions.toml       verified versions (2026-10-15; androidx.test 2026-10-16)
@@ -196,6 +197,7 @@ Install the top of the stack (`m7-ui-polish`); back up `databases/` first.
 | 2026-10-17 | M5: CalendarContract (Google via the system account, CalDAV via DAVx5); generic calendar chosen by the user, local "ActivityTrack" calendar as fallback; per-company calendar replaces the generic one; one-way app → calendar; one event per entry and day, shown from the entry start |
 | 2026-10-17 | M6/M7: bottom navigation bar (Home · Agenda · Reports · More) |
 | 2026-10-17 | Owner away: M4–M7 implemented autonomously as stacked PRs #4–#7; provisional choices listed in §5 for review |
+| 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 
 ## 7. Pitfalls to remember
 
