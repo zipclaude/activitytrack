@@ -5,6 +5,8 @@ import android.content.Context
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.geo.Nominatim
 import it.infraconsulting.activitytrack.data.geo.Osrm
+import it.infraconsulting.activitytrack.data.interchange.Exporter
+import it.infraconsulting.activitytrack.data.interchange.Importer
 import it.infraconsulting.activitytrack.data.repo.AttachmentRepository
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.LocationRepository
@@ -42,6 +44,11 @@ class AppContainer(context: Context) {
 		"ActivityTrack/$version (+https://github.com/zipclaude/activitytrack)"
 	}
 	val nominatim: Nominatim by lazy { Nominatim(userAgent) }
+	val exporter: Exporter by lazy { Exporter(database) }
+	val importer: Importer by lazy { Importer(database, clock) }
+
+	/* "ActivityTrack/<version>" written into interchange files */
+	val generator: String by lazy { userAgent.substringBefore(' ') }
 	val osrm: Osrm by lazy { Osrm(userAgent) }
 
 	/* System clock that follows time-zone changes (Clock.systemDefaultZone() captures the zone once). */
