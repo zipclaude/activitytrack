@@ -69,10 +69,8 @@ class LocationTracker(context: Context, private val onFix: (Fix, String?, Long?)
 	fun current(segmentId: Long?, highAccuracy: Boolean) {
 		if (!hasPermission(appContext))
 			return
-		val provider = if (highAccuracy && lm.isProviderEnabled(LocationManager.GPS_PROVIDER))
-			LocationManager.GPS_PROVIDER
-		else
-			provider()
+		/* the quality, not the provider, asks for satellites: fused still answers indoors */
+		val provider = provider()
 		val request = LocationRequest.Builder(0)
 			.setQuality(if (highAccuracy) LocationRequest.QUALITY_HIGH_ACCURACY else LocationRequest.QUALITY_BALANCED_POWER_ACCURACY)
 			.setDurationMillis(CURRENT_TIMEOUT_MS)

@@ -36,8 +36,8 @@ object CurrentPosition {
 				.minByOrNull { if (it.hasAccuracy()) it.accuracy else Float.MAX_VALUE }
 				?.let { return GeoPoint(it.latitude, it.longitude) }
 		}
+		/* fused at high quality uses satellites when they are visible, Wi-Fi and cells indoors */
 		val provider = when {
-			highAccuracy && LocationManager.GPS_PROVIDER in providers -> LocationManager.GPS_PROVIDER
 			LocationManager.FUSED_PROVIDER in providers -> LocationManager.FUSED_PROVIDER
 			LocationManager.GPS_PROVIDER in providers -> LocationManager.GPS_PROVIDER
 			LocationManager.NETWORK_PROVIDER in providers -> LocationManager.NETWORK_PROVIDER
