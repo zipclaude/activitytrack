@@ -131,6 +131,16 @@
   <string name="set_day_start_delay">Start-of-day prompt delay (min)</string>
   <string name="sec_location">Location</string>
   <string name="sec_dictation">Dictation</string>
+  <string name="sec_calendar">Calendar</string>
+  <string name="calendar_permission">Allow calendar access to keep the activities in a calendar.</string>
+  <string name="calendar_generic">Calendar for the activities</string>
+  <string name="calendar_none">None (no sync)</string>
+  <string name="calendar_new_local">New "ActivityTrack" calendar on this phone</string>
+  <string name="calendar_hint">One event per activity and day, from its start; Google or CalDAV calendars sync it.</string>
+  <string name="calendar_sync_now">Sync 90 days</string>
+  <string name="calendar_synced">Synchronised: %1$d changes</string>
+  <string name="calendar_company">Calendar of this company</string>
+  <string name="calendar_use_generic">The generic calendar</string>
   <string name="set_dictation_language">Dictation language</string>
   <string name="set_movement">Movement alert threshold (m)</string>
   <string name="set_stationary_radius">Arrival radius (m)</string>

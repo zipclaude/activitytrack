@@ -25,6 +25,7 @@ import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.TextInput
+import it.infraconsulting.activitytrack.ui.settings.CompanyCalendarRow
 import org.json.JSONObject
 
 /*
@@ -51,6 +52,7 @@ fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
 				if (id != connector.id)
 					vm.save(company.copy(connectorId = id, connectorConfig = null)) { secrets.clear(company.id) }
 			}
+			CompanyCalendarRow(company.id)
 			if (Capability.FILE_IMPORT in connector.capabilities && connector.settingFields.isEmpty())
 				Text(stringResource(R.string.connector_generic_hint), style = MaterialTheme.typography.bodySmall)
 		}

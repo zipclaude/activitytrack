@@ -45,4 +45,12 @@ class AppSettingsTest {
 		assertEquals("en-US", AppSettings(dictationLanguage = "en-US").validated().dictationLanguage)
 		assertEquals("it-IT", AppSettings(dictationLanguage = "en-IT").validated().dictationLanguage)
 	}
+
+	@Test
+	fun companyCalendarReplacesTheGenericOne() {
+		val s = AppSettings(calendarId = 1, companyCalendars = mapOf(7L to 2L))
+		assertEquals(2L, s.calendarFor(7))
+		assertEquals(1L, s.calendarFor(8))
+		assertEquals(1L, s.calendarFor(null))
+	}
 }
