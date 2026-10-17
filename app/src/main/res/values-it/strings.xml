@@ -120,6 +120,8 @@
   <string name="set_pause_interval">Intervallo promemoria pausa (min)</string>
   <string name="set_day_start_delay">Ritardo avviso inizio giornata (min)</string>
   <string name="sec_location">Posizione</string>
+  <string name="sec_dictation">Dettatura</string>
+  <string name="set_dictation_language">Lingua di dettatura</string>
   <string name="set_movement">Soglia avviso spostamento (m)</string>
   <string name="set_stationary_radius">Raggio di arrivo (m)</string>
   <string name="set_stationary_min">Tempo di arrivo (min)</string>
