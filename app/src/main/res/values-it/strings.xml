@@ -26,6 +26,9 @@
   <string name="mode_travel">In trasferta</string>
   <string name="mode_pause">In pausa</string>
   <string name="tile_start">Avvia</string>
+  <string name="tile_add">Riquadro Impostazioni rapide</string>
+  <string name="tile_add_hint">Pausa / riprendi dal pannello delle notifiche</string>
+  <string name="tile_added">Aggiunto</string>
   <string name="widget_no_activity">Nessuna attività</string>
   <string name="widget_since">%1$s dalle %2$s</string>
   <string name="widget_status_name">Stato attività</string>

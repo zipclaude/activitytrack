@@ -31,6 +31,9 @@
   <string name="mode_travel">Travelling</string>
   <string name="mode_pause">On pause</string>
   <string name="tile_start">Start</string>
+  <string name="tile_add">Quick Settings tile</string>
+  <string name="tile_add_hint">Pause / resume from the notification panel</string>
+  <string name="tile_added">Added</string>
   <string name="widget_no_activity">No activity</string>
   <string name="widget_since">%1$s since %2$s</string>
   <string name="widget_status_name">Activity status</string>

@@ -26,6 +26,9 @@
   <string name="mode_travel">Unterwegs</string>
   <string name="mode_pause">Pause</string>
   <string name="tile_start">Starten</string>
+  <string name="tile_add">Schnelleinstellungs-Kachel</string>
+  <string name="tile_add_hint">Pause / fortsetzen aus dem Benachrichtigungsfeld</string>
+  <string name="tile_added">Hinzugefügt</string>
   <string name="widget_no_activity">Keine Tätigkeit</string>
   <string name="widget_since">%1$s seit %2$s</string>
   <string name="widget_status_name">Tätigkeitsstatus</string>
