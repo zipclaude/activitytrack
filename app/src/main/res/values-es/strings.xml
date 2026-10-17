@@ -14,6 +14,7 @@
   <string name="action_add">Añadir</string>
   <string name="action_edit">Editar</string>
   <string name="action_back">Atrás</string>
+  <string name="action_more">Más</string>
   <string name="confirm_delete">¿Eliminar \"%1$s\"?</string>
   <string name="no_items">Todavía no hay elementos.</string>
   <string name="archived_suffix">Archivado</string>
