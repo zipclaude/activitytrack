@@ -76,6 +76,10 @@
   <string name="schedule_lunch">Lunch break %1$s</string>
   <string name="schedule_no_lunch">No lunch break</string>
   <string name="site_hint">Coordinates in decimal degrees, e.g. 45.4642, 9.1900.</string>
+  <string name="site_current_position">Current position</string>
+  <string name="site_map">Map</string>
+  <string name="position_unavailable">Position not available: check location access and that the device is outdoors or online.</string>
+  <string name="map_use_point">Use this point</string>
   <string name="time_hint">Times as HH:MM, e.g. 08:30.</string>
 
   <!-- fields -->

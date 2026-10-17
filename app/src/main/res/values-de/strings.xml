@@ -69,6 +69,10 @@
   <string name="schedule_lunch">Mittagspause %1$s</string>
   <string name="schedule_no_lunch">Keine Mittagspause</string>
   <string name="site_hint">Koordinaten in Dezimalgrad, z. B. 45.4642, 9.1900.</string>
+  <string name="site_current_position">Aktueller Standort</string>
+  <string name="site_map">Karte</string>
+  <string name="position_unavailable">Standort nicht verfügbar: Standortzugriff und Empfang prüfen.</string>
+  <string name="map_use_point">Diesen Punkt verwenden</string>
   <string name="time_hint">Uhrzeiten als HH:MM, z. B. 08:30.</string>
 
   <string name="field_name">Name</string>

@@ -69,6 +69,10 @@
   <string name="schedule_lunch">Pausa pranzo %1$s</string>
   <string name="schedule_no_lunch">Nessuna pausa pranzo</string>
   <string name="site_hint">Coordinate in gradi decimali, es. 45.4642, 9.1900.</string>
+  <string name="site_current_position">Posizione attuale</string>
+  <string name="site_map">Mappa</string>
+  <string name="position_unavailable">Posizione non disponibile: verifica l\'accesso alla posizione e la ricezione.</string>
+  <string name="map_use_point">Usa questo punto</string>
   <string name="time_hint">Orari nel formato HH:MM, es. 08:30.</string>
 
   <string name="field_name">Nome</string>
