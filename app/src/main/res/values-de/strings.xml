@@ -114,6 +114,15 @@
   <string name="set_endpoint">Endpunkt</string>
   <string name="sec_storage">Speicher</string>
   <string name="set_root">Datenordner</string>
+  <string name="perm_location">Standortzugriff</string>
+  <string name="perm_location_always">Immer erlaubt</string>
+  <string name="perm_location_in_use">Nur bei Nutzung: Start aus Benachrichtigungen ohne Standort</string>
+  <string name="perm_denied">Nicht erlaubt</string>
+  <string name="perm_grant">Erlauben</string>
+  <string name="perm_allow_always">Immer erlauben</string>
+  <string name="perm_battery">Akku-Optimierung</string>
+  <string name="perm_battery_unrestricted">Uneingeschränkt</string>
+  <string name="perm_battery_optimized">Optimiert: das System kann die Aufzeichnung beenden</string>
   <string name="set_change_root">Ändern</string>
   <string name="set_backup_retention">Aufbewahrte Sicherungen</string>
   <string name="home_start">Tätigkeit starten</string>

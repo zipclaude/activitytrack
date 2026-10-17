@@ -158,6 +158,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			field(F.DAY_START, R.string.set_day_start_delay)
 
 			SectionHeader(stringResource(R.string.sec_location))
+			LocationPermissionRows()
 			field(F.MOVEMENT, R.string.set_movement)
 			field(F.ST_RADIUS, R.string.set_stationary_radius)
 			field(F.ST_MIN, R.string.set_stationary_min)

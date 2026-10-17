@@ -124,6 +124,15 @@
   <string name="set_endpoint">Endpoint</string>
   <string name="sec_storage">Storage</string>
   <string name="set_root">Data folder</string>
+  <string name="perm_location">Location access</string>
+  <string name="perm_location_always">Allowed all the time</string>
+  <string name="perm_location_in_use">Only while in use: tracking stops when started from a notification</string>
+  <string name="perm_denied">Not allowed</string>
+  <string name="perm_grant">Allow</string>
+  <string name="perm_allow_always">Allow always</string>
+  <string name="perm_battery">Battery optimisation</string>
+  <string name="perm_battery_unrestricted">Unrestricted</string>
+  <string name="perm_battery_optimized">Optimised: the system may stop tracking</string>
   <string name="set_change_root">Change</string>
   <string name="set_backup_retention">Backups kept</string>
   <!-- tracking -->

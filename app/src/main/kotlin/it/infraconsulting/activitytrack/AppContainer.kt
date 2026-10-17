@@ -4,6 +4,7 @@ package it.infraconsulting.activitytrack
 import android.content.Context
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
+import it.infraconsulting.activitytrack.data.repo.LocationRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
@@ -29,6 +30,7 @@ class AppContainer(context: Context) {
 	val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
 	val backup: DatabaseBackup by lazy { DatabaseBackup(database, appContext.cacheDir) }
+	val locations: LocationRepository by lazy { LocationRepository(database) }
 
 	/* System clock that follows time-zone changes (Clock.systemDefaultZone() captures the zone once). */
 	private object DefaultZoneClock : Clock() {

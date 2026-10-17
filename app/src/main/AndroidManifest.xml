@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <!-- M0/M1: notifications only. Location, audio and network permissions are
-       added by the milestones that use them. -->
+  <!-- Audio permissions are added by the milestone that uses them. -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+  <!-- M2 location (A9): foreground service while an entry is ACTIVE; background
+       access lets it start from notification actions and after a reboot. -->
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+  <!-- OxygenOS kills background work aggressively; sideloaded, so the direct request is allowed. -->
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
   <application
       android:name=".ActivityTrackApp"
@@ -30,6 +39,12 @@
     <receiver
         android:name=".notify.ActionReceiver"
         android:exported="false" />
+
+    <!-- Location while an entry is ACTIVE (DESIGN §6.2). -->
+    <service
+        android:name=".location.LocationService"
+        android:exported="false"
+        android:foregroundServiceType="location" />
 
     <!-- Single reminder alarm (DESIGN §6.1). -->
     <receiver
