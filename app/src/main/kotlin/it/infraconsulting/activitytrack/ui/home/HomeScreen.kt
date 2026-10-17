@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -25,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
@@ -123,8 +129,24 @@ fun HomeScreen(
 		onBack = null,
 		actions = {
 			TextButton(onClick = onDay) { Text(stringResource(R.string.day_title)) }
-			TextButton(onClick = onMasterData) { Text(stringResource(R.string.md_title)) }
-			TextButton(onClick = onSettings) { Text(stringResource(R.string.settings_title)) }
+			/* the other destinations would squeeze the title (long in de/it) */
+			Box {
+				var menu by remember { mutableStateOf(false) }
+				val more = stringResource(R.string.action_more)
+				IconButton(onClick = { menu = true }, modifier = Modifier.semantics { contentDescription = more }) {
+					Text("⋮", style = MaterialTheme.typography.titleLarge)
+				}
+				DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+					DropdownMenuItem(
+						text = { Text(stringResource(R.string.md_title)) },
+						onClick = { menu = false; onMasterData() },
+					)
+					DropdownMenuItem(
+						text = { Text(stringResource(R.string.settings_title)) },
+						onClick = { menu = false; onSettings() },
+					)
+				}
+			}
 		},
 	) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
