@@ -421,4 +421,20 @@ class RepositoryTest {
 			reason { entries.recordAbsence(today, it.infraconsulting.activitytrack.data.db.AbsenceKind.FULL_DAY, 600) },
 		)
 	}
+
+	@Test
+	fun backdatedTravelTakesTheLaterSamples() = runBlocking<Unit> {
+		val locations = LocationRepository(db)
+		val t0 = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		val p = it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.4, 12.3)
+		for (m in listOf(0L, 5L, 10L, 15L)) {
+			clock.now = Instant.ofEpochMilli(t0 + m * 60_000)
+			locations.record(it.infraconsulting.activitytrack.domain.geo.Fix(clock.millis(), p, 8.0), "fused")
+		}
+		entries.apply(id, EntryCommand.TRAVEL, t0 + 10 * 60_000)
+		val (work, travel) = db.entryDao().segments(id)
+		assertEquals(2, locations.fixesOfSegment(work.id).size)
+		assertEquals(2, locations.fixesOfSegment(travel.id).size)
+	}
 }

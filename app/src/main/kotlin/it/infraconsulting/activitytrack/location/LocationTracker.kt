@@ -29,7 +29,6 @@ class LocationTracker(context: Context, private val onFix: (Fix, String?, Long?)
 	private val lm = appContext.getSystemService(LocationManager::class.java)
 	private val sensors = appContext.getSystemService(SensorManager::class.java)
 	private val motionSensor: Sensor? = sensors.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION)
-	private val executor: Executor = Executors.newSingleThreadExecutor()
 	private var running = false
 
 	private val listener = LocationListener { deliver(it, null) }
@@ -98,6 +97,8 @@ class LocationTracker(context: Context, private val onFix: (Fix, String?, Long?)
 	}
 
 	companion object {
+		/* one delivery thread for the process: the service (and its tracker) may be recreated */
+		private val executor: Executor = Executors.newSingleThreadExecutor()
 		private const val INTERVAL_MS = 5 * 60_000L
 		private const val MIN_INTERVAL_MS = 60_000L
 		private const val CURRENT_TIMEOUT_MS = 60_000L
