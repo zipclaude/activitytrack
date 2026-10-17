@@ -26,6 +26,9 @@
   <string name="mode_travel">De viaje</string>
   <string name="mode_pause">En pausa</string>
   <string name="tile_start">Iniciar</string>
+  <string name="tile_add">Icono de ajustes rápidos</string>
+  <string name="tile_add_hint">Pausar / reanudar desde el panel de notificaciones</string>
+  <string name="tile_added">Añadido</string>
   <string name="widget_no_activity">Ninguna actividad</string>
   <string name="widget_since">%1$s desde las %2$s</string>
   <string name="widget_status_name">Estado de actividad</string>

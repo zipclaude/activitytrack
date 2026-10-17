@@ -159,6 +159,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 
 			SectionHeader(stringResource(R.string.sec_location))
 			LocationPermissionRows()
+			AddTileRow()
 			field(F.MOVEMENT, R.string.set_movement)
 			field(F.ST_RADIUS, R.string.set_stationary_radius)
 			field(F.ST_MIN, R.string.set_stationary_min)
