@@ -26,6 +26,8 @@
 
   <!-- home -->
   <string name="home_no_open_entries">No open activities.</string>
+  <string name="home_empty_hint">No activity running.
+Tap the green play button below to start one.</string>
   <string name="entry_no_client">Client not set</string>
   <string name="mode_work">Working</string>
   <string name="mode_travel">Travelling</string>

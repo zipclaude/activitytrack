@@ -21,6 +21,9 @@
   <string name="archived_suffix">Archiviert</string>
 
   <string name="home_no_open_entries">Keine offenen Tätigkeiten.</string>
+
+  <string name="home_empty_hint">Keine laufende Tätigkeit.
+Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="entry_no_client">Kunde nicht festgelegt</string>
   <string name="mode_work">Arbeit</string>
   <string name="mode_travel">Unterwegs</string>
