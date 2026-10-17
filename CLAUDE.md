@@ -114,11 +114,18 @@ M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
    entries; samples while walking/driving; movement and arrival prompts;
    OSRM km and locality after a travel; map picker; day-start prompt.
 9. Open questions for the owner are listed in the PR #2 description/comments.
-9a. **Owner request 2026-10-17**: coloured command buttons — Start green,
+9a. ~~**Owner request 2026-10-17**~~ done (`ui/common/CommandButtons.kt`, `ic_cmd_*`), to check on device: coloured command buttons — Start green,
    Stop red, Pause yellow, Suspend orange, Travel blue. Start/Stop/Pause as
    coloured media icons (play, stop, pause) instead of text; a standard icon
    for Suspend if one exists; a stylised car for Travel; reuse them in the
    notifications.
+9b. Device state left by the 2026-10-17 test: `TEST_` data (restore the DB
+   backup in `/tmp/user/1000/at-backup-*`), "Arrival time" 5 min, ActivityTrack
+   selected as mock location app (owner resets it to "None").
+9c. Still to test on device: client-only completion dialog, coloured buttons,
+   day-start prompt, days off screen, late entry screen, start of tracking
+   from a notification action with "Allow all the time", reboot with an
+   ACTIVE entry (service restart), locality in the local language.
 10. Then mark PR #2 ready, merge, start M3.
 
 ## 6. Decisions log
