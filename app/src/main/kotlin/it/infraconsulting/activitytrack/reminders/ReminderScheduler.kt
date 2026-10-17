@@ -117,6 +117,8 @@ class ReminderScheduler(
 						postSummary(nm, r.day)
 						prefs.edit { putLong(KEY_SUMMARY_DAY, r.day.toEpochDay()) }
 					}
+					/* not planned yet: no DayStartState is passed (M2 step 8) */
+					is Reminder.DayStart -> {}
 				}
 			}
 		}
