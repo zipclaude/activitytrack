@@ -327,6 +327,11 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="import_section">Importar</string>
   <string name="import_hint">Archivo JSON o XML genérico: se añade lo que contiene; los datos existentes se mantienen y las diferencias se listan.</string>
   <string name="import_action">Elegir archivo para importar</string>
+  <string name="restore_section">Restaurar copia</string>
+  <string name="restore_hint">Sustituye todos los datos por una copia diaria (carpeta "backup"); antes se guardan los datos actuales como copia. Los adjuntos quedan en la carpeta de datos.</string>
+  <string name="restore_action">Elegir copia (.zip)</string>
+  <string name="restore_confirm">¿Sustituir todos los datos por la copia del %1$s (app %2$s)? Antes se guardan los datos actuales como copia y luego la app se reinicia.</string>
+  <string name="restore_do">Restaurar</string>
   <string name="export_done_file">Escrito en %1$s</string>
   <string name="exchange_failed">Error: %1$s</string>
   <string name="export_sec_master">Datos maestros</string>

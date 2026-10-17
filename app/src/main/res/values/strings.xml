@@ -337,6 +337,11 @@ Tap the green play button below to start one.</string>
   <string name="import_section">Import</string>
   <string name="import_hint">Generic JSON or XML file: whatever it contains is added; existing data is kept and differences are listed.</string>
   <string name="import_action">Choose file to import</string>
+  <string name="restore_section">Restore backup</string>
+  <string name="restore_hint">Replaces all data with a daily backup (folder "backup"); the current data is saved as a backup first. Attachments stay in the data folder.</string>
+  <string name="restore_action">Choose backup (.zip)</string>
+  <string name="restore_confirm">Replace all data with the backup of %1$s (app %2$s)? The current data is saved as a backup first, then the app restarts.</string>
+  <string name="restore_do">Restore</string>
   <string name="export_done_file">Written to %1$s</string>
   <string name="exchange_failed">Failed: %1$s</string>
   <string name="export_sec_master">Master data</string>

@@ -327,6 +327,11 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="import_section">Import</string>
   <string name="import_hint">Generische JSON- oder XML-Datei: der Inhalt wird hinzugefügt; vorhandene Daten bleiben, Unterschiede werden aufgelistet.</string>
   <string name="import_action">Datei zum Import wählen</string>
+  <string name="restore_section">Sicherung wiederherstellen</string>
+  <string name="restore_hint">Ersetzt alle Daten durch eine tägliche Sicherung (Ordner „backup“); die aktuellen Daten werden vorher gesichert. Anhänge bleiben im Datenordner.</string>
+  <string name="restore_action">Sicherung wählen (.zip)</string>
+  <string name="restore_confirm">Alle Daten durch die Sicherung vom %1$s (App %2$s) ersetzen? Die aktuellen Daten werden vorher gesichert, dann startet die App neu.</string>
+  <string name="restore_do">Wiederherstellen</string>
   <string name="export_done_file">Geschrieben nach %1$s</string>
   <string name="exchange_failed">Fehlgeschlagen: %1$s</string>
   <string name="export_sec_master">Stammdaten</string>
