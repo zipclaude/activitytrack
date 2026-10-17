@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
  */
 plugins {
 	alias(libs.plugins.kotlin.jvm)
+	alias(libs.plugins.kotlin.serialization)
 }
 
 java {
@@ -20,6 +21,8 @@ kotlin {
 }
 
 dependencies {
+	/* interchange JSON (M4); multiplatform library, no Android dependency */
+	implementation(libs.kotlinx.serialization.json)
 	testImplementation(libs.kotlin.test.junit)
 	testImplementation(libs.junit4)
 }
