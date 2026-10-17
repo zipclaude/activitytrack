@@ -26,6 +26,12 @@
   <string name="mode_travel">In trasferta</string>
   <string name="mode_pause">In pausa</string>
   <string name="tile_start">Avvia</string>
+  <string name="widget_no_activity">Nessuna attività</string>
+  <string name="widget_since">%1$s dalle %2$s</string>
+  <string name="widget_status_name">Stato attività</string>
+  <string name="widget_status_description">Attività in corso con i comandi, o clienti recenti</string>
+  <string name="widget_toggle_name">Pausa / riprendi</string>
+  <string name="widget_toggle_description">Mette in pausa o riprende l\'attività in corso</string>
   <string name="status_suspended">Sospesa</string>
   <string name="status_to_complete">Da completare</string>
   <string name="status_closed">Chiusa</string>

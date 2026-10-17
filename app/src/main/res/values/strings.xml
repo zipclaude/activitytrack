@@ -31,6 +31,12 @@
   <string name="mode_travel">Travelling</string>
   <string name="mode_pause">On pause</string>
   <string name="tile_start">Start</string>
+  <string name="widget_no_activity">No activity</string>
+  <string name="widget_since">%1$s since %2$s</string>
+  <string name="widget_status_name">Activity status</string>
+  <string name="widget_status_description">Running activity with its commands, or recent clients</string>
+  <string name="widget_toggle_name">Pause / resume</string>
+  <string name="widget_toggle_description">Pauses or resumes the running activity</string>
   <string name="status_suspended">Suspended</string>
   <string name="status_to_complete">To complete</string>
   <string name="status_closed">Closed</string>
