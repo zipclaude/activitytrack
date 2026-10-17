@@ -51,8 +51,8 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 |---|---|
 | M0 skeleton, domain rules, Room schema | **done**, CI green; debug APK installed and launched on the OnePlus 15R (2026-10-17) |
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
-| M2 travel & location | **implemented and device-tested** (branch `m2-location`, PR #2, 2026-10-17); merge pending owner OK |
-| M3 widgets, tile, attachments, dictation | — |
+| M2 travel & location | **done**, device-tested, merged (PR #2, 2026-10-17) |
+| M3 widgets, tile, attachments, dictation | **implemented and device-tested** (branch `m3-quick-input`, PR #3, 2026-10-17); merge pending owner OK |
 | M4 OCR, offline STT, XML/JSON export | — |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
@@ -92,42 +92,30 @@ app/…/reminders/                ReminderScheduler, ReminderNotifications, Remi
 app/…/backup/                   BackupWorker (WorkManager, daily)
 app/…/location/                 LocationService (FGS), LocationTracker, TrackingMonitor, TrackingNotifications,
                                 GeoEnrichWorker, CurrentPosition
+app/…/quick/                    ClientShortcuts, QuickToggle, ToggleTileService, Widgets (Glance 4×1, 1×1)
+app/…/ui/entry/                 EntryScreen, Attachments, Expenses (+ QuickExpenseScreen)
+app/…/ui/common/                Components (SearchableChoiceField), CommandButtons, MapPicker, Dictation
+app/src/debug/                  MockLocationReceiver (adb-driven fused test provider), debug shortcuts.xml
 app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTest
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (M2, branch `m2-location`, draft PR #2)
+## 5. Next steps (M3, branch `m3-quick-input`)
 
-M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
+M2 merged in `main` on 2026-10-17 (PR #2). M3 per SPEC §7, DESIGN §9–10:
 
-1. ~~Domain: movement, stationarity, km, holidays, day-start, arrival advice~~ done.
-2. ~~DB v2 `day_off` + auto-migration test~~ done.
-3. ~~`LocationService` + `LocationTracker`, permissions UI~~ done.
-4. ~~Movement / arrival prompts, backdated commands~~ done.
-5. ~~`GeoEnrichWorker`: OSRM km, Nominatim locality~~ done.
-6. ~~Start proposal from position; site current position + MapLibre picker~~ done.
-7. ~~Day-start prompt, absences, days off~~ done.
-8. **Device test** (all M2 code is untested on device): back up `databases/`
-   first; `am instrument` (RepositoryTest new cases, MigrationTest,
-   GeoClientsTest); v1 → v2 migration of the real DB; permissions flow
-   (in use, "all the time", battery); FGS notification switching between
-   entries; samples while walking/driving; movement and arrival prompts;
-   OSRM km and locality after a travel; map picker; day-start prompt.
-9. Open questions for the owner are listed in the PR #2 description/comments.
-9a. ~~**Owner request 2026-10-17**~~ done (`ui/common/CommandButtons.kt`, `ic_cmd_*`), to check on device: coloured command buttons — Start green,
-   Stop red, Pause yellow, Suspend orange, Travel blue. Start/Stop/Pause as
-   coloured media icons (play, stop, pause) instead of text; a standard icon
-   for Suspend if one exists; a stylised car for Travel; reuse them in the
-   notifications.
-9b. ~~Device cleanup~~ done: clean DB v2 restored, "Arrival time" 15 min. The
-   owner resets "Select mock location app" to None in Developer options.
-9c. ~~Remaining device tests~~ done (2026-10-17): coloured buttons, client-only
-   completion (empty / copy last / back), reboot with an ACTIVE entry (FGS
-   restarted by BootReceiver, fixes every 5 min with "Allow all the time"),
-   day off suppresses the prompt, day-start prompt and "Absent today",
-   late-entry screen (fix: INVALID_TIME message). Locality language checked
-   against Nominatim from the host only.
-10. Then mark PR #2 ready, merge, start M3.
+1. Start-for-client deep link (`Screen.StartFor`), dynamic shortcuts (top 4 clients).
+2. Quick Settings tile: WORK/PAUSE toggle of the most recent ACTIVE entry.
+3. Glance 1.2.0 widgets: 4×1 (state, coloured actions, recent clients, expense), 1×1 toggle.
+4. Attachments: photo (system camera), voice note (`MediaRecorder` .m4a), file;
+   SAF `attachments/<yyyy>/<entryId>/<uuid>.<ext>`.
+5. Expenses (EUR, description, receipt photo) and quick expense screen.
+6. Dictation of the activity text (`RecognizerIntent`, prefer offline).
+7. ~~Device test~~ done (2026-10-17): start-for-client link, client combo box
+   (owner request), shortcuts, QS tile (added from Settings), widgets 4×1 and
+   1×1, attachments (photo, voice note, file), expenses with receipt, quick
+   expense, dictation (SpeechRecognizer, language setting). Instrumented 29/29.
+8. Next: merge PR #3, then M4 (OCR receipts, offline STT, XML/JSON export).
 
 ## 6. Decisions log
 
@@ -167,6 +155,13 @@ M1 (steps 1–10) merged in `main` on 2026-10-17 (PR #1).
 | 2026-10-17 | Arrival at a site of the entry's own client sets location kind CLIENT |
 | 2026-10-17 | Locality from Nominatim in the local language (no accept-language), not the phone language (provisional, owner away) |
 | 2026-10-17 | Coloured icon buttons in the app; notifications keep text actions, icons attached for Wear/launchers (provisional, owner away) |
+| 2026-10-17 | M3: Glance for widgets; widget/shortcut client tap opens the start screen with the client selected (no direct start: no dialogs outside the app) |
+| 2026-10-17 | M3: 1×1 widget and QS tile toggle WORK/PAUSE of the most recent ACTIVE entry; none active → start screen (provisional) |
+| 2026-10-17 | M3: no expense action on the notification (3-action limit); expenses from app, widget, shortcut |
+| 2026-10-17 | M3: dictation through the system recognizer (Google on the OnePlus) accepted; free offline STT stays in M4 |
+| 2026-10-17 | M3: voice notes without length limit, explicit stop |
+| 2026-10-17 | Dictation language is a setting (it/en/de/es, default Italian), not the phone locale (en-IT is no recognizer language); SpeechRecognizer with in-app dialog, on-device first |
+| 2026-10-17 | QS tile added from Settings (StatusBarManager.requestAddTileService): the OxygenOS panel editor does not list it |
 
 ## 7. Pitfalls to remember
 

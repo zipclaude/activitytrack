@@ -65,6 +65,31 @@ class UserDataDir(context: Context) {
 		DocumentsContract.createDocument(resolver, dir, mime, name) ?: error("cannot create $name")
 	}
 
+	/*
+	 * Creates [name] under <root>/[path] (e.g. attachments/2026/12), making
+	 * the missing directories. Returns the document URI.
+	 */
+	suspend fun createAt(tree: Uri, path: List<String>, name: String, mime: String): Uri = withContext(Dispatchers.IO) {
+		var dir = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+		for (segment in path)
+			dir = findChild(tree, dir, segment)
+				?: DocumentsContract.createDocument(resolver, dir, Document.MIME_TYPE_DIR, segment)
+				?: error("cannot create $segment")
+		DocumentsContract.createDocument(resolver, dir, mime, name) ?: error("cannot create $name")
+	}
+
+	/* Document URI of a path relative to the root ("attachments/2026/12/x.jpg"); null when missing. */
+	suspend fun resolve(tree: Uri, relPath: String): Uri? = withContext(Dispatchers.IO) {
+		var doc = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+		for (segment in relPath.split('/'))
+			doc = findChild(tree, doc, segment, dirOnly = false) ?: return@withContext null
+		doc
+	}
+
+	suspend fun openInput(uri: Uri): java.io.InputStream = withContext(Dispatchers.IO) {
+		resolver.openInputStream(uri) ?: error("cannot open $uri")
+	}
+
 	/* Truncating output stream on [uri]; the caller closes it. */
 	suspend fun openOutput(uri: Uri): java.io.OutputStream = withContext(Dispatchers.IO) {
 		resolver.openOutputStream(uri, "wt") ?: error("cannot open $uri")
@@ -86,13 +111,13 @@ class UserDataDir(context: Context) {
 		DocumentsContract.deleteDocument(resolver, uri)
 	}
 
-	/* Directory child of [parent] named [name], if any. */
-	private fun findChild(tree: Uri, parent: Uri, name: String): Uri? {
+	/* Child of [parent] named [name] (a directory unless [dirOnly] is false), if any. */
+	private fun findChild(tree: Uri, parent: Uri, name: String, dirOnly: Boolean = true): Uri? {
 		val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getDocumentId(parent))
 		val proj = arrayOf(Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME, Document.COLUMN_MIME_TYPE)
 		resolver.query(children, proj, null, null, null)?.use { c ->
 			while (c.moveToNext()) {
-				if (c.getString(1) == name && c.getString(2) == Document.MIME_TYPE_DIR)
+				if (c.getString(1) == name && (!dirOnly || c.getString(2) == Document.MIME_TYPE_DIR))
 					return DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0))
 			}
 		}

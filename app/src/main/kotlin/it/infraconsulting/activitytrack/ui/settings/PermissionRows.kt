@@ -3,9 +3,12 @@ package it.infraconsulting.activitytrack.ui.settings
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.StatusBarManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Icon
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,6 +32,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.location.LocationTracker
+import it.infraconsulting.activitytrack.quick.ToggleTileService
 
 /*
  * Location access levels and battery optimisation (DESIGN §6.2). Both are
@@ -109,3 +113,33 @@ private fun requestIgnoreBatteryOptimizations(context: Context) {
 		Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, "package:${context.packageName}".toUri()),
 	)
 }
+
+/*
+ * Quick Settings tile: some launchers (OxygenOS) do not list third-party
+ * tiles in the panel editor; the system dialog adds it directly (API 33).
+ */
+@Composable
+fun AddTileRow() {
+	val context = LocalContext.current
+	var result by remember { mutableIntStateOf(-1) }
+	val appName = stringResource(R.string.app_name)
+	StatusRow(
+		label = stringResource(R.string.tile_add),
+		state = stringResource(
+			when (result) {
+				StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED,
+				StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED -> R.string.tile_added
+				else -> R.string.tile_add_hint
+			},
+		),
+		action = stringResource(R.string.action_add) to {
+			context.getSystemService(StatusBarManager::class.java).requestAddTileService(
+				ComponentName(context, ToggleTileService::class.java),
+				appName,
+				Icon.createWithResource(context, R.drawable.ic_cmd_play),
+				context.mainExecutor,
+			) { result = it }
+		},
+	)
+}
+

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dictation: microphone. Tinted by the caller. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FFFFFFFF"
+      android:pathData="M12,2.5A3,3 0 0,0 9,5.5V11.5A3,3 0 0,0 15,11.5V5.5A3,3 0 0,0 12,2.5ZM5.5,10.5H7.2A4.8,4.8 0 0,0 16.8,10.5H18.5A6.5,6.5 0 0,1 12.85,16.95V21H11.15V16.95A6.5,6.5 0 0,1 5.5,10.5Z" />
+</vector>

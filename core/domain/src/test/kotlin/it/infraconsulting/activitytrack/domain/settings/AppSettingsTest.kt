@@ -39,4 +39,10 @@ class AppSettingsTest {
 	fun kmFactorNaN() {
 		assertEquals(1.25, AppSettings(kmFactor = Double.NaN).validated().kmFactor)
 	}
+
+	@Test
+	fun dictationLanguageFallsBackToItalian() {
+		assertEquals("en-US", AppSettings(dictationLanguage = "en-US").validated().dictationLanguage)
+		assertEquals("it-IT", AppSettings(dictationLanguage = "en-IT").validated().dictationLanguage)
+	}
 }
