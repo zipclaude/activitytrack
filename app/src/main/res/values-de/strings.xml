@@ -370,4 +370,24 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="sec_advanced">Erweitert</string>
   <string name="set_plan_lead">Erinnerung an geplante Tätigkeiten (Min. vorher)</string>
   <string name="set_plan_snooze">Verschieben um (Min.)</string>
+  <!-- M10 pickers, home cards, gestures -->
+  <string name="action_ok">OK</string>
+  <string name="action_clear">Löschen</string>
+  <string name="home_none">Keine laufende Tätigkeit</string>
+  <string name="home_none_hint">Tippe unten auf die grüne Taste, um eine zu starten.</string>
+  <string name="todo_ignored">ignoriert</string>
+  <string name="swipe_start">Starten</string>
+  <string name="swipe_ignore">Ignorieren</string>
+  <string name="swipe_restore">Wiederherstellen</string>
+  <string name="swipe_postpone">Verschieben</string>
+  <string name="swipe_none">Keine</string>
+  <string name="swipe_postpone_or_ignore">Verschieben oder ignorieren</string>
+  <string name="swipe_pause_resume">Pause / fortsetzen</string>
+  <string name="swipe_stop_or_suspend">Beenden oder aussetzen</string>
+  <string name="gestures_title">Gesten</string>
+  <string name="gestures_entries">Laufende Tätigkeiten</string>
+  <string name="gestures_todos">Aufgaben</string>
+  <string name="gestures_to_start">Nach links wischen</string>
+  <string name="gestures_to_end">Nach rechts wischen</string>
+  <string name="gestures_full">Langes Wischen führt die erste Aktion sofort aus</string>
 </resources>

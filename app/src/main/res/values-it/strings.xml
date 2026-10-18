@@ -371,4 +371,24 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="sec_advanced">Avanzate</string>
   <string name="set_plan_lead">Promemoria attività pianificate (min prima)</string>
   <string name="set_plan_snooze">Posticipo (min)</string>
+  <!-- M10 pickers, home cards, gestures -->
+  <string name="action_ok">OK</string>
+  <string name="action_clear">Cancella</string>
+  <string name="home_none">Nessuna attività in corso</string>
+  <string name="home_none_hint">Tocca il pulsante verde qui sotto per iniziarne una.</string>
+  <string name="todo_ignored">ignorata</string>
+  <string name="swipe_start">Avvia</string>
+  <string name="swipe_ignore">Ignora</string>
+  <string name="swipe_restore">Ripristina</string>
+  <string name="swipe_postpone">Posticipa</string>
+  <string name="swipe_none">Nessuna</string>
+  <string name="swipe_postpone_or_ignore">Posticipa o ignora</string>
+  <string name="swipe_pause_resume">Pausa / riprendi</string>
+  <string name="swipe_stop_or_suspend">Termina o sospendi</string>
+  <string name="gestures_title">Gesti</string>
+  <string name="gestures_entries">Attività in corso</string>
+  <string name="gestures_todos">Attività da fare</string>
+  <string name="gestures_to_start">Trascina a sinistra</string>
+  <string name="gestures_to_end">Trascina a destra</string>
+  <string name="gestures_full">Trascinamento lungo: esegue subito la prima azione</string>
 </resources>

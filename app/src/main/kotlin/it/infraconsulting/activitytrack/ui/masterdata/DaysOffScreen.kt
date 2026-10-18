@@ -21,6 +21,7 @@ import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.TextInput
+import it.infraconsulting.activitytrack.ui.common.DateField
 import java.time.LocalDate
 
 /*
@@ -66,7 +67,7 @@ fun DaysOffScreen(onBack: () -> Unit) {
 			},
 			onDelete = delete,
 		) {
-			TextInput(stringResource(R.string.field_date), date, { date = it })
+			DateField(stringResource(R.string.field_date), date, { date = it })
 			TextInput(stringResource(R.string.field_note), note, { note = it })
 		}
 	}

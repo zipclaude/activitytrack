@@ -46,6 +46,7 @@ import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.SwitchRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
+import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseDecimal
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
@@ -187,7 +188,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			) { dictation = it }
 
 			SectionHeader(stringResource(R.string.sec_reports))
-			field(F.CARRY_OVER, R.string.set_carry_over, KeyboardType.Text)
+			TimeField(stringResource(R.string.set_carry_over), text[F.CARRY_OVER].orEmpty(), { text[F.CARRY_OVER] = it })
 			RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text)
 			RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text)
 			RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text)

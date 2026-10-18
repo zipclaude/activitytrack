@@ -45,6 +45,7 @@ import it.infraconsulting.activitytrack.ui.common.SwitchRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
+import it.infraconsulting.activitytrack.ui.common.TimeField
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 
@@ -529,8 +530,8 @@ fun ScheduleScreen(onBack: () -> Unit) {
 				}
 			},
 		) {
-			TextInput(stringResource(R.string.field_start), start, { start = it })
-			TextInput(stringResource(R.string.field_end), end, { end = it })
+			TimeField(stringResource(R.string.field_start), start, { start = it })
+			TimeField(stringResource(R.string.field_end), end, { end = it }, endOfDay = true)
 			Text(
 				stringResource(R.string.time_hint),
 				style = MaterialTheme.typography.bodySmall,
