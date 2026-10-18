@@ -46,6 +46,8 @@ import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseDate
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
+import it.infraconsulting.activitytrack.ui.common.DateField
+import it.infraconsulting.activitytrack.ui.common.TimeField
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -282,11 +284,11 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		) { clientId = it }
 		if (clientId == null)
 			ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
-		TextInput(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it })
-		TextInput(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it })
+		DateField(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true)
+		TimeField(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true)
 		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)
-		TextInput(stringResource(R.string.todo_field_due), due, { due = it })
-		TextInput(stringResource(R.string.todo_field_time), time, { time = it })
+		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true)
+		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true)
 		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it })
 		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false)
 		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false)

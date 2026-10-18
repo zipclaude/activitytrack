@@ -380,4 +380,24 @@ Tap the green play button below to start one.</string>
   <string name="sec_advanced">Advanced</string>
   <string name="set_plan_lead">Planned activity reminder (min before)</string>
   <string name="set_plan_snooze">Postpone step (min)</string>
+  <!-- M10 pickers, home cards, gestures -->
+  <string name="action_ok">OK</string>
+  <string name="action_clear">Clear</string>
+  <string name="home_none">No activity running</string>
+  <string name="home_none_hint">Tap the green button below to start one.</string>
+  <string name="todo_ignored">ignored</string>
+  <string name="swipe_start">Start</string>
+  <string name="swipe_ignore">Ignore</string>
+  <string name="swipe_restore">Restore</string>
+  <string name="swipe_postpone">Postpone</string>
+  <string name="swipe_none">None</string>
+  <string name="swipe_postpone_or_ignore">Postpone or ignore</string>
+  <string name="swipe_pause_resume">Pause / resume</string>
+  <string name="swipe_stop_or_suspend">Stop or suspend</string>
+  <string name="gestures_title">Gestures</string>
+  <string name="gestures_entries">Running activities</string>
+  <string name="gestures_todos">To-dos</string>
+  <string name="gestures_to_start">Swipe left</string>
+  <string name="gestures_to_end">Swipe right</string>
+  <string name="gestures_full">Long swipe runs the first action at once</string>
 </resources>

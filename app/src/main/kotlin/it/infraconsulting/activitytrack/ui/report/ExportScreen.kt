@@ -58,6 +58,7 @@ import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.SwitchRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.parseDate
+import it.infraconsulting.activitytrack.ui.common.DateField
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -282,8 +283,8 @@ fun ExportScreen(onBack: () -> Unit) {
 				for (f in OutFormat.entries)
 					FilterChip(selected = format == f, onClick = { format = f }, label = { Text(f.label) })
 			}
-			TextInput(stringResource(R.string.export_from), from, { from = it })
-			TextInput(stringResource(R.string.export_to), to, { to = it })
+			DateField(stringResource(R.string.export_from), from, { from = it }, clearable = true)
+			DateField(stringResource(R.string.export_to), to, { to = it }, clearable = true)
 			ChoiceField(
 				stringResource(R.string.field_company),
 				listOf<Pair<Long?, String>>(null to all) + companies.map { it.id to it.name },
