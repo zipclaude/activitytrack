@@ -70,6 +70,7 @@ class SettingsRepository(context: Context) {
 		val entryToStart = stringPreferencesKey("swipe_entry_to_start")
 		val entryToEnd = stringPreferencesKey("swipe_entry_to_end")
 		val fullSwipe = booleanPreferencesKey("swipe_full")
+		val compact = booleanPreferencesKey("display_compact")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -106,6 +107,7 @@ class SettingsRepository(context: Context) {
 				entryToEnd = enumOr(p[K.entryToEnd], d.gestures.entryToEnd),
 				fullSwipe = p[K.fullSwipe] ?: d.gestures.fullSwipe,
 			),
+			compactDisplay = p[K.compact] ?: d.compactDisplay,
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
 			tiles = readService(p, "tiles", d.tiles),
@@ -139,6 +141,7 @@ class SettingsRepository(context: Context) {
 		p[K.entryToStart] = s.gestures.entryToStart.name
 		p[K.entryToEnd] = s.gestures.entryToEnd.name
 		p[K.fullSwipe] = s.gestures.fullSwipe
+		p[K.compact] = s.compactDisplay
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
 		writeService(p, "tiles", s.tiles)

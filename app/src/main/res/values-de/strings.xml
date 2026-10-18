@@ -393,4 +393,12 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_due_at">fällig %1$s</string>
   <string name="todo_planned_chip">geplant</string>
   <string name="gestures_behaviour">Verhalten</string>
+  <!-- M11 home start, compact display, quick add -->
+  <string name="sec_display">Anzeige</string>
+  <string name="set_display">Darstellung</string>
+  <string name="display_normal">Normal</string>
+  <string name="display_compact">Kompakt</string>
+  <string name="quick_company">Neue Firma</string>
+  <string name="quick_client">Neuer Kunde</string>
+  <string name="start_travel">Reise starten</string>
 </resources>

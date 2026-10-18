@@ -46,6 +46,8 @@ data class AppSettings(
 	val companyCalendars: Map<Long, Long> = emptyMap(),
 	/* swipe gestures on entry and to-do cards (M10) */
 	val gestures: GestureSettings = GestureSettings(),
+	/* compact display (M11): smaller text, tighter cards */
+	val compactDisplay: Boolean = false,
 ) {
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId

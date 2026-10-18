@@ -394,4 +394,12 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_due_at">scad. %1$s</string>
   <string name="todo_planned_chip">pianificata</string>
   <string name="gestures_behaviour">Comportamento</string>
+  <!-- M11 home start, compact display, quick add -->
+  <string name="sec_display">Visualizzazione</string>
+  <string name="set_display">Aspetto</string>
+  <string name="display_normal">Normale</string>
+  <string name="display_compact">Compatta</string>
+  <string name="quick_company">Nuova azienda</string>
+  <string name="quick_client">Nuovo cliente</string>
+  <string name="start_travel">Avvia viaggio</string>
 </resources>

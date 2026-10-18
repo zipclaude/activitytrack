@@ -27,6 +27,8 @@ sealed interface Screen {
 	/* secondary destinations behind the bottom bar */
 	data object More : Screen
 	data object Start : Screen
+	/* start flow with Travel picked (Home bar, while other entries run) */
+	data object StartTravel : Screen
 	/* start flow with a client already picked (widget, shortcut) */
 	data class StartFor(val clientId: Long) : Screen
 	data class Entry(val id: Long) : Screen
@@ -70,7 +72,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Agenda, More, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures)
+			listOf(Home, Agenda, More, Start, StartTravel, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures)
 				.associateBy { it.key() }
 		}
 
