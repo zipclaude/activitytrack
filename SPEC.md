@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.9 (2026-10-18, M10 UI: Home cards, swipe gestures, pickers, ignored to-dos). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.10 (2026-10-18, M11: Home start controls, compact display, quick add). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -222,6 +222,14 @@ Suspend. A short swipe reveals the buttons, a long one runs the first
 (switchable). **Ignored** to-dos replace deletion: kept struck through at
 the bottom, no reminder nor calendar event, never restored by an import.
 
+**Home start (M11)**: the bottom start button is gone. The empty big card
+holds Start (start screen) and Travel (starts at once, no destination) and
+swipes left = Start, right = Travel; with entries open, Start and Travel
+are in the top bar (Travel opens the start screen in travel mode, which asks
+about the running entries). **Compact display** (setting): text at 88 %,
+tighter cards and buttons. **Quick add**: "+" beside Company and Client in
+the start screen and the to-do editor creates one and selects it.
+
 **Pickers (M10)**: every date and time field uses the Material date and time
 pickers (optional ones can be cleared).
 
@@ -245,6 +253,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M11 | Home start controls (empty card, top bar), compact display, quick add of companies and clients |
 | M10 | UI: Home cards, swipe gestures (Gestures screen), date/time pickers, ignored to-dos (schema v5) |
 | M9 | planned to-dos: manual and imported, planned date/time and duration, reminder with postpone / re-plan, agenda planning, calendar events, tags |
 

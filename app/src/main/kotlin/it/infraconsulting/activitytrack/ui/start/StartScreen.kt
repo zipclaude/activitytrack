@@ -28,6 +28,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.WithAddButton
+import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
+import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.location.CurrentPosition
@@ -42,9 +48,12 @@ import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.reasonText
 
 @Composable
-fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null) {
+fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null, travel: Boolean = false) {
 	val context = LocalContext.current.applicationContext
-	val vm = appViewModel { StartViewModel(it.entries, it.masterData, clientId, todoId, it.todos) { CurrentPosition.get(context) } }
+	val vm = appViewModel {
+		StartViewModel(it.entries, it.masterData, clientId, todoId, it.todos) { CurrentPosition.get(context) }
+			.also { vm -> if (travel) vm.setMode(SegmentKind.TRAVEL) }
+	}
 	val f by vm.form.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val clients by vm.clients.collectAsState()
@@ -53,6 +62,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	val pending by vm.pending.collectAsState()
 	val error by vm.error.collectAsState()
 	val none = stringResource(R.string.field_none)
+	var addCompany by remember { mutableStateOf(false) }
+	var addClient by remember { mutableStateOf(false) }
 
 	ScreenScaffold(title = stringResource(R.string.start_title), onBack = onBack) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -75,30 +86,34 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 					}
 				}
 				item {
-					Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-						ChoiceField(
-							stringResource(R.string.field_company),
-							listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) +
-								companies.filter { !it.archived || it.id == f.companyId }.map { it.id to it.name },
-							f.companyId,
-						) { vm.setCompany(it) }
-					}
-				}
-				if (clients.isEmpty())
-					item { EmptyText(stringResource(R.string.start_no_clients)) }
-				else
-					item {
-						/* combo box (owner request): type to search, or pick from the dropdown; most recent first */
-						val unknown = stringResource(R.string.client_unknown)
-						Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-							SearchableChoiceField(
-								stringResource(R.string.field_client),
-								(if (f.mode == SegmentKind.TRAVEL) listOf<Pair<Long?, String>>(null to unknown) else emptyList()) +
-									clients.map { it.id to it.name },
-								f.clientId,
-							) { vm.setClient(it) }
+					Column(modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)) {
+						WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+							ChoiceField(
+								stringResource(R.string.field_company),
+								listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) +
+									companies.filter { !it.archived || it.id == f.companyId }.map { it.id to it.name },
+								f.companyId,
+							) { vm.setCompany(it) }
 						}
 					}
+				}
+				item {
+					/* combo box (owner request): type to search, or pick from the dropdown; most recent first; "+" adds one (M11) */
+					val unknown = stringResource(R.string.client_unknown)
+					Column(modifier = Modifier.padding(start = 16.dp, end = 4.dp)) {
+						WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
+							if (clients.isEmpty())
+								EmptyText(stringResource(R.string.start_no_clients))
+							else
+								SearchableChoiceField(
+									stringResource(R.string.field_client),
+									(if (f.mode == SegmentKind.TRAVEL) listOf<Pair<Long?, String>>(null to unknown) else emptyList()) +
+										clients.map { it.id to it.name },
+									f.clientId,
+								) { vm.setClient(it) }
+						}
+					}
+				}
 				item {
 					Column(
 						modifier = Modifier.padding(16.dp),
@@ -137,6 +152,10 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	}
 
 	pending.firstOrNull()?.let { r -> RunningDialog(r, vm) }
+	if (addCompany)
+		QuickCompanyDialog(onDone = { addCompany = false; vm.setCompany(it) }, onDismiss = { addCompany = false })
+	if (addClient)
+		QuickClientDialog(f.companyId, onDone = { client, company -> addClient = false; vm.pickNewClient(client, company) }, onDismiss = { addClient = false })
 }
 
 /*

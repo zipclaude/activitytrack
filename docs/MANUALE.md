@@ -76,7 +76,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | riquadro dell'attività in corso, riquadri piccoli delle altre, "Da fare oggi", pulsante verde di avvio |
+| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre, "Da fare oggi" |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
 | **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Gesti", "Impostazioni" |
@@ -85,7 +85,12 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
 
 ### La Home a riquadri
 - In alto il **riquadro grande**: l'attività aperta più recente, con tempo,
-  stato e comandi. Senza attività aperte mostra "Nessuna attività in corso".
+  stato e comandi. Senza attività aperte mostra "Nessuna attività in corso"
+  con i pulsanti **▶ Avvia** (apre "Nuova attività") e **🚗 Viaggio** (il
+  viaggio parte subito, la destinazione si indica dopo o arriva con
+  l'arrivo); trascinandolo a sinistra si avvia, a destra parte il viaggio.
+- Con attività aperte, ▶ e 🚗 sono nella barra in alto (🚗 apre "Nuova
+  attività" con Viaggio già scelto, perché chiede cosa fare delle altre).
 - Sotto, un **riquadro piccolo** per ogni altra attività aperta (in pausa,
   sospesa, da completare): stato, ora e tempo, e un pulsante per riprenderla
   (o metterla in pausa, o completarla). Toccandolo, l'attività passa nel
@@ -106,6 +111,15 @@ uno lungo esegue subito il primo.
 
 Si cambiano in "Altro" → **"Gesti"**: per ogni direzione cosa proporre
 (anche nessuna azione), e se il trascinamento lungo esegue subito la prima.
+
+### Visualizzazione compatta
+Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
+riquadri e pulsanti più stretti, per vedere più attività e voci insieme.
+
+### Nuova azienda o cliente al volo
+In "Nuova attività" e nell'editor delle voci da fare, il **+** accanto ad
+Azienda e Cliente crea un'azienda (solo il nome) o un cliente (nome e
+azienda) senza uscire; il nuovo elemento risulta già scelto.
 
 ### Date e orari
 Tutti i campi data e ora si compilano con il calendario e l'orologio di

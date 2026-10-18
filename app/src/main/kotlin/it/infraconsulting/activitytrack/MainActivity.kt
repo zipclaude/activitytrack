@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.notify.EntryLinks
+import kotlinx.coroutines.flow.map
 import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
 import it.infraconsulting.activitytrack.ui.LocalBottomBar
 import it.infraconsulting.activitytrack.ui.ScopedEntry
@@ -73,8 +74,10 @@ class MainActivity : ComponentActivity() {
 		enableEdgeToEdge()
 		if (savedInstanceState == null)
 			deepLink.value = EntryLinks.screenOf(intent)
+		val settings = (application as ActivityTrackApp).container.settings.settings
 		setContent {
-			ActivityTrackTheme { Root(deepLink.value) { deepLink.value = null } }
+			val compact by settings.map { it.compactDisplay }.collectAsState(initial = false)
+			ActivityTrackTheme(compact) { Root(deepLink.value) { deepLink.value = null } }
 		}
 	}
 
@@ -190,12 +193,14 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 	when (top) {
 		Screen.Home -> HomeScreen(
 			onStart = { open(Screen.Start) },
+			onStartTravel = { open(Screen.StartTravel) },
 			onOpenEntry = { open(Screen.Entry(it)) },
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
 		)
 		Screen.Agenda -> AgendaScreen(onOpenEntry = { open(Screen.Entry(it)) }, onStartTodo = { open(Screen.StartFromTodo(it)) })
 		Screen.More -> MoreScreen(open)
 		Screen.Start -> StartScreen(back)
+		Screen.StartTravel -> StartScreen(back, travel = true)
 		is Screen.StartFor -> StartScreen(back, top.clientId)
 		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
 		Screen.Todos -> TodosScreen(back) { open(Screen.StartFromTodo(it)) }
