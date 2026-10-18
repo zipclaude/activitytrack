@@ -432,4 +432,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="sec_notifications">Notifiche</string>
   <string name="notif_settings_hint">Banner, suono e vibrazione di ogni tipo di notifica si impostano in Android: toccane uno per cambiarlo.</string>
   <string name="notif_all">Tutte le notifiche dell\'app</string>
+  <string name="agenda_fit">Adatta</string>
+  <string name="agenda_scroll">Scorri</string>
 </resources>

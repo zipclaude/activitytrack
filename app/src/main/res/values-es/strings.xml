@@ -432,4 +432,6 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="sec_notifications">Notificaciones</string>
   <string name="notif_settings_hint">El banner, el sonido y la vibración de cada tipo de notificación se ajustan en Android: toca uno para cambiarlo.</string>
   <string name="notif_all">Todas las notificaciones de la app</string>
+  <string name="agenda_fit">Ajustar</string>
+  <string name="agenda_scroll">Desplazar</string>
 </resources>
