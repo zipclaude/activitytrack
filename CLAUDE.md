@@ -66,9 +66,10 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 ## 4. File map
 
 ```
-SPEC.md                         functional specification (v0.6)
+SPEC.md                         functional specification (v0.7)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
 docs/INTERCHANGE.md             generic import/export format (M4)
+docs/MANUALE.md                 user manual in Italian (owner request; keep it in step with each version)
 docs/samples/                   interchange samples for device tests (TEST data)
 docs/DESIGN.md                  technical design, toolchain, risks
 gradle/libs.versions.toml       verified versions (2026-10-15; androidx.test 2026-10-16)
@@ -110,8 +111,11 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 M4–M7 were written autonomously on 2026-10-17 evening (owner away, phone not
 available). PR stack, to merge in order after the device tests:
-#4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`.
-Install the top of the stack (`m7-ui-polish`); back up `databases/` first.
+#4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`
+→ #8 `m8-hardening` (review fixes, backup restore, SPEC/DESIGN, user manual).
+Install the top of the stack (`m8-hardening`); back up `databases/` first.
+Branch `beta` = copy of `m8-hardening` for device tests; CI builds it on push
+and publishes the `app-debug` APK artifact (14 days).
 
 ### Device tests
 1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
@@ -127,7 +131,10 @@ Install the top of the stack (`m7-ui-polish`); back up `databases/` first.
    sample data; taps open entries / days; back from a tab goes Home.
 4. **M7**: visual review of the home card (state pill, running time), green
    start, empty state.
-5. Cleanup: restore the clean DB, delete TEST files in the data folder,
+5. **Restore**: Import / export → "Restore backup" with a daily backup zip
+   (confirm dialog, "-before-restore" zip written, app restarts with the old data).
+6. Read `docs/MANUALE.md` against the app.
+7. Cleanup: restore the clean DB, delete TEST files in the data folder,
    remove TEST events from the calendar (or the local calendar).
 
 ### Provisional decisions to confirm
@@ -196,6 +203,7 @@ Install the top of the stack (`m7-ui-polish`); back up `databases/` first.
 | 2026-10-17 | M5: CalendarContract (Google via the system account, CalDAV via DAVx5); generic calendar chosen by the user, local "ActivityTrack" calendar as fallback; per-company calendar replaces the generic one; one-way app → calendar; one event per entry and day, shown from the entry start |
 | 2026-10-17 | M6/M7: bottom navigation bar (Home · Agenda · Reports · More) |
 | 2026-10-17 | Owner away: M4–M7 implemented autonomously as stacked PRs #4–#7; provisional choices listed in §5 for review |
+| 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 
 ## 7. Pitfalls to remember
 

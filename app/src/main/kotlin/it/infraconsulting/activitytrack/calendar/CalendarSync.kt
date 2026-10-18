@@ -69,6 +69,12 @@ class CalendarSync(private val context: Context, private val container: AppConta
 	/* A calendar on this phone only (local account), when none of the synced ones is wanted. */
 	suspend fun createLocalCalendar(): Long = withContext(Dispatchers.IO) {
 		val name = context.getString(R.string.app_name)
+		/* chosen again later: reuse ours instead of creating another one */
+		resolver.query(
+			Calendars.CONTENT_URI, arrayOf(Calendars._ID),
+			"${Calendars.ACCOUNT_TYPE} = ? AND ${Calendars.ACCOUNT_NAME} = ?",
+			arrayOf(CalendarContract.ACCOUNT_TYPE_LOCAL, name), null,
+		)?.use { c -> if (c.moveToFirst()) return@withContext c.getLong(0) }
 		val uri = Calendars.CONTENT_URI.buildUpon()
 			.appendQueryParameter(CalendarContract.CALLER_IS_SYNCADAPTER, "true")
 			.appendQueryParameter(Calendars.ACCOUNT_NAME, name)
