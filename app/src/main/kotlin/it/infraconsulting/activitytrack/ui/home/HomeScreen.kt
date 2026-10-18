@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.Banded
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.ui.common.SwipeAction
 import it.infraconsulting.activitytrack.ui.LocalCompact
@@ -81,6 +82,8 @@ data class EntryCard(
 	val client: String?,
 	val company: String?,
 	val segments: List<SegmentEntity>,
+	/* company colour for the card band (M12) */
+	val companyColor: Int? = null,
 ) {
 	val title: String? get() = client ?: company
 
@@ -100,7 +103,7 @@ class HomeViewModel(
 		val co = companies.associateBy { it.id }
 		val bySeg = segs.groupBy { it.entryId }
 		list.map { e ->
-			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty())
+			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), e.companyId?.let { co[it]?.color })
 		}.sortedByDescending { it.lastChange }
 	}.state(emptyList())
 
@@ -256,34 +259,36 @@ private fun SmallEntryCard(card: EntryCard, now: Long, onSelect: () -> Unit, onC
 	val compact = LocalCompact.current
 	val button = Modifier.size(if (compact) 36.dp else 44.dp)
 	Card(onClick = onSelect, modifier = Modifier.fillMaxWidth()) {
-		Row(
-			modifier = Modifier.fillMaxWidth().heightIn(min = if (compact) 52.dp else 72.dp)
-				.padding(start = if (compact) 12.dp else 16.dp, end = 10.dp, top = if (compact) 4.dp else 8.dp, bottom = if (compact) 4.dp else 8.dp),
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.spacedBy(12.dp),
-		) {
-			Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-				Text(
-					listOfNotNull(card.title ?: stringResource(R.string.entry_no_client), e.activity).joinToString(" · "),
-					style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-				)
-				val since = card.segments.mapNotNull { it.endUtcMs ?: it.startUtcMs }.maxOrNull()
-				val state = statusText(e.status, e.mode)
-				Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-					val style = stateStyle(e.status, e.mode)
-					if (style != null) StatePill(style, state) else Text(state, style = MaterialTheme.typography.bodySmall)
+		Banded(card.companyColor) {
+			Row(
+				modifier = Modifier.fillMaxWidth().heightIn(min = if (compact) 52.dp else 72.dp)
+					.padding(start = if (compact) 12.dp else 16.dp, end = 10.dp, top = if (compact) 4.dp else 8.dp, bottom = if (compact) 4.dp else 8.dp),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.spacedBy(12.dp),
+			) {
+				Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
 					Text(
-						listOfNotNull(since?.let { clock(it, zone) }, hm(total(card.segments, SegmentKind.WORK, now))).joinToString(" · "),
-						style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+						listOfNotNull(card.title ?: stringResource(R.string.entry_no_client), e.activity).joinToString(" · "),
+						style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
 					)
+					val since = card.segments.mapNotNull { it.endUtcMs ?: it.startUtcMs }.maxOrNull()
+					val state = statusText(e.status, e.mode)
+					Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+						val style = stateStyle(e.status, e.mode)
+						if (style != null) StatePill(style, state) else Text(state, style = MaterialTheme.typography.bodySmall)
+						Text(
+							listOfNotNull(since?.let { clock(it, zone) }, hm(total(card.segments, SegmentKind.WORK, now))).joinToString(" · "),
+							style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+						)
+					}
 				}
-			}
-			val resting = (e.status == EntryStatus.ACTIVE && e.mode == SegmentKind.PAUSE) || e.status == EntryStatus.SUSPENDED
-			val running = e.status == EntryStatus.ACTIVE && !resting
-			when {
-				resting -> commandStyle(EntryCommand.WORK)?.let { CommandIconButton(it, stringResource(R.string.cmd_resume), { onCommand(EntryCommand.WORK) }, button) }
-				running -> commandStyle(EntryCommand.PAUSE)?.let { CommandIconButton(it, stringResource(R.string.cmd_pause), { onCommand(EntryCommand.PAUSE) }, button) }
-				e.status == EntryStatus.TO_COMPLETE -> TextButton(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
+				val resting = (e.status == EntryStatus.ACTIVE && e.mode == SegmentKind.PAUSE) || e.status == EntryStatus.SUSPENDED
+				val running = e.status == EntryStatus.ACTIVE && !resting
+				when {
+					resting -> commandStyle(EntryCommand.WORK)?.let { CommandIconButton(it, stringResource(R.string.cmd_resume), { onCommand(EntryCommand.WORK) }, button) }
+					running -> commandStyle(EntryCommand.PAUSE)?.let { CommandIconButton(it, stringResource(R.string.cmd_pause), { onCommand(EntryCommand.PAUSE) }, button) }
+					e.status == EntryStatus.TO_COMPLETE -> TextButton(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
+				}
 			}
 		}
 	}
@@ -300,54 +305,56 @@ private fun EntryCardView(
 	val zone = ZoneId.of(e.zoneId)
 	val compact = LocalCompact.current
 	Card(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
-		Column(modifier = Modifier.padding(if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)) {
-			val last = card.segments.lastOrNull()
-			val since = when {
-				e.status == EntryStatus.ACTIVE -> last?.startUtcMs
-				else -> card.segments.mapNotNull { it.endUtcMs }.maxOrNull()
-			}
-			Row(verticalAlignment = Alignment.Top) {
-				Column(Modifier.weight(1f)) {
-					if (card.client != null && card.company != null)
-						Text(card.company, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-					Text(card.title ?: stringResource(R.string.entry_no_client), style = MaterialTheme.typography.titleLarge)
-					e.activity?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+		Banded(card.companyColor) {
+			Column(modifier = Modifier.padding(if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)) {
+				val last = card.segments.lastOrNull()
+				val since = when {
+					e.status == EntryStatus.ACTIVE -> last?.startUtcMs
+					else -> card.segments.mapNotNull { it.endUtcMs }.maxOrNull()
 				}
-				/* the running segment's time, the number one looks for */
-				if (e.status == EntryStatus.ACTIVE && last?.endUtcMs == null && last != null)
-					Text(hm(now - last.startUtcMs), style = MaterialTheme.typography.headlineMedium)
-			}
-
-			val state = statusText(e.status, e.mode)
-			val text = if (since != null) stringResource(R.string.since_fmt, state, clock(since, zone)) else state
-			val style = stateStyle(e.status, e.mode)
-			if (style != null)
-				StatePill(style, text)
-			else
-				Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-			Text(
-				stringResource(
-					R.string.totals_fmt,
-					hm(total(card.segments, SegmentKind.WORK, now)),
-					hm(total(card.segments, SegmentKind.TRAVEL, now)),
-				),
-				style = MaterialTheme.typography.bodySmall,
-			)
-
-			FlowRow(
-				horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
-				verticalArrangement = Arrangement.spacedBy(8.dp),
-				itemVerticalAlignment = Alignment.CenterVertically,
-			) {
-				for ((cmd, label) in commands(e.status, e.mode)) {
-					val style = commandStyle(cmd)
-					if (style != null)
-						CommandIconButton(style, stringResource(label), { onCommand(cmd) }, if (compact) Modifier.size(44.dp) else Modifier)
-					else
-						OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
+				Row(verticalAlignment = Alignment.Top) {
+					Column(Modifier.weight(1f)) {
+						if (card.client != null && card.company != null)
+							Text(card.company, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+						Text(card.title ?: stringResource(R.string.entry_no_client), style = MaterialTheme.typography.titleLarge)
+						e.activity?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+					}
+					/* the running segment's time, the number one looks for */
+					if (e.status == EntryStatus.ACTIVE && last?.endUtcMs == null && last != null)
+						Text(hm(now - last.startUtcMs), style = MaterialTheme.typography.headlineMedium)
 				}
-				if (e.status == EntryStatus.TO_COMPLETE)
-					Button(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
+
+				val state = statusText(e.status, e.mode)
+				val text = if (since != null) stringResource(R.string.since_fmt, state, clock(since, zone)) else state
+				val style = stateStyle(e.status, e.mode)
+				if (style != null)
+					StatePill(style, text)
+				else
+					Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+				Text(
+					stringResource(
+						R.string.totals_fmt,
+						hm(total(card.segments, SegmentKind.WORK, now)),
+						hm(total(card.segments, SegmentKind.TRAVEL, now)),
+					),
+					style = MaterialTheme.typography.bodySmall,
+				)
+
+				FlowRow(
+					horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
+					verticalArrangement = Arrangement.spacedBy(8.dp),
+					itemVerticalAlignment = Alignment.CenterVertically,
+				) {
+					for ((cmd, label) in commands(e.status, e.mode)) {
+						val style = commandStyle(cmd)
+						if (style != null)
+							CommandIconButton(style, stringResource(label), { onCommand(cmd) }, if (compact) Modifier.size(44.dp) else Modifier)
+						else
+							OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
+					}
+					if (e.status == EntryStatus.TO_COMPLETE)
+						Button(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
+				}
 			}
 		}
 	}

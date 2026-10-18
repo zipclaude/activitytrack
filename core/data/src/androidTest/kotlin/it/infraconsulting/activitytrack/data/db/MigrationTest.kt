@@ -92,6 +92,22 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v5ToV6AddsColours() {
+		helper.createDatabase(DB, 5).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO client (id, company_id, name, archived) VALUES (1, 1, 'Bank', 0)")
+		}
+		helper.runMigrationsAndValidate(DB, 6, true).use { db ->
+			db.query("SELECT company.color, client.color FROM company, client").use { c ->
+				c.moveToFirst()
+				assertEquals(true, c.isNull(0))
+				assertEquals(true, c.isNull(1))
+			}
+			db.execSQL("UPDATE company SET color = 4029418")
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

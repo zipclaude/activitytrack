@@ -36,6 +36,8 @@ data class CompanyEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	val name: String,
 	val archived: Boolean = false,
+	/* card band and agenda colour (M12), 0xRRGGBB; null = none chosen */
+	val color: Int? = null,
 	/* code in the management system (M4 interchange key) */
 	@ColumnInfo(name = "external_code") val externalCode: String? = null,
 	/* connector plugin of this company and its plain settings (JSON); secrets live in the keystore */
@@ -85,6 +87,8 @@ data class ClientEntity(
 	@ColumnInfo(name = "company_id") val companyId: Long,
 	val name: String,
 	val archived: Boolean = false,
+	/* band colour when one company is shown (M12), 0xRRGGBB; null = none */
+	val color: Int? = null,
 	@ColumnInfo(name = "external_code") val externalCode: String? = null,
 )
 

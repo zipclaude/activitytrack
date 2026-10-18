@@ -37,6 +37,7 @@ import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.ClickableRow
+import it.infraconsulting.activitytrack.ui.common.ColorPalette
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
@@ -153,6 +154,10 @@ fun CompanyScreen(id: Long, onBack: () -> Unit) {
 		},
 	) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+			company?.let { c ->
+				item { SectionHeader(stringResource(R.string.sec_color)) }
+				item { ColorPalette(c.color) { vm.save(c.copy(color = it)) {} } }
+			}
 			company?.let { c -> item { ConnectorSection(c, vm) } }
 			item {
 				Row {
@@ -274,6 +279,10 @@ fun ClientScreen(id: Long, onBack: () -> Unit) {
 					headlineContent = { Text(companies.firstOrNull { it.id == client?.companyId }?.name.orEmpty()) },
 					overlineContent = { Text(stringResource(R.string.field_company)) },
 				)
+			}
+			client?.let { c ->
+				item { SectionHeader(stringResource(R.string.sec_color)) }
+				item { ColorPalette(c.color) { vm.save(c.copy(color = it)) {} } }
 			}
 			item {
 				Row {

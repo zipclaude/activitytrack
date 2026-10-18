@@ -53,6 +53,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.rgb
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import it.infraconsulting.activitytrack.ui.todo.todoSwipeActions
 import it.infraconsulting.activitytrack.ui.todo.TodosViewModel
 import it.infraconsulting.activitytrack.ui.home.rememberEntryCommands
@@ -224,7 +227,12 @@ private val PALETTE = listOf(
 	Color(0xFF00838F), Color(0xFFAD1457), Color(0xFF4E342E), Color(0xFF546E7A),
 )
 
-private fun colorOf(companyId: Long?) = PALETTE[((companyId ?: 0L) % PALETTE.size).toInt()]
+/* company colours chosen by the owner (M12); the others keep the automatic one */
+private val LocalCompanyColors = staticCompositionLocalOf { emptyMap<Long, Int>() }
+
+@Composable
+private fun colorOf(companyId: Long?): Color =
+	companyId?.let { LocalCompanyColors.current[it] }?.let(::rgb) ?: PALETTE[((companyId ?: 0L) % PALETTE.size).toInt()]
 
 private fun hm(d: Duration) = "%d:%02d".format(d.toHours(), d.toMinutesPart())
 
@@ -251,48 +259,52 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val run = rememberEntryCommands(commander) { id -> data?.items?.firstOrNull { it.entryId == id }?.title?.ifBlank { null } ?: fallback }
 	val swipes = ListSwipes(gestures, run, todosVm, onStartTodo) { todosVm.clearError(); editing = it }
 
-	ScreenScaffold(
-		title = stringResource(R.string.nav_agenda),
-		onBack = null,
-		actions = {
-			AddButton { plan(anchor, defaultSlot(anchor)) }
-			TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.agenda_today)) }
-		},
-	) { padding ->
-		Column(Modifier.fillMaxSize().padding(padding)) {
-			Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				for ((m, label) in listOf(
-					AgendaMode.LIST to R.string.agenda_list, AgendaMode.DAY to R.string.agenda_day,
-					AgendaMode.WEEK to R.string.agenda_week, AgendaMode.MONTH to R.string.agenda_month,
-				))
-					FilterChip(selected = mode == m, onClick = { vm.mode.value = m }, label = { Text(stringResource(label)) })
-			}
-			Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-				TextButton(onClick = { vm.move(-1) }) { Text("‹", style = MaterialTheme.typography.titleLarge) }
-				Text(periodTitle(mode, anchor, locale), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-				data?.let { d ->
-					val total = d.reported.values.fold(Duration.ZERO, Duration::plus)
-					if (!total.isZero && mode != AgendaMode.MONTH)
-						Text(hm(total), style = MaterialTheme.typography.titleMedium)
+	val companies by todosVm.companies.collectAsState()
+	val companyColors = companies.mapNotNull { c -> c.color?.let { c.id to it } }.toMap()
+	CompositionLocalProvider(LocalCompanyColors provides companyColors) {
+		ScreenScaffold(
+			title = stringResource(R.string.nav_agenda),
+			onBack = null,
+			actions = {
+				AddButton { plan(anchor, defaultSlot(anchor)) }
+				TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.agenda_today)) }
+			},
+		) { padding ->
+			Column(Modifier.fillMaxSize().padding(padding)) {
+				Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+					for ((m, label) in listOf(
+						AgendaMode.LIST to R.string.agenda_list, AgendaMode.DAY to R.string.agenda_day,
+						AgendaMode.WEEK to R.string.agenda_week, AgendaMode.MONTH to R.string.agenda_month,
+					))
+						FilterChip(selected = mode == m, onClick = { vm.mode.value = m }, label = { Text(stringResource(label)) })
 				}
-				TextButton(onClick = { vm.move(1) }) { Text("›", style = MaterialTheme.typography.titleLarge) }
-			}
-			HorizontalDivider()
-			val d = data ?: return@Column
-			when (mode) {
-				AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onTodo, swipes)
-				AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, minuteHeight = 1.2.dp, onOpenEntry, onTodo, plan)
-				AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, minuteHeight = 0.8.dp, onOpenEntry, onTodo, plan) {
-					vm.open(it, AgendaMode.DAY)
+				Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+					TextButton(onClick = { vm.move(-1) }) { Text("‹", style = MaterialTheme.typography.titleLarge) }
+					Text(periodTitle(mode, anchor, locale), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+					data?.let { d ->
+						val total = d.reported.values.fold(Duration.ZERO, Duration::plus)
+						if (!total.isZero && mode != AgendaMode.MONTH)
+							Text(hm(total), style = MaterialTheme.typography.titleMedium)
+					}
+					TextButton(onClick = { vm.move(1) }) { Text("›", style = MaterialTheme.typography.titleLarge) }
 				}
-				AgendaMode.MONTH -> MonthView(anchor, d, locale) { vm.open(it, AgendaMode.DAY) }
+				HorizontalDivider()
+				val d = data ?: return@Column
+				when (mode) {
+					AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onTodo, swipes)
+					AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, minuteHeight = 1.2.dp, onOpenEntry, onTodo, plan)
+					AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, minuteHeight = 0.8.dp, onOpenEntry, onTodo, plan) {
+						vm.open(it, AgendaMode.DAY)
+					}
+					AgendaMode.MONTH -> MonthView(anchor, d, locale) { vm.open(it, AgendaMode.DAY) }
+				}
 			}
 		}
+		selected?.let { t ->
+			TodoActions(t, todosVm, onStart = { onStartTodo(t.id) }, onEdit = { todosVm.clearError(); editing = t }) { selected = null }
+		}
+		editing?.let { t -> TodoEditDialog(t, todosVm) { editing = null } }
 	}
-	selected?.let { t ->
-		TodoActions(t, todosVm, onStart = { onStartTodo(t.id) }, onEdit = { todosVm.clearError(); editing = t }) { selected = null }
-	}
-	editing?.let { t -> TodoEditDialog(t, todosVm) { editing = null } }
 }
 
 /* What the list rows need to swipe (M10). */
