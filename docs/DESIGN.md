@@ -26,17 +26,18 @@ Versions live in `gradle/libs.versions.toml`.
 
 ```
 :app                     application, Compose UI, notifications, receivers, services
-:core:domain             pure Kotlin/JVM: models, state machine, rounding, attribution, totals
-:core:data               Room DB, DAOs, repositories, settings (DataStore), SAF storage
-planned
-:feature:tracking        home, start/stop flows, entry editor, day view       (M1)
-:feature:masterdata      companies, clients, sites, roles, presets, places    (M1)
-:feature:report          reports and export UI                                (M1)
-:service:reminders       alarm scheduler, notification builders, receivers    (M1)
-:service:location        foreground service, location pipeline, geo clients   (M2)
-:export:csv  :export:json  :export:xml                                        (M1 / M4)
-:widget                  Glance widgets, tile, shortcuts                      (M3)
+:core:domain             pure Kotlin/JVM: models, state machine, rounding, attribution,
+                         totals, tracking rules, interchange model and generic connector,
+                         calendar events
+:core:data               Room DB, DAOs, repositories, importer/exporter, geo clients,
+                         settings (DataStore), SAF storage, backup
 ```
+
+Packages of `:app`: `location` (service, tracker, monitor, geo worker),
+`reminders`, `notify`, `backup`, `calendar` (CalendarSync), `quick` (tile,
+widgets, shortcuts), `connect` (SecretStore), `ui/*` (one package per area:
+home, start, entry, agenda, report, todo, masterdata, settings, setup,
+common). Feature modules stay planned until the UI outgrows `:app`.
 
 Dependency direction: `app → feature/service/export → core:data → core:domain`.
 `:core:domain` has no Android dependency and is unit-tested on the host JVM.
@@ -66,7 +67,7 @@ Package root: `it.infraconsulting.activitytrack`.
   midnight; dates as epoch days.
 - Open segments have `end_utc_ms = NULL`; computations resolve them with `now`.
 
-## 4. Data model (Room, DB version 1)
+## 4. Data model (Room, DB version 3)
 
 Source: `core/data/src/main/kotlin/it/infraconsulting/activitytrack/data/db/Entities.kt`.
 
@@ -98,6 +99,13 @@ Invariants enforced in repositories (not expressible in Room annotations):
 
 Enums are stored by name (Room built-in converter): never rename enum constants
 without a migration.
+
+Version history: v1 (M0) as above; v2 (M2) `day_off(date_epoch_day, note)`;
+v3 (M4, auto-migration with `FillEntryUids`) `todo(uid, company_id,
+client_id?, external_key?, title, notes?, refs, due_epoch_day?, due_time_min?,
+priority?, done)`, `time_entry.uid` (unique) and `time_entry.todo_id`,
+`company.external_code / connector_id / connector_config`,
+`client.external_code`. `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)
 
@@ -226,10 +234,10 @@ toggles and endpoints, km factor, backup retention, SAF root URI.
 |---|---|---|
 | Photo / receipt | `ActivityResultContracts.TakePicture` (system camera) | — |
 | Voice note | `MediaRecorder`, AAC in MPEG-4 (`.m4a`) | — |
-| Dictation | `SpeechRecognizer.createOnDeviceSpeechRecognizer` if available, else default recognizer | — |
-| Offline STT | Vosk (it/en/de/es models) or whisper.cpp | Apache-2.0 / MIT |
-| OCR receipts | tesseract4android, `traineddata` in app files | Apache-2.0 |
-| Map | osmdroid or MapLibre Native | Apache-2.0 / BSD-2 |
+| Dictation (M3) | `SpeechRecognizer`: on-device first, default service as fallback, in-app dialog; language from settings | — |
+| Offline STT (future) | Vosk (it/en/de/es models) or whisper.cpp | Apache-2.0 / MIT |
+| OCR receipts (future) | tesseract4android, `traineddata` in app files | Apache-2.0 |
+| Map | MapLibre Native Android (osmdroid archived) | BSD-2 |
 | Geocoding | Nominatim HTTP API, User-Agent set, ≤ 1 req/s, cache by rounded coordinates | ODbL data |
 | Routing | OSRM `/route/v1/driving` | BSD-2 |
 
@@ -237,11 +245,14 @@ HTTP via `HttpURLConnection` + kotlinx coroutines (no extra client library).
 
 ## 10. Quick interaction (M3)
 
-- Glance widgets: 4×1 (state, chronometer, recent clients, actions), 1×1 toggle.
-- `TileService`: toggle WORK/PAUSE of the most recent active entry; long press
-  opens the app.
-- Dynamic shortcuts: top 4 clients by recent use.
-- Quick expense: translucent activity (amount keypad, description, camera).
+- Glance widgets (`quick/Widgets.kt`): 4×1 running entry with coloured
+  commands (ActionCallback → repository) and €, or recent clients (open the
+  start screen); 1×1 toggle. Refreshed by `NotificationSync`.
+- `ToggleTileService`: active tile, WORK/PAUSE of the most recent ACTIVE
+  entry, start screen otherwise; added via `StatusBarManager.requestAddTileService`.
+- `ClientShortcuts`: 4 dynamic shortcuts; static "Expense" shortcut
+  (`res/xml/shortcuts.xml`, debug variant with the `.debug` package).
+- Quick expense screen for the most recent open entry.
 
 ## 11. Export
 
@@ -262,6 +273,33 @@ quoting; km and expenses on the first day of an entry split at midnight.
 Original column list: start date, start time, end date, end time, pause hours, travel hours,
 company, client, role, activity, km, expenses total, notes, external refs,
 locality. Rounding and column set configurable per export profile.
+
+### 11.1 Interchange and connectors (M4)
+
+`domain/interchange`: `Interchange` (kotlinx.serialization), `Connector`
+(read/write files, pull/push remote, setting fields, secrets),
+`GenericConnector` (JSON; XML derived mechanically from the JSON tree with
+DOM, DTDs refused). `data/interchange`: `Importer` (one transaction, matching
+by external code → name / uid, app data wins, report of conflicts and
+skips), `Exporter` (sections, period, company, client; site coordinates on
+request). Format: docs/INTERCHANGE.md; samples in docs/samples.
+
+### 11.2 Calendar sync (M5)
+
+`domain/calendar/CalendarEvents` turns report lines into events;
+`calendar/CalendarSync` writes them through `CalendarContract` with
+`CUSTOM_APP_PACKAGE` / `CUSTOM_APP_URI = activitytrack://entry/<uid>/<day>`,
+so events are found again without a local table and others are never
+touched. Re-sync of 14 days on every change (debounced), 90 days on demand.
+Calendar ids are device-local settings (`calendarId`, `companyCalendars`).
+
+### 11.3 Consultation (M6)
+
+`ui/agenda`: `AgendaViewModel` loads the report lines of the visible period
+(list: month, week, day, month grid: whole weeks) plus open to-dos due;
+`Timeline` assigns concurrent entries to columns greedily; colours by
+company. Bottom navigation in `MainActivity` (`TABS`, `LocalBottomBar` for
+insets).
 
 ## 12. Internationalisation
 

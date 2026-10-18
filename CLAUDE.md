@@ -53,10 +53,12 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
 | M2 travel & location | **done**, device-tested, merged (PR #2, 2026-10-17) |
 | M3 widgets, tile, attachments, dictation | **done**, device-tested, merged (PR #3, 2026-10-17) |
-| M4 export and import | next, branch `m4-export-import` |
-| M5 external calendar sync (generic / per company; Google or CalDAV) | — |
-| M6 consultation: list, day agenda, week, month | — |
-| M7 UI polish | — |
+| M4 export and import | **implemented** (PR #4), device-tested 2026-10-18 (import, idempotence, start from to-do, done prompt, JSON export) |
+| M5 external calendar sync (generic / per company; Google or CalDAV) | **implemented** (PR #5, stacked on #4), device-tested 2026-10-18 on the local calendar |
+| M6 consultation: list, day agenda, week, month | **implemented** (PR #6, stacked on #5), device-tested 2026-10-18 |
+| M7 UI polish | first pass (PR #7, stacked on #6), owner review pending |
+| M8 hardening | review fixes, backup restore, manual (PR #8, stacked on #7), restore device-tested 2026-10-18; manual read pending |
+| M9 planned to-dos | **implemented** (PR #9, stacked on #8), device-tested 2026-10-18; reminder at 07:55 of 2026-10-19 still to observe |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
@@ -66,8 +68,11 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 ## 4. File map
 
 ```
-SPEC.md                         functional specification (v0.6)
+SPEC.md                         functional specification (v0.7)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
+docs/INTERCHANGE.md             generic import/export format (M4)
+docs/MANUALE.md                 user manual in Italian (owner request; keep it in step with each version)
+docs/samples/                   interchange samples for device tests (TEST data)
 docs/DESIGN.md                  technical design, toolchain, risks
 gradle/libs.versions.toml       verified versions (2026-10-15; androidx.test 2026-10-16)
 core/domain/…/model/            Model.kt, EntryStateMachine.kt, EntryInvariants.kt, ExternalRef.kt
@@ -80,6 +85,7 @@ core/domain/…/geo/              Geo.kt (haversine), Tracking.kt (Fix, Movement
 core/domain/…/calendar/         ItalianHolidays.kt (Easter, 4 Oct from 2026)
 core/domain/…/start/            StartDefaults.kt (pre-fill, nearestContaining), ClientPicker.kt, ArrivalAdvice.kt
 core/domain/…/settings/         AppSettings.kt (defaults + validated())
+core/domain/…/todo/             TodoPlan.kt (planned slot: start, growing end, postpone)
 core/domain/src/test/…          Rounding, DailyReport, EntryStateMachine, EntryInvariants, StartDefaults,
                                 ClientPicker, AppSettings, ReminderPlanner, CsvExporter, LocalMinutes
 core/data/…/db/                 Entities.kt, EntryDao.kt, MasterDataDao.kt, ActivityTrackDatabase.kt (lunch seed)
@@ -104,14 +110,70 @@ app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTe
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (M4, branch `m4-export-import`)
+## 5. Next steps (review with the owner, 2026-10-18)
 
-M3 merged in `main` on 2026-10-17 (PR #3). Roadmap restructured by the owner
-(2026-10-17): M4 export/import, M5 calendar sync, M6 consultation views, M7 UI
-polish; OCR and free offline STT moved to future improvements (SPEC §10).
+M4–M7 were written autonomously on 2026-10-17 evening (owner away, phone not
+available). PR stack, to merge in order after the device tests:
+#4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`
+→ #8 `m8-hardening` (review fixes, backup restore, SPEC/DESIGN, user manual).
+Install the top of the stack (`m8-hardening`); back up `databases/` first.
+M9 (2026-10-18): `m9-planning` on top of `m8-hardening`, own PR.
+Branch `beta` = copy of the top of the stack for device tests; CI builds it on push
+and publishes the `app-debug` APK artifact (14 days).
 
-1. Agree the export/import, calendar and consultation details (questions
-   asked 2026-10-17).
+### Device tests
+Done on 2026-10-18 (M4, M5 local calendar, M6, M9, restore); fixes in PR #9:
+agenda editor company, list time span, due-date overdue, restore time.
+Cleanup done 2026-10-18 (clean DB restored and migrated to v4, TEST backups/export
+deleted, local calendar empty; samples left in Download). Still open: item 7 (manual, owner reads it at leisure); share sheet and company
+"Management system" not exercised; week view text wraps in narrow blocks.
+
+1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
+   export → import (report: 1 company, 2 clients, 1 site, 3 to-dos);
+   import again (all unchanged); Home "To do today" → start from to-do →
+   stop → complete → "Is the to-do done?"; To-dos screen add/done; export
+   JSON/XML with empty dates + share; company screen "Management system".
+2. **M5**: Settings → Calendar: grant, pick a Google calendar or create the
+   local one; import `docs/samples/agenda-test.xml` (11 closed entries over
+   two weeks) → "Sync 90 days" → events in the calendar app; start an
+   entry → event appears from its start; company calendar overrides.
+3. **M6**: bottom bar; Agenda list (search), day, week, month with the
+   sample data; taps open entries / days; back from a tab goes Home.
+4. **M7**: visual review of the home card (state pill, running time), green
+   start, empty state.
+5. **M9**: To-dos → Add with planned date/time in 20 min, no duration →
+   reminder 15 min before (Start / Postpone 30 min / Re-plan); Postpone moves
+   the plan and reminds again; Agenda Day: tap a free slot → new planned
+   to-do; outlined block grows hour by hour while open; calendar event
+   tentative with `#pianificata`; entry events carry `#lavoro`/`#viaggio`/
+   `#pausa`; Settings → Advanced (▼) lead and postpone minutes; schema v4
+   migration on the installed app keeps the data.
+6. **Restore**: Import / export → "Restore backup" with a daily backup zip
+   (confirm dialog, "-before-restore" zip written, app restarts with the old data).
+7. Read `docs/MANUALE.md` against the app.
+8. Cleanup: restore the clean DB, delete TEST files in the data folder,
+   remove TEST events from the calendar (or the local calendar).
+
+### Provisional decisions to confirm
+- M5: on every change re-sync the last 14 days; "Sync 90 days" on demand;
+  without a target calendar nothing is created and old events are kept.
+- M6: tabs Home · Agenda · Report (the existing day report) · More
+  (To-dos, Import / export, Master data, Settings); agenda opens in List;
+  weeks start on Monday; one colour per company from a fixed palette.
+- M7: Material You dynamic colours kept; home start button icon-only.
+- M4: site coordinates exported only on request; running (ACTIVE) entries
+  are not imported; roles referenced by imported entries are created.
+- Open: notification icons/colours (text actions kept, see 2026-10-17).
+- M9: "tags per segment" read as hashtags on the last line of the calendar
+  event description (#lavoro #viaggio #pausa per kind of time in the entry,
+  #pianificata on planned to-dos; always Italian); planned events are TENTATIVE.
+- M9: the reminder also fires outside working hours and on days off; it is dropped
+  once the block is over, the to-do is done/re-planned or an entry runs from it.
+- M9: no duration → 1 h block growing hour by hour while open, capped at the
+  end of the planned day; done to-dos leave the calendar; events up to 365
+  days ahead; "Advanced" settings section collapsed by default.
+- M9: agenda taps on a to-do open its actions (start, postpone, done,
+  re-plan) instead of starting at once; free-slot taps in half-hour steps.
 
 ## 6. Decisions log
 
@@ -166,6 +228,14 @@ polish; OCR and free offline STT moved to future improvements (SPEC §10).
 | 2026-10-17 | M4: connector credentials stored encrypted with the Android keystore (structure now, used by future API plugins) |
 | 2026-10-17 | M5: CalendarContract (Google via the system account, CalDAV via DAVx5); generic calendar chosen by the user, local "ActivityTrack" calendar as fallback; per-company calendar replaces the generic one; one-way app → calendar; one event per entry and day, shown from the entry start |
 | 2026-10-17 | M6/M7: bottom navigation bar (Home · Agenda · Reports · More) |
+| 2026-10-17 | Owner away: M4–M7 implemented autonomously as stacked PRs #4–#7; provisional choices listed in §5 for review |
+| 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
+| 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
+| 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
+| 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
+| 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |
+| 2026-10-18 | "Overdue" also for a passed due date (after the due time; date only: from the next day), not only for a planned block that is over |
+| 2026-10-18 | M9 planned to-dos: manual add also from the agenda; planned slot separate from the due date; optional duration, else 1 h growing hourly; in agenda and calendar, tags per kind of time; states open → planned (date+time) → done, overdue highlighted on Home; reminder lead and postpone step configurable (advanced, defaults 15 / 30 min); plan in the interchange format; own PR |
 
 ## 7. Pitfalls to remember
 

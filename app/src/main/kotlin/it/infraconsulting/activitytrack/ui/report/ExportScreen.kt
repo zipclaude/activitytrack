@@ -40,10 +40,13 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.AppContainer
+import it.infraconsulting.activitytrack.AppRestart
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.interchange.ExportFilter
 import it.infraconsulting.activitytrack.data.interchange.ExportSection
 import it.infraconsulting.activitytrack.data.interchange.ImportReport
+import it.infraconsulting.activitytrack.data.storage.DatabaseBackup
 import it.infraconsulting.activitytrack.data.storage.UserDataDir
 import it.infraconsulting.activitytrack.domain.export.CsvExporter
 import it.infraconsulting.activitytrack.domain.interchange.FileFormat
@@ -74,6 +77,7 @@ sealed interface ExchangeState {
 	data object Running : ExchangeState
 	data class Exported(val file: String, val uri: Uri, val mime: String, val share: Boolean, val rows: Int?) : ExchangeState
 	data class Imported(val report: ImportReport) : ExchangeState
+	data class RestoreReady(val staged: DatabaseBackup.Staged) : ExchangeState
 	data object InvalidRange : ExchangeState
 	data class Failed(val detail: String?) : ExchangeState
 }
@@ -93,6 +97,10 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 
 	fun reset() {
 		_state.value = ExchangeState.Idle
+	}
+
+	fun invalidRange() {
+		_state.value = ExchangeState.InvalidRange
 	}
 
 	fun export(
@@ -171,6 +179,46 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 		}
 	}
 
+	/* A backup zip: checked into the cache, then confirmed by the user. */
+	fun prepareRestore(context: Context, uri: Uri) {
+		_state.value = ExchangeState.Running
+		viewModelScope.launch {
+			_state.value = try {
+				val staged = withContext(Dispatchers.IO) {
+					context.contentResolver.openInputStream(uri)?.use { c.backup.stage(it, ActivityTrackDatabase.VERSION) } ?: error("cannot read")
+				}
+				ExchangeState.RestoreReady(staged)
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: Exception) {
+				ExchangeState.Failed(e.message)
+			}
+		}
+	}
+
+	/*
+	 * Saves the current data as a backup first (nothing is lost by mistake),
+	 * then swaps the database and restarts the app.
+	 */
+	fun confirmRestore(context: Context, staged: DatabaseBackup.Staged) {
+		_state.value = ExchangeState.Running
+		viewModelScope.launch {
+			try {
+				val tree = c.settings.current().rootUri?.toUri() ?: error("no data folder")
+				val now = java.time.Instant.now()
+				val name = DatabaseBackup.fileName(now, ZoneId.systemDefault()).replace(".zip", "-before-restore.zip")
+				val uri = c.userDataDir.createFile(tree, UserDataDir.Sub.BACKUP, name, "application/zip")
+				c.userDataDir.openOutput(uri).use { c.backup.writeZip(c.generator, now, it) }
+				withContext(Dispatchers.IO) { AppRestart.replaceDatabase(context, c, staged) }
+				AppRestart.now(context)
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: Exception) {
+				_state.value = ExchangeState.Failed(e.message)
+			}
+		}
+	}
+
 	private companion object {
 		val STAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
 	}
@@ -198,11 +246,17 @@ fun ExportScreen(onBack: () -> Unit) {
 	val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
 		uri?.let { vm.import(context, it) }
 	}
+	val pickBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+		uri?.let { vm.prepareRestore(context, it) }
+	}
 	val run = { share: Boolean ->
-		vm.export(
-			format, from.takeIf { it.isNotBlank() }?.let(::parseDate), to.takeIf { it.isNotBlank() }?.let(::parseDate),
-			companyId, clientId, sections, coordinates, share, locale,
-		)
+		/* an empty date means "no limit", a malformed one is an error, never "no limit" */
+		val f = from.takeIf { it.isNotBlank() }?.let(::parseDate)
+		val t = to.takeIf { it.isNotBlank() }?.let(::parseDate)
+		if ((from.isNotBlank() && f == null) || (to.isNotBlank() && t == null))
+			vm.invalidRange()
+		else
+			vm.export(format, f, t, companyId, clientId, sections, coordinates, share, locale)
 	}
 
 	/* the share sheet opens once per export */
@@ -273,6 +327,14 @@ fun ExportScreen(onBack: () -> Unit) {
 				modifier = Modifier.fillMaxWidth(),
 			) { Text(stringResource(R.string.import_action)) }
 
+			SectionHeader(stringResource(R.string.restore_section))
+			Text(stringResource(R.string.restore_hint), style = MaterialTheme.typography.bodySmall)
+			OutlinedButton(
+				onClick = { pickBackup.launch(arrayOf("application/zip", "application/octet-stream")) },
+				enabled = state != ExchangeState.Running,
+				modifier = Modifier.fillMaxWidth(),
+			) { Text(stringResource(R.string.restore_action)) }
+
 			when (val s = state) {
 				is ExchangeState.Exported -> Text(
 					if (s.rows != null) pluralStringResource(R.plurals.export_done, s.rows, s.rows, s.file)
@@ -289,6 +351,19 @@ fun ExportScreen(onBack: () -> Unit) {
 	}
 
 	(state as? ExchangeState.Imported)?.let { ImportReportDialog(it.report, vm::reset) }
+	(state as? ExchangeState.RestoreReady)?.let { r ->
+		AlertDialog(
+			onDismissRequest = vm::reset,
+			title = { Text(stringResource(R.string.restore_section)) },
+			text = { Text(stringResource(R.string.restore_confirm, localTime(r.staged.createdUtc), r.staged.appVersion)) },
+			confirmButton = {
+				TextButton(onClick = { vm.confirmRestore(context, r.staged) }) {
+					Text(stringResource(R.string.restore_do), color = MaterialTheme.colorScheme.error)
+				}
+			},
+			dismissButton = { TextButton(onClick = vm::reset) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
 }
 
 @Composable
@@ -337,3 +412,9 @@ private fun ImportReportDialog(r: ImportReport, onClose: () -> Unit) {
 }
 
 private const val MAX_LINES = 50
+
+/* The backup time in the phone's zone ("2026-10-18 11:13"); the raw text if it is not an instant. */
+private fun localTime(utc: String): String =
+	runCatching {
+		java.time.Instant.parse(utc).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+	}.getOrDefault(utc)

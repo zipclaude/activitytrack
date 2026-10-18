@@ -35,6 +35,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 	autoMigrations = [
 		AutoMigration(from = 1, to = 2),	/* day_off */
 		AutoMigration(from = 2, to = 3, spec = ActivityTrackDatabase.FillEntryUids::class),	/* M4 interchange */
+		AutoMigration(from = 3, to = 4),	/* M9 planned to-dos */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
@@ -48,7 +49,7 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 3
+		const val VERSION = 4
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =

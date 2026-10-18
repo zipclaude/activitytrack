@@ -465,4 +465,22 @@ class RepositoryTest {
 		/* tied to the open TRAVEL segment */
 		assertEquals(db.entryDao().segments(id).single().id, row.segmentId)
 	}
+
+	@Test
+	fun backupIsStagedForRestore() = runBlocking<Unit> {
+		entries.start(StartRequest(SegmentKind.WORK, client))
+		val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+		val backup = it.infraconsulting.activitytrack.data.storage.DatabaseBackup(db, ctx.cacheDir)
+		val out = java.io.ByteArrayOutputStream()
+		backup.writeZip("test", clock.instant(), out)
+		val staged = backup.stage(out.toByteArray().inputStream(), ActivityTrackDatabase.VERSION)
+		assertEquals(ActivityTrackDatabase.VERSION, staged.dbVersion)
+		kotlin.test.assertTrue(staged.file.length() > 0)
+		/* a zip without database is refused */
+		val empty = java.io.ByteArrayOutputStream()
+		java.util.zip.ZipOutputStream(empty).use { z -> z.putNextEntry(java.util.zip.ZipEntry("manifest.json")); z.write("{}".toByteArray()); z.closeEntry() }
+		assertFailsWith<it.infraconsulting.activitytrack.data.storage.DatabaseBackup.InvalidBackup> {
+			backup.stage(empty.toByteArray().inputStream(), ActivityTrackDatabase.VERSION)
+		}
+	}
 }

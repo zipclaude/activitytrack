@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<activitytrack>
+  <format>activitytrack-interchange</format>
+  <version>1</version>
+  <generator>Simulated management system</generator>
+  <companies>
+    <company><key>ACME-01</key><name>TEST Acme S.p.A.</name></company>
+  </companies>
+  <clients>
+    <client><key>CLI-100</key><companyKey>ACME-01</companyKey><name>TEST Banca Centrale</name></client>
+    <client><key>CLI-200</key><companyKey>ACME-01</companyKey><name>TEST Ospedale Civile</name></client>
+  </clients>
+  <sites>
+    <site><ownerKind>client</ownerKind><ownerKey>CLI-100</ownerKey><companyKey>ACME-01</companyKey><label>Sede centrale</label><address>Piazza del Duomo 1, Milano</address><lat>45.4642</lat><lon>9.19</lon><radiusM>150</radiusM></site>
+  </sites>
+  <todos>
+    <todo><key>TK-1</key><companyKey>ACME-01</companyKey><clientKey>CLI-100</clientKey><title>Aggiornamento firewall</title><refs><ref>INC0012345</ref></refs><dueDate>2026-10-17</dueDate><dueTime>14:00</dueTime><priority>1</priority></todo>
+    <todo><key>TK-2</key><companyKey>ACME-01</companyKey><clientKey>CLI-200</clientKey><title>Verifica backup</title><notes>Controllare i job notturni</notes><dueDate>2026-10-20</dueDate></todo>
+    <todo><key>TK-3</key><companyKey>ACME-01</companyKey><title>Riunione di avanzamento</title></todo>
+  </todos>
+</activitytrack>

@@ -27,7 +27,15 @@ data class ReminderConfig(
 	val maxConfirmations: Int,	/* 0 = unlimited */
 	val pauseInterval: Duration,
 	val dayStartDelay: Duration = Duration.ofMinutes(15),
+	/* planned to-dos: reminder this long before the planned start */
+	val planLead: Duration = Duration.ofMinutes(15),
 )
+
+/*
+ * A planned, open to-do: its planned [start] and shown [end]; [remindedFor]
+ * is the planned start (UTC ms) whose reminder was already shown.
+ */
+data class ReminderTodo(val id: Long, val start: Instant, val end: Instant, val remindedFor: Long?)
 
 /*
  * Day-start prompt state: the last day it was shown, and the days already
@@ -49,6 +57,9 @@ sealed interface Reminder {
 
 	/* "No activity yet": absence / late entry / start, delay after the first working interval starts */
 	data class DayStart(val day: LocalDate, override val at: Instant) : Reminder
+
+	/* "Planned at HH:MM": start / postpone / re-plan, lead time before a planned to-do */
+	data class Planned(val todoId: Long, override val at: Instant) : Reminder
 }
 
 /*
@@ -66,6 +77,9 @@ sealed interface Reminder {
  * - DayStart: first working interval start + delay, once per day, on
  *   working days that are not off (holiday or manual) and not handled yet;
  *   skipped once the day's working hours are over.
+ * - Planned: planned start - lead, once per planned start (a new plan or a
+ *   postponement reminds again), also outside working hours and on days off;
+ *   dropped once the planned block is over.
  */
 class ReminderPlanner(
 	private val config: ReminderConfig,
@@ -79,8 +93,12 @@ class ReminderPlanner(
 		lastSummaryDay: LocalDate?,
 		now: Instant,
 		dayStart: DayStartState? = null,
+		todos: List<ReminderTodo> = emptyList(),
 	): List<Reminder> {
 		val out = ArrayList<Reminder>()
+		for (t in todos)
+			if (t.remindedFor != t.start.toEpochMilli() && now.isBefore(t.end))
+				out += Reminder.Planned(t.id, t.start - config.planLead)
 		for (e in entries) {
 			if (e.status != EntryStatus.ACTIVE || e.lastConfirmedMs == null)
 				continue
@@ -103,16 +121,18 @@ class ReminderPlanner(
 		lastSummaryDay: LocalDate?,
 		now: Instant,
 		dayStart: DayStartState? = null,
+		todos: List<ReminderTodo> = emptyList(),
 	): List<Reminder> =
-		planned(entries, lastSummaryDay, now, dayStart).filter { !it.at.isAfter(now) }
+		planned(entries, lastSummaryDay, now, dayStart, todos).filter { !it.at.isAfter(now) }
 
 	fun next(
 		entries: List<ReminderEntry>,
 		lastSummaryDay: LocalDate?,
 		now: Instant,
 		dayStart: DayStartState? = null,
+		todos: List<ReminderTodo> = emptyList(),
 	): Instant? =
-		planned(entries, lastSummaryDay, now, dayStart).map { it.at }.filter { it.isAfter(now) }.minOrNull()
+		planned(entries, lastSummaryDay, now, dayStart, todos).map { it.at }.filter { it.isAfter(now) }.minOrNull()
 
 	/* Postpone [t] to the end of the lunch break it falls in, if any. */
 	fun outsideLunch(t: Instant): Instant {

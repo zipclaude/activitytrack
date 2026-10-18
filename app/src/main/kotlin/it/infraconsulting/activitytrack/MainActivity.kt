@@ -11,7 +11,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,17 +27,24 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
+import it.infraconsulting.activitytrack.ui.LocalBottomBar
 import it.infraconsulting.activitytrack.ui.ScopedEntry
 import it.infraconsulting.activitytrack.ui.Screen
+import it.infraconsulting.activitytrack.ui.TABS
+import it.infraconsulting.activitytrack.ui.agenda.AgendaScreen
 import it.infraconsulting.activitytrack.ui.entry.EntryScreen
 import it.infraconsulting.activitytrack.ui.entry.QuickExpenseScreen
 import it.infraconsulting.activitytrack.ui.home.HomeScreen
 import it.infraconsulting.activitytrack.ui.home.LateEntryScreen
+import it.infraconsulting.activitytrack.ui.home.MoreScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientScreen
 import it.infraconsulting.activitytrack.ui.masterdata.ClientsScreen
 import it.infraconsulting.activitytrack.ui.masterdata.CompaniesScreen
@@ -105,10 +120,45 @@ private fun Navigator(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 			consumeDeepLink()
 		}
 	}
-	BackHandler(enabled = stack.size > 1, onBack = back)
+	/* from another tab's root, back goes home before leaving the app */
+	val atOtherRoot = stack.size == 1 && stack.last() != Screen.Home
+	BackHandler(enabled = stack.size > 1 || atOtherRoot) {
+		if (atOtherRoot) stack[0] = Screen.Home else back()
+	}
 	RequestRuntimePermissions()
 
-	ScopedEntry(stack) { top -> Destination(top, back, open) }
+	val top = stack.last()
+	val tab = top in TABS && stack.size == 1
+	Column(Modifier.fillMaxSize()) {
+		Box(Modifier.weight(1f)) {
+			CompositionLocalProvider(LocalBottomBar provides tab) {
+				ScopedEntry(stack) { t -> Destination(t, back, open) }
+			}
+		}
+		if (tab)
+			BottomBar(top) { selected ->
+				stack.clear()
+				stack.add(selected)
+			}
+	}
+}
+
+@Composable
+private fun BottomBar(current: Screen, onSelect: (Screen) -> Unit) {
+	NavigationBar {
+		for ((screen, icon, label) in listOf(
+			Triple(Screen.Home, R.drawable.ic_nav_home, R.string.nav_home),
+			Triple(Screen.Agenda, R.drawable.ic_nav_agenda, R.string.nav_agenda),
+			Triple(Screen.Day, R.drawable.ic_nav_report, R.string.nav_report),
+			Triple(Screen.More, R.drawable.ic_nav_more, R.string.nav_more),
+		))
+			NavigationBarItem(
+				selected = current == screen,
+				onClick = { if (current != screen) onSelect(screen) },
+				icon = { Icon(painterResource(icon), contentDescription = null) },
+				label = { Text(stringResource(label)) },
+			)
+	}
 }
 
 /*
@@ -140,19 +190,17 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		Screen.Home -> HomeScreen(
 			onStart = { open(Screen.Start) },
 			onOpenEntry = { open(Screen.Entry(it)) },
-			onDay = { open(Screen.Day) },
-			onMasterData = { open(Screen.MasterData) },
-			onSettings = { open(Screen.Settings) },
-			onTodos = { open(Screen.Todos) },
-			onExchange = { open(Screen.Export) },
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
 		)
+		Screen.Agenda -> AgendaScreen(onOpenEntry = { open(Screen.Entry(it)) }, onStartTodo = { open(Screen.StartFromTodo(it)) })
+		Screen.More -> MoreScreen(open)
 		Screen.Start -> StartScreen(back)
 		is Screen.StartFor -> StartScreen(back, top.clientId)
 		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
 		Screen.Todos -> TodosScreen(back) { open(Screen.StartFromTodo(it)) }
+		is Screen.Todo -> TodosScreen(back, editId = top.id) { open(Screen.StartFromTodo(it)) }
 		is Screen.Entry -> EntryScreen(top.id, back)
-		Screen.Day -> DayScreen(back, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
+		Screen.Day -> DayScreen(null, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
 		Screen.Export -> ExportScreen(back)
 		Screen.Settings -> SettingsScreen(back)
 		Screen.MasterData -> MasterDataScreen(back, open)

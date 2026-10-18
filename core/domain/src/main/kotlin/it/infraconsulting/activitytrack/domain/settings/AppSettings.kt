@@ -22,6 +22,9 @@ data class AppSettings(
 	val maxConfirmations: Int = 0,			/* 0 = unlimited */
 	val pauseIntervalMin: Int = 15,
 	val dayStartDelayMin: Int = 15,
+	/* planned to-dos (M9, advanced): reminder lead time and "postpone" step */
+	val planLeadMin: Int = 15,
+	val planSnoozeMin: Int = 30,
 	val movementThresholdM: Int = 100,
 	val stationaryRadiusM: Int = 100,
 	val stationaryMin: Int = 15,
@@ -35,12 +38,23 @@ data class AppSettings(
 	val rounding: ReportRounding = ReportRounding.DEFAULT,
 	/* speech recognition language, independent of the phone language (owner decision 2026-10-17) */
 	val dictationLanguage: String = "it-IT",
+	/*
+	 * External calendar sync (M5): device calendar ids, valid on this phone
+	 * only (never exported). A company's calendar replaces the generic one.
+	 */
+	val calendarId: Long? = null,
+	val companyCalendars: Map<Long, Long> = emptyMap(),
 ) {
+	/* Calendar for the entries of [companyId]; null = not synced. */
+	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId
+
 	fun validated(): AppSettings = copy(
 		confirmIntervalMin = confirmIntervalMin.coerceIn(10, 240),
 		maxConfirmations = maxConfirmations.coerceIn(0, 100),
 		pauseIntervalMin = pauseIntervalMin.coerceIn(10, 120),
 		dayStartDelayMin = dayStartDelayMin.coerceIn(0, 240),
+		planLeadMin = planLeadMin.coerceIn(0, 240),
+		planSnoozeMin = planSnoozeMin.coerceIn(10, 240),
 		movementThresholdM = movementThresholdM.coerceIn(50, 5_000),
 		stationaryRadiusM = stationaryRadiusM.coerceIn(25, 1_000),
 		stationaryMin = stationaryMin.coerceIn(5, 120),

@@ -88,6 +88,9 @@ class Exporter(private val db: ActivityTrackDatabase) {
 						dueDate = it.dueEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
 						dueTime = it.dueTimeMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },
 						priority = it.priority, done = it.done,
+						plannedDate = it.planEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
+						plannedTime = it.planStartMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },
+						durationMin = it.durationMin,
 					)
 				},
 			)
