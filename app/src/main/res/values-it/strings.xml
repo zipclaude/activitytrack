@@ -421,4 +421,11 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <!-- M13 backlog -->
   <string name="todo_plan_time_missing">Indica anche l\'ora pianificata</string>
   <string name="todo_plan_date_missing">Indica anche la data pianificata</string>
+  <string name="quick_role">Nuovo ruolo</string>
+  <string name="quick_preset">Nuova predefinita</string>
+  <string name="err_too_short">Meno di un minuto: controlla gli orari.</string>
+  <string name="short_title">\"%1$s\" è durata meno di un minuto</string>
+  <string name="short_text">Probabilmente avviata per errore. La scarto?</string>
+  <string name="short_discard">Scarta</string>
+  <string name="short_keep">Tieni e termina</string>
 </resources>

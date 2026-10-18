@@ -145,6 +145,13 @@ interface EntryDao {
 	@Query("DELETE FROM expense WHERE id = :id")
 	suspend fun deleteExpense(id: Long)
 
+	@Query("SELECT COUNT(*) FROM expense WHERE entry_id = :entryId")
+	suspend fun expenseCount(entryId: Long): Int
+
+	/* segments, samples, references cascade */
+	@Query("DELETE FROM time_entry WHERE id = :id")
+	suspend fun deleteEntry(id: Long)
+
 	@Query("SELECT * FROM attachment WHERE id = :id")
 	suspend fun attachment(id: Long): AttachmentEntity?
 

@@ -483,4 +483,28 @@ class RepositoryTest {
 			backup.stage(empty.toByteArray().inputStream(), ActivityTrackDatabase.VERSION)
 		}
 	}
+
+	@Test
+	fun underAMinuteIsAnError() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		val t0 = clock.millis()
+		/* a manual segment of 59 s */
+		assertEquals(Reason.TOO_SHORT, reason { entries.addManualSegment(id, SegmentKind.PAUSE, t0 - 120_000, t0 - 61_000) })
+		/* 30 min recorded: not discardable */
+		assertEquals(false, entries.isDiscardable(id))
+	}
+
+	@Test
+	fun aShortEntryIsDiscardedUnlessSomethingWasAdded() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		assertEquals(true, entries.isDiscardable(id))
+		entries.discard(id)
+		assertNull(db.entryDao().entry(id))
+
+		val kept = entries.start(StartRequest(SegmentKind.WORK, client))
+		entries.addExpense(kept, 1250, "parking")
+		assertEquals(false, entries.isDiscardable(kept))
+		assertEquals(Reason.TOO_SHORT, reason { entries.discard(kept) })
+	}
 }

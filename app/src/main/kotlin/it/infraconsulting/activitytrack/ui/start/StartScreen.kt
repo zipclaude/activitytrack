@@ -28,6 +28,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
+import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
 import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
@@ -64,6 +66,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	val none = stringResource(R.string.field_none)
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
+	var addRole by remember { mutableStateOf(false) }
+	var addPreset by remember { mutableStateOf(false) }
 
 	ScreenScaffold(title = stringResource(R.string.start_title), onBack = onBack) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -121,19 +125,23 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 					) {
 						val companyId = clients.firstOrNull { it.id == f.clientId }?.companyId ?: f.companyId
 						val usable = presets.filter { it.companyId == null || it.companyId == companyId }
-						if (usable.isNotEmpty())
+						/* "+" also for presets and roles (backlog 4, 2026-10-18) */
+						WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) {
 							ChoiceField(
 								stringResource(R.string.field_preset),
 								listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
 								null,
 							) { id -> id?.let(vm::applyPreset) }
+						}
 						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity)
-						ChoiceField(
-							stringResource(R.string.field_role),
-							listOf<Pair<Long?, String>>(null to none) +
-								roles.filter { !it.archived || it.id == f.roleId }.map { it.id to it.name },
-							f.roleId,
-						) { vm.setRole(it) }
+						WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
+							ChoiceField(
+								stringResource(R.string.field_role),
+								listOf<Pair<Long?, String>>(null to none) +
+									roles.filter { !it.archived || it.id == f.roleId }.map { it.id to it.name },
+								f.roleId,
+							) { vm.setRole(it) }
+						}
 						if (error != null)
 							Text(reasonText(error!!), color = MaterialTheme.colorScheme.error)
 					}
@@ -154,6 +162,13 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	pending.firstOrNull()?.let { r -> RunningDialog(r, vm) }
 	if (addCompany)
 		QuickCompanyDialog(onDone = { addCompany = false; vm.setCompany(it) }, onDismiss = { addCompany = false })
+	if (addRole)
+		QuickRoleDialog(onDone = { addRole = false; vm.setRole(it) }, onDismiss = { addRole = false })
+	if (addPreset)
+		QuickPresetDialog(
+			f.activity, clients.firstOrNull { it.id == f.clientId }?.companyId ?: f.companyId,
+			onDone = { addPreset = false; vm.setActivity(it) }, onDismiss = { addPreset = false },
+		)
 	if (addClient)
 		QuickClientDialog(f.companyId, onDone = { client, company -> addClient = false; vm.pickNewClient(client, company) }, onDismiss = { addClient = false })
 }
