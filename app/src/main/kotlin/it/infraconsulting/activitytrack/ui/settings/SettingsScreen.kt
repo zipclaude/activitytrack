@@ -114,6 +114,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 	var osrmOn by remember { mutableStateOf(initial.osrm.enabled) }
 	var tilesOn by remember { mutableStateOf(initial.tiles.enabled) }
 	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
+	var compact by remember { mutableStateOf(initial.compactDisplay) }
 	var work by remember { mutableStateOf(initial.rounding.work) }
 	var travel by remember { mutableStateOf(initial.rounding.travel) }
 	var pause by remember { mutableStateOf(initial.rounding.pause) }
@@ -143,6 +144,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 		osrm = OnlineService(osrmOn, text[F.OSRM].orEmpty()),
 		tiles = OnlineService(tilesOn, text[F.TILES].orEmpty()),
 		dictationLanguage = dictation,
+		compactDisplay = compact,
 		rounding = ReportRounding(
 			work.copy(minimum = minutes(F.WORK_MIN, work.minimum)),
 			travel.copy(minimum = minutes(F.TRAVEL_MIN, travel.minimum)),
@@ -159,6 +161,13 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
+			SectionHeader(stringResource(R.string.sec_display))
+			ChoiceField(
+				stringResource(R.string.set_display),
+				listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
+				compact,
+			) { compact = it }
+
 			SectionHeader(stringResource(R.string.sec_reminders))
 			field(F.CONFIRM, R.string.set_confirm_interval)
 			field(F.MAX_CONFIRM, R.string.set_max_confirmations)

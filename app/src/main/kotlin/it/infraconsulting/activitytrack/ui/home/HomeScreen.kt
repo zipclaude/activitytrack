@@ -48,6 +48,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.data.repo.StartRequest
+import it.infraconsulting.activitytrack.ui.common.SwipeAction
+import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
@@ -87,7 +90,7 @@ data class EntryCard(
 
 class HomeViewModel(
 	private val entries: EntryRepository,
-	master: MasterDataRepository,
+	private val master: MasterDataRepository,
 	settings: SettingsRepository,
 ) : EntryCommander(entries) {
 	val cards = combine(
@@ -110,6 +113,16 @@ class HomeViewModel(
 	fun select(id: Long) {
 		_selected.value = id
 	}
+
+	/*
+	 * Travel from the empty card (owner, 2026-10-18: it starts at once): no
+	 * destination yet, the company proposed as for a new entry; arrival or
+	 * the entry screen sets the client later.
+	 */
+	fun startTravel() = run {
+		val p = entries.startProposal(master.knownSites())
+		entries.start(StartRequest(SegmentKind.TRAVEL, clientId = null, companyId = p.companyId, locationKind = p.locationKind), emptyMap())
+	}
 }
 
 /*
@@ -121,6 +134,7 @@ class HomeViewModel(
 @Composable
 fun HomeScreen(
 	onStart: () -> Unit,
+	onStartTravel: () -> Unit,
 	onOpenEntry: (Long) -> Unit,
 	onStartTodo: (Long) -> Unit,
 ) {
@@ -145,16 +159,27 @@ fun HomeScreen(
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
 		onBack = null,
+		/* with entries open the empty card is gone: start and travel move to the bar (owner, 2026-10-18) */
+		actions = {
+			if (cards.isNotEmpty())
+				for ((cmd, label, go) in listOf(
+					Triple(EntryCommand.WORK, R.string.start_title, onStart),
+					Triple(EntryCommand.TRAVEL, R.string.start_travel, onStartTravel),
+				)) {
+					val st = commandStyle(cmd)!!
+					IconButton(onClick = go) { Icon(painterResource(st.icon), contentDescription = stringResource(label), tint = st.container) }
+				}
+		},
 	) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 			LazyColumn(
 				modifier = Modifier.weight(1f).fillMaxWidth(),
-				verticalArrangement = Arrangement.spacedBy(10.dp),
+				verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 10.dp),
 				contentPadding = PaddingValues(vertical = 8.dp),
 			) {
 				item(key = "big") {
 					if (big == null)
-						EmptyEntryCard(Modifier.padding(horizontal = 16.dp))
+						EmptyEntryCard(gestures.fullSwipe, onStart, vm::startTravel, Modifier.padding(horizontal = 16.dp))
 					else
 						SwipeCard(
 							toStart = entrySwipeActions(big.entry, gestures.entryToStart) { run(big.entry, it) },
@@ -179,36 +204,42 @@ fun HomeScreen(
 				}
 				item(key = "todos") { TodoTodaySection(onStartTodo) }
 			}
-			/* green play like every start (owner request), the label for accessibility */
-			val start = commandStyle(EntryCommand.WORK)!!
-			val label = stringResource(R.string.home_start)
-			Button(
-				onClick = onStart,
-				colors = ButtonDefaults.buttonColors(containerColor = start.container, contentColor = start.content),
-				modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
-			) { Icon(painterResource(start.icon), contentDescription = label, modifier = Modifier.size(32.dp)) }
 		}
 	}
 }
 
-/* The big card when no entry is open: same frame, a message instead (owner, 2026-10-18). */
+/*
+ * The big card when no entry is open (owner, 2026-10-18): the message and
+ * the start and travel buttons, which replace the old bottom button; a
+ * swipe to the left starts like the button, to the right starts a travel.
+ */
 @Composable
-private fun EmptyEntryCard(modifier: Modifier) {
-	Card(modifier = modifier.fillMaxWidth()) {
-		Column(
-			modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp).padding(18.dp),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-		) {
-			Icon(
-				painterResource(R.drawable.ic_clock), contentDescription = null,
-				tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(40.dp),
-			)
-			Text(stringResource(R.string.home_none), style = MaterialTheme.typography.titleLarge)
-			Text(
-				stringResource(R.string.home_none_hint), style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
-			)
+private fun EmptyEntryCard(fullSwipe: Boolean, onStart: () -> Unit, onTravel: () -> Unit, modifier: Modifier) {
+	val compact = LocalCompact.current
+	val start = commandStyle(EntryCommand.WORK)!!
+	val travel = commandStyle(EntryCommand.TRAVEL)!!
+	val startLabel = stringResource(R.string.swipe_start)
+	val travelLabel = stringResource(R.string.cmd_travel)
+	SwipeCard(
+		toStart = listOf(SwipeAction(startLabel, start.icon, start.container, start.content, onStart)),
+		toEnd = listOf(SwipeAction(travelLabel, travel.icon, travel.container, travel.content, onTravel)),
+		fullSwipe = fullSwipe,
+		shape = CardDefaults.shape,
+		modifier = modifier,
+	) {
+		Card(modifier = Modifier.fillMaxWidth()) {
+			Column(
+				modifier = Modifier.fillMaxWidth().heightIn(min = if (compact) 120.dp else 180.dp).padding(if (compact) 12.dp else 18.dp),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 10.dp, Alignment.CenterVertically),
+			) {
+				Text(stringResource(R.string.home_none), style = MaterialTheme.typography.titleLarge)
+				Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
+					val size = if (compact) 48.dp else 64.dp
+					CommandIconButton(start, startLabel, onStart, Modifier.size(size))
+					CommandIconButton(travel, stringResource(R.string.start_travel), onTravel, Modifier.size(size))
+				}
+			}
 		}
 	}
 }
@@ -222,9 +253,12 @@ private fun EmptyEntryCard(modifier: Modifier) {
 private fun SmallEntryCard(card: EntryCard, now: Long, onSelect: () -> Unit, onCommand: (EntryCommand) -> Unit, onOpen: () -> Unit) {
 	val e = card.entry
 	val zone = ZoneId.of(e.zoneId)
+	val compact = LocalCompact.current
+	val button = Modifier.size(if (compact) 36.dp else 44.dp)
 	Card(onClick = onSelect, modifier = Modifier.fillMaxWidth()) {
 		Row(
-			modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+			modifier = Modifier.fillMaxWidth().heightIn(min = if (compact) 52.dp else 72.dp)
+				.padding(start = if (compact) 12.dp else 16.dp, end = 10.dp, top = if (compact) 4.dp else 8.dp, bottom = if (compact) 4.dp else 8.dp),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 		) {
@@ -247,8 +281,8 @@ private fun SmallEntryCard(card: EntryCard, now: Long, onSelect: () -> Unit, onC
 			val resting = (e.status == EntryStatus.ACTIVE && e.mode == SegmentKind.PAUSE) || e.status == EntryStatus.SUSPENDED
 			val running = e.status == EntryStatus.ACTIVE && !resting
 			when {
-				resting -> commandStyle(EntryCommand.WORK)?.let { CommandIconButton(it, stringResource(R.string.cmd_resume), { onCommand(EntryCommand.WORK) }, Modifier.size(44.dp)) }
-				running -> commandStyle(EntryCommand.PAUSE)?.let { CommandIconButton(it, stringResource(R.string.cmd_pause), { onCommand(EntryCommand.PAUSE) }, Modifier.size(44.dp)) }
+				resting -> commandStyle(EntryCommand.WORK)?.let { CommandIconButton(it, stringResource(R.string.cmd_resume), { onCommand(EntryCommand.WORK) }, button) }
+				running -> commandStyle(EntryCommand.PAUSE)?.let { CommandIconButton(it, stringResource(R.string.cmd_pause), { onCommand(EntryCommand.PAUSE) }, button) }
 				e.status == EntryStatus.TO_COMPLETE -> TextButton(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
 			}
 		}
@@ -264,8 +298,9 @@ private fun EntryCardView(
 ) {
 	val e = card.entry
 	val zone = ZoneId.of(e.zoneId)
+	val compact = LocalCompact.current
 	Card(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
-		Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+		Column(modifier = Modifier.padding(if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)) {
 			val last = card.segments.lastOrNull()
 			val since = when {
 				e.status == EntryStatus.ACTIVE -> last?.startUtcMs
@@ -300,14 +335,14 @@ private fun EntryCardView(
 			)
 
 			FlowRow(
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
+				horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
 				verticalArrangement = Arrangement.spacedBy(8.dp),
 				itemVerticalAlignment = Alignment.CenterVertically,
 			) {
 				for ((cmd, label) in commands(e.status, e.mode)) {
 					val style = commandStyle(cmd)
 					if (style != null)
-						CommandIconButton(style, stringResource(label), { onCommand(cmd) })
+						CommandIconButton(style, stringResource(label), { onCommand(cmd) }, if (compact) Modifier.size(44.dp) else Modifier)
 					else
 						OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
 				}
