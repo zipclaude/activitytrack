@@ -202,6 +202,8 @@ data class TodoEntity(
 	@ColumnInfo(name = "duration_min") val durationMin: Int? = null,
 	/* planned start (UTC ms) whose reminder was shown */
 	@ColumnInfo(name = "plan_reminded_utc_ms") val planRemindedUtcMs: Long? = null,
+	/* ignored (M10) instead of deleted: kept struck through, restorable, never re-created by imports */
+	@ColumnInfo(name = "ignored_utc_ms") val ignoredUtcMs: Long? = null,
 )
 
 @Entity(

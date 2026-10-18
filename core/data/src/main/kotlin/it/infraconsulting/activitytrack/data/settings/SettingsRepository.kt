@@ -17,6 +17,7 @@ import it.infraconsulting.activitytrack.domain.rounding.ReportRounding
 import it.infraconsulting.activitytrack.domain.rounding.RoundingMode
 import it.infraconsulting.activitytrack.domain.rounding.RoundingRule
 import it.infraconsulting.activitytrack.domain.settings.AppSettings
+import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.domain.settings.OnlineService
 import java.io.IOException
 import java.time.Duration
@@ -64,6 +65,11 @@ class SettingsRepository(context: Context) {
 		val calendarId = longPreferencesKey("calendar_id")
 		/* "companyId:calendarId,..." */
 		val companyCalendars = stringPreferencesKey("company_calendars")
+		val todoToStart = stringPreferencesKey("swipe_todo_to_start")
+		val todoToEnd = stringPreferencesKey("swipe_todo_to_end")
+		val entryToStart = stringPreferencesKey("swipe_entry_to_start")
+		val entryToEnd = stringPreferencesKey("swipe_entry_to_end")
+		val fullSwipe = booleanPreferencesKey("swipe_full")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -93,6 +99,13 @@ class SettingsRepository(context: Context) {
 				pair.split(':').takeIf { it.size == 2 }?.let { (c, cal) -> c.toLongOrNull()?.let { k -> cal.toLongOrNull()?.let { k to it } } }
 			}.toMap(),
 			rootUri = p[K.rootUri],
+			gestures = GestureSettings(
+				todoToStart = enumOr(p[K.todoToStart], d.gestures.todoToStart),
+				todoToEnd = enumOr(p[K.todoToEnd], d.gestures.todoToEnd),
+				entryToStart = enumOr(p[K.entryToStart], d.gestures.entryToStart),
+				entryToEnd = enumOr(p[K.entryToEnd], d.gestures.entryToEnd),
+				fullSwipe = p[K.fullSwipe] ?: d.gestures.fullSwipe,
+			),
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
 			tiles = readService(p, "tiles", d.tiles),
@@ -121,6 +134,11 @@ class SettingsRepository(context: Context) {
 		s.calendarId?.let { p[K.calendarId] = it } ?: p.remove(K.calendarId)
 		p[K.companyCalendars] = s.companyCalendars.entries.joinToString(",") { "${it.key}:${it.value}" }
 		s.rootUri.let { if (it != null) p[K.rootUri] = it else p.remove(K.rootUri) }
+		p[K.todoToStart] = s.gestures.todoToStart.name
+		p[K.todoToEnd] = s.gestures.todoToEnd.name
+		p[K.entryToStart] = s.gestures.entryToStart.name
+		p[K.entryToEnd] = s.gestures.entryToEnd.name
+		p[K.fullSwipe] = s.gestures.fullSwipe
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
 		writeService(p, "tiles", s.tiles)
@@ -128,6 +146,10 @@ class SettingsRepository(context: Context) {
 		writeRule(p, "travel", s.rounding.travel)
 		writeRule(p, "pause", s.rounding.pause)
 	}
+
+	/* an unknown stored name (renamed constant, newer app) falls back to the default */
+	private inline fun <reified E : Enum<E>> enumOr(name: String?, default: E): E =
+		name?.let { n -> enumValues<E>().firstOrNull { it.name == n } } ?: default
 
 	private fun readService(p: Preferences, name: String, d: OnlineService) =
 		OnlineService(p[K.enabled(name)] ?: d.enabled, p[K.endpoint(name)] ?: d.endpoint)
