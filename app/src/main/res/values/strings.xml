@@ -429,4 +429,7 @@ Tap the green play button below to start one.</string>
   <string name="color_none">No colour</string>
   <string name="sec_color">Colour</string>
   <string name="todo_filter_all">All companies</string>
+  <!-- M13 backlog -->
+  <string name="todo_plan_time_missing">Set the planned time too</string>
+  <string name="todo_plan_date_missing">Set the planned date too</string>
 </resources>
