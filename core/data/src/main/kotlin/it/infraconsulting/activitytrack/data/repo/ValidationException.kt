@@ -26,5 +26,6 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		STORAGE,			/* the user data folder cannot be read or written */
 		NO_VIEWER,			/* no app can open the file */
 		INVALID_AMOUNT,			/* expense amount missing or not positive */
+		TOO_SHORT,			/* a segment or entry under one minute (backlog 10) */
 	}
 }

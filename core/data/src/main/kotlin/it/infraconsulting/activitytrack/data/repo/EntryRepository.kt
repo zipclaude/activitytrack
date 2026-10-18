@@ -354,6 +354,9 @@ class EntryRepository(
 		endUtcMs: Long,
 		kmDeclared: Double? = null,
 	): Long = db.withTransaction {
+		/* under a minute is an error (owner, 2026-10-18) */
+		if (startUtcMs < endUtcMs && endUtcMs - startUtcMs < MIN_LENGTH_MS)
+			throw ValidationException(Reason.TOO_SHORT)
 		if (kind == SegmentKind.WORK || startUtcMs >= endUtcMs || endUtcMs > clock.millis() ||
 			(kmDeclared != null && (kmDeclared.isNaN() || kmDeclared < 0)) ||
 			(kmDeclared != null && kind != SegmentKind.TRAVEL))
@@ -407,8 +410,30 @@ class EntryRepository(
 		verify(s.entryId)
 	}
 
-	private companion object {
-		val DEFAULTS_WINDOW: Duration = Duration.ofDays(30)
+	/* Time recorded so far (open segments up to now). */
+	suspend fun recordedMs(entryId: Long): Long {
+		val now = clock.millis()
+		return dao.segments(entryId).sumOf { maxOf(0L, (it.endUtcMs ?: now) - it.startUtcMs) }
+	}
+
+	/*
+	 * An entry under one minute is a mistake (owner, 2026-10-18): stopping it
+	 * from the app offers to discard it. Only without attachments or expenses,
+	 * so nothing the user added is lost.
+	 */
+	suspend fun isDiscardable(entryId: Long): Boolean =
+		recordedMs(entryId) < MIN_LENGTH_MS && dao.attachmentCount(entryId) == 0 && dao.expenseCount(entryId) == 0
+
+	suspend fun discard(entryId: Long) = db.withTransaction {
+		load(entryId)
+		if (!isDiscardable(entryId))
+			throw ValidationException(Reason.TOO_SHORT, "entry $entryId is not discardable")
+		dao.deleteEntry(entryId)
+	}
+
+	companion object {
+		private val DEFAULTS_WINDOW: Duration = Duration.ofDays(30)
+		const val MIN_LENGTH_MS = 60_000L
 	}
 
 	private suspend fun load(entryId: Long): TimeEntryEntity =

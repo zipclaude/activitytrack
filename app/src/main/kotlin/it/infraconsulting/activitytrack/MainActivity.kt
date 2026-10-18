@@ -61,6 +61,7 @@ import it.infraconsulting.activitytrack.ui.report.DayScreen
 import it.infraconsulting.activitytrack.ui.report.ExportScreen
 import it.infraconsulting.activitytrack.ui.settings.GesturesScreen
 import it.infraconsulting.activitytrack.ui.settings.SettingsScreen
+import it.infraconsulting.activitytrack.ui.settings.SettingsSection
 import it.infraconsulting.activitytrack.ui.setup.SetupScreen
 import it.infraconsulting.activitytrack.ui.start.StartScreen
 import it.infraconsulting.activitytrack.ui.todo.TodosScreen
@@ -208,7 +209,8 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		is Screen.Entry -> EntryScreen(top.id, back)
 		Screen.Day -> DayScreen(null, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
 		Screen.Export -> ExportScreen(back)
-		Screen.Settings -> SettingsScreen(back)
+		Screen.Settings -> SettingsScreen(back, onOpen = open)
+		is Screen.SettingsPage -> SettingsScreen(back, SettingsSection.entries.firstOrNull { it.name == top.name } ?: SettingsSection.DISPLAY)
 		Screen.Gestures -> GesturesScreen(back)
 		Screen.MasterData -> MasterDataScreen(back, open)
 		Screen.Companies -> CompaniesScreen(back) { open(Screen.Company(it)) }

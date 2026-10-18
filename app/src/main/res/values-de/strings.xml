@@ -417,4 +417,20 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="color_none">Keine Farbe</string>
   <string name="sec_color">Farbe</string>
   <string name="todo_filter_all">Alle Firmen</string>
+  <!-- M13 backlog -->
+  <string name="todo_plan_time_missing">Auch die geplante Uhrzeit angeben</string>
+  <string name="todo_plan_date_missing">Auch das geplante Datum angeben</string>
+  <string name="quick_role">Neue Rolle</string>
+  <string name="quick_preset">Neue Vorlage</string>
+  <string name="err_too_short">Kürzer als eine Minute: Zeiten prüfen.</string>
+  <string name="short_title">„%1$s“ dauerte weniger als eine Minute</string>
+  <string name="short_text">Wahrscheinlich versehentlich gestartet. Verwerfen?</string>
+  <string name="short_discard">Verwerfen</string>
+  <string name="short_keep">Behalten und beenden</string>
+  <string name="todo_filter_today">Heute</string>
+  <string name="sec_notifications">Benachrichtigungen</string>
+  <string name="notif_settings_hint">Banner, Ton und Vibration jeder Benachrichtigungsart werden in Android eingestellt: zum Ändern antippen.</string>
+  <string name="notif_all">Alle Benachrichtigungen der App</string>
+  <string name="agenda_fit">Einpassen</string>
+  <string name="agenda_scroll">Scrollen</string>
 </resources>

@@ -418,4 +418,20 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="color_none">Nessun colore</string>
   <string name="sec_color">Colore</string>
   <string name="todo_filter_all">Tutte le aziende</string>
+  <!-- M13 backlog -->
+  <string name="todo_plan_time_missing">Indica anche l\'ora pianificata</string>
+  <string name="todo_plan_date_missing">Indica anche la data pianificata</string>
+  <string name="quick_role">Nuovo ruolo</string>
+  <string name="quick_preset">Nuova predefinita</string>
+  <string name="err_too_short">Meno di un minuto: controlla gli orari.</string>
+  <string name="short_title">\"%1$s\" è durata meno di un minuto</string>
+  <string name="short_text">Probabilmente avviata per errore. La scarto?</string>
+  <string name="short_discard">Scarta</string>
+  <string name="short_keep">Tieni e termina</string>
+  <string name="todo_filter_today">Oggi</string>
+  <string name="sec_notifications">Notifiche</string>
+  <string name="notif_settings_hint">Banner, suono e vibrazione di ogni tipo di notifica si impostano in Android: toccane uno per cambiarlo.</string>
+  <string name="notif_all">Tutte le notifiche dell\'app</string>
+  <string name="agenda_fit">Adatta</string>
+  <string name="agenda_scroll">Scorri</string>
 </resources>

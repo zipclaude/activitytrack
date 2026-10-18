@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.11 (2026-10-18, M12: company and client colours, to-do company filter). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.12 (2026-10-18, M13: owner backlog, first part). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -230,6 +230,17 @@ about the running entries). **Compact display** (setting): text at 88 %,
 tighter cards and buttons. **Quick add**: "+" beside Company and Client in
 the start screen and the to-do editor creates one and selects it.
 
+**Backlog, first part (M13)**: settings in sub-screens (Gestures among
+them) and a Notifications section opening the Android page of each
+channel (banner, sound, vibration); "+" also for preset and role in the
+start screen; coloured icon buttons for the "add" actions of the entry
+screen; a plan with day and no time (or the reverse) is flagged on the
+field; anything under one minute is an error (manual segments rejected; an
+entry stopped from the app under a minute, with no attachment or expense,
+can be discarded); To-dos "Today" filter; agenda Day/Week cover the working
+hours, open on the current activity and can fit the working day to the
+screen.
+
 **Colours (M12)**: a colour per company and client (12-colour palette or
 none; interchange `color` "#RRGGBB"). Entry and to-do cards carry a thin
 band at the start edge in the company colour; a to-do list that shows a
@@ -260,6 +271,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M13 | owner backlog 2, 4, 5, 6, 7, 9, 10, 12 (settings sub-screens, notifications, quick add, agenda fit, Today filter, one-minute rule, coloured add buttons) |
 | M12 | colours of companies and clients (bands, agenda), to-do company filter (schema v6) |
 | M11 | Home start controls (empty card, top bar), compact display, quick add of companies and clients |
 | M10 | UI: Home cards, swipe gestures (Gestures screen), date/time pickers, ignored to-dos (schema v5) |
