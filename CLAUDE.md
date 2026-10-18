@@ -69,6 +69,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M7 UI polish | first pass (PR #7 → #10, on `main`), owner review pending |
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
+| M13 backlog | **implemented** (branch `m13-backlog`, on top of M12): backlog items 2, 4, 5, 6, 7, 8, 9, 10, 12; device test pending |
 | M12 colours | **implemented** (branch `m12-colors`): company/client colours, card bands, to-do company filter, agenda colours (schema v6); device test pending |
 | M11 UI | **done** (PR #13, on `main`, release v0.4.0): start/travel on the empty card and the bar, compact display, quick add; device-tested 2026-10-18 |
 | M10 UI | **done** (PR #12, on `main`, release v0.3.0): pickers, Home cards, swipes, Gestures screen, ignored to-dos (schema v5); smoke-tested on the debug app 2026-10-18 |
@@ -139,7 +140,8 @@ M10 (PR #12, merged, v0.3.0): UI per the approved mockup, see decisions
 lists show ignored to-dos and for how long (proposal: Home only on the day they
 were ignored; To-dos list always, at the bottom).
 
-### Backlog (owner notes, 2026-10-18; not started)
+### Backlog (owner notes, 2026-10-18)
+Done in M13: 2, 4, 5, 6, 7, 8, 9, 10, 12. Open: 1, 3, 11, 13 (questions to the owner).
 Colours: done in M12 (see the decisions log).
 1. Company, client, role, preset lists sortable: per list alphabetical, by last
    use / creation, or manual.
