@@ -53,12 +53,12 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
 | M2 travel & location | **done**, device-tested, merged (PR #2, 2026-10-17) |
 | M3 widgets, tile, attachments, dictation | **done**, device-tested, merged (PR #3, 2026-10-17) |
-| M4 export and import | **implemented** (PR #4), device-tested 2026-10-18 (import, idempotence, start from to-do, done prompt, JSON export) |
-| M5 external calendar sync (generic / per company; Google or CalDAV) | **implemented** (PR #5, stacked on #4), device-tested 2026-10-18 on the local calendar |
-| M6 consultation: list, day agenda, week, month | **implemented** (PR #6, stacked on #5), device-tested 2026-10-18 |
-| M7 UI polish | first pass (PR #7, stacked on #6), owner review pending |
-| M8 hardening | review fixes, backup restore, manual (PR #8, stacked on #7), restore device-tested 2026-10-18; manual read pending |
-| M9 planned to-dos | **implemented** (PR #9, stacked on #8), device-tested 2026-10-18; reminder at 07:55 of 2026-10-19 still to observe |
+| M4 export and import | **implemented** (PR #4, on `main`), device-tested 2026-10-18 (import, idempotence, start from to-do, done prompt, JSON export) |
+| M5 external calendar sync (generic / per company; Google or CalDAV) | **implemented** (PR #5 → #10, on `main`), device-tested 2026-10-18 on the local calendar |
+| M6 consultation: list, day agenda, week, month | **implemented** (PR #6 → #10, on `main`), device-tested 2026-10-18 |
+| M7 UI polish | first pass (PR #7 → #10, on `main`), owner review pending |
+| M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
+| M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
@@ -112,14 +112,10 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-18)
 
-M4–M7 were written autonomously on 2026-10-17 evening (owner away, phone not
-available). PR stack, to merge in order after the device tests:
-#4 `m4-export-import` → #5 `m5-calendar` → #6 `m6-consultation` → #7 `m7-ui-polish`
-→ #8 `m8-hardening` (review fixes, backup restore, SPEC/DESIGN, user manual).
-Install the top of the stack (`m8-hardening`); back up `databases/` first.
-M9 (2026-10-18): `m9-planning` on top of `m8-hardening`, own PR.
-Branch `beta` = copy of the top of the stack for device tests; CI builds it on push
-and publishes the `app-debug` APK artifact (14 days).
+M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
+been merged into their stacked bases, not retargeted to `main`). CI green.
+Branch `beta` = copy of what is under device test; CI builds it on push and
+publishes the `app-debug` APK artifact (14 days).
 
 ### Device tests
 Done on 2026-10-18 (M4, M5 local calendar, M6, M9, restore); fixes in PR #9:
@@ -232,6 +228,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
+| 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
 | 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |
 | 2026-10-18 | "Overdue" also for a passed due date (after the due time; date only: from the next day), not only for a planned block that is over |
