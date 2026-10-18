@@ -2,7 +2,7 @@
 <resources>
   <string name="app_name" translatable="false">ActivityTrack</string>
   <!-- suggested data folder; the debug build uses its own (coexisting installs) -->
-  <string name="data_folder_hint" translatable="false">MyDocuments/ActivityTrack</string>
+  <string name="data_folder_hint" translatable="false">ActivityTrack</string>
 
   <!-- notification channels -->
   <string name="ch_ongoing">Running activities</string>
@@ -50,7 +50,7 @@ Tap the green play button below to start one.</string>
 
   <!-- data folder -->
   <string name="setup_title">Data folder</string>
-  <string name="setup_text">Choose the folder for attachments, backups and exports, for example %1$s. The app keeps access to it; the files stay there even if the app is uninstalled.</string>
+  <string name="setup_text">Choose the folder for attachments, backups and exports: we suggest %1$s in the main storage (the picker opens there; create it with “New folder” if missing). The app keeps access to it; the files stay there even if the app is uninstalled.</string>
   <string name="setup_choose">Choose folder</string>
   <string name="setup_lost">Access to the data folder was lost. Choose it again.</string>
   <string name="setup_error">This folder cannot be used. Choose another one.</string>

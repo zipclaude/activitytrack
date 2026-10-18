@@ -6,5 +6,5 @@
 -->
 <resources>
   <string name="app_name" translatable="false">ActivityTrackDbg</string>
-  <string name="data_folder_hint" translatable="false">MyDocuments/ActivityTrackDbg</string>
+  <string name="data_folder_hint" translatable="false">ActivityTrackDbg</string>
 </resources>
