@@ -110,6 +110,9 @@ class TodosViewModel(
 	/* to-dos of one company only (M12, owner: kept until removed); null = all */
 	fun setCompanyFilter(companyId: Long?) = run { settingsRepo.update { it.copy(todoCompanyFilter = companyId) } }
 
+	/* To-dos screen: today's (and overdue) only, or all (backlog 9) */
+	fun setTodayOnly(on: Boolean) = run { settingsRepo.update { it.copy(todoTodayOnly = on) } }
+
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
 	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
 	fun save(t: TodoEntity, done: () -> Unit) = run(done) { todos.save(t) }
@@ -425,8 +428,14 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	var opened by rememberSaveable { mutableStateOf(false) }
 	val companies by vm.companies.collectAsState()
-	val filter = vm.settings.collectAsState().value?.todoCompanyFilter
-	val list = (if (showDone) all else open + ignored).filter { filter == null || it.companyId == filter }
+	val settings by vm.settings.collectAsState()
+	val filter = settings?.todoCompanyFilter
+	val todayOnly = settings?.todoTodayOnly == true
+	val today = LocalDate.now().toEpochDay()
+	val list = (if (showDone) all else open + ignored).filter { t ->
+		(filter == null || t.companyId == filter) &&
+			(!todayOnly || t.ignoredUtcMs == null && listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today })
+	}
 	val band = bands(list, companies, clients)
 
 	LaunchedEffect(editId, all) {
@@ -448,9 +457,12 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 			verticalArrangement = Arrangement.spacedBy(10.dp),
 		) {
 			item {
-				Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-					Box(Modifier.weight(1f)) { SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it } }
-					CompanyFilter(vm)
+				Column(Modifier.padding(horizontal = 16.dp)) {
+					SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it }
+					Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+						FilterChip(selected = todayOnly, onClick = { vm.setTodayOnly(!todayOnly) }, label = { Text(stringResource(R.string.todo_filter_today)) })
+						CompanyFilter(vm)
+					}
 				}
 			}
 			if (list.isEmpty())

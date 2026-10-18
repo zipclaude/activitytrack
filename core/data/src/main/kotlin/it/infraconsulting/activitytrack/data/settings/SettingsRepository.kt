@@ -72,6 +72,7 @@ class SettingsRepository(context: Context) {
 		val fullSwipe = booleanPreferencesKey("swipe_full")
 		val compact = booleanPreferencesKey("display_compact")
 		val todoCompany = longPreferencesKey("todo_company_filter")
+		val todoToday = booleanPreferencesKey("todo_today_only")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -110,6 +111,7 @@ class SettingsRepository(context: Context) {
 			),
 			compactDisplay = p[K.compact] ?: d.compactDisplay,
 			todoCompanyFilter = p[K.todoCompany],
+			todoTodayOnly = p[K.todoToday] ?: d.todoTodayOnly,
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
 			tiles = readService(p, "tiles", d.tiles),
@@ -145,6 +147,7 @@ class SettingsRepository(context: Context) {
 		p[K.fullSwipe] = s.gestures.fullSwipe
 		p[K.compact] = s.compactDisplay
 		s.todoCompanyFilter?.let { p[K.todoCompany] = it } ?: p.remove(K.todoCompany)
+		p[K.todoToday] = s.todoTodayOnly
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
 		writeService(p, "tiles", s.tiles)
