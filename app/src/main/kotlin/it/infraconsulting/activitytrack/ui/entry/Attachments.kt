@@ -38,6 +38,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.INDIGO
+import it.infraconsulting.activitytrack.ui.common.TEAL
+import it.infraconsulting.activitytrack.ui.common.PURPLE
+import it.infraconsulting.activitytrack.ui.common.ColoredActionButton
 import it.infraconsulting.activitytrack.data.db.AttachmentEntity
 import it.infraconsulting.activitytrack.data.db.AttachmentKind
 import it.infraconsulting.activitytrack.data.repo.AttachmentRepository
@@ -143,22 +147,20 @@ fun AttachmentsSection(entryId: Long, zone: ZoneId) {
 			modifier = Modifier.padding(horizontal = 16.dp),
 			horizontalArrangement = Arrangement.spacedBy(8.dp),
 		) {
-			OutlinedButton(onClick = {
+			ColoredActionButton(stringResource(R.string.att_add_photo), R.drawable.ic_camera, PURPLE, {
 				vm.clearError()
 				val f = captureFile(context, "jpg")
 				pendingPhoto = f.path
 				takePicture.launch(FileProvider.getUriForFile(context, "${context.packageName}.files", f))
-			}) { Text(stringResource(R.string.att_add_photo)) }
-			OutlinedButton(onClick = {
+			})
+			ColoredActionButton(stringResource(R.string.att_add_voice), R.drawable.ic_mic, TEAL, {
 				vm.clearError()
 				if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
 					recording = true
 				else
 					askMic.launch(Manifest.permission.RECORD_AUDIO)
-			}) { Text(stringResource(R.string.att_add_voice)) }
-			OutlinedButton(onClick = { vm.clearError(); pickFile.launch(arrayOf("*/*")) }) {
-				Text(stringResource(R.string.att_add_file))
-			}
+			})
+			ColoredActionButton(stringResource(R.string.att_add_file), R.drawable.ic_attach, INDIGO, { vm.clearError(); pickFile.launch(arrayOf("*/*")) })
 		}
 		error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
 	}

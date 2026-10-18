@@ -79,7 +79,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 | **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre, "Da fare oggi" |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
-| **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Gesti", "Impostazioni" |
+| **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Impostazioni" (con "Gesti") |
 
 Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
 
@@ -109,7 +109,7 @@ uno lungo esegue subito il primo.
 | Da fare | Avvia | Posticipa (se pianificata) o Ignora |
 | Da fare ignorata | Ripristina | Ripristina |
 
-Si cambiano in "Altro" → **"Gesti"**: per ogni direzione cosa proporre
+Si cambiano in "Impostazioni" → **"Gesti"**: per ogni direzione cosa proporre
 (anche nessuna azione), e se il trascinamento lungo esegue subito la prima.
 
 ### Colori di aziende e clienti
@@ -122,16 +122,18 @@ ne hanno uno automatico).
 
 Accanto a "Da fare oggi" (e nella schermata "Da fare") il pulsante **"Tutte
 le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
-lo togli con la ✕. Le attività in corso non vengono filtrate.
+lo togli con la ✕. Le attività in corso non vengono filtrate. Nella schermata
+"Da fare" il filtro **"Oggi"** mostra solo le voci di oggi o in ritardo.
 
 ### Visualizzazione compatta
 Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
 riquadri e pulsanti più stretti, per vedere più attività e voci insieme.
 
 ### Nuova azienda o cliente al volo
-In "Nuova attività" e nell'editor delle voci da fare, il **+** accanto ad
-Azienda e Cliente crea un'azienda (solo il nome) o un cliente (nome e
-azienda) senza uscire; il nuovo elemento risulta già scelto.
+In "Nuova attività" il **+** accanto ad Azienda, Cliente, Predefinita e
+Ruolo crea il nuovo elemento senza uscire (nell'editor delle voci da fare,
+Azienda e Cliente); il nuovo elemento risulta già scelto (la predefinita
+riempie la descrizione).
 
 ### Date e orari
 Tutti i campi data e ora si compilano con il calendario e l'orologio di
@@ -227,11 +229,18 @@ tocchi "Ferma e salva"), "File" (qualsiasi documento). Toccando un allegato:
 
 ## 6. Fermare e completare
 
+Se fermi dall'app un'attività durata **meno di un minuto** (senza allegati né
+spese), l'app la considera un errore e chiede se **scartarla** o tenerla e
+fermarla come sempre.
+
 Dopo lo Stop l'attività è **da completare** (notifica persistente e card rossa).
 Nella schermata dell'attività:
 - controlla cliente, descrizione (dettabile), ruolo, località, luogo, note;
-- "Tempi": "+ Viaggio" e "+ Pausa" aggiungono tratti dimenticati (anche con i
-  km); i tratti aggiunti a mano si possono eliminare, quelli registrati no;
+- "Tempi": i pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
+  dimenticati (anche con i km; almeno un minuto); i tratti aggiunti a mano si
+  possono eliminare, quelli registrati no;
+- allegati (**Foto**, **Nota vocale**, **File**) e **Spesa** hanno pulsanti
+  colorati con icona;
 - "Riferimenti esterni": ticket, URL o codici (riconosciuti automaticamente);
 - **"Completa"** (verde).
 
@@ -255,6 +264,9 @@ oggi; a destra il totale rendicontato del periodo).
   fine; attività contemporanee affiancate; le *Da fare* pianificate sono
   blocchi con il bordo colorato.
 - **Settimana** — sette colonne da lunedì; toccando un giorno si apre la vista Giorno.
+- In Giorno e Settimana la linea del tempo copre l'orario di lavoro e si apre
+  sull'attività in corso (o sull'ora attuale); **"Adatta"** fa stare tutto
+  l'orario di lavoro in uno schermo, **"Scorri"** torna alla scala normale.
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
@@ -398,12 +410,17 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 
 ## 14. Impostazioni
 
+Le impostazioni sono divise in sezioni, ognuna con la sua pagina e il suo
+"Salva"; in fondo all'elenco c'è **"Gesti"**.
+
 | Sezione | Voce | Predefinito |
 |---|---|---|
+| Visualizzazione | Normale / Compatta | Normale |
 | Promemoria | Intervallo di conferma | 30 min |
 | | Numero massimo di conferme | 0 (illimitato) |
 | | Intervallo promemoria pausa | 15 min |
 | | Ritardo avviso inizio giornata | 15 min |
+| Notifiche | per ogni tipo (conferma, pausa, pianificate, spostamento, arrivo, inizio giornata, riepilogo, da completare, in corso) apre la pagina di Android per banner, suono e vibrazione | — |
 | Posizione | accesso, batteria, riquadro rapido | — |
 | | Soglia avviso spostamento | 100 m |
 | | Raggio / tempo di arrivo | 100 m / 15 min |
@@ -414,7 +431,7 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 | | arrotondamenti lavoro / viaggio / pausa | §1 |
 | Servizi online | Nominatim, OSRM, mappe OpenStreetMap (attivabili e con endpoint) | attivi |
 | Archiviazione | cartella dati, backup conservati, backup ora | 14 |
-| Avanzate (▼) | Promemoria attività pianificate (min prima) | 15 |
+| Avanzate | Promemoria attività pianificate (min prima) | 15 |
 | | Posticipo (min) | 30 |
 
 I valori fuori intervallo vengono corretti al salvataggio.

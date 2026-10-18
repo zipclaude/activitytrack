@@ -110,6 +110,9 @@ class TodosViewModel(
 	/* to-dos of one company only (M12, owner: kept until removed); null = all */
 	fun setCompanyFilter(companyId: Long?) = run { settingsRepo.update { it.copy(todoCompanyFilter = companyId) } }
 
+	/* To-dos screen: today's (and overdue) only, or all (backlog 9) */
+	fun setTodayOnly(on: Boolean) = run { settingsRepo.update { it.copy(todoTodayOnly = on) } }
+
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
 	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
 	fun save(t: TodoEntity, done: () -> Unit) = run(done) { todos.save(t) }
@@ -425,8 +428,14 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	var opened by rememberSaveable { mutableStateOf(false) }
 	val companies by vm.companies.collectAsState()
-	val filter = vm.settings.collectAsState().value?.todoCompanyFilter
-	val list = (if (showDone) all else open + ignored).filter { filter == null || it.companyId == filter }
+	val settings by vm.settings.collectAsState()
+	val filter = settings?.todoCompanyFilter
+	val todayOnly = settings?.todoTodayOnly == true
+	val today = LocalDate.now().toEpochDay()
+	val list = (if (showDone) all else open + ignored).filter { t ->
+		(filter == null || t.companyId == filter) &&
+			(!todayOnly || t.ignoredUtcMs == null && listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today })
+	}
 	val band = bands(list, companies, clients)
 
 	LaunchedEffect(editId, all) {
@@ -448,9 +457,12 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 			verticalArrangement = Arrangement.spacedBy(10.dp),
 		) {
 			item {
-				Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-					Box(Modifier.weight(1f)) { SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it } }
-					CompanyFilter(vm)
+				Column(Modifier.padding(horizontal = 16.dp)) {
+					SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it }
+					Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+						FilterChip(selected = todayOnly, onClick = { vm.setTodayOnly(!todayOnly) }, label = { Text(stringResource(R.string.todo_filter_today)) })
+						CompanyFilter(vm)
+					}
 				}
 			}
 			if (list.isEmpty())
@@ -497,6 +509,10 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	var priority by remember { mutableStateOf(initial.priority?.toString().orEmpty()) }
 	var notes by remember { mutableStateOf(initial.notes.orEmpty()) }
 	var refs by remember { mutableStateOf(initial.refs) }
+	/* a plan needs both day and time: the missing one is flagged on its field after Save (M13) */
+	var tried by remember { mutableStateOf(false) }
+	val planTimeMissing = tried && planDay.isNotBlank() && planTime.isBlank()
+	val planDayMissing = tried && planTime.isNotBlank() && planDay.isBlank()
 	val coNames = companies.associate { it.id to it.name }
 	EditDialog(
 		title = stringResource(if (initial.id == 0L) R.string.todo_new else R.string.todo_edit),
@@ -506,6 +522,10 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			val company = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
 			if (company == null) {
 				vm.missingCompany()
+				return@EditDialog
+			}
+			if (planDay.isBlank() != planTime.isBlank()) {
+				tried = true
 				return@EditDialog
 			}
 			val pd = optional(planDay) { parseDate(it)?.toEpochDay() }
@@ -550,8 +570,14 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
 				ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
 			}
-		DateField(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true)
-		TimeField(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true)
+		DateField(
+			stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true,
+			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing },
+		)
+		TimeField(
+			stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true,
+			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing },
+		)
 		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)
 		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true)
 		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true)

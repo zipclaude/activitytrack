@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.data.db.ActivityPresetEntity
+import it.infraconsulting.activitytrack.data.db.RoleEntity
 import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
@@ -29,10 +31,21 @@ import it.infraconsulting.activitytrack.ui.appViewModel
  */
 class QuickAddViewModel(private val master: MasterDataRepository) : ActionViewModel() {
 	val companies = master.companies.state(emptyList())
+	val roles = master.roles.state(emptyList())
 
 	fun addCompany(name: String, done: (Long) -> Unit) {
 		var id = 0L
 		run({ done(id) }) { id = master.saveCompany(CompanyEntity(name = name)) }
+	}
+
+	fun addRole(name: String, done: (Long) -> Unit) {
+		var id = 0L
+		run({ done(id) }) { id = master.saveRole(RoleEntity(name = name)) }
+	}
+
+	/* [companyId] null = a preset for every company */
+	fun addPreset(text: String, companyId: Long?, roleId: Long?, done: (String) -> Unit) {
+		run({ done(text.trim()) }) { master.savePreset(ActivityPresetEntity(text = text, companyId = companyId, defaultRoleId = roleId)) }
 	}
 
 	fun addClient(companyId: Long?, name: String, done: (Long, Long) -> Unit) {
@@ -68,6 +81,53 @@ fun QuickCompanyDialog(onDone: (Long) -> Unit, onDismiss: () -> Unit) {
 		onDismiss = { vm.clearError(); onDismiss() },
 		onConfirm = { vm.addCompany(name) { onDone(it) } },
 	) { TextInput(stringResource(R.string.field_name), name, { name = it }) }
+}
+
+@Composable
+fun QuickRoleDialog(onDone: (Long) -> Unit, onDismiss: () -> Unit) {
+	val vm = quickAddViewModel()
+	val error by vm.error.collectAsState()
+	var name by remember { mutableStateOf("") }
+	EditDialog(
+		title = stringResource(R.string.quick_role),
+		error = error,
+		onDismiss = { vm.clearError(); onDismiss() },
+		onConfirm = { vm.addRole(name, onDone) },
+	) { TextInput(stringResource(R.string.field_name), name, { name = it }) }
+}
+
+/*
+ * A preset (activity text, optional company and default role); [text]
+ * starts from the activity typed so far. done gets the saved text.
+ */
+@Composable
+fun QuickPresetDialog(text: String, companyId: Long?, onDone: (String) -> Unit, onDismiss: () -> Unit) {
+	val vm = quickAddViewModel()
+	val error by vm.error.collectAsState()
+	val companies by vm.companies.collectAsState()
+	val roles by vm.roles.collectAsState()
+	var value by remember { mutableStateOf(text) }
+	var company by remember { mutableStateOf(companyId) }
+	var role by remember { mutableStateOf<Long?>(null) }
+	val none = stringResource(R.string.field_none)
+	EditDialog(
+		title = stringResource(R.string.quick_preset),
+		error = error,
+		onDismiss = { vm.clearError(); onDismiss() },
+		onConfirm = { vm.addPreset(value, company, role, onDone) },
+	) {
+		TextInput(stringResource(R.string.field_activity), value, { value = it })
+		ChoiceField(
+			stringResource(R.string.field_company),
+			listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) + companies.filter { !it.archived }.map { it.id to it.name },
+			company,
+		) { company = it }
+		ChoiceField(
+			stringResource(R.string.field_role),
+			listOf<Pair<Long?, String>>(null to none) + roles.filter { !it.archived }.map { it.id to it.name },
+			role,
+		) { role = it }
+	}
 }
 
 /* [companyId]: proposed company (the current filter); done gets the client and its company. */

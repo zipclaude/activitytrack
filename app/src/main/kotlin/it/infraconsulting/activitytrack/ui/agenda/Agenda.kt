@@ -53,6 +53,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.R
+import kotlinx.coroutines.flow.first
+import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.LaunchedEffect
 import it.infraconsulting.activitytrack.ui.common.rgb
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
@@ -138,6 +142,9 @@ data class AgendaData(
 	val items: List<AgendaItem>,
 	val todos: List<AgendaTodo>,
 	val reported: Map<LocalDate, Duration>,
+	/* working hours of the visible days, minutes of the day (backlog 6); null = none set */
+	val workFrom: Int? = null,
+	val workTo: Int? = null,
 )
 
 /*
@@ -150,6 +157,7 @@ class AgendaViewModel(
 	private val reports: ReportRepository,
 	private val settings: SettingsRepository,
 	todos: TodoRepository,
+	private val master: MasterDataRepository,
 ) : ViewModel() {
 	val mode = MutableStateFlow(AgendaMode.LIST)
 	val anchor = MutableStateFlow(LocalDate.now())
@@ -204,7 +212,12 @@ class AgendaViewModel(
 				AgendaTodo(t, t.dueEpochDay?.let(LocalDate::ofEpochDay) ?: return@mapNotNull null, t.dueTimeMin)
 			item.takeIf { it.day in from..to }
 		}
-		return AgendaData(from, to, items, todos, report.days.associate { it.day to it.reported })
+		val weekdays = generateSequence(from) { it.plusDays(1) }.takeWhile { it <= to }.map { it.dayOfWeek.value }.toSet()
+		val work = master.schedule.first().filter { it.dayOfWeek in weekdays }
+		return AgendaData(
+			from, to, items, todos, report.days.associate { it.day to it.reported },
+			work.minOfOrNull { it.startMin }, work.maxOfOrNull { it.endMin },
+		)
 	}
 
 	companion object {
@@ -240,7 +253,9 @@ private fun clock(i: Instant, zone: ZoneId): String = i.atZone(zone).toLocalTime
 
 @Composable
 fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
-	val vm = appViewModel { AgendaViewModel(it.reports, it.settings, it.todos) }
+	val vm = appViewModel { AgendaViewModel(it.reports, it.settings, it.todos, it.masterData) }
+	/* fit the working day to the screen (backlog 6) */
+	var fit by rememberSaveable { mutableStateOf(false) }
 	val todosVm = todosViewModel()
 	val mode by vm.mode.collectAsState()
 	val anchor by vm.anchor.collectAsState()
@@ -266,7 +281,9 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 			title = stringResource(R.string.nav_agenda),
 			onBack = null,
 			actions = {
-				AddButton { plan(anchor, defaultSlot(anchor)) }
+				if (mode == AgendaMode.DAY || mode == AgendaMode.WEEK)
+				TextButton(onClick = { fit = !fit }) { Text(stringResource(if (fit) R.string.agenda_scroll else R.string.agenda_fit)) }
+			AddButton { plan(anchor, defaultSlot(anchor)) }
 				TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.agenda_today)) }
 			},
 		) { padding ->
@@ -292,8 +309,8 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 				val d = data ?: return@Column
 				when (mode) {
 					AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onTodo, swipes)
-					AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, minuteHeight = 1.2.dp, onOpenEntry, onTodo, plan)
-					AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, minuteHeight = 0.8.dp, onOpenEntry, onTodo, plan) {
+					AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, 1.2.dp, fit, onOpenEntry, onTodo, plan)
+					AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, 0.8.dp, fit, onOpenEntry, onTodo, plan) {
 						vm.open(it, AgendaMode.DAY)
 					}
 					AgendaMode.MONTH -> MonthView(anchor, d, locale) { vm.open(it, AgendaMode.DAY) }
@@ -424,7 +441,8 @@ private fun Timeline(
 	days: List<LocalDate>,
 	d: AgendaData,
 	locale: Locale,
-	minuteHeight: Dp,
+	scrollMinuteHeight: Dp,
+	fit: Boolean,
 	onOpenEntry: (Long) -> Unit,
 	onTodo: (TodoEntity) -> Unit,
 	onPlan: (LocalDate, Int) -> Unit,
@@ -441,8 +459,16 @@ private fun Timeline(
 		return (base * 1440 + local.hour * 60 + local.minute).toInt()
 	}
 	val all = byDay.flatMap { (day, blocks) -> blocks.map { minuteOf(it.start, day) to minuteOf(it.end, day) } }
-	val firstHour = minOf(7, (all.minOfOrNull { it.first } ?: 420) / 60).coerceAtLeast(0)
-	val lastHour = maxOf(20, ((all.maxOfOrNull { it.second } ?: 1200) + 59) / 60).coerceAtMost(30)
+	/*
+	 * Hours shown: the working hours and every block; scrolling adds 07-20
+	 * around them, fitting (backlog 6) shows just that span on one screen.
+	 */
+	val workFrom = d.workFrom ?: 420
+	val workTo = d.workTo ?: 1200
+	val from = minOf(workFrom, all.minOfOrNull { it.first } ?: workFrom)
+	val to = maxOf(workTo, all.maxOfOrNull { it.second } ?: workTo)
+	val firstHour = (if (fit) from / 60 else minOf(7, from / 60)).coerceAtLeast(0)
+	val lastHour = (if (fit) (to + 59) / 60 else maxOf(20, (to + 59) / 60)).coerceIn(firstHour + 1, 30)
 	val minutes = (lastHour - firstHour) * 60
 	val today = LocalDate.now()
 
@@ -469,67 +495,80 @@ private fun Timeline(
 				modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 2.dp),
 				style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
 			)
-		Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-			Box(Modifier.width(40.dp).height(minuteHeight * minutes)) {
-				for (h in firstHour until lastHour)
-					Text(
-						"%02d".format(h % 24), style = MaterialTheme.typography.labelSmall,
-						modifier = Modifier.offset(x = 8.dp, y = minuteHeight * ((h - firstHour) * 60)),
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
-					)
+		BoxWithConstraints(Modifier.fillMaxSize()) {
+			val minuteHeight = if (fit) maxHeight / minutes else scrollMinuteHeight
+			val scroll = rememberScrollState()
+			/* opens on the running entry, else now (today), else the start of work (backlog 6) */
+			val density = LocalDensity.current
+			val focus = byDay.entries.firstNotNullOfOrNull { (day, blocks) -> blocks.firstOrNull { it.item?.running == true }?.let { minuteOf(it.start, day) } }
+				?: days.firstOrNull { it == today }?.let { LocalTime.now().let { t -> t.hour * 60 + t.minute } }
+				?: workFrom
+			LaunchedEffect(days.first(), fit, minutes) {
+				if (!fit)
+					scroll.scrollTo(with(density) { (minuteHeight * maxOf(0, focus - firstHour * 60 - 60)).roundToPx() })
 			}
-			for (day in days)
-				BoxWithConstraints(
-					Modifier.weight(1f).height(minuteHeight * minutes).pointerInput(day, firstHour) {
-						detectTapGestures { o ->
-							val min = firstHour * 60 + (o.y / minuteHeight.toPx()).toInt() / 30 * 30
-							if (min >= 1440) onPlan(day.plusDays(1), min - 1440) else onPlan(day, min)
-						}
-					},
-				) {
+			Row(Modifier.fillMaxSize().verticalScroll(scroll)) {
+				Box(Modifier.width(40.dp).height(minuteHeight * minutes)) {
 					for (h in firstHour until lastHour)
-						HorizontalDivider(Modifier.offset(y = minuteHeight * ((h - firstHour) * 60)), color = MaterialTheme.colorScheme.outlineVariant)
-					val blocks = byDay.getValue(day).sortedBy { it.start }
-					val columns = columnsOf(blocks.map { minuteOf(it.start, day) to minuteOf(it.end, day) })
-					val count = (columns.maxOrNull() ?: 0) + 1
-					val width = maxWidth / count
-					blocks.forEachIndexed { i, b ->
-						val top = (minuteOf(b.start, day) - firstHour * 60).coerceAtLeast(0)
-						val bottom = (minuteOf(b.end, day) - firstHour * 60).coerceAtMost(minutes)
-						val place = Modifier.offset(x = width * columns[i], y = minuteHeight * top)
-							.width(width).height(maxOf(minuteHeight * (bottom - top), 18.dp)).padding(1.dp)
-						val one = days.size == 1
-						val span = "${clock(b.start, zone)}–${clock(b.end, zone)}"
-						b.item?.let {
-							Box(
-								place.clip(RoundedCornerShape(4.dp))
-									.background(colorOf(it.companyId).copy(alpha = if (it.running) 0.6f else 0.85f))
-									.clickable { onOpenEntry(it.entryId) }.padding(horizontal = 3.dp, vertical = 1.dp),
-							) {
-								Text(
-									if (one) "${it.title}${if (it.activity.isNotBlank()) " · ${it.activity}" else ""}\n$span · ${hm(it.reported)}"
-									else it.title,
-									color = Color.White, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
-									overflow = TextOverflow.Ellipsis,
-								)
+						Text(
+							"%02d".format(h % 24), style = MaterialTheme.typography.labelSmall,
+							modifier = Modifier.offset(x = 8.dp, y = minuteHeight * ((h - firstHour) * 60)),
+							color = MaterialTheme.colorScheme.onSurfaceVariant,
+						)
+				}
+				for (day in days)
+					BoxWithConstraints(
+						Modifier.weight(1f).height(minuteHeight * minutes).pointerInput(day, firstHour, minuteHeight) {
+							detectTapGestures { o ->
+								val min = firstHour * 60 + (o.y / minuteHeight.toPx()).toInt() / 30 * 30
+								if (min >= 1440) onPlan(day.plusDays(1), min - 1440) else onPlan(day, min)
 							}
-						}
-						b.todo?.let {
-							val c = colorOf(it.todo.companyId)
-							Box(
-								place.clip(RoundedCornerShape(4.dp)).background(c.copy(alpha = 0.15f))
-									.border(1.dp, c, RoundedCornerShape(4.dp))
-									.clickable { onTodo(it.todo) }.padding(horizontal = 3.dp, vertical = 1.dp),
-							) {
-								Text(
-									if (one) "☐ ${it.title}\n$span" else "☐ ${it.title}",
-									color = MaterialTheme.colorScheme.onSurface, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
-									overflow = TextOverflow.Ellipsis,
-								)
+						},
+					) {
+						for (h in firstHour until lastHour)
+							HorizontalDivider(Modifier.offset(y = minuteHeight * ((h - firstHour) * 60)), color = MaterialTheme.colorScheme.outlineVariant)
+						val blocks = byDay.getValue(day).sortedBy { it.start }
+						val columns = columnsOf(blocks.map { minuteOf(it.start, day) to minuteOf(it.end, day) })
+						val count = (columns.maxOrNull() ?: 0) + 1
+						val width = maxWidth / count
+						blocks.forEachIndexed { i, b ->
+							val top = (minuteOf(b.start, day) - firstHour * 60).coerceAtLeast(0)
+							val bottom = (minuteOf(b.end, day) - firstHour * 60).coerceAtMost(minutes)
+							val place = Modifier.offset(x = width * columns[i], y = minuteHeight * top)
+								.width(width).height(maxOf(minuteHeight * (bottom - top), 18.dp)).padding(1.dp)
+							val one = days.size == 1
+							val span = "${clock(b.start, zone)}–${clock(b.end, zone)}"
+							b.item?.let {
+								Box(
+									place.clip(RoundedCornerShape(4.dp))
+										.background(colorOf(it.companyId).copy(alpha = if (it.running) 0.6f else 0.85f))
+										.clickable { onOpenEntry(it.entryId) }.padding(horizontal = 3.dp, vertical = 1.dp),
+								) {
+									Text(
+										if (one) "${it.title}${if (it.activity.isNotBlank()) " · ${it.activity}" else ""}\n$span · ${hm(it.reported)}"
+										else it.title,
+										color = Color.White, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
+										overflow = TextOverflow.Ellipsis,
+									)
+								}
+							}
+							b.todo?.let {
+								val c = colorOf(it.todo.companyId)
+								Box(
+									place.clip(RoundedCornerShape(4.dp)).background(c.copy(alpha = 0.15f))
+										.border(1.dp, c, RoundedCornerShape(4.dp))
+										.clickable { onTodo(it.todo) }.padding(horizontal = 3.dp, vertical = 1.dp),
+								) {
+									Text(
+										if (one) "☐ ${it.title}\n$span" else "☐ ${it.title}",
+										color = MaterialTheme.colorScheme.onSurface, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
+										overflow = TextOverflow.Ellipsis,
+									)
+								}
 							}
 						}
 					}
-				}
+			}
 		}
 	}
 }

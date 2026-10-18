@@ -42,7 +42,7 @@ import java.util.Locale
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateField(label: String, value: String, onChange: (String) -> Unit, clearable: Boolean = false) {
+fun DateField(label: String, value: String, onChange: (String) -> Unit, clearable: Boolean = false, error: String? = null) {
 	var open by remember { mutableStateOf(false) }
 	val locale = LocalConfiguration.current.locales[0]
 	val date = parseDate(value)
@@ -52,6 +52,7 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, clearabl
 		icon = R.drawable.ic_calendar,
 		onOpen = { open = true },
 		onClear = if (clearable && value.isNotBlank()) ({ onChange("") }) else null,
+		error = error,
 	)
 	if (open) {
 		/* the picker works in UTC midnights: convert with UTC, never the phone zone */
@@ -74,7 +75,7 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, clearabl
 /* [endOfDay]: a picked 00:00 means 24:00 (the end of a working interval). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimeField(label: String, value: String, onChange: (String) -> Unit, clearable: Boolean = false, endOfDay: Boolean = false) {
+fun TimeField(label: String, value: String, onChange: (String) -> Unit, clearable: Boolean = false, endOfDay: Boolean = false, error: String? = null) {
 	var open by remember { mutableStateOf(false) }
 	val min = parseHhMm(value)
 	PickerTextField(
@@ -83,6 +84,7 @@ fun TimeField(label: String, value: String, onChange: (String) -> Unit, clearabl
 		icon = R.drawable.ic_clock,
 		onOpen = { open = true },
 		onClear = if (clearable && value.isNotBlank()) ({ onChange("") }) else null,
+		error = error,
 	)
 	if (open) {
 		val start = (min ?: java.time.LocalTime.now().let { it.hour * 60 + it.minute }) % 1440
@@ -106,9 +108,9 @@ fun TimeField(label: String, value: String, onChange: (String) -> Unit, clearabl
 fun dateText(d: LocalDate, locale: Locale): String =
 	d.format(DateTimeFormatter.ofPattern("EEE dd/MM/yyyy", locale))
 
-/* A read-only text field that opens a picker when tapped anywhere. */
+/* A read-only text field that opens a picker when tapped anywhere; [error] shows under it. */
 @Composable
-private fun PickerTextField(label: String, shown: String, icon: Int, onOpen: () -> Unit, onClear: (() -> Unit)?) {
+private fun PickerTextField(label: String, shown: String, icon: Int, onOpen: () -> Unit, onClear: (() -> Unit)?, error: String?) {
 	val source = remember { MutableInteractionSource() }
 	LaunchedEffect(source) {
 		source.interactions.collect { if (it is PressInteraction.Release) onOpen() }
@@ -120,6 +122,8 @@ private fun PickerTextField(label: String, shown: String, icon: Int, onOpen: () 
 		label = { Text(label) },
 		singleLine = true,
 		interactionSource = source,
+		isError = error != null,
+		supportingText = error?.let { { Text(it) } },
 		trailingIcon = {
 			Row {
 				onClear?.let {

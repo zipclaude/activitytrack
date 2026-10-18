@@ -3,12 +3,15 @@ package it.infraconsulting.activitytrack.ui.common
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -89,3 +92,26 @@ fun StatePill(style: CommandStyle, text: String) {
 	}
 }
 
+/*
+ * Coloured button with icon and label (M13, owner 2026-10-18): the "add"
+ * actions of the entry screen (photo, voice note, file, expense, travel,
+ * pause), so they read at a glance like the command buttons.
+ */
+@Composable
+fun ColoredActionButton(label: String, @DrawableRes icon: Int, container: Color, onClick: () -> Unit, content: Color = Color.White) {
+	Button(
+		onClick = onClick,
+		colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content),
+		contentPadding = PaddingValues(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+	) {
+		Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(20.dp))
+		Spacer(Modifier.width(6.dp))
+		Text(label)
+	}
+}
+
+/* the "add" colours: none of them is a command colour (green, red, yellow, orange, blue) */
+internal val PURPLE = Color(0xFF6A1B9A)
+internal val TEAL = Color(0xFF00838F)
+internal val INDIGO = Color(0xFF3949AB)
+internal val MAGENTA = Color(0xFFAD1457)
