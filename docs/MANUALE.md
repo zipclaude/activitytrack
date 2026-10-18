@@ -76,12 +76,40 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | attività aperte, "Da fare oggi", pulsante verde di avvio |
+| **Home** | riquadro dell'attività in corso, riquadri piccoli delle altre, "Da fare oggi", pulsante verde di avvio |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
-| **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Impostazioni" |
+| **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Gesti", "Impostazioni" |
 
 Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
+
+### La Home a riquadri
+- In alto il **riquadro grande**: l'attività aperta più recente, con tempo,
+  stato e comandi. Senza attività aperte mostra "Nessuna attività in corso".
+- Sotto, un **riquadro piccolo** per ogni altra attività aperta (in pausa,
+  sospesa, da completare): stato, ora e tempo, e un pulsante per riprenderla
+  (o metterla in pausa, o completarla). Toccandolo, l'attività passa nel
+  riquadro grande.
+- Sotto il separatore **"Da fare oggi"** un riquadro per ogni voce in
+  scadenza o pianificata oggi o prima; in fondo, barrate, quelle ignorate oggi.
+
+### Gesti (trascinare i riquadri)
+Ogni riquadro si trascina a sinistra o a destra (Home, lista dell'Agenda,
+schermata "Da fare"). Un trascinamento breve mostra i pulsanti, da toccare;
+uno lungo esegue subito il primo.
+
+| Riquadro | A sinistra | A destra |
+|---|---|---|
+| Attività in corso | Pausa, o Riprendi se è in pausa o sospesa | Termina (con le stesse domande del pulsante Stop) o Sospendi |
+| Da fare | Avvia | Posticipa (se pianificata) o Ignora |
+| Da fare ignorata | Ripristina | Ripristina |
+
+Si cambiano in "Altro" → **"Gesti"**: per ogni direzione cosa proporre
+(anche nessuna azione), e se il trascinamento lungo esegue subito la prima.
+
+### Date e orari
+Tutti i campi data e ora si compilano con il calendario e l'orologio di
+Android: tocca il campo. Quelli facoltativi hanno la ✕ per svuotarli.
 
 ---
 
@@ -243,6 +271,10 @@ cambia la scadenza del gestionale.
   prima; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
   pianificato o dopo la scadenza (dopo l'ora di scadenza, o dal giorno dopo
   se la scadenza non ha ora).
+- **Ignorare** una voce (gesto o azione "Ignora") invece di cancellarla: resta
+  in fondo alla lista "Da fare", barrata, senza promemoria né evento in
+  calendario; in Home compare solo il giorno in cui l'hai ignorata. Un altro
+  trascinamento la ripristina. Un import dal gestionale non la ripristina.
 - Toccando una voce: "Avvia attività", "Posticipa", "Segna come fatta" /
   "Segna come da fare", "Ripianifica" (o "Modifica" se non pianificata).
 - Una voce può avere più attività (es. un lavoro su più giorni).

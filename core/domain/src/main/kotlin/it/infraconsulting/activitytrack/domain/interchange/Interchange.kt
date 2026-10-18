@@ -79,6 +79,8 @@ data class XTodo(
 	val plannedDate: String? = null,
 	val plannedTime: String? = null,
 	val durationMin: Int? = null,
+	/* set aside in the app (M10); an import never re-creates or restores an ignored to-do */
+	val ignored: Boolean = false,
 )
 
 @Serializable

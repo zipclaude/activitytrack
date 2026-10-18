@@ -27,14 +27,19 @@ interface TodoDao {
 	@Query("SELECT * FROM todo WHERE company_id = :companyId AND external_key = :key")
 	suspend fun byExternalKey(companyId: Long, key: String): TodoEntity?
 
-	/* open first by due date (undated last), then priority (1 = highest) */
+	/* open (not done, not ignored) first by due date (undated last), then priority (1 = highest) */
 	@Query(
-		"SELECT * FROM todo WHERE done = 0 ORDER BY due_epoch_day IS NULL, due_epoch_day, " +
+		"SELECT * FROM todo WHERE done = 0 AND ignored_utc_ms IS NULL ORDER BY due_epoch_day IS NULL, due_epoch_day, " +
 			"due_time_min IS NULL, due_time_min, priority IS NULL, priority, title COLLATE NOCASE",
 	)
 	fun observeOpen(): Flow<List<TodoEntity>>
 
-	@Query("SELECT * FROM todo ORDER BY done, due_epoch_day IS NULL, due_epoch_day, title COLLATE NOCASE")
+	/* ignored and not done, most recently ignored first */
+	@Query("SELECT * FROM todo WHERE done = 0 AND ignored_utc_ms IS NOT NULL ORDER BY ignored_utc_ms DESC")
+	fun observeIgnored(): Flow<List<TodoEntity>>
+
+	/* ignored ones after the others (M10: at the bottom of the lists) */
+	@Query("SELECT * FROM todo ORDER BY done, ignored_utc_ms IS NOT NULL, due_epoch_day IS NULL, due_epoch_day, title COLLATE NOCASE")
 	fun observeAll(): Flow<List<TodoEntity>>
 
 	@Query("SELECT * FROM todo")

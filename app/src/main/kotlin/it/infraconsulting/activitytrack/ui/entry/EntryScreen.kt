@@ -58,6 +58,8 @@ import it.infraconsulting.activitytrack.ui.common.parseDate
 import it.infraconsulting.activitytrack.ui.common.parseDecimal
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
 import it.infraconsulting.activitytrack.ui.common.reasonText
+import it.infraconsulting.activitytrack.ui.common.DateField
+import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.home.statusText
 import java.time.Instant
 import java.time.LocalDate
@@ -274,9 +276,9 @@ private fun ManualSegmentDialog(
 			}
 		},
 	) {
-		TextInput(stringResource(R.string.field_date), date, { date = it })
-		TextInput(stringResource(R.string.field_start), start, { start = it })
-		TextInput(stringResource(R.string.field_end), end, { end = it })
+		DateField(stringResource(R.string.field_date), date, { date = it })
+		TimeField(stringResource(R.string.field_start), start, { start = it })
+		TimeField(stringResource(R.string.field_end), end, { end = it })
 		if (kind == SegmentKind.TRAVEL)
 			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal)
 		Text(stringResource(R.string.segment_hint), style = MaterialTheme.typography.bodySmall)

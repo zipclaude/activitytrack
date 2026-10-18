@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Date field: opens the date picker. Tinted by the text field. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FFFFFFFF"
+      android:fillType="evenOdd"
+      android:pathData="M4,5.5H20V20.5H4ZM6,10V18.5H18V10ZM7,2.5H9V7H7ZM15,2.5H17V7H15ZM8,12H11V15H8Z" />
+</vector>

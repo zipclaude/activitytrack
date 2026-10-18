@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.8 (2026-10-18, M9 planned to-dos added). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.9 (2026-10-18, M10 UI: Home cards, swipe gestures, pickers, ignored to-dos). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -208,6 +208,23 @@ hashtags per kind of time (#lavoro #viaggio #pausa, #pianificata; always Italian
 
 ### 8.2 Consultation and navigation
 
+**Home (M10)**: the big card always shows: the most recent open entry, or the
+one tapped, or an empty-state message; every other open entry has a small
+card (about a third of it) with a resume / pause / complete button; the
+to-dos due or planned by today follow under a separator, one card each, the
+ones ignored today at the bottom.
+
+**Swipe gestures (M10)**, on Home, Agenda list and To-dos, configurable per
+card type and direction (layout-relative start/end): to-do left = Start,
+right = Postpone (if planned) or Ignore, an ignored to-do restores; entry
+left = Pause / Resume, right = Stop (same questions as the button) or
+Suspend. A short swipe reveals the buttons, a long one runs the first
+(switchable). **Ignored** to-dos replace deletion: kept struck through at
+the bottom, no reminder nor calendar event, never restored by an import.
+
+**Pickers (M10)**: every date and time field uses the Material date and time
+pickers (optional ones can be cleared).
+
 Bottom navigation: Home · Agenda · Report · More. The agenda shows the
 report lines and the to-dos due as a list (with search), a day or week
 timeline (concurrent entries side by side) and a month grid with reported
@@ -228,6 +245,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M10 | UI: Home cards, swipe gestures (Gestures screen), date/time pickers, ignored to-dos (schema v5) |
 | M9 | planned to-dos: manual and imported, planned date/time and duration, reminder with postpone / re-plan, agenda planning, calendar events, tags |
 
 Owner priorities (2026-10-17): M4 → M7 in this order.

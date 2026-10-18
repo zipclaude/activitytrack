@@ -3,12 +3,21 @@ package it.infraconsulting.activitytrack.ui.todo
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -19,8 +28,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
@@ -30,39 +46,50 @@ import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
+import it.infraconsulting.activitytrack.domain.settings.GestureSettings
+import it.infraconsulting.activitytrack.domain.settings.Gestures
+import it.infraconsulting.activitytrack.domain.settings.TodoAction
+import it.infraconsulting.activitytrack.domain.settings.TodoSwipe
 import it.infraconsulting.activitytrack.domain.todo.dueOverdue
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
+import it.infraconsulting.activitytrack.ui.common.BLUE
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
-import it.infraconsulting.activitytrack.ui.common.ClickableRow
+import it.infraconsulting.activitytrack.ui.common.DateField
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
+import it.infraconsulting.activitytrack.ui.common.GREEN
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
-import it.infraconsulting.activitytrack.ui.common.SectionHeader
+import it.infraconsulting.activitytrack.ui.common.SwipeAction
+import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.ui.common.SwitchRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
+import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseDate
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-/* To-dos (M4, planned M9): list, add/edit in the app, plan, start an entry, mark done. */
+/* To-dos (M4, planned M9, cards and swipes M10): list, add/edit, plan, start, done, ignore. */
 class TodosViewModel(
 	private val todos: TodoRepository,
 	master: MasterDataRepository,
 	settings: SettingsRepository,
 ) : ActionViewModel() {
 	val open = todos.open.state(emptyList())
+	val ignored = todos.ignored.state(emptyList())
 	val all = todos.all.state(emptyList())
 	val clients = master.clients.state(emptyList())
 	val companies = master.companies.state(emptyList())
 	val settings = settings.settings.state(null)
 
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
+	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
 	fun save(t: TodoEntity, done: () -> Unit) = run(done) { todos.save(t) }
 	fun postpone(t: TodoEntity, minutes: Int) = run { todos.postpone(t.id, minutes) }
 
@@ -85,20 +112,22 @@ internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = TodoEntity
  * date and time (owner, 2026-10-18): "overdue" on Home and in the lists.
  */
 internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean {
-	if (t.done)
+	if (t.done || t.ignoredUtcMs != null)
 		return false
 	val zone = ZoneId.systemDefault()
 	return t.plan()?.let { now.isAfter(it.end(zone, open = false, now = now)) } == true ||
 		dueOverdue(t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, now, zone)
 }
 
+/* "today", else a short local date ("sab 17/10") */
 @Composable
 private fun dayText(epochDay: Long): String {
 	val date = LocalDate.ofEpochDay(epochDay)
-	return if (date == LocalDate.now()) stringResource(R.string.todo_today) else date.toString()
+	val locale = LocalConfiguration.current.locales[0]
+	return if (date == LocalDate.now()) stringResource(R.string.todo_today) else date.format(DateTimeFormatter.ofPattern("EEE d/MM", locale))
 }
 
-/* "client · planned day time (min) · due date time · P1" under the title. */
+/* "client · planned day time (min) · due date time · P1" (the actions dialog). */
 @Composable
 private fun subtitle(t: TodoEntity, clientName: String?): String {
 	val planned = t.plan()?.let { p ->
@@ -110,33 +139,161 @@ private fun subtitle(t: TodoEntity, clientName: String?): String {
 	return listOfNotNull(late, clientName, planned, due, t.priority?.let { "P$it" }).joinToString(" · ")
 }
 
-/* Home section: open to-dos due or planned today, or overdue. */
+/* The time shown at the card's top right: the planned block, else the due date. */
+@Composable
+private fun cardTime(t: TodoEntity): String? {
+	val today = LocalDate.now()
+	t.plan()?.let { p ->
+		val zone = ZoneId.systemDefault()
+		val end = p.end(zone, open = false, now = Instant.now()).atZone(zone).toLocalTime()
+		val span = "${formatMin(p.startMin)}–${formatMin(end.hour * 60 + end.minute)}"
+		return if (p.day == today) span else "${dayText(p.day.toEpochDay())} $span"
+	}
+	val due = t.dueEpochDay?.let(LocalDate::ofEpochDay) ?: return null
+	val text = (if (due == today) "" else "${dayText(due.toEpochDay())} ") + (t.dueTimeMin?.let(::formatMin) ?: "")
+	return stringResource(R.string.todo_due_at, text.trim())
+}
+
+@Composable
+private fun Chip(text: String, container: Color, content: Color) {
+	Surface(shape = RoundedCornerShape(50), color = container, contentColor = content) {
+		Text(text, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp))
+	}
+}
+
+/*
+ * One to-do as a card (M10): title and time, client and labels; an ignored
+ * one is struck through and dimmed.
+ */
+@Composable
+fun TodoCard(t: TodoEntity, clientName: String?, onClick: () -> Unit) {
+	val ignored = t.ignoredUtcMs != null
+	val late = overdue(t)
+	val body: @Composable () -> Unit = {
+		Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+			Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+				Text(
+					(if (t.done) "✓ " else "") + t.title,
+					style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+					textDecoration = if (ignored) TextDecoration.LineThrough else null,
+					maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+				)
+				cardTime(t)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+			}
+			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+				clientName?.let {
+					Text(
+						it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+						textDecoration = if (ignored) TextDecoration.LineThrough else null,
+					)
+				}
+				val cs = MaterialTheme.colorScheme
+				when {
+					ignored -> Chip(stringResource(R.string.todo_ignored), cs.surfaceVariant, cs.onSurfaceVariant)
+					late -> Chip(stringResource(R.string.todo_overdue), cs.errorContainer, cs.onErrorContainer)
+					t.plan() != null -> Chip(stringResource(R.string.todo_planned_chip), cs.secondaryContainer, cs.onSecondaryContainer)
+				}
+				t.priority?.takeIf { !ignored }?.let { Chip("P$it", cs.surfaceVariant, cs.onSurfaceVariant) }
+			}
+		}
+	}
+	if (ignored)
+		OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth().alpha(0.6f)) { body() }
+	else
+		Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) { body() }
+}
+
+/* The buttons a swipe reveals on a to-do card ([swipe] for that direction). */
+@Composable
+internal fun todoSwipeActions(
+	t: TodoEntity,
+	swipe: TodoSwipe,
+	vm: TodosViewModel,
+	snooze: Int,
+	onStart: (Long) -> Unit,
+	onReplan: (TodoEntity) -> Unit,
+): List<SwipeAction> {
+	val grey = MaterialTheme.colorScheme.outline
+	return Gestures.todoActions(swipe, ignored = t.ignoredUtcMs != null, planned = t.plan() != null, done = t.done).map { a ->
+		when (a) {
+			TodoAction.START -> SwipeAction(stringResource(R.string.swipe_start), R.drawable.ic_cmd_play, GREEN, Color.White) { onStart(t.id) }
+			TodoAction.POSTPONE -> SwipeAction(stringResource(R.string.action_postpone, snooze), R.drawable.ic_clock, BLUE, Color.White) { vm.postpone(t, snooze) }
+			TodoAction.IGNORE -> SwipeAction(stringResource(R.string.swipe_ignore), R.drawable.ic_ignore, grey, Color.White) { vm.setIgnored(t, true) }
+			TodoAction.RESTORE -> SwipeAction(stringResource(R.string.swipe_restore), R.drawable.ic_restore, BLUE, Color.White) { vm.setIgnored(t, false) }
+			TodoAction.DONE -> SwipeAction(stringResource(R.string.todo_mark_done), R.drawable.ic_done, GREEN, Color.White) { vm.setDone(t, true) }
+			TodoAction.REPLAN -> SwipeAction(stringResource(R.string.action_replan), R.drawable.ic_calendar, BLUE, Color.White) { onReplan(t) }
+		}
+	}
+}
+
+/* A to-do card with its swipe gestures (Home, To-dos, Agenda list). */
+@Composable
+fun TodoSwipeCard(
+	t: TodoEntity,
+	clientName: String?,
+	vm: TodosViewModel,
+	onStart: (Long) -> Unit,
+	onReplan: (TodoEntity) -> Unit,
+	onClick: () -> Unit,
+) {
+	val settings by vm.settings.collectAsState()
+	val g = settings?.gestures ?: GestureSettings()
+	val snooze = settings?.planSnoozeMin ?: 30
+	SwipeCard(
+		toStart = todoSwipeActions(t, g.todoToStart, vm, snooze, onStart, onReplan),
+		toEnd = todoSwipeActions(t, g.todoToEnd, vm, snooze, onStart, onReplan),
+		fullSwipe = g.fullSwipe,
+		shape = CardDefaults.shape,
+	) { TodoCard(t, clientName, onClick) }
+}
+
+/* "To do today ———— n" (M10: the to-do area under a separator). */
+@Composable
+private fun TodoHeader(count: Int) {
+	Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+		Text(stringResource(R.string.todo_due_today), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+		HorizontalDivider(Modifier.weight(1f))
+		Text(count.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+	}
+}
+
+/*
+ * Home section: open to-dos due or planned today, or overdue, one card
+ * each; the ones ignored today at the bottom (owner, 2026-10-18).
+ */
 @Composable
 fun TodoTodaySection(onStart: (Long) -> Unit) {
 	val vm = todosViewModel()
 	val open by vm.open.collectAsState()
+	val ignored by vm.ignored.collectAsState()
 	val clients by vm.clients.collectAsState()
-	val today = LocalDate.now().toEpochDay()
-	val due = open.filter { t -> listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today } }
+	val today = LocalDate.now()
+	val due = open.filter { t -> listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today.toEpochDay() } }
 		.sortedWith(compareBy({ it.planEpochDay ?: it.dueEpochDay }, { it.planStartMin ?: it.dueTimeMin ?: 1440 }))
-	if (due.isEmpty())
+	val zone = ZoneId.systemDefault()
+	val ignoredToday = ignored.filter { t -> t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == today }
+	if (due.isEmpty() && ignoredToday.isEmpty())
 		return
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
-	Column {
-		SectionHeader(stringResource(R.string.todo_due_today))
-		for (t in due)
-			ClickableRow(t.title, subtitle(t, clients.firstOrNull { it.id == t.clientId }?.name)) { selected = t }
+	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+		TodoHeader(due.size)
+		for (t in due + ignoredToday)
+			TodoSwipeCard(
+				t, clients.firstOrNull { it.id == t.clientId }?.name, vm, onStart,
+				onReplan = { vm.clearError(); editing = it },
+			) { selected = t }
 	}
 	selected?.let { t -> TodoActions(t, vm, onStart = { onStart(t.id) }, onEdit = { vm.clearError(); editing = t }) { selected = null } }
 	editing?.let { t -> TodoEditDialog(t, vm) { editing = null } }
 }
 
-/* Start / postpone / done / edit (re-plan) for one to-do. */
+/* Start / postpone / done / ignore / edit (re-plan) for one to-do. */
 @Composable
 internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit, onEdit: (() -> Unit)?, onDismiss: () -> Unit) {
 	val clients by vm.clients.collectAsState()
 	val settings by vm.settings.collectAsState()
+	val ignored = t.ignoredUtcMs != null
 	AlertDialog(
 		onDismissRequest = onDismiss,
 		title = { Text(t.title) },
@@ -146,13 +303,19 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 				t.notes?.let { Text(it) }
 				if (t.refs.isNotBlank())
 					Text(t.refs.lines().joinToString(" · "), style = MaterialTheme.typography.bodySmall)
-				if (!t.done)
-					TextButton(onClick = { onDismiss(); onStart() }) { Text(stringResource(R.string.todo_start)) }
-				val snooze = settings?.planSnoozeMin
-				if (!t.done && t.plan() != null && snooze != null)
-					TextButton(onClick = { vm.postpone(t, snooze); onDismiss() }) { Text(stringResource(R.string.action_postpone, snooze)) }
-				TextButton(onClick = { vm.setDone(t, !t.done); onDismiss() }) {
-					Text(stringResource(if (t.done) R.string.todo_reopen else R.string.todo_mark_done))
+				if (ignored)
+					TextButton(onClick = { vm.setIgnored(t, false); onDismiss() }) { Text(stringResource(R.string.swipe_restore)) }
+				else {
+					if (!t.done)
+						TextButton(onClick = { onDismiss(); onStart() }) { Text(stringResource(R.string.todo_start)) }
+					val snooze = settings?.planSnoozeMin
+					if (!t.done && t.plan() != null && snooze != null)
+						TextButton(onClick = { vm.postpone(t, snooze); onDismiss() }) { Text(stringResource(R.string.action_postpone, snooze)) }
+					TextButton(onClick = { vm.setDone(t, !t.done); onDismiss() }) {
+						Text(stringResource(if (t.done) R.string.todo_reopen else R.string.todo_mark_done))
+					}
+					if (!t.done)
+						TextButton(onClick = { vm.setIgnored(t, true); onDismiss() }) { Text(stringResource(R.string.swipe_ignore)) }
 				}
 				onEdit?.let {
 					TextButton(onClick = { onDismiss(); it() }) {
@@ -166,18 +329,22 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 	)
 }
 
-/* [editId]: open that to-do in the editor at once (re-plan from the reminder). */
+/*
+ * [editId]: open that to-do in the editor at once (re-plan from the reminder).
+ * Open ones first, ignored ones at the bottom, done ones on request.
+ */
 @Composable
 fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Unit) {
 	val vm = todosViewModel()
 	val open by vm.open.collectAsState()
+	val ignored by vm.ignored.collectAsState()
 	val all by vm.all.collectAsState()
 	val clients by vm.clients.collectAsState()
 	var showDone by remember { mutableStateOf(false) }
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	var opened by rememberSaveable { mutableStateOf(false) }
-	val list = if (showDone) all else open
+	val list = if (showDone) all else open + ignored
 
 	LaunchedEffect(editId, all) {
 		if (editId != null && !opened)
@@ -193,13 +360,20 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 		onBack = onBack,
 		actions = { AddButton { vm.clearError(); editing = newTodo() } },
 	) { padding ->
-		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+		LazyColumn(
+			modifier = Modifier.fillMaxSize().padding(padding),
+			verticalArrangement = Arrangement.spacedBy(10.dp),
+		) {
 			item { Column(Modifier.padding(horizontal = 16.dp)) { SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it } } }
 			if (list.isEmpty())
 				item { EmptyText() }
 			items(list, key = { it.id }) { t ->
-				val title = if (t.done) "✓ ${t.title}" else t.title
-				ClickableRow(title, subtitle(t, clients.firstOrNull { it.id == t.clientId }?.name)) { selected = t }
+				Column(Modifier.padding(horizontal = 16.dp)) {
+					TodoSwipeCard(
+						t, clients.firstOrNull { it.id == t.clientId }?.name, vm, onStart,
+						onReplan = { vm.clearError(); editing = it },
+					) { selected = t }
+				}
 			}
 		}
 	}
@@ -282,11 +456,11 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		) { clientId = it }
 		if (clientId == null)
 			ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
-		TextInput(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it })
-		TextInput(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it })
+		DateField(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true)
+		TimeField(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true)
 		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)
-		TextInput(stringResource(R.string.todo_field_due), due, { due = it })
-		TextInput(stringResource(R.string.todo_field_time), time, { time = it })
+		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true)
+		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true)
 		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it })
 		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false)
 		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false)

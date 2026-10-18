@@ -29,6 +29,7 @@ import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
 import it.infraconsulting.activitytrack.ui.common.reasonText
+import it.infraconsulting.activitytrack.ui.common.TimeField
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -54,7 +55,7 @@ fun LateEntryScreen(epochDay: Long, onBack: () -> Unit) {
 			verticalArrangement = Arrangement.spacedBy(12.dp),
 		) {
 			Text(stringResource(R.string.late_entry_hint, day.toString()))
-			TextInput(stringResource(R.string.field_time), time, { time = it }, keyboardType = KeyboardType.Number)
+			TimeField(stringResource(R.string.field_time), time, { time = it })
 			error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error) }
 			Button(onClick = { vm.save(day, time, onBack) }, modifier = Modifier.fillMaxWidth()) {
 				Text(stringResource(R.string.action_save))
