@@ -51,6 +51,9 @@ class TodosViewModel(private val todos: TodoRepository, master: MasterDataReposi
 
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
 	fun save(t: TodoEntity, done: () -> Unit) = run(done) { todos.save(t) }
+
+	/* a to-do belongs to a company: through its client or chosen directly */
+	fun missingCompany() = fail(ValidationException.Reason.CLIENT_REQUIRED)
 }
 
 @Composable
@@ -160,8 +163,10 @@ private fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, error: Valid
 		onDismiss = onClose,
 		onConfirm = {
 			val company = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
-			if (company == null)
+			if (company == null) {
+				vm.missingCompany()
 				return@EditDialog
+			}
 			vm.save(
 				initial.copy(
 					title = title, companyId = company, clientId = clientId,
