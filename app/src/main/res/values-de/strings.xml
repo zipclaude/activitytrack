@@ -431,4 +431,6 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="sec_notifications">Benachrichtigungen</string>
   <string name="notif_settings_hint">Banner, Ton und Vibration jeder Benachrichtigungsart werden in Android eingestellt: zum Ändern antippen.</string>
   <string name="notif_all">Alle Benachrichtigungen der App</string>
+  <string name="agenda_fit">Einpassen</string>
+  <string name="agenda_scroll">Scrollen</string>
 </resources>
