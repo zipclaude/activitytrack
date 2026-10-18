@@ -53,12 +53,12 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M1 core tracking | **done**, device-tested, merged (PR #1, 2026-10-17) |
 | M2 travel & location | **done**, device-tested, merged (PR #2, 2026-10-17) |
 | M3 widgets, tile, attachments, dictation | **done**, device-tested, merged (PR #3, 2026-10-17) |
-| M4 export and import | **implemented** (PR #4), device test pending |
-| M5 external calendar sync (generic / per company; Google or CalDAV) | **implemented** (PR #5, stacked on #4), device test pending |
-| M6 consultation: list, day agenda, week, month | **implemented** (PR #6, stacked on #5), device test pending |
+| M4 export and import | **implemented** (PR #4), device-tested 2026-10-18 (import, idempotence, start from to-do, done prompt, JSON export) |
+| M5 external calendar sync (generic / per company; Google or CalDAV) | **implemented** (PR #5, stacked on #4), device-tested 2026-10-18 on the local calendar |
+| M6 consultation: list, day agenda, week, month | **implemented** (PR #6, stacked on #5), device-tested 2026-10-18 |
 | M7 UI polish | first pass (PR #7, stacked on #6), owner review pending |
-| M8 hardening | review fixes, backup restore, manual (PR #8, stacked on #7), device test pending |
-| M9 planned to-dos | **implemented** (branch `m9-planning`, stacked on #8), device test pending |
+| M8 hardening | review fixes, backup restore, manual (PR #8, stacked on #7), restore device-tested 2026-10-18; manual read pending |
+| M9 planned to-dos | **implemented** (PR #9, stacked on #8), device-tested 2026-10-18; reminder at 07:55 of 2026-10-19 still to observe |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
@@ -122,6 +122,11 @@ Branch `beta` = copy of the top of the stack for device tests; CI builds it on p
 and publishes the `app-debug` APK artifact (14 days).
 
 ### Device tests
+Done on 2026-10-18 (M4, M5 local calendar, M6, M9, restore); fixes in PR #9:
+agenda editor company, list time span, due-date overdue, restore time.
+Still open: items 7 (manual) and 8 (cleanup); share sheet and company
+"Management system" not exercised; week view text wraps in narrow blocks.
+
 1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
    export → import (report: 1 company, 2 clients, 1 site, 3 to-dos);
    import again (all unchanged); Home "To do today" → start from to-do →
