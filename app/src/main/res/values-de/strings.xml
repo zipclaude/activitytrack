@@ -427,4 +427,5 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="short_text">Wahrscheinlich versehentlich gestartet. Verwerfen?</string>
   <string name="short_discard">Verwerfen</string>
   <string name="short_keep">Behalten und beenden</string>
+  <string name="todo_filter_today">Heute</string>
 </resources>

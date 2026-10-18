@@ -428,4 +428,5 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="short_text">Probablemente iniciada por error. ¿Descartarla?</string>
   <string name="short_discard">Descartar</string>
   <string name="short_keep">Conservar y terminar</string>
+  <string name="todo_filter_today">Hoy</string>
 </resources>

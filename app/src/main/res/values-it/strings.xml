@@ -428,4 +428,5 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="short_text">Probabilmente avviata per errore. La scarto?</string>
   <string name="short_discard">Scarta</string>
   <string name="short_keep">Tieni e termina</string>
+  <string name="todo_filter_today">Oggi</string>
 </resources>
