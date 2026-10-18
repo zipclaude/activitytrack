@@ -46,6 +46,7 @@ import it.infraconsulting.activitytrack.ui.report.ExportScreen
 import it.infraconsulting.activitytrack.ui.settings.SettingsScreen
 import it.infraconsulting.activitytrack.ui.setup.SetupScreen
 import it.infraconsulting.activitytrack.ui.start.StartScreen
+import it.infraconsulting.activitytrack.ui.todo.TodosScreen
 
 class MainActivity : ComponentActivity() {
 	/* entry to open, from a notification (consumed by the navigator) */
@@ -142,9 +143,14 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 			onDay = { open(Screen.Day) },
 			onMasterData = { open(Screen.MasterData) },
 			onSettings = { open(Screen.Settings) },
+			onTodos = { open(Screen.Todos) },
+			onExchange = { open(Screen.Export) },
+			onStartTodo = { open(Screen.StartFromTodo(it)) },
 		)
 		Screen.Start -> StartScreen(back)
 		is Screen.StartFor -> StartScreen(back, top.clientId)
+		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
+		Screen.Todos -> TodosScreen(back) { open(Screen.StartFromTodo(it)) }
 		is Screen.Entry -> EntryScreen(top.id, back)
 		Screen.Day -> DayScreen(back, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
 		Screen.Export -> ExportScreen(back)

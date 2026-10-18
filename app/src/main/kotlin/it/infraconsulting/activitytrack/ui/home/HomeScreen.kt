@@ -48,6 +48,7 @@ import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.formatMin
+import it.infraconsulting.activitytrack.ui.todo.TodoTodaySection
 import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.delay
@@ -113,6 +114,9 @@ fun HomeScreen(
 	onDay: () -> Unit,
 	onMasterData: () -> Unit,
 	onSettings: () -> Unit,
+	onTodos: () -> Unit,
+	onExchange: () -> Unit,
+	onStartTodo: (Long) -> Unit,
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData) }
 	val cards by vm.cards.collectAsState()
@@ -140,6 +144,14 @@ fun HomeScreen(
 					Text("⋮", style = MaterialTheme.typography.titleLarge)
 				}
 				DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+					DropdownMenuItem(
+						text = { Text(stringResource(R.string.todo_title)) },
+						onClick = { menu = false; onTodos() },
+					)
+					DropdownMenuItem(
+						text = { Text(stringResource(R.string.export_title)) },
+						onClick = { menu = false; onExchange() },
+					)
 					DropdownMenuItem(
 						text = { Text(stringResource(R.string.md_title)) },
 						onClick = { menu = false; onMasterData() },
@@ -173,6 +185,7 @@ fun HomeScreen(
 						onOpen = { onOpenEntry(c.entry.id) },
 					)
 				}
+				item { TodoTodaySection(onStartTodo) }
 			}
 			Button(onClick = onStart, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
 				Text(stringResource(R.string.home_start))
