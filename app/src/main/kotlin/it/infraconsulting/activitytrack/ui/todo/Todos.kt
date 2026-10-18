@@ -497,6 +497,10 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	var priority by remember { mutableStateOf(initial.priority?.toString().orEmpty()) }
 	var notes by remember { mutableStateOf(initial.notes.orEmpty()) }
 	var refs by remember { mutableStateOf(initial.refs) }
+	/* a plan needs both day and time: the missing one is flagged on its field after Save (M13) */
+	var tried by remember { mutableStateOf(false) }
+	val planTimeMissing = tried && planDay.isNotBlank() && planTime.isBlank()
+	val planDayMissing = tried && planTime.isNotBlank() && planDay.isBlank()
 	val coNames = companies.associate { it.id to it.name }
 	EditDialog(
 		title = stringResource(if (initial.id == 0L) R.string.todo_new else R.string.todo_edit),
@@ -506,6 +510,10 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			val company = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
 			if (company == null) {
 				vm.missingCompany()
+				return@EditDialog
+			}
+			if (planDay.isBlank() != planTime.isBlank()) {
+				tried = true
 				return@EditDialog
 			}
 			val pd = optional(planDay) { parseDate(it)?.toEpochDay() }
@@ -550,8 +558,14 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
 				ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
 			}
-		DateField(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true)
-		TimeField(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true)
+		DateField(
+			stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true,
+			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing },
+		)
+		TimeField(
+			stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true,
+			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing },
+		)
 		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)
 		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true)
 		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true)

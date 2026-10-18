@@ -417,4 +417,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="color_none">Keine Farbe</string>
   <string name="sec_color">Farbe</string>
   <string name="todo_filter_all">Alle Firmen</string>
+  <!-- M13 backlog -->
+  <string name="todo_plan_time_missing">Auch die geplante Uhrzeit angeben</string>
+  <string name="todo_plan_date_missing">Auch das geplante Datum angeben</string>
 </resources>

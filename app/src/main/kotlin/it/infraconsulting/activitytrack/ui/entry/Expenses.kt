@@ -33,6 +33,9 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
+import androidx.compose.foundation.layout.Box
+import it.infraconsulting.activitytrack.ui.common.MAGENTA
+import it.infraconsulting.activitytrack.ui.common.ColoredActionButton
 import it.infraconsulting.activitytrack.data.db.AttachmentKind
 import it.infraconsulting.activitytrack.data.db.ExpenseEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
@@ -117,8 +120,8 @@ fun ExpensesSection(entryId: Long) {
 				"${formatEur(e.amountCents)} · ${e.description}",
 				if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
 			) { deleting = e }
-		OutlinedButton(onClick = { vm.clearError(); adding = true }, modifier = Modifier.padding(horizontal = 16.dp)) {
-			Text(stringResource(R.string.expense_add))
+		Box(Modifier.padding(horizontal = 16.dp)) {
+			ColoredActionButton(stringResource(R.string.expense_add), R.drawable.ic_shortcut_expense, MAGENTA, { vm.clearError(); adding = true })
 		}
 	}
 	if (adding) {

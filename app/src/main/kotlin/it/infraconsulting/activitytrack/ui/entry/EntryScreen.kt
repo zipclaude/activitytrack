@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.ColoredActionButton
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
@@ -147,13 +148,13 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			}
 
 			item {
-				Row {
+				Column {
 					SectionHeader(stringResource(R.string.segments))
-					TextButton(onClick = { vm.clearError(); adding = SegmentKind.TRAVEL }) {
-						Text(stringResource(R.string.add_travel))
-					}
-					TextButton(onClick = { vm.clearError(); adding = SegmentKind.PAUSE }) {
-						Text(stringResource(R.string.add_pause))
+					Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+						val travel = commandStyle(EntryCommand.TRAVEL)!!
+						val pause = commandStyle(EntryCommand.PAUSE)!!
+						ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
+						ColoredActionButton(stringResource(R.string.add_pause), pause.icon, pause.container, { vm.clearError(); adding = SegmentKind.PAUSE }, pause.content)
 					}
 				}
 			}
