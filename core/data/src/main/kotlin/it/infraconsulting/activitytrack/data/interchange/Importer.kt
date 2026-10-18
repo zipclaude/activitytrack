@@ -23,6 +23,7 @@ import it.infraconsulting.activitytrack.domain.interchange.XCompany
 import it.infraconsulting.activitytrack.domain.interchange.XEntry
 import it.infraconsulting.activitytrack.domain.interchange.XSite
 import it.infraconsulting.activitytrack.domain.interchange.XTodo
+import it.infraconsulting.activitytrack.domain.todo.TodoPlan
 import it.infraconsulting.activitytrack.domain.model.EntryInvariants
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
@@ -235,6 +236,12 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		val clientId = x.clientKey?.let { clientId(r, companyId, it) ?: return r.skip("todos", x.key, "unknown client ${x.clientKey}") }
 		val due = x.dueDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "due date $it") }
 		val time = x.dueTime?.let { minutes(it) ?: return r.skip("todos", x.key, "due time $it") }
+		val planDay = x.plannedDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "planned date $it") }
+		val planTime = x.plannedTime?.let { minutes(it) ?: return r.skip("todos", x.key, "planned time $it") }
+		if ((planDay == null) != (planTime == null))
+			return r.skip("todos", x.key, "planned date and time go together")
+		val duration = x.durationMin?.takeIf { it in 1..TodoPlan.MAX_DURATION_MIN }
+			?: x.durationMin?.let { return r.skip("todos", x.key, "duration $it") }
 		val refs = x.refs.map(String::trim).filter(String::isNotEmpty).joinToString("\n")
 		val existing = todos.byExternalKey(companyId, x.key) ?: todos.byUid(x.key)
 		if (existing == null) {
@@ -244,6 +251,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 					uid = UUID.randomUUID().toString(), companyId = companyId, clientId = clientId, externalKey = x.key,
 					title = x.title.trim(), notes = x.notes?.trim()?.ifEmpty { null }, refs = refs, dueEpochDay = due,
 					dueTimeMin = time, priority = x.priority, done = x.done, createdUtcMs = now, updatedUtcMs = now,
+					planEpochDay = planDay, planStartMin = planTime, durationMin = duration,
 				),
 			)
 			r.added("todos")
@@ -256,6 +264,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			"refs".takeIf { existing.refs != refs },
 			"due".takeIf { existing.dueEpochDay != due || existing.dueTimeMin != time },
 			"priority".takeIf { existing.priority != x.priority },
+			"plan".takeIf { existing.planEpochDay != planDay || existing.planStartMin != planTime || existing.durationMin != duration },
 			"done".takeIf { existing.done != x.done },
 		)
 		if (diff.isEmpty()) r.same("todos") else r.conflict("todos", x.key, diff.joinToString())
