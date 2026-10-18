@@ -228,7 +228,8 @@ cambia la scadenza del gestionale.
   giornata).
 - **Promemoria**: 15 minuti prima dell'ora pianificata arriva la notifica
   "Titolo alle HH:MM" con "Avvia attività", "Posticipa 30 min" (sposta la
-  pianificazione; il promemoria torna prima della nuova ora) e "Ripianifica"
+  pianificazione di 30 minuti dall'ora pianificata o, se è già passata, da
+  adesso; il promemoria torna prima della nuova ora) e "Ripianifica"
   (apre la voce). Arriva anche fuori orario e nei giorni liberi; sparisce se
   la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
   passato.

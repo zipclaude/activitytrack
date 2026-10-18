@@ -6,6 +6,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /*
  * When a to-do is planned (M9, owner decisions 2026-10-18): a local day and
@@ -54,6 +55,19 @@ data class TodoPlan(val day: LocalDate, val startMin: Int, val durationMin: Int?
 	fun postponed(minutes: Int): TodoPlan {
 		val t = day.atTime(startMin / 60, startMin % 60).plusMinutes(minutes.toLong())
 		return copy(day = t.toLocalDate(), startMin = t.hour * 60 + t.minute)
+	}
+
+	/*
+	 * "Postpone" on the reminder (owner, 2026-10-18): [minutes] after the
+	 * planned start, or after [now] (next whole minute) once the start has
+	 * passed, so a late answer does not bring the reminder straight back.
+	 */
+	fun postponed(minutes: Int, now: Instant, zone: ZoneId): TodoPlan {
+		if (!now.isAfter(start(zone)))
+			return postponed(minutes)
+		val local = now.atZone(zone).toLocalDateTime()
+		val next = local.truncatedTo(ChronoUnit.MINUTES).let { if (it == local) it else it.plusMinutes(1) }
+		return copy(day = next.toLocalDate(), startMin = next.hour * 60 + next.minute).postponed(minutes)
 	}
 
 	companion object {

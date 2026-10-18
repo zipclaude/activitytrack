@@ -162,8 +162,7 @@ and publishes the `app-debug` APK artifact (14 days).
 - M9: "tags per segment" read as hashtags on the last line of the calendar
   event description (#lavoro #viaggio #pausa per kind of time in the entry,
   #pianificata on planned to-dos; localised); planned events are TENTATIVE.
-- M9: Postpone moves the plan (not only the reminder) by the step; the
-  reminder also fires outside working hours and on days off; it is dropped
+- M9: the reminder also fires outside working hours and on days off; it is dropped
   once the block is over, the to-do is done/re-planned or an entry runs from it.
 - M9: no duration → 1 h block growing hour by hour while open, capped at the
   end of the planned day; done to-dos leave the calendar; events up to 365
@@ -227,6 +226,7 @@ and publishes the `app-debug` APK artifact (14 days).
 | 2026-10-17 | Owner away: M4–M7 implemented autonomously as stacked PRs #4–#7; provisional choices listed in §5 for review |
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
+| 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
 | 2026-10-18 | M9 planned to-dos: manual add also from the agenda; planned slot separate from the due date; optional duration, else 1 h growing hourly; in agenda and calendar, tags per kind of time; states open → planned (date+time) → done, overdue highlighted on Home; reminder lead and postpone step configurable (advanced, defaults 15 / 30 min); plan in the interchange format; own PR |
 
 ## 7. Pitfalls to remember

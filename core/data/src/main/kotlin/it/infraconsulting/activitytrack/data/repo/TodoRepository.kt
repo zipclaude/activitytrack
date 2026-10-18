@@ -8,6 +8,7 @@ import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.todo.TodoPlan
 import java.time.Clock
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 
 /*
@@ -62,10 +63,10 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 		dao.update(t.copy(done = done, updatedUtcMs = clock.millis()))
 	}
 
-	/* The plan moved [minutes] later ("postpone" on the reminder); the duration stays. */
+	/* The plan moved [minutes] after its start, or after now once started ("postpone"); the duration stays. */
 	suspend fun postpone(id: Long, minutes: Int) = db.withTransaction {
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
-		val p = t.plan()?.postponed(minutes) ?: return@withTransaction
+		val p = t.plan()?.postponed(minutes, clock.instant(), ZoneId.systemDefault()) ?: return@withTransaction
 		dao.update(t.copy(planEpochDay = p.day.toEpochDay(), planStartMin = p.startMin, updatedUtcMs = clock.millis()))
 	}
 
