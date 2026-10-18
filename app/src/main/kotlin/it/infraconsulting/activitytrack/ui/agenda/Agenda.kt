@@ -2,7 +2,9 @@
 package it.infraconsulting.activitytrack.ui.agenda
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,11 +35,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -52,15 +56,22 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
 import it.infraconsulting.activitytrack.data.repo.TodoRepository
+import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.ui.appViewModel
+import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.fold
+import it.infraconsulting.activitytrack.ui.todo.TodoActions
+import it.infraconsulting.activitytrack.ui.todo.TodoEditDialog
+import it.infraconsulting.activitytrack.ui.todo.newTodo
+import it.infraconsulting.activitytrack.ui.todo.todosViewModel
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -90,7 +101,21 @@ data class AgendaItem(
 	val running: Boolean,
 )
 
-data class AgendaTodo(val id: Long, val day: LocalDate, val timeMin: Int?, val title: String)
+/*
+ * An open to-do on the day it is planned (a block from [start] to [end]) or,
+ * without a plan, on its due day (a line, [timeMin] the due time).
+ */
+data class AgendaTodo(
+	val todo: TodoEntity,
+	val day: LocalDate,
+	val timeMin: Int?,
+	val start: Instant? = null,
+	val end: Instant? = null,
+) {
+	val id get() = todo.id
+	val title get() = todo.title
+	val planned get() = start != null
+}
 
 data class AgendaData(
 	val from: LocalDate,
@@ -103,7 +128,7 @@ data class AgendaData(
 /*
  * Consultation (M6): the same lines as the reports (day attribution,
  * rounding, a running entry ending now) for the visible period, plus the
- * open to-dos due in it. Reloads on every entry change.
+ * open to-dos planned or due in it. Reloads on every entry or to-do change.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgendaViewModel(
@@ -154,9 +179,14 @@ class AgendaViewModel(
 				)
 			}
 		}
+		val now = Instant.now()
 		val todos = open.mapNotNull { t ->
-			val day = t.dueEpochDay?.let(LocalDate::ofEpochDay) ?: return@mapNotNull null
-			if (day < from || day > to) null else AgendaTodo(t.id, day, t.dueTimeMin, t.title)
+			val p = t.plan()
+			val item = if (p != null)
+				AgendaTodo(t, p.day, p.startMin, p.start(zone), p.end(zone, true, now))
+			else
+				AgendaTodo(t, t.dueEpochDay?.let(LocalDate::ofEpochDay) ?: return@mapNotNull null, t.dueTimeMin)
+			item.takeIf { it.day in from..to }
 		}
 		return AgendaData(from, to, items, todos, report.days.associate { it.day to it.reported })
 	}
@@ -190,15 +220,24 @@ private fun clock(i: Instant, zone: ZoneId): String = i.atZone(zone).toLocalTime
 @Composable
 fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val vm = appViewModel { AgendaViewModel(it.reports, it.settings, it.todos) }
+	val todosVm = todosViewModel()
 	val mode by vm.mode.collectAsState()
 	val anchor by vm.anchor.collectAsState()
 	val data by vm.data.collectAsState()
 	val locale = LocalConfiguration.current.locales[0]
+	var selected by remember { mutableStateOf<TodoEntity?>(null) }
+	var editing by remember { mutableStateOf<TodoEntity?>(null) }
+	/* planning from the agenda (M9): a tap on a free slot or "Add" opens a new planned to-do */
+	val plan: (LocalDate, Int) -> Unit = { day, min -> todosVm.clearError(); editing = newTodo(day, min) }
+	val onTodo: (TodoEntity) -> Unit = { selected = it }
 
 	ScreenScaffold(
 		title = stringResource(R.string.nav_agenda),
 		onBack = null,
-		actions = { TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.agenda_today)) } },
+		actions = {
+			AddButton { plan(anchor, defaultSlot(anchor)) }
+			TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.agenda_today)) }
+		},
 	) { padding ->
 		Column(Modifier.fillMaxSize().padding(padding)) {
 			Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -221,15 +260,27 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 			HorizontalDivider()
 			val d = data ?: return@Column
 			when (mode) {
-				AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onStartTodo)
-				AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, minuteHeight = 1.2.dp, onOpenEntry, onStartTodo)
-				AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, minuteHeight = 0.8.dp, onOpenEntry, onStartTodo) {
+				AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onTodo)
+				AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, minuteHeight = 1.2.dp, onOpenEntry, onTodo, plan)
+				AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, minuteHeight = 0.8.dp, onOpenEntry, onTodo, plan) {
 					vm.open(it, AgendaMode.DAY)
 				}
 				AgendaMode.MONTH -> MonthView(anchor, d, locale) { vm.open(it, AgendaMode.DAY) }
 			}
 		}
 	}
+	selected?.let { t ->
+		TodoActions(t, todosVm, onStart = { onStartTodo(t.id) }, onEdit = { todosVm.clearError(); editing = t }) { selected = null }
+	}
+	editing?.let { t -> TodoEditDialog(t, todosVm) { editing = null } }
+}
+
+/* "Add": the next half hour today, 09:00 on other days. */
+private fun defaultSlot(day: LocalDate): Int {
+	if (day != LocalDate.now())
+		return 9 * 60
+	val now = LocalTime.now()
+	return minOf(((now.hour * 60 + now.minute) / 30 + 1) * 30, 23 * 60 + 30)
 }
 
 private fun periodTitle(m: AgendaMode, a: LocalDate, locale: Locale): String = when (m) {
@@ -244,7 +295,7 @@ private fun periodTitle(m: AgendaMode, a: LocalDate, locale: Locale): String = w
 
 /* Days of the month with their lines and to-dos; the search matches client and activity. */
 @Composable
-private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
+private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit, onTodo: (TodoEntity) -> Unit) {
 	var query by rememberSaveable { mutableStateOf("") }
 	val zone = ZoneId.systemDefault()
 	val q = fold(query)
@@ -289,10 +340,13 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 						Text(hm(it.reported), style = MaterialTheme.typography.bodyMedium)
 					}
 				}
-				items(todos.filter { it.day == day }, key = { "t${it.id}" }) { t ->
+				items(todos.filter { it.day == day }.sortedBy { it.timeMin ?: 1440 }, key = { "t${it.id}" }) { t ->
 					Text(
-						"☐ " + (t.timeMin?.let { "%02d:%02d ".format(it / 60, it % 60) } ?: "") + t.title,
-						modifier = Modifier.fillMaxWidth().clickable { onStartTodo(t.id) }.padding(horizontal = 16.dp, vertical = 6.dp),
+						"☐ " + listOfNotNull(
+							t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.let { e -> "–${clock(e, zone)}" } ?: "") },
+							t.title,
+						).joinToString(" "),
+						modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
 						color = MaterialTheme.colorScheme.primary,
 					)
 				}
@@ -303,7 +357,9 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 
 /*
  * Day or week timeline: hours down the side, one column per day, entries as
- * blocks from start to end; concurrent entries share the column width.
+ * blocks from start to end, planned to-dos as outlined blocks; concurrent
+ * blocks share the column width. A tap on a free slot plans a to-do there
+ * (half-hour steps); unplanned to-dos due in the period are listed on top.
  */
 @Composable
 private fun Timeline(
@@ -312,17 +368,21 @@ private fun Timeline(
 	locale: Locale,
 	minuteHeight: Dp,
 	onOpenEntry: (Long) -> Unit,
-	onStartTodo: (Long) -> Unit,
+	onTodo: (TodoEntity) -> Unit,
+	onPlan: (LocalDate, Int) -> Unit,
 	onDayHeader: ((LocalDate) -> Unit)? = null,
 ) {
 	val zone = ZoneId.systemDefault()
-	val byDay = days.associateWith { day -> d.items.filter { it.day == day } }
+	val byDay = days.associateWith { day ->
+		d.items.filter { it.day == day }.map { Block(it.start, it.end, it, null) } +
+			d.todos.filter { it.day == day && it.planned }.map { Block(it.start!!, it.end!!, null, it) }
+	}
 	fun minuteOf(i: Instant, day: LocalDate): Int {
 		val local = i.atZone(zone)
 		val base = local.toLocalDate().toEpochDay() - day.toEpochDay()
 		return (base * 1440 + local.hour * 60 + local.minute).toInt()
 	}
-	val all = byDay.flatMap { (day, items) -> items.map { minuteOf(it.start, day) to minuteOf(it.end, day) } }
+	val all = byDay.flatMap { (day, blocks) -> blocks.map { minuteOf(it.start, day) to minuteOf(it.end, day) } }
 	val firstHour = minOf(7, (all.minOfOrNull { it.first } ?: 420) / 60).coerceAtLeast(0)
 	val lastHour = maxOf(20, ((all.maxOfOrNull { it.second } ?: 1200) + 59) / 60).coerceAtMost(30)
 	val minutes = (lastHour - firstHour) * 60
@@ -344,11 +404,11 @@ private fun Timeline(
 						)
 					}
 			}
-		val dayTodos = d.todos.filter { it.day in days }
+		val dayTodos = d.todos.filter { it.day in days && !it.planned }
 		for (t in dayTodos)
 			Text(
 				"☐ ${t.day.dayOfMonth} · " + t.title,
-				modifier = Modifier.fillMaxWidth().clickable { onStartTodo(t.id) }.padding(horizontal = 16.dp, vertical = 2.dp),
+				modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 2.dp),
 				style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
 			)
 		Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -361,35 +421,63 @@ private fun Timeline(
 					)
 			}
 			for (day in days)
-				BoxWithConstraints(Modifier.weight(1f).height(minuteHeight * minutes)) {
+				BoxWithConstraints(
+					Modifier.weight(1f).height(minuteHeight * minutes).pointerInput(day, firstHour) {
+						detectTapGestures { o ->
+							val min = firstHour * 60 + (o.y / minuteHeight.toPx()).toInt() / 30 * 30
+							if (min >= 1440) onPlan(day.plusDays(1), min - 1440) else onPlan(day, min)
+						}
+					},
+				) {
 					for (h in firstHour until lastHour)
 						HorizontalDivider(Modifier.offset(y = minuteHeight * ((h - firstHour) * 60)), color = MaterialTheme.colorScheme.outlineVariant)
-					val items = byDay.getValue(day).sortedBy { it.start }
-					val columns = columnsOf(items.map { minuteOf(it.start, day) to minuteOf(it.end, day) })
+					val blocks = byDay.getValue(day).sortedBy { it.start }
+					val columns = columnsOf(blocks.map { minuteOf(it.start, day) to minuteOf(it.end, day) })
 					val count = (columns.maxOrNull() ?: 0) + 1
 					val width = maxWidth / count
-					items.forEachIndexed { i, it ->
-						val top = (minuteOf(it.start, day) - firstHour * 60).coerceAtLeast(0)
-						val bottom = (minuteOf(it.end, day) - firstHour * 60).coerceAtMost(minutes)
-						Box(
-							Modifier.offset(x = width * columns[i], y = minuteHeight * top)
-								.width(width).height(maxOf(minuteHeight * (bottom - top), 18.dp))
-								.padding(1.dp).clip(RoundedCornerShape(4.dp))
-								.background(colorOf(it.companyId).copy(alpha = if (it.running) 0.6f else 0.85f))
-								.clickable { onOpenEntry(it.entryId) }.padding(horizontal = 3.dp, vertical = 1.dp),
-						) {
-							Text(
-								if (days.size == 1) "${it.title}${if (it.activity.isNotBlank()) " · ${it.activity}" else ""}\n${clock(it.start, zone)}–${clock(it.end, zone)} · ${hm(it.reported)}"
-								else it.title,
-								color = Color.White, fontSize = if (days.size == 1) 12.sp else 10.sp, lineHeight = 13.sp,
-								overflow = TextOverflow.Ellipsis,
-							)
+					blocks.forEachIndexed { i, b ->
+						val top = (minuteOf(b.start, day) - firstHour * 60).coerceAtLeast(0)
+						val bottom = (minuteOf(b.end, day) - firstHour * 60).coerceAtMost(minutes)
+						val place = Modifier.offset(x = width * columns[i], y = minuteHeight * top)
+							.width(width).height(maxOf(minuteHeight * (bottom - top), 18.dp)).padding(1.dp)
+						val one = days.size == 1
+						val span = "${clock(b.start, zone)}–${clock(b.end, zone)}"
+						b.item?.let {
+							Box(
+								place.clip(RoundedCornerShape(4.dp))
+									.background(colorOf(it.companyId).copy(alpha = if (it.running) 0.6f else 0.85f))
+									.clickable { onOpenEntry(it.entryId) }.padding(horizontal = 3.dp, vertical = 1.dp),
+							) {
+								Text(
+									if (one) "${it.title}${if (it.activity.isNotBlank()) " · ${it.activity}" else ""}\n$span · ${hm(it.reported)}"
+									else it.title,
+									color = Color.White, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
+									overflow = TextOverflow.Ellipsis,
+								)
+							}
+						}
+						b.todo?.let {
+							val c = colorOf(it.todo.companyId)
+							Box(
+								place.clip(RoundedCornerShape(4.dp)).background(c.copy(alpha = 0.15f))
+									.border(1.dp, c, RoundedCornerShape(4.dp))
+									.clickable { onTodo(it.todo) }.padding(horizontal = 3.dp, vertical = 1.dp),
+							) {
+								Text(
+									if (one) "☐ ${it.title}\n$span" else "☐ ${it.title}",
+									color = MaterialTheme.colorScheme.onSurface, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
+									overflow = TextOverflow.Ellipsis,
+								)
+							}
 						}
 					}
 				}
 		}
 	}
 }
+
+/* A timeline block: a report line or a planned to-do. */
+private class Block(val start: Instant, val end: Instant, val item: AgendaItem?, val todo: AgendaTodo?)
 
 /* Greedy column assignment of intervals sorted by start: each takes the first free column. */
 internal fun columnsOf(intervals: List<Pair<Int, Int>>): List<Int> {

@@ -1,8 +1,8 @@
 # ActivityTrack — manuale d'uso
 
-Versione 0.1.0 (sviluppo fino alla milestone M7, 17 ottobre 2026).
-Le funzioni di M4–M7 (importazione/esportazione, calendario, agenda, grafica)
-sono state scritte ma non ancora provate sul telefono: segnalare ogni
+Versione 0.1.0 (sviluppo fino alla milestone M9, 18 ottobre 2026).
+Le funzioni di M4–M9 (importazione/esportazione, calendario, agenda, grafica,
+attività pianificate) sono state scritte ma non ancora provate sul telefono: segnalare ogni
 differenza tra questo manuale e l'app.
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
@@ -190,14 +190,22 @@ conclusa?"** ("Sì" la segna come fatta, "No, ci tornerò" la lascia aperta).
 In alto le modalità e il periodo ("‹ ›" per scorrere, "Oggi" per tornare a
 oggi; a destra il totale rendicontato del periodo).
 - **Lista** — il mese, giorno per giorno, con ricerca per cliente o
-  descrizione; le voci *Da fare* in scadenza compaiono con ☐.
+  descrizione; le voci *Da fare* pianificate o in scadenza compaiono con ☐.
 - **Giorno** — linea del tempo: ogni attività è un blocco dall'inizio alla
-  fine; attività contemporanee affiancate.
+  fine; attività contemporanee affiancate; le *Da fare* pianificate sono
+  blocchi con il bordo colorato.
 - **Settimana** — sette colonne da lunedì; toccando un giorno si apre la vista Giorno.
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
-Ogni azienda ha il suo colore. Toccando un'attività si apre la sua scheda.
+Ogni azienda ha il suo colore. Toccando un'attività si apre la sua scheda;
+toccando una *Da fare* si aprono le sue azioni (avvia, posticipa, fatta,
+ripianifica).
+
+**Pianificare dall'agenda**: nelle viste Giorno e Settimana tocca uno spazio
+libero: si apre una nuova *Da fare* pianificata a quell'ora (a passi di
+mezz'ora). "Aggiungi" in alto fa lo stesso per il giorno mostrato (oggi: la
+prossima mezz'ora; altri giorni: le 09:00).
 
 ### Report
 Il report di un giorno: totale solare e rendicontato, una riga per attività
@@ -207,12 +215,30 @@ con lavoro, viaggio e pausa reali → arrotondati; da qui anche l'esportazione.
 
 ## 8. Da fare
 
-Attività pianificate, importate da un gestionale o create a mano
-("Altro" → "Da fare" → "Aggiungi"): titolo, cliente (o azienda), scadenza e ora,
-priorità (1 = massima), note, riferimenti (uno per riga).
-- In Home, **"Da fare oggi"** mostra quelle scadute o in scadenza oggi.
-- Toccando una voce: "Avvia attività", "Segna come fatta" / "Segna come da
-  fare", "Modifica".
+Attività da fare, importate da un gestionale o create a mano ("Altro" →
+"Da fare" → "Aggiungi", oppure dall'Agenda): titolo, cliente (o azienda),
+**data e ora pianificate**, **durata**, scadenza e ora, priorità
+(1 = massima), note, riferimenti (uno per riga).
+
+Stati: **aperta** (senza pianificazione) → **pianificata** (data e ora) →
+**fatta**. La pianificazione è separata dalla scadenza: ripianificare non
+cambia la scadenza del gestionale.
+- **Durata**: se la indichi, il blocco dura quella; se la lasci vuota dura
+  un'ora e, finché la voce resta aperta, si allunga di ora in ora (fino a fine
+  giornata).
+- **Promemoria**: 15 minuti prima dell'ora pianificata arriva la notifica
+  "Titolo alle HH:MM" con "Avvia attività", "Posticipa 30 min" (sposta la
+  pianificazione di 30 minuti dall'ora pianificata o, se è già passata, da
+  adesso; il promemoria torna prima della nuova ora) e "Ripianifica"
+  (apre la voce). Arriva anche fuori orario e nei giorni liberi; sparisce se
+  la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
+  passato.
+- In Home, **"Da fare oggi"** mostra quelle in scadenza o pianificate oggi o
+  prima; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
+  pianificato o dopo la scadenza (dopo l'ora di scadenza, o dal giorno dopo
+  se la scadenza non ha ora).
+- Toccando una voce: "Avvia attività", "Posticipa", "Segna come fatta" /
+  "Segna come da fare", "Ripianifica" (o "Modifica" se non pianificata).
 - Una voce può avere più attività (es. un lavoro su più giorni).
 
 ---
@@ -282,6 +308,11 @@ Impostazioni → "Calendario":
 
 Ogni attività diventa un evento per giorno, dall'avvio: titolo "Cliente –
 Descrizione", nella descrizione i tempi arrotondati, km, riferimenti e note.
+Le *Da fare* pianificate e aperte diventano eventi "provvisori" (Cliente –
+Titolo) fino a un anno avanti; quando sono fatte escono dal calendario.
+L'ultima riga della descrizione porta dei tag per tipo di tempo: `#lavoro`,
+`#viaggio`, `#pausa`, `#pianificata`, sempre in italiano qualunque sia la
+lingua del telefono (cercali nell'app calendario).
 La sincronizzazione è solo dall'app al calendario: modifiche fatte nel
 calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 "Sincronizza 90 giorni" riallinea più indietro.
@@ -319,6 +350,8 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 | | arrotondamenti lavoro / viaggio / pausa | §1 |
 | Servizi online | Nominatim, OSRM, mappe OpenStreetMap (attivabili e con endpoint) | attivi |
 | Archiviazione | cartella dati, backup conservati, backup ora | 14 |
+| Avanzate (▼) | Promemoria attività pianificate (min prima) | 15 |
+| | Posticipo (min) | 30 |
 
 I valori fuori intervallo vengono corretti al salvataggio.
 

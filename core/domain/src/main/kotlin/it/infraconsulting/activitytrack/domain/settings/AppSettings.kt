@@ -22,6 +22,9 @@ data class AppSettings(
 	val maxConfirmations: Int = 0,			/* 0 = unlimited */
 	val pauseIntervalMin: Int = 15,
 	val dayStartDelayMin: Int = 15,
+	/* planned to-dos (M9, advanced): reminder lead time and "postpone" step */
+	val planLeadMin: Int = 15,
+	val planSnoozeMin: Int = 30,
 	val movementThresholdM: Int = 100,
 	val stationaryRadiusM: Int = 100,
 	val stationaryMin: Int = 15,
@@ -50,6 +53,8 @@ data class AppSettings(
 		maxConfirmations = maxConfirmations.coerceIn(0, 100),
 		pauseIntervalMin = pauseIntervalMin.coerceIn(10, 120),
 		dayStartDelayMin = dayStartDelayMin.coerceIn(0, 240),
+		planLeadMin = planLeadMin.coerceIn(0, 240),
+		planSnoozeMin = planSnoozeMin.coerceIn(10, 240),
 		movementThresholdM = movementThresholdM.coerceIn(50, 5_000),
 		stationaryRadiusM = stationaryRadiusM.coerceIn(25, 1_000),
 		stationaryMin = stationaryMin.coerceIn(5, 120),

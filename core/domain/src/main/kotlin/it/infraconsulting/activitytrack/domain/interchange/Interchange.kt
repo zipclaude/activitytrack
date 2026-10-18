@@ -75,6 +75,10 @@ data class XTodo(
 	val dueTime: String? = null,
 	val priority: Int? = null,
 	val done: Boolean = false,
+	/* planned slot (M9), apart from the due date: local date and time, optional duration */
+	val plannedDate: String? = null,
+	val plannedTime: String? = null,
+	val durationMin: Int? = null,
 )
 
 @Serializable

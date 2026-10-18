@@ -19,6 +19,7 @@ object NotificationChannels {
 	const val DAY_START = "day_start"		/* no entry started at day start */
 	const val DAY_SUMMARY = "day_summary"		/* end-of-day totals */
 	const val TO_COMPLETE = "to_complete"		/* entries missing details */
+	const val PLANNED = "planned"			/* planned to-do about to start */
 
 	fun register(context: Context) {
 		val nm = context.getSystemService(NotificationManager::class.java)
@@ -31,6 +32,7 @@ object NotificationChannels {
 			channel(context, DAY_START, R.string.ch_day_start, NotificationManager.IMPORTANCE_DEFAULT),
 			channel(context, DAY_SUMMARY, R.string.ch_day_summary, NotificationManager.IMPORTANCE_LOW),
 			channel(context, TO_COMPLETE, R.string.ch_to_complete, NotificationManager.IMPORTANCE_DEFAULT),
+			channel(context, PLANNED, R.string.ch_planned, NotificationManager.IMPORTANCE_HIGH),
 		)
 		nm.createNotificationChannels(channels)
 	}

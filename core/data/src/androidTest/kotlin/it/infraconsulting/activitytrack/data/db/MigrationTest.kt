@@ -60,6 +60,23 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v3ToV4AddsTheTodoPlan() {
+		helper.createDatabase(DB, 3).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO todo (uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms) VALUES ('t1', 1, 'Patch', '', 0, 0, 0)")
+		}
+		helper.runMigrationsAndValidate(DB, 4, true).use { db ->
+			db.query("SELECT title, plan_epoch_day, plan_start_min, duration_min, plan_reminded_utc_ms FROM todo").use { c ->
+				c.moveToFirst()
+				assertEquals("Patch", c.getString(0))
+				for (i in 1..4)
+					assertEquals(true, c.isNull(i))
+			}
+			db.execSQL("UPDATE todo SET plan_epoch_day = 20745, plan_start_min = 540, duration_min = 60")
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

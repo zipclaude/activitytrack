@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.7 (2026-10-17, M4–M7 added). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.8 (2026-10-18, M9 planned to-dos added). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -137,6 +137,7 @@ With q = 15: 7 → 15, 19:59 → 15, 20 → 30.
 | Stationary ≤ 100 m for 15 min during TRAVEL | "Arrived?"; near a client site proposes WORK, near HOME proposes closing |
 | No entry 15 min after working-day start | actions: *Absence (full day) / Late entry at… / Start entry* |
 | Entries TO_COMPLETE | reminder until completed |
+| Planned to-do | 15 min (configurable, advanced) before the planned start: *Start / Postpone 30 min (configurable; from the planned start, or from now once it has passed) / Re-plan*; also outside working hours and on days off; once per planned start, dropped when the block is over, the to-do is done or an entry runs from it |
 
 Working hours: several intervals per weekday. Public holidays (Italian national,
 Easter Monday computed) and manual days off suppress the day-start prompt.
@@ -184,7 +185,14 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
 - **To-dos**: planned activities (title, client, due date/time, priority,
   notes, references), imported or created in the app; an entry can start from
   a to-do (pre-filled, references copied); completing it asks whether the
-  to-do is done; home shows the to-dos due today.
+  to-do is done; home shows the to-dos due or planned today, and flags as
+  overdue those still open past their planned block or their due date/time
+  (date only: from the next day).
+- **Planned to-dos (M9)**: states open (no plan) → planned (local date and
+  start time, apart from the due date) → done. Optional duration; without it
+  the block lasts one hour and grows hour by hour while the to-do stays open,
+  up to the end of the planned day. Created by hand (To-dos, agenda) or
+  imported (`plannedDate`, `plannedTime`, `durationMin`).
 - **Backup restore**: a daily backup replaces all data after a safety backup.
 
 ### 8.1 Calendar sync
@@ -194,13 +202,18 @@ event per entry and report day, from the entry start (a running entry ends
 "now"), title "Client – Activity", rounded times, km, references and notes in
 the description, locality as location. A generic calendar (chosen, or a local
 "ActivityTrack" one) and optionally one per company, which replaces it.
+Planned open to-dos become tentative events ("Client – Title") up to a year
+ahead; done ones leave the calendar. The last description line carries
+hashtags per kind of time (#lavoro #viaggio #pausa, #pianificata; always Italian).
 
 ### 8.2 Consultation and navigation
 
 Bottom navigation: Home · Agenda · Report · More. The agenda shows the
 report lines and the to-dos due as a list (with search), a day or week
 timeline (concurrent entries side by side) and a month grid with reported
-hours; one colour per company; taps open the entry or the day.
+hours; one colour per company; taps open the entry or the day. Planned
+to-dos are outlined blocks; a tap on a free slot (half-hour steps) or "Add"
+plans a new to-do there.
 
 ## 9. Milestones
 
@@ -214,6 +227,8 @@ hours; one colour per company; taps open the entry or the day.
 | M5 | external calendar sync: a generic calendar for the app and/or one per company (Google Calendar or CalDAV) |
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
+| M8 | review fixes, backup restore, user manual |
+| M9 | planned to-dos: manual and imported, planned date/time and duration, reminder with postpone / re-plan, agenda planning, calendar events, tags |
 
 Owner priorities (2026-10-17): M4 → M7 in this order.
 
