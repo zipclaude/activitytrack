@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.setup
 
+import android.provider.DocumentsContract
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -66,7 +67,8 @@ fun rememberDataDirPicker(vm: DataDirViewModel, onDone: () -> Unit = {}): () -> 
 	val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
 		if (uri != null) vm.choose(uri, onDone)
 	}
-	return { launcher.launch(null) }
+	/* opens in the root of the main storage, where the suggested folder goes (owner, 2026-10-18) */
+	return { launcher.launch(DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", "primary:")) }
 }
 
 /* First run, or access to the data directory lost: the folder must be chosen. */
@@ -83,7 +85,7 @@ fun SetupScreen(lost: Boolean, onChosen: () -> Unit) {
 		) {
 			if (lost)
 				Text(stringResource(R.string.setup_lost), color = MaterialTheme.colorScheme.error)
-			Text(stringResource(R.string.setup_text))
+			Text(stringResource(R.string.setup_text, stringResource(R.string.data_folder_hint)))
 			Button(onClick = pick) { Text(stringResource(R.string.setup_choose)) }
 			if (failed)
 				Text(stringResource(R.string.setup_error), color = MaterialTheme.colorScheme.error)
