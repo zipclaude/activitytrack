@@ -62,7 +62,8 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* the data folder is changed only through the picker */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri) }
+			/* data folder and calendars change through their own rows, not this form */
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars) }
 			onDone()
 		}
 	}
@@ -166,6 +167,9 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			field(F.ST_RADIUS, R.string.set_stationary_radius)
 			field(F.ST_MIN, R.string.set_stationary_min)
 			field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
+
+			SectionHeader(stringResource(R.string.sec_calendar))
+			CalendarRows()
 
 			SectionHeader(stringResource(R.string.sec_dictation))
 			/* language names in their own language, as in the system pickers */

@@ -121,6 +121,16 @@
   <string name="set_day_start_delay">Ritardo avviso inizio giornata (min)</string>
   <string name="sec_location">Posizione</string>
   <string name="sec_dictation">Dettatura</string>
+  <string name="sec_calendar">Calendario</string>
+  <string name="calendar_permission">Consenti l\'accesso al calendario per riportarvi le attività.</string>
+  <string name="calendar_generic">Calendario delle attività</string>
+  <string name="calendar_none">Nessuno (nessuna sincronizzazione)</string>
+  <string name="calendar_new_local">Nuovo calendario "ActivityTrack" sul telefono</string>
+  <string name="calendar_hint">Un evento per attività e giorno, dall\'avvio; i calendari Google o CalDAV lo sincronizzano.</string>
+  <string name="calendar_sync_now">Sincronizza 90 giorni</string>
+  <string name="calendar_synced">Sincronizzato: %1$d modifiche</string>
+  <string name="calendar_company">Calendario di questa azienda</string>
+  <string name="calendar_use_generic">Il calendario generico</string>
   <string name="set_dictation_language">Lingua di dettatura</string>
   <string name="set_movement">Soglia avviso spostamento (m)</string>
   <string name="set_stationary_radius">Raggio di arrivo (m)</string>

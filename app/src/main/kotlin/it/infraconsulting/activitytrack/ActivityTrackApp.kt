@@ -3,6 +3,7 @@ package it.infraconsulting.activitytrack
 
 import android.app.Application
 import it.infraconsulting.activitytrack.backup.BackupWorker
+import it.infraconsulting.activitytrack.calendar.CalendarSync
 import it.infraconsulting.activitytrack.connect.SecretStore
 import it.infraconsulting.activitytrack.location.TrackingMonitor
 import it.infraconsulting.activitytrack.notify.NotificationChannels
@@ -27,6 +28,9 @@ class ActivityTrackApp : Application() {
 	lateinit var tracking: TrackingMonitor
 		private set
 
+	lateinit var calendarSync: CalendarSync
+		private set
+
 	/* connector secrets, keystore-encrypted (M4) */
 	val secrets: SecretStore by lazy { SecretStore(this) }
 
@@ -38,6 +42,7 @@ class ActivityTrackApp : Application() {
 		reminders = ReminderScheduler(this, container).also { it.start(appScope) }
 		tracking = TrackingMonitor(this, container)
 		ClientShortcuts(this, container).start(appScope)
+		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
 		BackupWorker.schedule(this)
 	}
 }
