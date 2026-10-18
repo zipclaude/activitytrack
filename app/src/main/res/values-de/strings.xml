@@ -312,7 +312,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_show_done">Erledigte anzeigen</string>
   <string name="todo_field_title">Titel</string>
   <string name="todo_field_due">Fällig am (jjjj-mm-tt)</string>
-  <string name="todo_field_time">Uhrzeit (hh:mm)</string>
+  <string name="todo_field_time">Fällig um (hh:mm)</string>
   <string name="todo_field_priority">Priorität (1 = höchste)</string>
   <string name="todo_field_refs">Referenzen (eine pro Zeile)</string>
   <string name="todo_done_question">Ist die Aufgabe erledigt?</string>
@@ -356,4 +356,22 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
     <item quantity="one">%1$d Zeile in %2$s geschrieben</item>
     <item quantity="other">%1$d Zeilen in %2$s geschrieben</item>
   </plurals>
+  <!-- M9 planned to-dos -->
+  <string name="ch_planned">Geplante Tätigkeiten</string>
+  <string name="notif_planned_title">%1$s um %2$s</string>
+  <string name="action_postpone">%1$d Min. verschieben</string>
+  <string name="action_replan">Neu planen</string>
+  <string name="todo_field_plan_date">Geplant am (jjjj-mm-tt)</string>
+  <string name="todo_field_plan_time">Geplante Uhrzeit (hh:mm)</string>
+  <string name="todo_field_duration">Dauer (Min.; leer = 1 Std., wächst)</string>
+  <string name="todo_planned">geplant %1$s</string>
+  <string name="todo_overdue">überfällig</string>
+  <string name="todo_new">Neue Aufgabe</string>
+  <string name="sec_advanced">Erweitert</string>
+  <string name="set_plan_lead">Erinnerung an geplante Tätigkeiten (Min. vorher)</string>
+  <string name="set_plan_snooze">Verschieben um (Min.)</string>
+  <string name="tag_work">#arbeit</string>
+  <string name="tag_travel">#reise</string>
+  <string name="tag_pause">#pause</string>
+  <string name="tag_planned">#geplant</string>
 </resources>

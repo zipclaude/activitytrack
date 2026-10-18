@@ -15,15 +15,22 @@ import android.util.Log
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.calendar.CalendarEvents
+import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.calendar.EventLabels
+import it.infraconsulting.activitytrack.domain.calendar.EventTags
 import it.infraconsulting.activitytrack.domain.calendar.PlannedEvent
+import it.infraconsulting.activitytrack.domain.calendar.TodoEvent
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -95,15 +102,34 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		ContentUris.parseId(resolver.insert(uri, values) ?: error("calendar not created"))
 	}
 
-	/* Every change of the entries re-syncs the last two weeks (running entries included). */
+	/*
+	 * Every change of the entries or to-dos re-syncs the last two weeks
+	 * (running entries included) and the planned to-dos; a planned block
+	 * without duration is synced again each time it grows by an hour.
+	 */
 	fun start(scope: CoroutineScope) {
+		val tick = MutableStateFlow(0)
+		var growth: Job? = null
 		scope.launch {
-			combine(container.reports.changes, container.settings.settings) { _, _ -> }.conflate().collect {
+			combine(container.reports.changes, container.settings.settings, container.todos.all, tick) { _, _, _, _ -> }.conflate().collect {
 				/* lets bursts of changes (stop + complete) settle */
 				delay(SETTLE_MS)
 				runCatching { sync(DEFAULT_DAYS) }.onFailure { Log.w(TAG, "sync failed", it) }
+				growth?.cancel()
+				nextGrowth()?.let { at ->
+					growth = scope.launch {
+						delay(at.toEpochMilli() - System.currentTimeMillis() + 1_000)
+						tick.value++
+					}
+				}
 			}
 		}
+	}
+
+	private suspend fun nextGrowth(): Instant? {
+		val zone = ZoneId.systemDefault()
+		val now = Instant.now()
+		return container.todos.planned().mapNotNull { it.plan()?.nextGrowth(zone, true, now) }.minOrNull()
 	}
 
 	/* Brings our events of the last [days] days in line with the reports; returns the changes made. */
@@ -116,6 +142,14 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		val zone = ZoneId.systemDefault()
 		val to = LocalDate.now(zone)
 		val from = to.minusDays(days)
+		val labels = EventLabels(
+			context.getString(R.string.cmd_work), context.getString(R.string.cmd_travel),
+			context.getString(R.string.cmd_pause), context.getString(R.string.external_refs), "km",
+			EventTags(
+				context.getString(R.string.tag_work), context.getString(R.string.tag_travel),
+				context.getString(R.string.tag_pause), context.getString(R.string.tag_planned),
+			),
+		)
 		val report = container.reports.report(from, to, zone, s.rounding, s.carryOverMin)
 		val entries = container.reports.entriesAround(from, to, zone).associateBy { it.entry.id }
 		val planned = CalendarEvents.plan(
@@ -123,15 +157,30 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			report.meta,
 			entries.mapNotNull { (id, e) -> e.entry.uid?.let { id to it } }.toMap(),
 			entries.mapValues { it.value.entry.companyId },
-			EventLabels(
-				context.getString(R.string.cmd_work), context.getString(R.string.cmd_travel),
-				context.getString(R.string.cmd_pause), context.getString(R.string.external_refs), "km",
-			),
-		)
+			labels,
+		) + CalendarEvents.planTodos(plannedTodos(zone, from), labels)
 		withContext(Dispatchers.IO) {
 			val windowStart = from.atStartOfDay(zone).toInstant().toEpochMilli()
-			val windowEnd = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+			/* planned to-dos reach into the future */
+			val windowEnd = to.plusDays(FUTURE_DAYS + 1).atStartOfDay(zone).toInstant().toEpochMilli()
 			apply(planned, existing(windowStart, windowEnd)) { s.calendarFor(it) }
+		}
+	}
+
+	/* Open planned to-dos from [from] on; done ones leave the calendar (their entries stay). */
+	private suspend fun plannedTodos(zone: ZoneId, from: LocalDate): List<TodoEvent> {
+		val now = Instant.now()
+		val clients = container.masterData.clients.first().associateBy { it.id }
+		val companies = container.masterData.companies.first().associateBy { it.id }
+		return container.todos.planned().mapNotNull { t ->
+			val p = t.plan() ?: return@mapNotNull null
+			if (p.day < from)
+				return@mapNotNull null
+			TodoEvent(
+				uid = t.uid, companyId = t.companyId, start = p.start(zone), end = p.end(zone, true, now), title = t.title,
+				client = t.clientId?.let { clients[it]?.name } ?: companies[t.companyId]?.name.orEmpty(),
+				notes = t.notes.orEmpty(), refs = t.refs.lines().filter(String::isNotBlank),
+			)
 		}
 	}
 
@@ -150,7 +199,12 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			null,
 		)?.use { c ->
 			while (c.moveToNext()) {
-				val key = c.getString(2)?.removePrefix(URI_PREFIX) ?: continue
+				val uri = c.getString(2) ?: continue
+				val key = when {
+					uri.startsWith(TODO_URI_PREFIX) -> CalendarEvents.TODO_KEY + uri.removePrefix(TODO_URI_PREFIX)
+					uri.startsWith(URI_PREFIX) -> uri.removePrefix(URI_PREFIX)
+					else -> continue
+				}
 				out[key] = Existing(c.getLong(0), c.getLong(1), key, c.getLong(3), c.getLong(4), c.getString(5), c.getString(6), c.getString(7))
 			}
 		}
@@ -200,9 +254,13 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		put(Events.DESCRIPTION, p.description)
 		put(Events.EVENT_LOCATION, p.location)
 		put(Events.AVAILABILITY, Events.AVAILABILITY_BUSY)
+		put(Events.STATUS, if (p.tentative) Events.STATUS_TENTATIVE else Events.STATUS_CONFIRMED)
 		put(Events.HAS_ALARM, 0)
 		put(Events.CUSTOM_APP_PACKAGE, context.packageName)
-		put(Events.CUSTOM_APP_URI, URI_PREFIX + p.key)
+		put(
+			Events.CUSTOM_APP_URI,
+			if (p.key.startsWith(CalendarEvents.TODO_KEY)) TODO_URI_PREFIX + p.key.removePrefix(CalendarEvents.TODO_KEY) else URI_PREFIX + p.key,
+		)
 	}
 
 	private fun eventUri(id: Long): Uri = ContentUris.withAppendedId(Events.CONTENT_URI, id)
@@ -210,8 +268,11 @@ class CalendarSync(private val context: Context, private val container: AppConta
 	companion object {
 		private const val TAG = "CalendarSync"
 		private const val URI_PREFIX = "activitytrack://entry/"
+		private const val TODO_URI_PREFIX = "activitytrack://todo/"
 		private const val SETTLE_MS = 3_000L
 		const val DEFAULT_DAYS = 14L
 		const val FULL_DAYS = 90L
+		/* planned to-dos synced up to a year ahead */
+		const val FUTURE_DAYS = 365L
 	}
 }
