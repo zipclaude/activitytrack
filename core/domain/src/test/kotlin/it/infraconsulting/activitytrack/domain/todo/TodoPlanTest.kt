@@ -70,6 +70,17 @@ class TodoPlanTest {
 	}
 
 	@Test
+	fun dueDatePassed() {
+		assertEquals(false, dueOverdue(null, null, at(day, 12, 0), zone))
+		/* date only: overdue from the next day */
+		assertEquals(false, dueOverdue(day, null, at(day, 23, 59), zone))
+		assertEquals(true, dueOverdue(day, null, at(day.plusDays(1), 0, 0, 1), zone))
+		/* date and time: overdue after the time */
+		assertEquals(false, dueOverdue(day, 14 * 60, at(day, 14, 0), zone))
+		assertEquals(true, dueOverdue(day, 14 * 60, at(day, 14, 1), zone))
+	}
+
+	@Test
 	fun dstDayKeepsTheWallClock() {
 		/* 25 October 2026: clocks go back at 03:00 in Rome */
 		val dst = LocalDate.of(2026, 10, 25)

@@ -30,6 +30,7 @@ import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
+import it.infraconsulting.activitytrack.domain.todo.dueOverdue
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
@@ -79,9 +80,17 @@ internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = TodoEntity
 	planEpochDay = day?.toEpochDay(), planStartMin = startMin,
 )
 
-/* Still open past its planned duration or first hour (M9: "planned, overdue" on Home). */
-internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean =
-	!t.done && t.plan()?.let { now.isAfter(it.end(ZoneId.systemDefault(), open = false, now = now)) } == true
+/*
+ * Still open past its planned duration or first hour (M9), or past its due
+ * date and time (owner, 2026-10-18): "overdue" on Home and in the lists.
+ */
+internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean {
+	if (t.done)
+		return false
+	val zone = ZoneId.systemDefault()
+	return t.plan()?.let { now.isAfter(it.end(zone, open = false, now = now)) } == true ||
+		dueOverdue(t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, now, zone)
+}
 
 @Composable
 private fun dayText(epochDay: Long): String {
@@ -213,7 +222,9 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	val error by vm.error.collectAsState()
 	var title by remember { mutableStateOf(initial.title) }
 	var clientId by remember { mutableStateOf(initial.clientId) }
-	var companyId by remember { mutableStateOf(initial.companyId.takeIf { it != 0L } ?: companies.firstOrNull()?.id) }
+	/* the companies may still be loading when the dialog opens (agenda): default to the first once known */
+	var picked by remember { mutableStateOf(initial.companyId.takeIf { it != 0L }) }
+	val companyId = picked ?: companies.firstOrNull()?.id
 	var planDay by remember { mutableStateOf(initial.planEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var planTime by remember { mutableStateOf(initial.planStartMin?.let(::formatMin).orEmpty()) }
 	var duration by remember { mutableStateOf(initial.durationMin?.toString().orEmpty()) }
@@ -270,7 +281,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			clientId,
 		) { clientId = it }
 		if (clientId == null)
-			ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { companyId = it }
+			ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
 		TextInput(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it })
 		TextInput(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it })
 		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)

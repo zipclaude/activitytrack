@@ -185,8 +185,9 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
 - **To-dos**: planned activities (title, client, due date/time, priority,
   notes, references), imported or created in the app; an entry can start from
   a to-do (pre-filled, references copied); completing it asks whether the
-  to-do is done; home shows the to-dos due or planned today, and the planned
-  ones still open past their block as overdue.
+  to-do is done; home shows the to-dos due or planned today, and flags as
+  overdue those still open past their planned block or their due date/time
+  (date only: from the next day).
 - **Planned to-dos (M9)**: states open (no plan) → planned (local date and
   start time, apart from the due date) → done. Optional duration; without it
   the block lasts one hour and grows hour by hour while the to-do stays open,
