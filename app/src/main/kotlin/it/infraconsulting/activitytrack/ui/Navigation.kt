@@ -35,6 +35,8 @@ sealed interface Screen {
 	data object Day : Screen
 	data object Export : Screen
 	data object Settings : Screen
+	/* one settings section (backlog 2): [name] is a SettingsSection */
+	data class SettingsPage(val name: String) : Screen
 	data object MasterData : Screen
 	data object Companies : Screen
 	data class Company(val id: Long) : Screen
@@ -66,6 +68,7 @@ sealed interface Screen {
 		is StartFor -> "start/$clientId"
 		is StartFromTodo -> "start-todo/$todoId"
 		is Todo -> "todo/$id"
+		is SettingsPage -> "settings/$name"
 		else -> this::class.simpleName!!
 	}
 
@@ -79,6 +82,8 @@ sealed interface Screen {
 		fun parse(key: String): Screen? {
 			objects[key]?.let { return it }
 			val (kind, id) = key.split('/').takeIf { it.size == 2 } ?: return null
+		if (kind == "settings")
+			return SettingsPage(id)
 			val n = id.toLongOrNull() ?: return null
 			return when (kind) {
 				"entry" -> Entry(n)

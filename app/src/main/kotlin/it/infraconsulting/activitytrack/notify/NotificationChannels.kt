@@ -21,6 +21,15 @@ object NotificationChannels {
 	const val TO_COMPLETE = "to_complete"		/* entries missing details */
 	const val PLANNED = "planned"			/* planned to-do about to start */
 
+	/* channels in the order of the Notifications settings, with their names */
+	val LIST: List<Pair<String, Int>> by lazy {
+		listOf(
+			CONFIRM to R.string.ch_confirm, PAUSE to R.string.ch_pause, PLANNED to R.string.ch_planned,
+			MOVEMENT to R.string.ch_movement, ARRIVAL to R.string.ch_arrival, DAY_START to R.string.ch_day_start,
+			DAY_SUMMARY to R.string.ch_day_summary, TO_COMPLETE to R.string.ch_to_complete, ONGOING to R.string.ch_ongoing,
+		)
+	}
+
 	fun register(context: Context) {
 		val nm = context.getSystemService(NotificationManager::class.java)
 		val channels = listOf(

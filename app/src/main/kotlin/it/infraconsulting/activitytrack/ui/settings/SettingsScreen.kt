@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.ClickableRow
+import it.infraconsulting.activitytrack.ui.Screen
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyColumn
 import it.infraconsulting.activitytrack.backup.BackupWorker
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.domain.rounding.ReportRounding
@@ -75,18 +79,38 @@ private enum class F {
 	NOMINATIM, OSRM, TILES, WORK_MIN, TRAVEL_MIN, PAUSE_MIN, PLAN_LEAD, PLAN_SNOOZE,
 }
 
+/* Settings grouped in sub-screens (backlog 2, 2026-10-18). */
+enum class SettingsSection(val label: Int, val form: Boolean = true) {
+	DISPLAY(R.string.sec_display),
+	REMINDERS(R.string.sec_reminders),
+	NOTIFICATIONS(R.string.sec_notifications, form = false),
+	LOCATION(R.string.sec_location),
+	CALENDAR(R.string.sec_calendar, form = false),
+	DICTATION(R.string.sec_dictation),
+	REPORTS(R.string.sec_reports),
+	ONLINE(R.string.sec_online),
+	STORAGE(R.string.sec_storage),
+	ADVANCED(R.string.sec_advanced),
+}
+
+/* [section] null: the list of sections (and Gestures); else that section's form. */
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen: (Screen) -> Unit = {}) {
 	val vm = appViewModel { SettingsViewModel(it.settings) }
 	val s = vm.settings.collectAsState().value
-	ScreenScaffold(title = stringResource(R.string.settings_title), onBack = onBack) { padding ->
-		if (s != null)
-			SettingsForm(s, vm, Modifier.padding(padding))
+	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title), onBack = onBack) { padding ->
+		if (section == null)
+			LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+				items(SettingsSection.entries) { sec -> ClickableRow(stringResource(sec.label)) { onOpen(Screen.SettingsPage(sec.name)) } }
+				item { ClickableRow(stringResource(R.string.gestures_title)) { onOpen(Screen.Gestures) } }
+			}
+		else if (s != null)
+			SettingsForm(s, vm, section, Modifier.padding(padding))
 	}
 }
 
 @Composable
-private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: Modifier) {
+private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: SettingsSection, modifier: Modifier) {
 	val text = remember {
 		mutableStateMapOf(
 			F.CONFIRM to initial.confirmIntervalMin.toString(),
@@ -109,7 +133,6 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			F.PLAN_SNOOZE to initial.planSnoozeMin.toString(),
 		)
 	}
-	var advanced by remember { mutableStateOf(false) }
 	var nominatimOn by remember { mutableStateOf(initial.nominatim.enabled) }
 	var osrmOn by remember { mutableStateOf(initial.osrm.enabled) }
 	var tilesOn by remember { mutableStateOf(initial.tiles.enabled) }
@@ -161,72 +184,64 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
-			SectionHeader(stringResource(R.string.sec_display))
-			ChoiceField(
-				stringResource(R.string.set_display),
-				listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
-				compact,
-			) { compact = it }
-
-			SectionHeader(stringResource(R.string.sec_reminders))
-			field(F.CONFIRM, R.string.set_confirm_interval)
-			field(F.MAX_CONFIRM, R.string.set_max_confirmations)
-			field(F.PAUSE, R.string.set_pause_interval)
-			field(F.DAY_START, R.string.set_day_start_delay)
-
-			SectionHeader(stringResource(R.string.sec_location))
-			LocationPermissionRows()
-			AddTileRow()
-			field(F.MOVEMENT, R.string.set_movement)
-			field(F.ST_RADIUS, R.string.set_stationary_radius)
-			field(F.ST_MIN, R.string.set_stationary_min)
-			field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
-
-			SectionHeader(stringResource(R.string.sec_calendar))
-			CalendarRows()
-
-			SectionHeader(stringResource(R.string.sec_dictation))
-			/* language names in their own language, as in the system pickers */
-			ChoiceField(
-				stringResource(R.string.set_dictation_language),
-				AppSettings.DICTATION_LANGUAGES.map { tag ->
-					tag to java.util.Locale.forLanguageTag(tag).let { it.getDisplayLanguage(it).replaceFirstChar(Char::titlecase) }
-				},
-				dictation,
-			) { dictation = it }
-
-			SectionHeader(stringResource(R.string.sec_reports))
-			TimeField(stringResource(R.string.set_carry_over), text[F.CARRY_OVER].orEmpty(), { text[F.CARRY_OVER] = it })
-			RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text)
-			RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text)
-			RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text)
-
-			SectionHeader(stringResource(R.string.sec_online))
-			SwitchRow(stringResource(R.string.set_nominatim), nominatimOn) { nominatimOn = it }
-			field(F.NOMINATIM, R.string.set_endpoint, KeyboardType.Uri)
-			SwitchRow(stringResource(R.string.set_osrm), osrmOn) { osrmOn = it }
-			field(F.OSRM, R.string.set_endpoint, KeyboardType.Uri)
-			SwitchRow(stringResource(R.string.set_tiles), tilesOn) { tilesOn = it }
-			field(F.TILES, R.string.set_endpoint, KeyboardType.Uri)
-
-			SectionHeader(stringResource(R.string.sec_storage))
-			DataDirRow(initial.rootUri)
-			field(F.RETENTION, R.string.set_backup_retention)
-			val context = androidx.compose.ui.platform.LocalContext.current
-			val started = stringResource(R.string.backup_started)
-			TextButton(onClick = {
-				BackupWorker.runNow(context)
-				scope.launch { snackbar.showSnackbar(started) }
-			}) { Text(stringResource(R.string.backup_now)) }
-
-			/* advanced (M9): planned to-do reminders, collapsed by default */
-			Row(verticalAlignment = Alignment.CenterVertically) {
-				Column(Modifier.weight(1f)) { SectionHeader(stringResource(R.string.sec_advanced)) }
-				TextButton(onClick = { advanced = !advanced }) { Text(if (advanced) "▲" else "▼") }
-			}
-			if (advanced) {
-				field(F.PLAN_LEAD, R.string.set_plan_lead)
-				field(F.PLAN_SNOOZE, R.string.set_plan_snooze)
+			when (section) {
+				SettingsSection.DISPLAY -> ChoiceField(
+					stringResource(R.string.set_display),
+					listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
+					compact,
+				) { compact = it }
+				SettingsSection.REMINDERS -> {
+					field(F.CONFIRM, R.string.set_confirm_interval)
+					field(F.MAX_CONFIRM, R.string.set_max_confirmations)
+					field(F.PAUSE, R.string.set_pause_interval)
+					field(F.DAY_START, R.string.set_day_start_delay)
+				}
+				SettingsSection.NOTIFICATIONS -> NotificationRows()
+				SettingsSection.LOCATION -> {
+					LocationPermissionRows()
+					AddTileRow()
+					field(F.MOVEMENT, R.string.set_movement)
+					field(F.ST_RADIUS, R.string.set_stationary_radius)
+					field(F.ST_MIN, R.string.set_stationary_min)
+					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
+				}
+				SettingsSection.CALENDAR -> CalendarRows()
+				/* language names in their own language, as in the system pickers */
+				SettingsSection.DICTATION -> ChoiceField(
+					stringResource(R.string.set_dictation_language),
+					AppSettings.DICTATION_LANGUAGES.map { tag ->
+						tag to java.util.Locale.forLanguageTag(tag).let { it.getDisplayLanguage(it).replaceFirstChar(Char::titlecase) }
+					},
+					dictation,
+				) { dictation = it }
+				SettingsSection.REPORTS -> {
+					TimeField(stringResource(R.string.set_carry_over), text[F.CARRY_OVER].orEmpty(), { text[F.CARRY_OVER] = it })
+					RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text)
+					RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text)
+					RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text)
+				}
+				SettingsSection.ONLINE -> {
+					SwitchRow(stringResource(R.string.set_nominatim), nominatimOn) { nominatimOn = it }
+					field(F.NOMINATIM, R.string.set_endpoint, KeyboardType.Uri)
+					SwitchRow(stringResource(R.string.set_osrm), osrmOn) { osrmOn = it }
+					field(F.OSRM, R.string.set_endpoint, KeyboardType.Uri)
+					SwitchRow(stringResource(R.string.set_tiles), tilesOn) { tilesOn = it }
+					field(F.TILES, R.string.set_endpoint, KeyboardType.Uri)
+				}
+				SettingsSection.STORAGE -> {
+					DataDirRow(initial.rootUri)
+					field(F.RETENTION, R.string.set_backup_retention)
+					val context = androidx.compose.ui.platform.LocalContext.current
+					val started = stringResource(R.string.backup_started)
+					TextButton(onClick = {
+						BackupWorker.runNow(context)
+						scope.launch { snackbar.showSnackbar(started) }
+					}) { Text(stringResource(R.string.backup_now)) }
+				}
+				SettingsSection.ADVANCED -> {
+					field(F.PLAN_LEAD, R.string.set_plan_lead)
+					field(F.PLAN_SNOOZE, R.string.set_plan_snooze)
+				}
 			}
 
 			Text(
@@ -237,10 +252,11 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			)
 		}
 		SnackbarHost(snackbar)
-		Button(
-			onClick = { vm.save(build()) { scope.launch { snackbar.showSnackbar(savedMsg) } } },
-			modifier = Modifier.fillMaxWidth().padding(16.dp),
-		) { Text(stringResource(R.string.action_save)) }
+		if (section.form)
+			Button(
+				onClick = { vm.save(build()) { scope.launch { snackbar.showSnackbar(savedMsg) } } },
+				modifier = Modifier.fillMaxWidth().padding(16.dp),
+			) { Text(stringResource(R.string.action_save)) }
 	}
 }
 
