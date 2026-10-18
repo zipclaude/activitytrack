@@ -390,4 +390,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="gestures_to_start">Nach links wischen</string>
   <string name="gestures_to_end">Nach rechts wischen</string>
   <string name="gestures_full">Langes Wischen führt die erste Aktion sofort aus</string>
+  <string name="todo_due_at">fällig %1$s</string>
+  <string name="todo_planned_chip">geplant</string>
+  <string name="gestures_behaviour">Verhalten</string>
 </resources>

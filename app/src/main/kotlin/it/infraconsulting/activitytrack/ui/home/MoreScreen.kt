@@ -22,6 +22,7 @@ fun MoreScreen(onOpen: (Screen) -> Unit) {
 				Screen.Todos to R.string.todo_title,
 				Screen.Export to R.string.export_title,
 				Screen.MasterData to R.string.md_title,
+				Screen.Gestures to R.string.gestures_title,
 				Screen.Settings to R.string.settings_title,
 			)
 			items(rows) { (screen, label) -> ClickableRow(stringResource(label)) { onOpen(screen) } }

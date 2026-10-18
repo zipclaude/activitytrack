@@ -391,4 +391,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="gestures_to_start">Deslizar a la izquierda</string>
   <string name="gestures_to_end">Deslizar a la derecha</string>
   <string name="gestures_full">Deslizar largo ejecuta la primera acción al instante</string>
+  <string name="todo_due_at">vence %1$s</string>
+  <string name="todo_planned_chip">planificada</string>
+  <string name="gestures_behaviour">Comportamiento</string>
 </resources>
