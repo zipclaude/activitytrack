@@ -283,6 +283,17 @@
   <string name="day_empty">No hay tiempo registrado este día.</string>
   <string name="day_line_fmt">Trabajo %1$s → %2$s · Viaje %3$s → %4$s · Pausa %5$s → %6$s</string>
   <string name="export_title">Importar / exportar</string>
+  <string name="nav_home">Inicio</string>
+  <string name="nav_agenda">Agenda</string>
+  <string name="nav_report">Informe</string>
+  <string name="nav_more">Más</string>
+  <string name="agenda_today">Hoy</string>
+  <string name="agenda_list">Lista</string>
+  <string name="agenda_day">Día</string>
+  <string name="agenda_week">Semana</string>
+  <string name="agenda_month">Mes</string>
+  <string name="agenda_search">Buscar cliente o actividad</string>
+  <string name="agenda_empty">No hay actividades en este periodo.</string>
   <string name="connector_title">Sistema de gestión</string>
   <string name="connector_external_code">Código en el sistema de gestión</string>
   <string name="connector_plugin">Conector</string>

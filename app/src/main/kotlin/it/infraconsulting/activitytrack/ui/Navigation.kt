@@ -6,14 +6,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 
 /*
  * Destinations. The app owns its back stack (a state list), the same model
@@ -21,6 +22,10 @@ import androidx.compose.runtime.toMutableStateList
  */
 sealed interface Screen {
 	data object Home : Screen
+	/* consultation (M6): list, day, week, month */
+	data object Agenda : Screen
+	/* secondary destinations behind the bottom bar */
+	data object More : Screen
 	data object Start : Screen
 	/* start flow with a client already picked (widget, shortcut) */
 	data class StartFor(val clientId: Long) : Screen
@@ -60,7 +65,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos)
+			listOf(Home, Agenda, More, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos)
 				.associateBy { it.key() }
 		}
 
@@ -131,3 +136,10 @@ fun ScopedEntry(stack: List<Screen>, content: @Composable (Screen) -> Unit) {
 @Composable
 fun rememberBackStack(): SnapshotStateList<Screen> =
 	rememberSaveable(saver = BackStackSaver) { listOf<Screen>(Screen.Home).toMutableStateList() }
+
+/* Bottom navigation (M6/M7, owner decision 2026-10-17): roots shown with the bar. */
+val TABS: List<Screen> by lazy { listOf(Screen.Home, Screen.Agenda, Screen.Day, Screen.More) }
+
+/* Inside a tab root the bottom bar owns the navigation-bar inset. */
+val LocalBottomBar = staticCompositionLocalOf { false }
+

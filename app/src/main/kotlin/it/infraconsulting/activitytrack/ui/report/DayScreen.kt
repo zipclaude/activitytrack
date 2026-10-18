@@ -65,7 +65,7 @@ class DayViewModel(reports: ReportRepository, settings: SettingsRepository) : Ac
 
 /* Solar vs reported totals of a day and its entry lines (SPEC §4.4). */
 @Composable
-fun DayScreen(onBack: () -> Unit, onOpenEntry: (Long) -> Unit, onExport: () -> Unit) {
+fun DayScreen(onBack: (() -> Unit)?, onOpenEntry: (Long) -> Unit, onExport: () -> Unit) {
 	val vm = appViewModel { DayViewModel(it.reports, it.settings) }
 	val day by vm.day.collectAsState()
 	val loaded by vm.report.collectAsState()
