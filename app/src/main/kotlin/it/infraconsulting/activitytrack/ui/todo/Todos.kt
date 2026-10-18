@@ -40,6 +40,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.WithAddButton
+import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
+import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
 import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.TodoRepository
@@ -52,6 +55,7 @@ import it.infraconsulting.activitytrack.domain.settings.TodoAction
 import it.infraconsulting.activitytrack.domain.settings.TodoSwipe
 import it.infraconsulting.activitytrack.domain.todo.dueOverdue
 import it.infraconsulting.activitytrack.ui.ActionViewModel
+import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.BLUE
@@ -169,8 +173,12 @@ private fun Chip(text: String, container: Color, content: Color) {
 fun TodoCard(t: TodoEntity, clientName: String?, onClick: () -> Unit) {
 	val ignored = t.ignoredUtcMs != null
 	val late = overdue(t)
+	val compact = LocalCompact.current
 	val body: @Composable () -> Unit = {
-		Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+		Column(
+			Modifier.padding(horizontal = if (compact) 12.dp else 14.dp, vertical = if (compact) 7.dp else 12.dp),
+			verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp),
+		) {
 			Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 				Text(
 					(if (t.done) "✓ " else "") + t.title,
@@ -276,7 +284,7 @@ fun TodoTodaySection(onStart: (Long) -> Unit) {
 		return
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
-	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 10.dp)) {
 		TodoHeader(due.size)
 		for (t in due + ignoredToday)
 			TodoSwipeCard(
@@ -398,6 +406,8 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	var clientId by remember { mutableStateOf(initial.clientId) }
 	/* the companies may still be loading when the dialog opens (agenda): default to the first once known */
 	var picked by remember { mutableStateOf(initial.companyId.takeIf { it != 0L }) }
+	var addCompany by remember { mutableStateOf(false) }
+	var addClient by remember { mutableStateOf(false) }
 	val companyId = picked ?: companies.firstOrNull()?.id
 	var planDay by remember { mutableStateOf(initial.planEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var planTime by remember { mutableStateOf(initial.planStartMin?.let(::formatMin).orEmpty()) }
@@ -448,14 +458,18 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		},
 	) {
 		TextInput(stringResource(R.string.todo_field_title), title, { title = it })
-		SearchableChoiceField(
-			stringResource(R.string.field_client),
-			listOf<Pair<Long?, String>>(null to stringResource(R.string.field_none)) +
-				clients.filter { !it.archived }.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
-			clientId,
-		) { clientId = it }
+		WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
+			SearchableChoiceField(
+				stringResource(R.string.field_client),
+				listOf<Pair<Long?, String>>(null to stringResource(R.string.field_none)) +
+					clients.filter { !it.archived }.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
+				clientId,
+			) { clientId = it }
+		}
 		if (clientId == null)
-			ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
+			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+				ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
+			}
 		DateField(stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true)
 		TimeField(stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true)
 		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)
@@ -465,4 +479,8 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false)
 		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false)
 	}
+	if (addCompany)
+		QuickCompanyDialog(onDone = { addCompany = false; picked = it; clientId = null }, onDismiss = { addCompany = false })
+	if (addClient)
+		QuickClientDialog(companyId, onDone = { c, co -> addClient = false; clientId = c; picked = co }, onDismiss = { addClient = false })
 }

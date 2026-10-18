@@ -69,6 +69,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M7 UI polish | first pass (PR #7 → #10, on `main`), owner review pending |
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
+| M11 UI | **implemented** (branch `m11-ui`): start/travel on the empty card and the bar, compact display, quick add; device test pending |
 | M10 UI | **done** (PR #12, on `main`, release v0.3.0): pickers, Home cards, swipes, Gestures screen, ignored to-dos (schema v5); smoke-tested on the debug app 2026-10-18 |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
@@ -251,6 +252,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-18 | M10 UI (mockup https://claude.ai/artifact/5fmq8LyttMzhbbLbMiYm5j approved): Material date and time pickers for every date/time field; Home: the running-entry card always shown (empty state message when none), most recent entry in the big card, every other open entry (paused, suspended) in its own small card (1/3 height) below, tapping one brings it to the big card; to-do area under a separator, one card per to-do; UI language Italian (phone stays English: per-app language) |
 | 2026-10-18 | M10 swipe gestures, configurable per direction (start/end, RTL-safe) and per card type, everywhere (Home, Agenda list, To-dos): to-do left = Start, right = Postpone or Ignore; entry left = Pause / Resume, right = Stop (same questions as the Stop button) or Suspend; short swipe reveals the buttons, a long swipe runs the first one (switchable; no Undo: each action is reversible or asks first, e.g. Stop) |
 | 2026-10-18 | To-do "ignored" state instead of delete: struck through, at the bottom of the lists, restored with another swipe; imports never re-create or un-ignore it |
+| 2026-10-18 | M11: no bottom start button; empty card: Start + Travel buttons and swipes (left = start screen, right = travel at once, no destination); with entries open, Start / Travel icons in the top bar (Travel opens the start screen in travel mode); compact display setting (text 88 %, tighter cards); "+" quick add of company and client (start screen, to-do editor; client quick add did not exist before) |
 | 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10); debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |

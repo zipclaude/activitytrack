@@ -405,4 +405,12 @@ Tap the green play button below to start one.</string>
   <string name="todo_due_at">due %1$s</string>
   <string name="todo_planned_chip">planned</string>
   <string name="gestures_behaviour">Behaviour</string>
+  <!-- M11 home start, compact display, quick add -->
+  <string name="sec_display">Display</string>
+  <string name="set_display">Layout</string>
+  <string name="display_normal">Normal</string>
+  <string name="display_compact">Compact</string>
+  <string name="quick_company">New company</string>
+  <string name="quick_client">New client</string>
+  <string name="start_travel">Start travel</string>
 </resources>
