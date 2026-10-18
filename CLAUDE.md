@@ -141,7 +141,11 @@ lists show ignored to-dos and for how long (proposal: Home only on the day they
 were ignored; To-dos list always, at the bottom).
 
 ### Backlog (owner notes, 2026-10-18)
-Done in M13: 2, 4, 5, 6, 7, 8, 9, 10, 12. Open: 1, 3, 11, 13 (questions to the owner).
+Done in M13: 2, 4, 5, 6, 7, 8, 9, 10, 12. Open: 1, 3, 11, 13 (answers 2026-10-18:
+11 yes, an edited tracked segment becomes "corrected by hand" and keeps its
+original times; 13 yes as proposed, filters by tag in agenda and reports
+later; 1 yes as proposed, manual order by dragging; 3 mockup first).
+14. Show the company and client colour in the drop-down lists too.
 Colours: done in M12 (see the decisions log).
 1. Company, client, role, preset lists sortable: per list alphabetical, by last
    use / creation, or manual.
