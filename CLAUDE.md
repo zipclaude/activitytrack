@@ -34,6 +34,16 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
   Then `./gradlew installDebug` and
   `adb shell am start -n it.infraconsulting.activitytrack.debug/it.infraconsulting.activitytrack.MainActivity`.
 - Push to `main` only after a green local build; CI must stay green.
+- Two apps on the phone (owner, 2026-10-18): **ActivityTrackDbg** = debug build
+  installed with adb for tests (`it.infraconsulting.activitytrack.debug`, data
+  folder `ActivityTrackDbg`); **ActivityTrack** = the app in use,
+  release from GitHub Releases (`it.infraconsulting.activitytrack`, data folder
+  `ActivityTrack`). Device tests touch only the debug app.
+- Release: tag `vX.Y.Z` on `main` and push the tag → CI job `release` signs the
+  APK with the repository secrets `RELEASE_*` and publishes the GitHub Release
+  (versionCode = CI run number). Keystore and passwords:
+  `~/src/activitytrack-keys/` (never in the repo; losing it means no more
+  updates without reinstalling). Local signed build: `./gradlew :app:assembleRelease`.
 
 ### 2.2 Cloud sandbox (claude.ai session)
 - Maven Central, `dl.google.com`, `services.gradle.org` and Actions log storage
@@ -234,8 +244,9 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
 | 2026-10-18 | M10 UI (mockup https://claude.ai/artifact/5fmq8LyttMzhbbLbMiYm5j approved): Material date and time pickers for every date/time field; Home: the running-entry card always shown (empty state message when none), most recent entry in the big card, every other open entry (paused, suspended) in its own small card (1/3 height) below, tapping one brings it to the big card; to-do area under a separator, one card per to-do; UI language Italian (phone stays English: per-app language) |
-| 2026-10-18 | M10 swipe gestures, configurable per direction (start/end, RTL-safe) and per card type, everywhere (Home, Agenda list, To-dos): to-do left = Start, right = Postpone or Ignore; entry left = Pause / Resume, right = Stop (same questions as the Stop button) or Suspend; short swipe reveals the buttons, full swipe runs the first one with Undo (switchable) |
+| 2026-10-18 | M10 swipe gestures, configurable per direction (start/end, RTL-safe) and per card type, everywhere (Home, Agenda list, To-dos): to-do left = Start, right = Postpone or Ignore; entry left = Pause / Resume, right = Stop (same questions as the Stop button) or Suspend; short swipe reveals the buttons, a long swipe runs the first one (switchable; no Undo: each action is reversible or asks first, e.g. Stop) |
 | 2026-10-18 | To-do "ignored" state instead of delete: struck through, at the bottom of the lists, restored with another swipe; imports never re-create or un-ignore it |
+| 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
 | 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |
