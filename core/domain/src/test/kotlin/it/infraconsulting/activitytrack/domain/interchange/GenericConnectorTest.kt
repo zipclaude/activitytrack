@@ -16,7 +16,8 @@ class GenericConnectorTest {
 		sites = listOf(XSite("client", "C-1", "HQ", "Via Roma 1", 45.4642, 9.19, 150)),
 		roles = listOf(XRole("Sysadmin")),
 		presets = listOf(XPreset("Backup check", "ACME", "Sysadmin")),
-		todos = listOf(XTodo("T-9", "ACME", "C-1", "Patch servers", refs = listOf("INC0012"), dueDate = "2026-10-20", dueTime = "09:00", priority = 2)),
+		todos = listOf(XTodo("T-9", "ACME", "C-1", "Patch servers", refs = listOf("INC0012"), dueDate = "2026-10-20", dueTime = "09:00", priority = 2,
+			plannedDate = "2026-10-19", plannedTime = "14:30", durationMin = 90)),
 		entries = listOf(
 			XEntry(
 				key = "6f1c0f4e-0000-4000-8000-000000000001", companyKey = "ACME", clientKey = "C-1", todoKey = "T-9",

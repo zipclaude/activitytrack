@@ -50,6 +50,27 @@ class CalendarEventsTest {
 	}
 
 	@Test
+	fun tagsPerKindOfTime() {
+		val tagged = labels.copy(tags = EventTags("#work", "#travel", "#pause", "#planned"))
+		val days = listOf(DayTotals(day, Duration.ofMinutes(130), Duration.ofMinutes(150), listOf(line(1, 110, 20))))
+		val e = CalendarEvents.plan(days, mapOf(1L to meta("Bank")), mapOf(1L to "u-1"), mapOf(1L to 5L), tagged).single()
+		assertEquals("Work 2:00 · Travel 0:20\n#work #travel", e.description)
+	}
+
+	@Test
+	fun plannedTodoIsTentativeWithItsTag() {
+		val tagged = labels.copy(tags = EventTags(planned = "#planned"))
+		val e = CalendarEvents.planTodos(
+			listOf(TodoEvent("t-1", 5, start, start.plusSeconds(3600), "Patch", "Bank", "Rack 3", listOf("INC1"))), tagged,
+		).single()
+		assertEquals("todo:t-1", e.key)
+		assertEquals("Bank – Patch", e.title)
+		assertEquals("Rack 3\nRefs: INC1\n#planned", e.description)
+		assertEquals(true, e.tentative)
+		assertEquals(start.plusSeconds(3600), e.end)
+	}
+
+	@Test
 	fun entriesWithoutUidAreLeftOut() {
 		val days = listOf(DayTotals(day, Duration.ZERO, Duration.ZERO, listOf(line(3, 30))))
 		assertEquals(emptyList(), CalendarEvents.plan(days, mapOf(3L to meta("Bank")), emptyMap(), emptyMap(), labels))
