@@ -2,6 +2,14 @@
 package it.infraconsulting.activitytrack.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import it.infraconsulting.activitytrack.ui.common.SwipeCard
+import it.infraconsulting.activitytrack.domain.settings.GestureSettings
+import it.infraconsulting.activitytrack.data.settings.SettingsRepository
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -72,12 +80,16 @@ data class EntryCard(
 	val segments: List<SegmentEntity>,
 ) {
 	val title: String? get() = client ?: company
+
+	/* latest start or end of a segment: "the most recent" entry for the big card */
+	val lastChange: Long get() = segments.maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: 0L) } ?: entry.updatedUtcMs
 }
 
 class HomeViewModel(
 	private val entries: EntryRepository,
 	master: MasterDataRepository,
-) : ActionViewModel() {
+	settings: SettingsRepository,
+) : EntryCommander(entries) {
 	val cards = combine(
 		entries.openEntries, entries.openEntrySegments, master.clients, master.companies,
 	) { list, segs, clients, companies ->
@@ -86,45 +98,39 @@ class HomeViewModel(
 		val bySeg = segs.groupBy { it.entryId }
 		list.map { e ->
 			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty())
-		}
+		}.sortedByDescending { it.lastChange }
 	}.state(emptyList())
 
-	val clients = master.clients.state(emptyList())
-	val roles = master.roles.state(emptyList())
-	val presets = master.presets.state(emptyList())
+	val settings = settings.settings.state(null)
 
-	/* Suspended entry proposed for resumption after a stop. */
-	private val _resume = MutableStateFlow<TimeEntryEntity?>(null)
-	val resume = _resume.asStateFlow()
+	/* the entry shown in the big card; null = the most recent one */
+	private val _selected = MutableStateFlow<Long?>(null)
+	val selected = _selected.asStateFlow()
 
-	fun command(id: Long, cmd: EntryCommand) = run {
-		entries.apply(id, cmd)
-		if (cmd == EntryCommand.STOP)
-			_resume.value = entries.suspendedToResume(id)
+	fun select(id: Long) {
+		_selected.value = id
 	}
-
-	fun dismissResume() {
-		_resume.value = null
-	}
-
-	fun resume(id: Long) = run {
-		_resume.value = null
-		entries.apply(id, EntryCommand.WORK)
-	}
-
 }
 
-/* Open entries with their commands; the start flow is a separate screen. */
+/*
+ * Home (M10, owner decisions 2026-10-18): the big card always shows (an
+ * empty-state message when nothing runs) with the most recent open entry,
+ * or the one tapped; every other open entry gets a small card below; the
+ * to-dos follow under a separator. Cards swipe as set in Gestures.
+ */
 @Composable
 fun HomeScreen(
 	onStart: () -> Unit,
 	onOpenEntry: (Long) -> Unit,
 	onStartTodo: (Long) -> Unit,
 ) {
-	val vm = appViewModel { HomeViewModel(it.entries, it.masterData) }
+	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
 	val cards by vm.cards.collectAsState()
-	val resume by vm.resume.collectAsState()
-	var stopping by remember { mutableStateOf<EntryCard?>(null) }
+	val selected by vm.selected.collectAsState()
+	val settings by vm.settings.collectAsState()
+	val gestures = settings?.gestures ?: GestureSettings()
+	val fallback = stringResource(R.string.entry_no_client)
+	val run = rememberEntryCommands(vm) { id -> cards.firstOrNull { it.entry.id == id }?.title ?: fallback }
 
 	/* elapsed times refresh every 30 s; the DB keeps exact timestamps */
 	val now by produceState(System.currentTimeMillis()) {
@@ -133,6 +139,8 @@ fun HomeScreen(
 			value = System.currentTimeMillis()
 		}
 	}
+	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
+	val small = cards.filter { it !== big }
 
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
@@ -141,32 +149,35 @@ fun HomeScreen(
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 			LazyColumn(
 				modifier = Modifier.weight(1f).fillMaxWidth(),
-				verticalArrangement = Arrangement.spacedBy(8.dp),
+				verticalArrangement = Arrangement.spacedBy(10.dp),
+				contentPadding = PaddingValues(vertical = 8.dp),
 			) {
-				if (cards.isEmpty())
-					item {
-						Text(
-							stringResource(R.string.home_empty_hint),
-							style = MaterialTheme.typography.bodyLarge,
-							color = MaterialTheme.colorScheme.onSurfaceVariant,
-							modifier = Modifier.fillMaxWidth().padding(24.dp),
-						)
-					}
-				items(cards, key = { it.entry.id }) { c ->
-					EntryCardView(
-						card = c,
-						now = now,
-						onCommand = { cmd ->
-							/* STOP while working asks about the return travel; from TRAVEL it stops directly */
-							if (cmd == EntryCommand.STOP && c.entry.mode != SegmentKind.TRAVEL)
-								stopping = c
-							else
-								vm.command(c.entry.id, cmd)
-						},
-						onOpen = { onOpenEntry(c.entry.id) },
-					)
+				item(key = "big") {
+					if (big == null)
+						EmptyEntryCard(Modifier.padding(horizontal = 16.dp))
+					else
+						SwipeCard(
+							toStart = entrySwipeActions(big.entry, gestures.entryToStart) { run(big.entry, it) },
+							toEnd = entrySwipeActions(big.entry, gestures.entryToEnd) { run(big.entry, it) },
+							fullSwipe = gestures.fullSwipe,
+							shape = CardDefaults.shape,
+							modifier = Modifier.padding(horizontal = 16.dp),
+						) {
+							EntryCardView(card = big, now = now, onCommand = { run(big.entry, it) }, onOpen = { onOpenEntry(big.entry.id) })
+						}
 				}
-				item { TodoTodaySection(onStartTodo) }
+				items(small, key = { it.entry.id }) { c ->
+					SwipeCard(
+						toStart = entrySwipeActions(c.entry, gestures.entryToStart) { run(c.entry, it) },
+						toEnd = entrySwipeActions(c.entry, gestures.entryToEnd) { run(c.entry, it) },
+						fullSwipe = gestures.fullSwipe,
+						shape = CardDefaults.shape,
+						modifier = Modifier.padding(horizontal = 16.dp),
+					) {
+						SmallEntryCard(c, now, onSelect = { vm.select(c.entry.id) }, onCommand = { run(c.entry, it) }, onOpen = { onOpenEntry(c.entry.id) })
+					}
+				}
+				item(key = "todos") { TodoTodaySection(onStartTodo) }
 			}
 			/* green play like every start (owner request), the label for accessibility */
 			val start = commandStyle(EntryCommand.WORK)!!
@@ -178,34 +189,70 @@ fun HomeScreen(
 			) { Icon(painterResource(start.icon), contentDescription = label, modifier = Modifier.size(32.dp)) }
 		}
 	}
+}
 
-	stopping?.let { c ->
-		AlertDialog(
-			onDismissRequest = { stopping = null },
-			title = { Text(stringResource(R.string.stop_title, c.title ?: "")) },
-			confirmButton = {
-				TextButton(onClick = { stopping = null; vm.command(c.entry.id, EntryCommand.STOP) }) {
-					Text(stringResource(R.string.stop_now))
-				}
-			},
-			dismissButton = {
-				TextButton(onClick = { stopping = null; vm.command(c.entry.id, EntryCommand.TRAVEL) }) {
-					Text(stringResource(R.string.stop_return))
-				}
-			},
-		)
+/* The big card when no entry is open: same frame, a message instead (owner, 2026-10-18). */
+@Composable
+private fun EmptyEntryCard(modifier: Modifier) {
+	Card(modifier = modifier.fillMaxWidth()) {
+		Column(
+			modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp).padding(18.dp),
+			horizontalAlignment = Alignment.CenterHorizontally,
+			verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+		) {
+			Icon(
+				painterResource(R.drawable.ic_clock), contentDescription = null,
+				tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(40.dp),
+			)
+			Text(stringResource(R.string.home_none), style = MaterialTheme.typography.titleLarge)
+			Text(
+				stringResource(R.string.home_none_hint), style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
+			)
+		}
 	}
+}
 
-	resume?.let { e ->
-		val name = cards.firstOrNull { it.entry.id == e.id }?.title.orEmpty()
-		AlertDialog(
-			onDismissRequest = vm::dismissResume,
-			title = { Text(stringResource(R.string.resume_title, name)) },
-			confirmButton = { TextButton(onClick = { vm.resume(e.id) }) { Text(stringResource(R.string.action_yes)) } },
-			dismissButton = { TextButton(onClick = vm::dismissResume) { Text(stringResource(R.string.action_no)) } },
-		)
+/*
+ * A background entry (paused, suspended, to complete, or another running
+ * one), about a third of the big card: a tap brings it to the big card; the
+ * button resumes, pauses or opens it for completion.
+ */
+@Composable
+private fun SmallEntryCard(card: EntryCard, now: Long, onSelect: () -> Unit, onCommand: (EntryCommand) -> Unit, onOpen: () -> Unit) {
+	val e = card.entry
+	val zone = ZoneId.of(e.zoneId)
+	Card(onClick = onSelect, modifier = Modifier.fillMaxWidth()) {
+		Row(
+			modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.spacedBy(12.dp),
+		) {
+			Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+				Text(
+					listOfNotNull(card.title ?: stringResource(R.string.entry_no_client), e.activity).joinToString(" · "),
+					style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+				)
+				val since = card.segments.mapNotNull { it.endUtcMs ?: it.startUtcMs }.maxOrNull()
+				val state = statusText(e.status, e.mode)
+				Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+					val style = stateStyle(e.status, e.mode)
+					if (style != null) StatePill(style, state) else Text(state, style = MaterialTheme.typography.bodySmall)
+					Text(
+						listOfNotNull(since?.let { clock(it, zone) }, hm(total(card.segments, SegmentKind.WORK, now))).joinToString(" · "),
+						style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+					)
+				}
+			}
+			val resting = (e.status == EntryStatus.ACTIVE && e.mode == SegmentKind.PAUSE) || e.status == EntryStatus.SUSPENDED
+			val running = e.status == EntryStatus.ACTIVE && !resting
+			when {
+				resting -> commandStyle(EntryCommand.WORK)?.let { CommandIconButton(it, stringResource(R.string.cmd_resume), { onCommand(EntryCommand.WORK) }, Modifier.size(44.dp)) }
+				running -> commandStyle(EntryCommand.PAUSE)?.let { CommandIconButton(it, stringResource(R.string.cmd_pause), { onCommand(EntryCommand.PAUSE) }, Modifier.size(44.dp)) }
+				e.status == EntryStatus.TO_COMPLETE -> TextButton(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
+			}
+		}
 	}
-
 }
 
 @Composable
@@ -217,7 +264,7 @@ private fun EntryCardView(
 ) {
 	val e = card.entry
 	val zone = ZoneId.of(e.zoneId)
-	Card(onClick = onOpen, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+	Card(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
 		Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
 			val last = card.segments.lastOrNull()
 			val since = when {

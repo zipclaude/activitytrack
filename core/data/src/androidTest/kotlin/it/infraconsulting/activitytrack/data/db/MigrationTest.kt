@@ -77,6 +77,21 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v4ToV5AddsIgnored() {
+		helper.createDatabase(DB, 4).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO todo (uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms) VALUES ('t1', 1, 'Patch', '', 0, 0, 0)")
+		}
+		helper.runMigrationsAndValidate(DB, 5, true).use { db ->
+			db.query("SELECT title, ignored_utc_ms FROM todo").use { c ->
+				c.moveToFirst()
+				assertEquals("Patch", c.getString(0))
+				assertEquals(true, c.isNull(1))
+			}
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

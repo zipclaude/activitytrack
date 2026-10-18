@@ -391,4 +391,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="gestures_to_start">Trascina a sinistra</string>
   <string name="gestures_to_end">Trascina a destra</string>
   <string name="gestures_full">Trascinamento lungo: esegue subito la prima azione</string>
+  <string name="todo_due_at">scad. %1$s</string>
+  <string name="todo_planned_chip">pianificata</string>
+  <string name="gestures_behaviour">Comportamento</string>
 </resources>

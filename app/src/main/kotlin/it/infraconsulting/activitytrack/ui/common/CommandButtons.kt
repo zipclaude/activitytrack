@@ -34,11 +34,11 @@ import it.infraconsulting.activitytrack.domain.model.SegmentKind
  */
 data class CommandStyle(@DrawableRes val icon: Int, val container: Color, val content: Color)
 
-private val GREEN = Color(0xFF2E7D32)
-private val RED = Color(0xFFC62828)
-private val YELLOW = Color(0xFFF9A825)
-private val ORANGE = Color(0xFFEF6C00)
-private val BLUE = Color(0xFF1565C0)
+internal val GREEN = Color(0xFF2E7D32)
+internal val RED = Color(0xFFC62828)
+internal val YELLOW = Color(0xFFF9A825)
+internal val ORANGE = Color(0xFFEF6C00)
+internal val BLUE = Color(0xFF1565C0)
 /* dark icon on yellow: white would fail contrast */
 private val ON_YELLOW = Color(0xFF212121)
 

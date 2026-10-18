@@ -46,6 +46,8 @@ sealed interface Screen {
 	/* expense for the most recent open entry (widget, shortcut) */
 	data object QuickExpense : Screen
 	data object Todos : Screen
+	/* swipe gestures (M10) */
+	data object Gestures : Screen
 	/* start flow pre-filled from a to-do */
 	data class StartFromTodo(val todoId: Long) : Screen
 	/* to-dos with one open for editing (re-plan from the reminder) */
@@ -68,7 +70,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Agenda, More, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos)
+			listOf(Home, Agenda, More, Start, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures)
 				.associateBy { it.key() }
 		}
 
