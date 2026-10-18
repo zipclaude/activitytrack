@@ -69,7 +69,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M7 UI polish | first pass (PR #7 → #10, on `main`), owner review pending |
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
-| M11 UI | **implemented** (branch `m11-ui`): start/travel on the empty card and the bar, compact display, quick add; device test pending |
+| M11 UI | **implemented** (PR #13): start/travel on the empty card and the bar, compact display, quick add; device-tested 2026-10-18 on the debug app |
 | M10 UI | **done** (PR #12, on `main`, release v0.3.0): pickers, Home cards, swipes, Gestures screen, ignored to-dos (schema v5); smoke-tested on the debug app 2026-10-18 |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
