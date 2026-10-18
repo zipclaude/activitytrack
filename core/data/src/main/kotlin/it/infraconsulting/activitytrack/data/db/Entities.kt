@@ -196,6 +196,12 @@ data class TodoEntity(
 	val done: Boolean = false,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
 	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
+	/* planned slot (M9): local day and start, both or neither; duration optional */
+	@ColumnInfo(name = "plan_epoch_day") val planEpochDay: Long? = null,
+	@ColumnInfo(name = "plan_start_min") val planStartMin: Int? = null,
+	@ColumnInfo(name = "duration_min") val durationMin: Int? = null,
+	/* planned start (UTC ms) whose reminder was shown */
+	@ColumnInfo(name = "plan_reminded_utc_ms") val planRemindedUtcMs: Long? = null,
 )
 
 @Entity(

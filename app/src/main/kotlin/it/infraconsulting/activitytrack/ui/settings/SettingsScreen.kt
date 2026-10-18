@@ -62,7 +62,8 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* the data folder is changed only through the picker */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri) }
+			/* data folder and calendars change through their own rows, not this form */
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars) }
 			onDone()
 		}
 	}
@@ -71,7 +72,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 /* Text-field keys of the form; values are parsed on save. */
 private enum class F {
 	CONFIRM, MAX_CONFIRM, PAUSE, DAY_START, MOVEMENT, ST_RADIUS, ST_MIN, KM_FACTOR, CARRY_OVER, RETENTION,
-	NOMINATIM, OSRM, TILES, WORK_MIN, TRAVEL_MIN, PAUSE_MIN,
+	NOMINATIM, OSRM, TILES, WORK_MIN, TRAVEL_MIN, PAUSE_MIN, PLAN_LEAD, PLAN_SNOOZE,
 }
 
 @Composable
@@ -104,8 +105,11 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			F.WORK_MIN to initial.rounding.work.minimum.toMinutes().toString(),
 			F.TRAVEL_MIN to initial.rounding.travel.minimum.toMinutes().toString(),
 			F.PAUSE_MIN to initial.rounding.pause.minimum.toMinutes().toString(),
+			F.PLAN_LEAD to initial.planLeadMin.toString(),
+			F.PLAN_SNOOZE to initial.planSnoozeMin.toString(),
 		)
 	}
+	var advanced by remember { mutableStateOf(false) }
 	var nominatimOn by remember { mutableStateOf(initial.nominatim.enabled) }
 	var osrmOn by remember { mutableStateOf(initial.osrm.enabled) }
 	var tilesOn by remember { mutableStateOf(initial.tiles.enabled) }
@@ -127,6 +131,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 		maxConfirmations = int(F.MAX_CONFIRM, initial.maxConfirmations),
 		pauseIntervalMin = int(F.PAUSE, initial.pauseIntervalMin),
 		dayStartDelayMin = int(F.DAY_START, initial.dayStartDelayMin),
+		planLeadMin = int(F.PLAN_LEAD, initial.planLeadMin),
+		planSnoozeMin = int(F.PLAN_SNOOZE, initial.planSnoozeMin),
 		movementThresholdM = int(F.MOVEMENT, initial.movementThresholdM),
 		stationaryRadiusM = int(F.ST_RADIUS, initial.stationaryRadiusM),
 		stationaryMin = int(F.ST_MIN, initial.stationaryMin),
@@ -167,6 +173,9 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 			field(F.ST_MIN, R.string.set_stationary_min)
 			field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
 
+			SectionHeader(stringResource(R.string.sec_calendar))
+			CalendarRows()
+
 			SectionHeader(stringResource(R.string.sec_dictation))
 			/* language names in their own language, as in the system pickers */
 			ChoiceField(
@@ -200,6 +209,16 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, modifier: 
 				BackupWorker.runNow(context)
 				scope.launch { snackbar.showSnackbar(started) }
 			}) { Text(stringResource(R.string.backup_now)) }
+
+			/* advanced (M9): planned to-do reminders, collapsed by default */
+			Row(verticalAlignment = Alignment.CenterVertically) {
+				Column(Modifier.weight(1f)) { SectionHeader(stringResource(R.string.sec_advanced)) }
+				TextButton(onClick = { advanced = !advanced }) { Text(if (advanced) "▲" else "▼") }
+			}
+			if (advanced) {
+				field(F.PLAN_LEAD, R.string.set_plan_lead)
+				field(F.PLAN_SNOOZE, R.string.set_plan_snooze)
+			}
 
 			Text(
 				stringResource(R.string.settings_note),

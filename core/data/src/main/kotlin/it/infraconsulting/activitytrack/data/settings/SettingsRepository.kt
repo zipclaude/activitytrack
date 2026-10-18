@@ -51,6 +51,8 @@ class SettingsRepository(context: Context) {
 		val maxConfirmations = intPreferencesKey("max_confirmations")
 		val pauseInterval = intPreferencesKey("pause_interval_min")
 		val dayStartDelay = intPreferencesKey("day_start_delay_min")
+		val planLead = intPreferencesKey("plan_lead_min")
+		val planSnooze = intPreferencesKey("plan_snooze_min")
 		val movementThreshold = intPreferencesKey("movement_threshold_m")
 		val stationaryRadius = intPreferencesKey("stationary_radius_m")
 		val stationaryMin = intPreferencesKey("stationary_min")
@@ -59,6 +61,9 @@ class SettingsRepository(context: Context) {
 		val backupRetention = intPreferencesKey("backup_retention")
 		val rootUri = stringPreferencesKey("root_uri")
 		val dictationLanguage = stringPreferencesKey("dictation_language")
+		val calendarId = longPreferencesKey("calendar_id")
+		/* "companyId:calendarId,..." */
+		val companyCalendars = stringPreferencesKey("company_calendars")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -74,6 +79,8 @@ class SettingsRepository(context: Context) {
 			maxConfirmations = p[K.maxConfirmations] ?: d.maxConfirmations,
 			pauseIntervalMin = p[K.pauseInterval] ?: d.pauseIntervalMin,
 			dayStartDelayMin = p[K.dayStartDelay] ?: d.dayStartDelayMin,
+			planLeadMin = p[K.planLead] ?: d.planLeadMin,
+			planSnoozeMin = p[K.planSnooze] ?: d.planSnoozeMin,
 			movementThresholdM = p[K.movementThreshold] ?: d.movementThresholdM,
 			stationaryRadiusM = p[K.stationaryRadius] ?: d.stationaryRadiusM,
 			stationaryMin = p[K.stationaryMin] ?: d.stationaryMin,
@@ -81,6 +88,10 @@ class SettingsRepository(context: Context) {
 			kmFactor = p[K.kmFactor] ?: d.kmFactor,
 			backupRetention = p[K.backupRetention] ?: d.backupRetention,
 			dictationLanguage = p[K.dictationLanguage] ?: d.dictationLanguage,
+			calendarId = p[K.calendarId],
+			companyCalendars = p[K.companyCalendars].orEmpty().split(',').mapNotNull { pair ->
+				pair.split(':').takeIf { it.size == 2 }?.let { (c, cal) -> c.toLongOrNull()?.let { k -> cal.toLongOrNull()?.let { k to it } } }
+			}.toMap(),
 			rootUri = p[K.rootUri],
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
@@ -98,6 +109,8 @@ class SettingsRepository(context: Context) {
 		p[K.maxConfirmations] = s.maxConfirmations
 		p[K.pauseInterval] = s.pauseIntervalMin
 		p[K.dayStartDelay] = s.dayStartDelayMin
+		p[K.planLead] = s.planLeadMin
+		p[K.planSnooze] = s.planSnoozeMin
 		p[K.movementThreshold] = s.movementThresholdM
 		p[K.stationaryRadius] = s.stationaryRadiusM
 		p[K.stationaryMin] = s.stationaryMin
@@ -105,6 +118,8 @@ class SettingsRepository(context: Context) {
 		p[K.kmFactor] = s.kmFactor
 		p[K.backupRetention] = s.backupRetention
 		p[K.dictationLanguage] = s.dictationLanguage
+		s.calendarId?.let { p[K.calendarId] = it } ?: p.remove(K.calendarId)
+		p[K.companyCalendars] = s.companyCalendars.entries.joinToString(",") { "${it.key}:${it.value}" }
 		s.rootUri.let { if (it != null) p[K.rootUri] = it else p.remove(K.rootUri) }
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)

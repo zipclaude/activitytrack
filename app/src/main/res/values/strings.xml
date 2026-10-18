@@ -26,6 +26,8 @@
 
   <!-- home -->
   <string name="home_no_open_entries">No open activities.</string>
+  <string name="home_empty_hint">No activity running.
+Tap the green play button below to start one.</string>
   <string name="entry_no_client">Client not set</string>
   <string name="mode_work">Working</string>
   <string name="mode_travel">Travelling</string>
@@ -131,6 +133,16 @@
   <string name="set_day_start_delay">Start-of-day prompt delay (min)</string>
   <string name="sec_location">Location</string>
   <string name="sec_dictation">Dictation</string>
+  <string name="sec_calendar">Calendar</string>
+  <string name="calendar_permission">Allow calendar access to keep the activities in a calendar.</string>
+  <string name="calendar_generic">Calendar for the activities</string>
+  <string name="calendar_none">None (no sync)</string>
+  <string name="calendar_new_local">New "ActivityTrack" calendar on this phone</string>
+  <string name="calendar_hint">One event per activity and day, from its start; Google or CalDAV calendars sync it.</string>
+  <string name="calendar_sync_now">Sync 90 days</string>
+  <string name="calendar_synced">Synchronised: %1$d changes</string>
+  <string name="calendar_company">Calendar of this company</string>
+  <string name="calendar_use_generic">The generic calendar</string>
   <string name="set_dictation_language">Dictation language</string>
   <string name="set_movement">Movement alert threshold (m)</string>
   <string name="set_stationary_radius">Arrival radius (m)</string>
@@ -284,6 +296,17 @@
   <string name="day_empty">No time recorded on this day.</string>
   <string name="day_line_fmt">Work %1$s → %2$s · Travel %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / export</string>
+  <string name="nav_home">Home</string>
+  <string name="nav_agenda">Agenda</string>
+  <string name="nav_report">Report</string>
+  <string name="nav_more">More</string>
+  <string name="agenda_today">Today</string>
+  <string name="agenda_list">List</string>
+  <string name="agenda_day">Day</string>
+  <string name="agenda_week">Week</string>
+  <string name="agenda_month">Month</string>
+  <string name="agenda_search">Search client or activity</string>
+  <string name="agenda_empty">No activities in this period.</string>
   <string name="connector_title">Management system</string>
   <string name="connector_external_code">Code in the management system</string>
   <string name="connector_plugin">Connector</string>
@@ -314,6 +337,11 @@
   <string name="import_section">Import</string>
   <string name="import_hint">Generic JSON or XML file: whatever it contains is added; existing data is kept and differences are listed.</string>
   <string name="import_action">Choose file to import</string>
+  <string name="restore_section">Restore backup</string>
+  <string name="restore_hint">Replaces all data with a daily backup (folder "backup"); the current data is saved as a backup first. Attachments stay in the data folder.</string>
+  <string name="restore_action">Choose backup (.zip)</string>
+  <string name="restore_confirm">Replace all data with the backup of %1$s (app %2$s)? The current data is saved as a backup first, then the app restarts.</string>
+  <string name="restore_do">Restore</string>
   <string name="export_done_file">Written to %1$s</string>
   <string name="exchange_failed">Failed: %1$s</string>
   <string name="export_sec_master">Master data</string>
@@ -338,4 +366,18 @@
     <item quantity="one">%1$d line written to %2$s</item>
     <item quantity="other">%1$d lines written to %2$s</item>
   </plurals>
+  <!-- M9 planned to-dos -->
+  <string name="ch_planned">Planned activities</string>
+  <string name="notif_planned_title">%1$s at %2$s</string>
+  <string name="action_postpone">Postpone %1$d min</string>
+  <string name="action_replan">Re-plan</string>
+  <string name="todo_field_plan_date">Planned date (yyyy-mm-dd)</string>
+  <string name="todo_field_plan_time">Planned time (hh:mm)</string>
+  <string name="todo_field_duration">Duration (min; empty = 1 h, growing)</string>
+  <string name="todo_planned">planned %1$s</string>
+  <string name="todo_overdue">overdue</string>
+  <string name="todo_new">New to-do</string>
+  <string name="sec_advanced">Advanced</string>
+  <string name="set_plan_lead">Planned activity reminder (min before)</string>
+  <string name="set_plan_snooze">Postpone step (min)</string>
 </resources>

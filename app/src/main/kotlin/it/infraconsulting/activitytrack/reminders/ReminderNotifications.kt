@@ -77,6 +77,27 @@ object ReminderNotifications {
 			.addAction(action(context.getString(R.string.action_start_entry), EntryLinks.openScreen(context, Screen.Start, 4)))
 			.build()
 
+	/*
+	 * "<title> at HH:MM" before a planned to-do: Start (start screen from the
+	 * to-do) / Postpone N min / Re-plan (the to-do editor). No dialog outside
+	 * the app.
+	 */
+	fun planned(context: Context, todoId: Long, title: String, subtitle: String?, startMs: Long, snoozeMin: Int): Notification {
+		val rc = (todoId * 4).toInt()
+		return Notification.Builder(context, NotificationChannels.PLANNED)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(context.getString(R.string.notif_planned_title, title, clock(startMs)))
+			.apply { subtitle?.let(::setContentText) }
+			.setContentIntent(EntryLinks.openScreen(context, Screen.Todo(todoId), -(rc + 1)))
+			.setAutoCancel(true)
+			.setCategory(Notification.CATEGORY_REMINDER)
+			.setWhen(startMs)
+			.addAction(action(context.getString(R.string.todo_start), EntryLinks.openScreen(context, Screen.StartFromTodo(todoId), -(rc + 2))))
+			.addAction(action(context.getString(R.string.action_postpone, snoozeMin), ActionReceiver.postponeTodo(context, todoId)))
+			.addAction(action(context.getString(R.string.action_replan), EntryLinks.openScreen(context, Screen.Todo(todoId), -(rc + 3))))
+			.build()
+	}
+
 	fun daySummary(context: Context, solar: Duration, reported: Duration): Notification =
 		Notification.Builder(context, NotificationChannels.DAY_SUMMARY)
 			.setSmallIcon(R.drawable.ic_stat_timer)

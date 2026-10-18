@@ -5,16 +5,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -29,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -46,8 +52,10 @@ import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.CommandIconButton
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
+import it.infraconsulting.activitytrack.ui.common.StatePill
 import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.formatMin
+import it.infraconsulting.activitytrack.ui.common.stateStyle
 import it.infraconsulting.activitytrack.ui.todo.TodoTodaySection
 import java.time.Instant
 import java.time.ZoneId
@@ -111,11 +119,6 @@ class HomeViewModel(
 fun HomeScreen(
 	onStart: () -> Unit,
 	onOpenEntry: (Long) -> Unit,
-	onDay: () -> Unit,
-	onMasterData: () -> Unit,
-	onSettings: () -> Unit,
-	onTodos: () -> Unit,
-	onExchange: () -> Unit,
 	onStartTodo: (Long) -> Unit,
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData) }
@@ -134,35 +137,6 @@ fun HomeScreen(
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
 		onBack = null,
-		actions = {
-			TextButton(onClick = onDay) { Text(stringResource(R.string.day_title)) }
-			/* the other destinations would squeeze the title (long in de/it) */
-			Box {
-				var menu by remember { mutableStateOf(false) }
-				val more = stringResource(R.string.action_more)
-				IconButton(onClick = { menu = true }, modifier = Modifier.semantics { contentDescription = more }) {
-					Text("⋮", style = MaterialTheme.typography.titleLarge)
-				}
-				DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.todo_title)) },
-						onClick = { menu = false; onTodos() },
-					)
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.export_title)) },
-						onClick = { menu = false; onExchange() },
-					)
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.md_title)) },
-						onClick = { menu = false; onMasterData() },
-					)
-					DropdownMenuItem(
-						text = { Text(stringResource(R.string.settings_title)) },
-						onClick = { menu = false; onSettings() },
-					)
-				}
-			}
-		},
 	) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 			LazyColumn(
@@ -170,7 +144,14 @@ fun HomeScreen(
 				verticalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				if (cards.isEmpty())
-					item { EmptyText(stringResource(R.string.home_no_open_entries)) }
+					item {
+						Text(
+							stringResource(R.string.home_empty_hint),
+							style = MaterialTheme.typography.bodyLarge,
+							color = MaterialTheme.colorScheme.onSurfaceVariant,
+							modifier = Modifier.fillMaxWidth().padding(24.dp),
+						)
+					}
 				items(cards, key = { it.entry.id }) { c ->
 					EntryCardView(
 						card = c,
@@ -187,9 +168,14 @@ fun HomeScreen(
 				}
 				item { TodoTodaySection(onStartTodo) }
 			}
-			Button(onClick = onStart, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-				Text(stringResource(R.string.home_start))
-			}
+			/* green play like every start (owner request), the label for accessibility */
+			val start = commandStyle(EntryCommand.WORK)!!
+			val label = stringResource(R.string.home_start)
+			Button(
+				onClick = onStart,
+				colors = ButtonDefaults.buttonColors(containerColor = start.container, contentColor = start.content),
+				modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
+			) { Icon(painterResource(start.icon), contentDescription = label, modifier = Modifier.size(32.dp)) }
 		}
 	}
 
@@ -232,23 +218,31 @@ private fun EntryCardView(
 	val e = card.entry
 	val zone = ZoneId.of(e.zoneId)
 	Card(onClick = onOpen, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-		Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-			if (card.client != null && card.company != null)
-				Text(card.company, style = MaterialTheme.typography.labelMedium)
-			Text(card.title ?: stringResource(R.string.entry_no_client), style = MaterialTheme.typography.titleMedium)
-			e.activity?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-
+		Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
 			val last = card.segments.lastOrNull()
 			val since = when {
 				e.status == EntryStatus.ACTIVE -> last?.startUtcMs
 				else -> card.segments.mapNotNull { it.endUtcMs }.maxOrNull()
 			}
+			Row(verticalAlignment = Alignment.Top) {
+				Column(Modifier.weight(1f)) {
+					if (card.client != null && card.company != null)
+						Text(card.company, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+					Text(card.title ?: stringResource(R.string.entry_no_client), style = MaterialTheme.typography.titleLarge)
+					e.activity?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+				}
+				/* the running segment's time, the number one looks for */
+				if (e.status == EntryStatus.ACTIVE && last?.endUtcMs == null && last != null)
+					Text(hm(now - last.startUtcMs), style = MaterialTheme.typography.headlineMedium)
+			}
+
 			val state = statusText(e.status, e.mode)
-			Text(
-				if (since != null) stringResource(R.string.since_fmt, state, clock(since, zone)) else state,
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary,
-			)
+			val text = if (since != null) stringResource(R.string.since_fmt, state, clock(since, zone)) else state
+			val style = stateStyle(e.status, e.mode)
+			if (style != null)
+				StatePill(style, text)
+			else
+				Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
 			Text(
 				stringResource(
 					R.string.totals_fmt,

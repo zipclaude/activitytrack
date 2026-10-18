@@ -21,6 +21,9 @@
   <string name="archived_suffix">Archiviert</string>
 
   <string name="home_no_open_entries">Keine offenen Tätigkeiten.</string>
+
+  <string name="home_empty_hint">Keine laufende Tätigkeit.
+Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="entry_no_client">Kunde nicht festgelegt</string>
   <string name="mode_work">Arbeit</string>
   <string name="mode_travel">Unterwegs</string>
@@ -121,6 +124,16 @@
   <string name="set_day_start_delay">Verzögerung Tagesbeginn-Hinweis (min)</string>
   <string name="sec_location">Standort</string>
   <string name="sec_dictation">Diktat</string>
+  <string name="sec_calendar">Kalender</string>
+  <string name="calendar_permission">Kalenderzugriff erlauben, um die Tätigkeiten in einen Kalender zu schreiben.</string>
+  <string name="calendar_generic">Kalender für die Tätigkeiten</string>
+  <string name="calendar_none">Keiner (keine Synchronisierung)</string>
+  <string name="calendar_new_local">Neuer Kalender „ActivityTrack“ auf dem Telefon</string>
+  <string name="calendar_hint">Ein Termin pro Tätigkeit und Tag ab dem Start; Google- oder CalDAV-Kalender synchronisieren ihn.</string>
+  <string name="calendar_sync_now">90 Tage synchronisieren</string>
+  <string name="calendar_synced">Synchronisiert: %1$d Änderungen</string>
+  <string name="calendar_company">Kalender dieser Firma</string>
+  <string name="calendar_use_generic">Der allgemeine Kalender</string>
   <string name="set_dictation_language">Diktiersprache</string>
   <string name="set_movement">Schwelle Bewegungswarnung (m)</string>
   <string name="set_stationary_radius">Ankunftsradius (m)</string>
@@ -273,6 +286,17 @@
   <string name="day_empty">An diesem Tag wurde keine Zeit erfasst.</string>
   <string name="day_line_fmt">Arbeit %1$s → %2$s · Reise %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / Export</string>
+  <string name="nav_home">Start</string>
+  <string name="nav_agenda">Agenda</string>
+  <string name="nav_report">Bericht</string>
+  <string name="nav_more">Mehr</string>
+  <string name="agenda_today">Heute</string>
+  <string name="agenda_list">Liste</string>
+  <string name="agenda_day">Tag</string>
+  <string name="agenda_week">Woche</string>
+  <string name="agenda_month">Monat</string>
+  <string name="agenda_search">Kunde oder Tätigkeit suchen</string>
+  <string name="agenda_empty">Keine Tätigkeiten in diesem Zeitraum.</string>
   <string name="connector_title">Verwaltungssystem</string>
   <string name="connector_external_code">Code im Verwaltungssystem</string>
   <string name="connector_plugin">Konnektor</string>
@@ -288,7 +312,7 @@
   <string name="todo_show_done">Erledigte anzeigen</string>
   <string name="todo_field_title">Titel</string>
   <string name="todo_field_due">Fällig am (jjjj-mm-tt)</string>
-  <string name="todo_field_time">Uhrzeit (hh:mm)</string>
+  <string name="todo_field_time">Fällig um (hh:mm)</string>
   <string name="todo_field_priority">Priorität (1 = höchste)</string>
   <string name="todo_field_refs">Referenzen (eine pro Zeile)</string>
   <string name="todo_done_question">Ist die Aufgabe erledigt?</string>
@@ -303,6 +327,11 @@
   <string name="import_section">Import</string>
   <string name="import_hint">Generische JSON- oder XML-Datei: der Inhalt wird hinzugefügt; vorhandene Daten bleiben, Unterschiede werden aufgelistet.</string>
   <string name="import_action">Datei zum Import wählen</string>
+  <string name="restore_section">Sicherung wiederherstellen</string>
+  <string name="restore_hint">Ersetzt alle Daten durch eine tägliche Sicherung (Ordner „backup“); die aktuellen Daten werden vorher gesichert. Anhänge bleiben im Datenordner.</string>
+  <string name="restore_action">Sicherung wählen (.zip)</string>
+  <string name="restore_confirm">Alle Daten durch die Sicherung vom %1$s (App %2$s) ersetzen? Die aktuellen Daten werden vorher gesichert, dann startet die App neu.</string>
+  <string name="restore_do">Wiederherstellen</string>
   <string name="export_done_file">Geschrieben nach %1$s</string>
   <string name="exchange_failed">Fehlgeschlagen: %1$s</string>
   <string name="export_sec_master">Stammdaten</string>
@@ -327,4 +356,18 @@
     <item quantity="one">%1$d Zeile in %2$s geschrieben</item>
     <item quantity="other">%1$d Zeilen in %2$s geschrieben</item>
   </plurals>
+  <!-- M9 planned to-dos -->
+  <string name="ch_planned">Geplante Tätigkeiten</string>
+  <string name="notif_planned_title">%1$s um %2$s</string>
+  <string name="action_postpone">%1$d Min. verschieben</string>
+  <string name="action_replan">Neu planen</string>
+  <string name="todo_field_plan_date">Geplant am (jjjj-mm-tt)</string>
+  <string name="todo_field_plan_time">Geplante Uhrzeit (hh:mm)</string>
+  <string name="todo_field_duration">Dauer (Min.; leer = 1 Std., wächst)</string>
+  <string name="todo_planned">geplant %1$s</string>
+  <string name="todo_overdue">überfällig</string>
+  <string name="todo_new">Neue Aufgabe</string>
+  <string name="sec_advanced">Erweitert</string>
+  <string name="set_plan_lead">Erinnerung an geplante Tätigkeiten (Min. vorher)</string>
+  <string name="set_plan_snooze">Verschieben um (Min.)</string>
 </resources>

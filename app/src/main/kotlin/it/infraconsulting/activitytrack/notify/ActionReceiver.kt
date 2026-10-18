@@ -30,6 +30,10 @@ class ActionReceiver : BroadcastReceiver() {
 			absent(context, app, intent, goAsync())
 			return
 		}
+		if (intent.action == ACTION_POSTPONE_TODO) {
+			postpone(context, app, intent, goAsync())
+			return
+		}
 		val entryId = intent.getLongExtra(EXTRA_ENTRY, -1)
 		if (entryId < 0)
 			return
@@ -85,8 +89,27 @@ class ActionReceiver : BroadcastReceiver() {
 		}
 	}
 
+	/* Planned to-do reminder answered "postpone": the plan moves on, the reminder comes again before it. */
+	private fun postpone(context: Context, app: ActivityTrackApp, intent: Intent, pending: PendingResult) {
+		val todoId = intent.getLongExtra(EXTRA_TODO, -1)
+		scope.launch {
+			try {
+				if (todoId >= 0) {
+					app.container.todos.postpone(todoId, app.container.settings.current().planSnoozeMin)
+					context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(todoId, NotificationIds.PLANNED))
+				}
+			} catch (e: ValidationException) {
+				Log.w(TAG, "rejected: ${e.message}")
+			} finally {
+				pending.finish()
+			}
+		}
+	}
+
 	companion object {
 		private const val TAG = "ActionReceiver"
+		private const val ACTION_POSTPONE_TODO = "it.infraconsulting.activitytrack.action.POSTPONE_TODO"
+		private const val EXTRA_TODO = "todo"
 		private const val ACTION_ABSENT = "it.infraconsulting.activitytrack.action.ABSENT"
 		private const val EXTRA_DAY = "day"
 		private const val ACTION_COMMAND = "it.infraconsulting.activitytrack.action.COMMAND"
@@ -163,6 +186,15 @@ class ActionReceiver : BroadcastReceiver() {
 				context,
 				-1,
 				Intent(context, ActionReceiver::class.java).setAction(ACTION_ABSENT).putExtra(EXTRA_DAY, day.toEpochDay()),
+				PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+			)
+
+		/* to-do actions: negative request codes, apart from the entry ranges and -1 */
+		fun postponeTodo(context: Context, todoId: Long): PendingIntent =
+			PendingIntent.getBroadcast(
+				context,
+				-(todoId * 4 + 2).toInt(),
+				Intent(context, ActionReceiver::class.java).setAction(ACTION_POSTPONE_TODO).putExtra(EXTRA_TODO, todoId),
 				PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
 			)
 
