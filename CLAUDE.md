@@ -227,6 +227,7 @@ and publishes the `app-debug` APK artifact (14 days).
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
+| 2026-10-18 | "Overdue" also for a passed due date (after the due time; date only: from the next day), not only for a planned block that is over |
 | 2026-10-18 | M9 planned to-dos: manual add also from the agenda; planned slot separate from the due date; optional duration, else 1 h growing hourly; in agenda and calendar, tags per kind of time; states open → planned (date+time) → done, overdue highlighted on Home; reminder lead and postpone step configurable (advanced, defaults 15 / 30 min); plan in the interchange format; own PR |
 
 ## 7. Pitfalls to remember

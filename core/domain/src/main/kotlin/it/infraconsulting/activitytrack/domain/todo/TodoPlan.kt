@@ -79,3 +79,14 @@ data class TodoPlan(val day: LocalDate, val startMin: Int, val durationMin: Int?
 			if (epochDay == null || startMin == null) null else TodoPlan(LocalDate.ofEpochDay(epochDay), startMin, durationMin)
 	}
 }
+
+/*
+ * A due date has passed (owner, 2026-10-18: a passed deadline is flagged
+ * like a planned block that is over): after the due time, or after the due
+ * day when no time is given.
+ */
+fun dueOverdue(dueDay: LocalDate?, dueMin: Int?, now: Instant, zone: ZoneId): Boolean {
+	dueDay ?: return false
+	val limit = if (dueMin != null) dueDay.atMinute(dueMin.coerceIn(0, 1440), zone) else dueDay.plusDays(1).atStartOfDay(zone).toInstant()
+	return now.isAfter(limit)
+}

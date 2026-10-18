@@ -342,8 +342,10 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 				}
 				items(todos.filter { it.day == day }.sortedBy { it.timeMin ?: 1440 }, key = { "t${it.id}" }) { t ->
 					Text(
-						"☐ " + (t.timeMin?.let { "%02d:%02d ".format(it / 60, it % 60) } ?: "") +
-							(t.end?.let { "–${clock(it, zone)} " } ?: "") + t.title,
+						"☐ " + listOfNotNull(
+							t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.let { e -> "–${clock(e, zone)}" } ?: "") },
+							t.title,
+						).joinToString(" "),
 						modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
 						color = MaterialTheme.colorScheme.primary,
 					)

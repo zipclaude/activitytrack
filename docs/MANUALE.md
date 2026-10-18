@@ -234,8 +234,9 @@ cambia la scadenza del gestionale.
   la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
   passato.
 - In Home, **"Da fare oggi"** mostra quelle in scadenza o pianificate oggi o
-  prima; quelle pianificate ancora aperte dopo il loro blocco sono segnate
-  "in ritardo".
+  prima; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
+  pianificato o dopo la scadenza (dopo l'ora di scadenza, o dal giorno dopo
+  se la scadenza non ha ora).
 - Toccando una voce: "Avvia attività", "Posticipa", "Segna come fatta" /
   "Segna come da fare", "Ripianifica" (o "Modifica" se non pianificata).
 - Una voce può avere più attività (es. un lavoro su più giorni).
