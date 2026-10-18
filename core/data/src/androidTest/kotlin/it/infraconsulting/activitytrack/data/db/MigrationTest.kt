@@ -13,7 +13,11 @@ import kotlin.test.assertEquals
 @RunWith(AndroidJUnit4::class)
 class MigrationTest {
 	@get:Rule
-	val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), ActivityTrackDatabase::class.java)
+	val helper = MigrationTestHelper(
+		InstrumentationRegistry.getInstrumentation(),
+		ActivityTrackDatabase::class.java,
+		listOf(ActivityTrackDatabase.FillEntryUids()),
+	)
 
 	@Test
 	fun v1ToV2AddsDayOff() {
@@ -31,6 +35,28 @@ class MigrationTest {
 				c.moveToFirst()
 				assertEquals(1, c.getInt(0))
 			}
+		}
+	}
+
+	@Test
+	fun v2ToV3AddsTodosAndEntryUids() {
+		helper.createDatabase(DB, 2).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO client (id, company_id, name, archived) VALUES (1, 1, 'Bank', 0)")
+			for (id in 1..2)
+				db.execSQL(
+					"INSERT INTO time_entry (id, company_id, client_id, status, zone_id, unanswered_reminders, " +
+						"created_utc_ms, updated_utc_ms) VALUES ($id, 1, 1, 'CLOSED', 'Europe/Rome', 0, 0, 0)",
+				)
+		}
+		helper.runMigrationsAndValidate(DB, 3, true).use { db ->
+			db.query("SELECT COUNT(DISTINCT uid), COUNT(*) FROM time_entry WHERE uid IS NOT NULL").use { c ->
+				c.moveToFirst()
+				assertEquals(2, c.getInt(0))
+				assertEquals(2, c.getInt(1))
+			}
+			db.execSQL("INSERT INTO todo (uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms) VALUES ('t1', 1, 'Patch', '', 0, 0, 0)")
+			db.execSQL("UPDATE time_entry SET todo_id = 1 WHERE id = 1")
 		}
 	}
 

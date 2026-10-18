@@ -61,7 +61,7 @@ import java.time.ZoneId
 
 @Composable
 fun EntryScreen(entryId: Long, onBack: () -> Unit) {
-	val vm = appViewModel { EntryViewModel(entryId, it.entries, it.masterData) }
+	val vm = appViewModel { EntryViewModel(entryId, it.entries, it.masterData, it.todos) }
 	val entry by vm.entry.collectAsState()
 	ScreenScaffold(title = stringResource(R.string.entry_title), onBack = onBack) { padding ->
 		/* the form starts from the first loaded state; later emissions refresh only status and lists */
@@ -204,6 +204,17 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			onEmpty = { vm.completeEmpty(onBack) },
 			onCopy = { vm.completeCopyingLast(onBack) },
 			onEdit = vm::dismissEmptyPrompt,
+		)
+	}
+
+	val todoPrompt by vm.todoPrompt.collectAsState()
+	todoPrompt?.let { p ->
+		AlertDialog(
+			onDismissRequest = { vm.answerTodo(false) },
+			title = { Text(stringResource(R.string.todo_done_question)) },
+			text = { Text(p.title) },
+			confirmButton = { TextButton(onClick = { vm.answerTodo(true) }) { Text(stringResource(R.string.action_yes)) } },
+			dismissButton = { TextButton(onClick = { vm.answerTodo(false) }) { Text(stringResource(R.string.todo_later)) } },
 		)
 	}
 

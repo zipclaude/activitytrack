@@ -31,6 +31,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.flow.first
 
 /* Data for a new entry; only the client is required, except for a TRAVEL start. */
@@ -42,6 +43,8 @@ data class StartRequest(
 	val activity: String? = null,
 	val locality: String? = null,
 	val locationKind: LocationKind? = null,
+	/* started from a to-do (M4) */
+	val todoId: Long? = null,
 )
 
 /* Defaults proposed when a client is picked. */
@@ -120,6 +123,8 @@ class EntryRepository(
 		val zone = clock.zone.id
 		val id = dao.startEntry(
 			TimeEntryEntity(
+				uid = UUID.randomUUID().toString(),
+				todoId = req.todoId,
 				companyId = companyId,
 				clientId = req.clientId,
 				roleId = req.roleId,
@@ -135,6 +140,10 @@ class EntryRepository(
 			),
 			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = now, zoneId = zone),
 		)
+		/* the to-do's tickets become the entry's external references */
+		req.todoId?.let { db.todoDao().byId(it) }?.refs?.lines()?.filter(String::isNotBlank)?.forEach {
+			dao.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(it), value = it.trim()))
+		}
 		verify(id)
 		return id
 	}

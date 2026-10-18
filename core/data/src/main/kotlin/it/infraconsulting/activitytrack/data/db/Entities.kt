@@ -28,11 +28,19 @@ enum class AttachmentKind { PHOTO, AUDIO, RECEIPT, FILE }
 
 enum class AbsenceKind { FULL_DAY, LATE_ENTRY, EARLY_EXIT }
 
-@Entity(tableName = "company", indices = [Index(value = ["name"], unique = true)])
+@Entity(
+	tableName = "company",
+	indices = [Index(value = ["name"], unique = true), Index(value = ["external_code"], unique = true)],
+)
 data class CompanyEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	val name: String,
 	val archived: Boolean = false,
+	/* code in the management system (M4 interchange key) */
+	@ColumnInfo(name = "external_code") val externalCode: String? = null,
+	/* connector plugin of this company and its plain settings (JSON); secrets live in the keystore */
+	@ColumnInfo(name = "connector_id") val connectorId: String? = null,
+	@ColumnInfo(name = "connector_config") val connectorConfig: String? = null,
 )
 
 @Entity(
@@ -67,13 +75,17 @@ data class CompanySiteEntity(
 			onDelete = ForeignKey.RESTRICT,
 		),
 	],
-	indices = [Index(value = ["company_id", "name"], unique = true)],
+	indices = [
+		Index(value = ["company_id", "name"], unique = true),
+		Index(value = ["company_id", "external_code"], unique = true),
+	],
 )
 data class ClientEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	@ColumnInfo(name = "company_id") val companyId: Long,
 	val name: String,
 	val archived: Boolean = false,
+	@ColumnInfo(name = "external_code") val externalCode: String? = null,
 )
 
 @Entity(
@@ -140,6 +152,52 @@ data class ActivityPresetEntity(
 	@ColumnInfo(name = "company_id") val companyId: Long? = null,
 )
 
+/*
+ * Planned activity, typically from a company's management system (M4, owner
+ * decision 2026-10-17). Entries started from it link back via todo_id.
+ */
+@Entity(
+	tableName = "todo",
+	foreignKeys = [
+		ForeignKey(
+			entity = CompanyEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["company_id"],
+			onDelete = ForeignKey.RESTRICT,
+		),
+		ForeignKey(
+			entity = ClientEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["client_id"],
+			onDelete = ForeignKey.RESTRICT,
+		),
+	],
+	indices = [
+		Index(value = ["uid"], unique = true),
+		Index(value = ["company_id", "external_key"], unique = true),
+		Index("client_id"),
+		Index(value = ["done", "due_epoch_day"]),
+	],
+)
+data class TodoEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	val uid: String,
+	@ColumnInfo(name = "company_id") val companyId: Long,
+	@ColumnInfo(name = "client_id") val clientId: Long? = null,
+	/* key in the management system; null for to-dos created in the app */
+	@ColumnInfo(name = "external_key") val externalKey: String? = null,
+	val title: String,
+	val notes: String? = null,
+	/* external references, one per line */
+	val refs: String = "",
+	@ColumnInfo(name = "due_epoch_day") val dueEpochDay: Long? = null,
+	@ColumnInfo(name = "due_time_min") val dueTimeMin: Int? = null,
+	val priority: Int? = null,
+	val done: Boolean = false,
+	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
+)
+
 @Entity(
 	tableName = "time_entry",
 	foreignKeys = [
@@ -161,11 +219,23 @@ data class ActivityPresetEntity(
 			childColumns = ["role_id"],
 			onDelete = ForeignKey.RESTRICT,
 		),
+		ForeignKey(
+			entity = TodoEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["todo_id"],
+			onDelete = ForeignKey.SET_NULL,
+		),
 	],
-	indices = [Index("company_id"), Index("client_id"), Index("role_id"), Index("status")],
+	indices = [
+		Index("company_id"), Index("client_id"), Index("role_id"), Index("status"), Index("todo_id"),
+		Index(value = ["uid"], unique = true),
+	],
 )
 data class TimeEntryEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	/* stable identity across devices and exports (M4); null only before migration 2 -> 3 filled it */
+	val uid: String? = null,
+	@ColumnInfo(name = "todo_id") val todoId: Long? = null,
 	/*
 	 * Company may be known before the client (company site match, copy from
 	 * the previous entry). When client_id is set, company_id must equal the
