@@ -198,6 +198,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		is Screen.StartFor -> StartScreen(back, top.clientId)
 		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
 		Screen.Todos -> TodosScreen(back) { open(Screen.StartFromTodo(it)) }
+		is Screen.Todo -> TodosScreen(back, editId = top.id) { open(Screen.StartFromTodo(it)) }
 		is Screen.Entry -> EntryScreen(top.id, back)
 		Screen.Day -> DayScreen(null, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
 		Screen.Export -> ExportScreen(back)

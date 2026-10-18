@@ -18,6 +18,9 @@ import it.infraconsulting.activitytrack.domain.reminder.Reminder
 import it.infraconsulting.activitytrack.domain.reminder.ReminderConfig
 import it.infraconsulting.activitytrack.domain.reminder.ReminderEntry
 import it.infraconsulting.activitytrack.domain.reminder.ReminderPlanner
+import it.infraconsulting.activitytrack.domain.reminder.ReminderTodo
+import it.infraconsulting.activitytrack.data.repo.plan
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.notify.EntryInfo
 import it.infraconsulting.activitytrack.notify.NotificationIds
 import java.time.Duration
@@ -35,8 +38,8 @@ import kotlinx.coroutines.sync.withLock
 /*
  * Single-alarm reminder scheduler (DESIGN §6.1): the earliest reminder of
  * ReminderPlanner arms one inexact alarm; ReminderReceiver posts what is due
- * and re-arms. Re-armed on every change of entries, settings, lunch breaks
- * or working hours, and on boot / time changes (BootReceiver).
+ * and re-arms. Re-armed on every change of entries, settings, lunch breaks,
+ * working hours or to-dos, and on boot / time changes (BootReceiver).
  */
 class ReminderScheduler(
 	private val context: Context,
@@ -52,7 +55,7 @@ class ReminderScheduler(
 				container.settings.settings,
 				container.masterData.lunchBreaks,
 				container.masterData.schedule,
-				combine(container.entries.absences, container.masterData.daysOff) { _, _ -> },
+				combine(container.entries.absences, container.masterData.daysOff, container.todos.all) { _, _, _ -> },
 			) { _, _, _, _, _ -> }.conflate().collect { reschedule() }
 		}
 	}
@@ -62,9 +65,10 @@ class ReminderScheduler(
 		val entries: List<ReminderEntry>,
 		val lastSummary: LocalDate?,
 		val dayStart: DayStartState,
+		val todos: List<ReminderTodo>,
 	) {
-		fun due(now: Instant) = planner.due(entries, lastSummary, now, dayStart)
-		fun next(now: Instant) = planner.next(entries, lastSummary, now, dayStart)
+		fun due(now: Instant) = planner.due(entries, lastSummary, now, dayStart, todos)
+		fun next(now: Instant) = planner.next(entries, lastSummary, now, dayStart, todos)
 	}
 
 	private suspend fun state(): Plan {
@@ -80,6 +84,7 @@ class ReminderScheduler(
 				s.maxConfirmations,
 				Duration.ofMinutes(s.pauseIntervalMin.toLong()),
 				Duration.ofMinutes(s.dayStartDelayMin.toLong()),
+				Duration.ofMinutes(s.planLeadMin.toLong()),
 			),
 			container.masterData.lunchBreaks.first().map { DayWindow(it.dayOfWeek, it.startMin, it.endMin) },
 			container.masterData.schedule.first().map { DayWindow(it.dayOfWeek, it.startMin, it.endMin) },
@@ -93,9 +98,32 @@ class ReminderScheduler(
 		val lastDayStart = prefs.getLong(KEY_DAY_START, Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let(LocalDate::ofEpochDay)
 		val handled = container.entries.handledDays(today, horizon, zone)
 		/* the day got handled after the prompt (entry, absence): the prompt is moot */
+		val nm = context.getSystemService(NotificationManager::class.java)
 		if (today in handled)
-			context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(0, NotificationIds.DAY_START))
-		return Plan(planner, entries, last, DayStartState(lastDayStart, handled))
+			nm.cancel(NotificationIds.of(0, NotificationIds.DAY_START))
+		return Plan(planner, entries, last, DayStartState(lastDayStart, handled), plannedTodos(zone, nm))
+	}
+
+	/*
+	 * Open planned to-dos without a running entry of their own. A shown
+	 * reminder goes away when the to-do is started, done, re-planned or over.
+	 */
+	private suspend fun plannedTodos(zone: ZoneId, nm: NotificationManager): List<ReminderTodo> {
+		val now = Instant.now()
+		val started = container.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }.mapNotNull { it.todoId }.toSet()
+		val out = ArrayList<ReminderTodo>()
+		for (t in container.todos.all.first()) {
+			val p = t.plan()
+			val start = p?.start(zone)
+			/* the block as planned (duration or first hour): a reminder after it is moot */
+			val end = p?.end(zone, open = false, now = now)
+			val live = start != null && end != null && !t.done && t.id !in started && now.isBefore(end)
+			if (live)
+				out += ReminderTodo(t.id, start!!, end!!, t.planRemindedUtcMs)
+			if (t.planRemindedUtcMs != null && (!live || t.planRemindedUtcMs != start?.toEpochMilli()))
+				nm.cancel(NotificationIds.of(t.id, NotificationIds.PLANNED))
+		}
+		return out
 	}
 
 	suspend fun reschedule() = lock.withLock {
@@ -144,6 +172,7 @@ class ReminderScheduler(
 						nm.notify(NotificationIds.of(0, NotificationIds.DAY_START), ReminderNotifications.dayStart(context, r.day))
 						prefs.edit { putLong(KEY_DAY_START, r.day.toEpochDay()) }
 					}
+					is Reminder.Planned -> postPlanned(nm, r.todoId)
 				}
 			}
 		}
@@ -158,6 +187,19 @@ class ReminderScheduler(
 			val title = e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name } ?: fallback
 			e.id to EntryInfo(e, title, emptyList())
 		}
+	}
+
+	/* The reminder of a planned to-do, recorded against its planned start. */
+	private suspend fun postPlanned(nm: NotificationManager, todoId: Long) {
+		val t = container.todos.find(todoId) ?: return
+		val start = t.plan()?.start(ZoneId.systemDefault())?.toEpochMilli() ?: return
+		val client = t.clientId?.let { id -> container.masterData.clients.first().firstOrNull { it.id == id }?.name }
+		val company = container.masterData.companies.first().firstOrNull { it.id == t.companyId }?.name
+		nm.notify(
+			NotificationIds.of(todoId, NotificationIds.PLANNED),
+			ReminderNotifications.planned(context, todoId, t.title, client ?: company, start, container.settings.current().planSnoozeMin),
+		)
+		container.todos.markPlanReminded(todoId, start)
 	}
 
 	/* Solar vs reported totals of [day]; nothing when the day has no time. */

@@ -312,7 +312,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_show_done">Mostra anche le fatte</string>
   <string name="todo_field_title">Titolo</string>
   <string name="todo_field_due">Scadenza (aaaa-mm-gg)</string>
-  <string name="todo_field_time">Ora (hh:mm)</string>
+  <string name="todo_field_time">Ora scadenza (hh:mm)</string>
   <string name="todo_field_priority">Priorità (1 = massima)</string>
   <string name="todo_field_refs">Riferimenti (uno per riga)</string>
   <string name="todo_done_question">L\'attività da fare è conclusa?</string>
@@ -357,4 +357,22 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
     <item quantity="many">%1$d di righe scritte in %2$s</item>
     <item quantity="other">%1$d righe scritte in %2$s</item>
   </plurals>
+  <!-- M9 planned to-dos -->
+  <string name="ch_planned">Attività pianificate</string>
+  <string name="notif_planned_title">%1$s alle %2$s</string>
+  <string name="action_postpone">Posticipa %1$d min</string>
+  <string name="action_replan">Ripianifica</string>
+  <string name="todo_field_plan_date">Data pianificata (aaaa-mm-gg)</string>
+  <string name="todo_field_plan_time">Ora pianificata (hh:mm)</string>
+  <string name="todo_field_duration">Durata (min; vuota = 1 h, si allunga)</string>
+  <string name="todo_planned">pianificata %1$s</string>
+  <string name="todo_overdue">in ritardo</string>
+  <string name="todo_new">Nuova attività da fare</string>
+  <string name="sec_advanced">Avanzate</string>
+  <string name="set_plan_lead">Promemoria attività pianificate (min prima)</string>
+  <string name="set_plan_snooze">Posticipo (min)</string>
+  <string name="tag_work">#lavoro</string>
+  <string name="tag_travel">#viaggio</string>
+  <string name="tag_pause">#pausa</string>
+  <string name="tag_planned">#pianificata</string>
 </resources>
