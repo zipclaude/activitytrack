@@ -1,6 +1,31 @@
+import java.util.Properties
+
 plugins {
 	alias(libs.plugins.android.application)
 	alias(libs.plugins.kotlin.compose)
+}
+
+/*
+ * Release signing (owner, 2026-10-18): one fixed key, so a release from
+ * GitHub updates the installed one. CI passes it in RELEASE_* variables
+ * (repository secrets); locally a properties file outside the repository
+ * (-Pactivitytrack.signing=<file>, default <keys folder>/release.properties).
+ * Without either, the release is built unsigned.
+ */
+val releaseSigning: Map<String, String>? = run {
+	System.getenv("RELEASE_STORE_FILE")?.let { file ->
+		return@run mapOf(
+			"storeFile" to file,
+			"storePassword" to System.getenv("RELEASE_STORE_PASSWORD").orEmpty(),
+			"keyAlias" to System.getenv("RELEASE_KEY_ALIAS").orEmpty(),
+			"keyPassword" to System.getenv("RELEASE_KEY_PASSWORD").orEmpty(),
+		)
+	}
+	val path = (findProperty("activitytrack.signing") as String?)
+		?: "${System.getProperty("user.home")}/activitytrack-keys/release.properties"
+	file(path).takeIf { it.isFile }?.let { f ->
+		Properties().apply { f.inputStream().use(::load) }.let { p -> p.stringPropertyNames().associateWith(p::getProperty) }
+	}
 }
 
 android {
@@ -11,8 +36,9 @@ android {
 		applicationId = "it.infraconsulting.activitytrack"
 		minSdk = 33
 		targetSdk = 36
-		versionCode = 1
-		versionName = "0.1.0"
+		/* CI passes the tag (v0.2.0 -> 0.2.0) and the run number */
+		versionCode = (findProperty("activitytrack.versionCode") as String?)?.toInt() ?: 1
+		versionName = (findProperty("activitytrack.versionName") as String?) ?: "0.1.0"
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		/* personal APK for the owner's phone: native libraries (MapLibre) only for arm64 */
 		ndk {
@@ -20,15 +46,29 @@ android {
 		}
 	}
 
+	signingConfigs {
+		releaseSigning?.let { s ->
+			create("release") {
+				storeFile = file(s.getValue("storeFile"))
+				storePassword = s.getValue("storePassword")
+				keyAlias = s.getValue("keyAlias")
+				keyPassword = s.getValue("keyPassword")
+			}
+		}
+	}
+
 	buildTypes {
+		/* adb installs for device tests: "ActivityTrackDbg", its own package and data folder */
 		debug {
 			applicationIdSuffix = ".debug"
 			versionNameSuffix = "-debug"
 		}
+		/* the app in use, from GitHub releases; R8 off until a minified build is device-tested */
 		release {
-			isMinifyEnabled = true
-			isShrinkResources = true
+			isMinifyEnabled = false
+			isShrinkResources = false
 			proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+			signingConfig = signingConfigs.findByName("release")
 		}
 	}
 

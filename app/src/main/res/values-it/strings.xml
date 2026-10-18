@@ -43,7 +43,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="status_closed">Chiusa</string>
 
   <string name="setup_title">Cartella dati</string>
-  <string name="setup_text">Scegli la cartella per allegati, backup ed esportazioni, ad esempio Documents/ActivityTrack. L\'app ne mantiene l\'accesso; i file restano anche se l\'app viene disinstallata.</string>
+  <string name="setup_text">Scegli la cartella per allegati, backup ed esportazioni, ad esempio %1$s. L\'app ne mantiene l\'accesso; i file restano anche se l\'app viene disinstallata.</string>
   <string name="setup_choose">Scegli cartella</string>
   <string name="setup_lost">L\'accesso alla cartella dati è stato perso. Sceglila di nuovo.</string>
   <string name="setup_error">Questa cartella non è utilizzabile. Scegline un\'altra.</string>

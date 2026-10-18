@@ -43,7 +43,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="status_closed">Cerrada</string>
 
   <string name="setup_title">Carpeta de datos</string>
-  <string name="setup_text">Elige la carpeta para adjuntos, copias de seguridad y exportaciones, por ejemplo Documents/ActivityTrack. La app conserva el acceso; los archivos permanecen aunque se desinstale la app.</string>
+  <string name="setup_text">Elige la carpeta para adjuntos, copias de seguridad y exportaciones, por ejemplo %1$s. La app conserva el acceso; los archivos permanecen aunque se desinstale la app.</string>
   <string name="setup_choose">Elegir carpeta</string>
   <string name="setup_lost">Se perdió el acceso a la carpeta de datos. Elígela de nuevo.</string>
   <string name="setup_error">No se puede usar esta carpeta. Elige otra.</string>
