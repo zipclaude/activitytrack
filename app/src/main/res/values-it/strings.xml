@@ -429,4 +429,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="short_discard">Scarta</string>
   <string name="short_keep">Tieni e termina</string>
   <string name="todo_filter_today">Oggi</string>
+  <string name="sec_notifications">Notifiche</string>
+  <string name="notif_settings_hint">Banner, suono e vibrazione di ogni tipo di notifica si impostano in Android: toccane uno per cambiarlo.</string>
+  <string name="notif_all">Tutte le notifiche dell\'app</string>
 </resources>

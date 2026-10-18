@@ -440,4 +440,7 @@ Tap the green play button below to start one.</string>
   <string name="short_discard">Discard</string>
   <string name="short_keep">Keep and stop</string>
   <string name="todo_filter_today">Today</string>
+  <string name="sec_notifications">Notifications</string>
+  <string name="notif_settings_hint">Banner, sound and vibration of each kind of notification are set in Android: tap one to change it.</string>
+  <string name="notif_all">All notifications of the app</string>
 </resources>

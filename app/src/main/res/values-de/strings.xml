@@ -428,4 +428,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="short_discard">Verwerfen</string>
   <string name="short_keep">Behalten und beenden</string>
   <string name="todo_filter_today">Heute</string>
+  <string name="sec_notifications">Benachrichtigungen</string>
+  <string name="notif_settings_hint">Banner, Ton und Vibration jeder Benachrichtigungsart werden in Android eingestellt: zum Ändern antippen.</string>
+  <string name="notif_all">Alle Benachrichtigungen der App</string>
 </resources>
