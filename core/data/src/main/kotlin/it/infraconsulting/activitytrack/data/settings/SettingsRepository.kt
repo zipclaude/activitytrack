@@ -51,6 +51,8 @@ class SettingsRepository(context: Context) {
 		val maxConfirmations = intPreferencesKey("max_confirmations")
 		val pauseInterval = intPreferencesKey("pause_interval_min")
 		val dayStartDelay = intPreferencesKey("day_start_delay_min")
+		val planLead = intPreferencesKey("plan_lead_min")
+		val planSnooze = intPreferencesKey("plan_snooze_min")
 		val movementThreshold = intPreferencesKey("movement_threshold_m")
 		val stationaryRadius = intPreferencesKey("stationary_radius_m")
 		val stationaryMin = intPreferencesKey("stationary_min")
@@ -77,6 +79,8 @@ class SettingsRepository(context: Context) {
 			maxConfirmations = p[K.maxConfirmations] ?: d.maxConfirmations,
 			pauseIntervalMin = p[K.pauseInterval] ?: d.pauseIntervalMin,
 			dayStartDelayMin = p[K.dayStartDelay] ?: d.dayStartDelayMin,
+			planLeadMin = p[K.planLead] ?: d.planLeadMin,
+			planSnoozeMin = p[K.planSnooze] ?: d.planSnoozeMin,
 			movementThresholdM = p[K.movementThreshold] ?: d.movementThresholdM,
 			stationaryRadiusM = p[K.stationaryRadius] ?: d.stationaryRadiusM,
 			stationaryMin = p[K.stationaryMin] ?: d.stationaryMin,
@@ -105,6 +109,8 @@ class SettingsRepository(context: Context) {
 		p[K.maxConfirmations] = s.maxConfirmations
 		p[K.pauseInterval] = s.pauseIntervalMin
 		p[K.dayStartDelay] = s.dayStartDelayMin
+		p[K.planLead] = s.planLeadMin
+		p[K.planSnooze] = s.planSnoozeMin
 		p[K.movementThreshold] = s.movementThresholdM
 		p[K.stationaryRadius] = s.stationaryRadiusM
 		p[K.stationaryMin] = s.stationaryMin
