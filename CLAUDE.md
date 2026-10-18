@@ -124,7 +124,8 @@ and publishes the `app-debug` APK artifact (14 days).
 ### Device tests
 Done on 2026-10-18 (M4, M5 local calendar, M6, M9, restore); fixes in PR #9:
 agenda editor company, list time span, due-date overdue, restore time.
-Still open: items 7 (manual) and 8 (cleanup); share sheet and company
+Cleanup done 2026-10-18 (clean DB restored and migrated to v4, TEST backups/export
+deleted, local calendar empty; samples left in Download). Still open: item 7 (manual); share sheet and company
 "Management system" not exercised; week view text wraps in narrow blocks.
 
 1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
