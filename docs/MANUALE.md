@@ -53,9 +53,9 @@ di lavoro per un altro cliente).
 GitHub (file `ActivityTrack-<versione>.apk`); le versioni successive si
 installano sopra la precedente senza perdere i dati. Sul telefono può esserci
 anche **ActivityTrackDbg**, la versione di prova installata dal PC: è un'app
-separata, con dati e cartella propri (`MyDocuments/ActivityTrackDbg`).
+separata, con dati e cartella propri (`ActivityTrackDbg`).
 
-1. **Cartella dati** — l'app chiede una cartella (`MyDocuments/ActivityTrack`)
+1. **Cartella dati** — l'app chiede una cartella (`ActivityTrack`)
    per allegati, backup ed esportazioni. I file restano anche se l'app viene
    disinstallata. Se la cartella viene spostata o rinominata l'app lo segnala
    ("L'accesso alla cartella dati è stato perso") e chiede di sceglierla di nuovo.

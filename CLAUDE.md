@@ -36,9 +36,9 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 - Push to `main` only after a green local build; CI must stay green.
 - Two apps on the phone (owner, 2026-10-18): **ActivityTrackDbg** = debug build
   installed with adb for tests (`it.infraconsulting.activitytrack.debug`, data
-  folder `MyDocuments/ActivityTrackDbg`); **ActivityTrack** = the app in use,
+  folder `ActivityTrackDbg`); **ActivityTrack** = the app in use,
   release from GitHub Releases (`it.infraconsulting.activitytrack`, data folder
-  `MyDocuments/ActivityTrack`). Device tests touch only the debug app.
+  `ActivityTrack`). Device tests touch only the debug app.
 - Release: tag `vX.Y.Z` on `main` and push the tag → CI job `release` signs the
   APK with the repository secrets `RELEASE_*` and publishes the GitHub Release
   (versionCode = CI run number). Keystore and passwords:

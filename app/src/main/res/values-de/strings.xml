@@ -43,7 +43,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="status_closed">Abgeschlossen</string>
 
   <string name="setup_title">Datenordner</string>
-  <string name="setup_text">Wähle den Ordner für Anhänge, Sicherungen und Exporte, zum Beispiel %1$s. Die App behält den Zugriff; die Dateien bleiben auch nach einer Deinstallation erhalten.</string>
+  <string name="setup_text">Wähle den Ordner für Anhänge, Sicherungen und Exporte: wir empfehlen %1$s im Hauptspeicher (die Auswahl öffnet sich dort; fehlt er, lege ihn mit „Neuer Ordner“ an). Die App behält den Zugriff; die Dateien bleiben auch nach einer Deinstallation erhalten.</string>
   <string name="setup_choose">Ordner wählen</string>
   <string name="setup_lost">Der Zugriff auf den Datenordner ging verloren. Bitte erneut wählen.</string>
   <string name="setup_error">Dieser Ordner kann nicht verwendet werden. Bitte einen anderen wählen.</string>
