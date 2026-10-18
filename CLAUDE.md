@@ -34,6 +34,16 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
   Then `./gradlew installDebug` and
   `adb shell am start -n it.infraconsulting.activitytrack.debug/it.infraconsulting.activitytrack.MainActivity`.
 - Push to `main` only after a green local build; CI must stay green.
+- Two apps on the phone (owner, 2026-10-18): **ActivityTrackDbg** = debug build
+  installed with adb for tests (`it.infraconsulting.activitytrack.debug`, data
+  folder `MyDocuments/ActivityTrackDbg`); **ActivityTrack** = the app in use,
+  release from GitHub Releases (`it.infraconsulting.activitytrack`, data folder
+  `MyDocuments/ActivityTrack`). Device tests touch only the debug app.
+- Release: tag `vX.Y.Z` on `main` and push the tag → CI job `release` signs the
+  APK with the repository secrets `RELEASE_*` and publishes the GitHub Release
+  (versionCode = CI run number). Keystore and passwords:
+  `~/src/activitytrack-keys/` (never in the repo; losing it means no more
+  updates without reinstalling). Local signed build: `./gradlew :app:assembleRelease`.
 
 ### 2.2 Cloud sandbox (claude.ai session)
 - Maven Central, `dl.google.com`, `services.gradle.org` and Actions log storage
@@ -228,6 +238,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
+| 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
 | 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |

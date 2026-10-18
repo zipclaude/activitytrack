@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Debug builds only: simulated positions for device tests (Developer options →
-     "Select mock location app" → ActivityTrack debug). -->
+     "Select mock location app" → ActivityTrackDbg). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 

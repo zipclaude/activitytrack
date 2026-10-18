@@ -83,7 +83,7 @@ fun SetupScreen(lost: Boolean, onChosen: () -> Unit) {
 		) {
 			if (lost)
 				Text(stringResource(R.string.setup_lost), color = MaterialTheme.colorScheme.error)
-			Text(stringResource(R.string.setup_text))
+			Text(stringResource(R.string.setup_text, stringResource(R.string.data_folder_hint)))
 			Button(onClick = pick) { Text(stringResource(R.string.setup_choose)) }
 			if (failed)
 				Text(stringResource(R.string.setup_error), color = MaterialTheme.colorScheme.error)

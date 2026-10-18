@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug build (installed with adb for device tests): its own name and data
+  folder, so it coexists with the release from GitHub (owner, 2026-10-18).
+  The local calendar takes the app name too.
+-->
+<resources>
+  <string name="app_name" translatable="false">ActivityTrackDbg</string>
+  <string name="data_folder_hint" translatable="false">MyDocuments/ActivityTrackDbg</string>
+</resources>
