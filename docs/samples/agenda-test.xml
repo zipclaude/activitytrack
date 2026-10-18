@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample activities for the agenda and calendar tests (TEST data, two weeks up to 2026-10-16). -->
+<activitytrack>
+  <format>activitytrack-interchange</format>
+  <version>1</version>
+  <companies><company><key>ACME-01</key><name>TEST Acme S.p.A.</name></company></companies>
+  <clients>
+    <client><key>CLI-100</key><companyKey>ACME-01</companyKey><name>TEST Banca Centrale</name></client>
+    <client><key>CLI-200</key><companyKey>ACME-01</companyKey><name>TEST Ospedale Civile</name></client>
+  </clients>
+  <entries>
+    <entry>
+      <key>063787d1-5211-5cf9-bb1a-a3bfa57bf4d3</key><companyKey>ACME-01</companyKey><clientKey>CLI-100</clientKey>
+      <activity>Aggiornamento firewall</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>TRAVEL</kind><startUtc>2026-10-04T06:10:00Z</startUtc><endUtc>2026-10-04T06:40:00Z</endUtc><kmEstimated>18.5</kmEstimated></segment><segment><kind>WORK</kind><startUtc>2026-10-04T06:40:00Z</startUtc><endUtc>2026-10-04T10:30:00Z</endUtc></segment><segment><kind>PAUSE</kind><startUtc>2026-10-04T10:30:00Z</startUtc><endUtc>2026-10-04T11:30:00Z</endUtc></segment><segment><kind>WORK</kind><startUtc>2026-10-04T11:30:00Z</startUtc><endUtc>2026-10-04T15:15:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>087ec682-d318-59a6-8466-20f864b484ab</key><companyKey>ACME-01</companyKey><clientKey>CLI-200</clientKey>
+      <activity>Verifica backup</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-05T07:00:00Z</startUtc><endUtc>2026-10-05T10:00:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>7b3cd107-afdd-5687-9391-e6c98446fed6</key><companyKey>ACME-01</companyKey><clientKey>CLI-100</clientKey>
+      <activity>Supporto utenti</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-05T12:00:00Z</startUtc><endUtc>2026-10-05T16:05:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>02212b38-1100-5fc1-9532-ef6994695649</key><companyKey>ACME-01</companyKey><clientKey>CLI-200</clientKey>
+      <activity>Migrazione storage</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>TRAVEL</kind><startUtc>2026-10-07T05:45:00Z</startUtc><endUtc>2026-10-07T06:30:00Z</endUtc><kmEstimated>18.5</kmEstimated></segment><segment><kind>WORK</kind><startUtc>2026-10-07T06:30:00Z</startUtc><endUtc>2026-10-07T11:00:00Z</endUtc></segment><segment><kind>WORK</kind><startUtc>2026-10-07T12:00:00Z</startUtc><endUtc>2026-10-07T17:20:00Z</endUtc></segment><segment><kind>TRAVEL</kind><startUtc>2026-10-07T17:20:00Z</startUtc><endUtc>2026-10-07T18:00:00Z</endUtc><kmEstimated>18.5</kmEstimated></segment></segments>
+    </entry>
+    <entry>
+      <key>7e304726-444b-577c-aec0-0fdc791ec422</key><companyKey>ACME-01</companyKey><clientKey>CLI-100</clientKey>
+      <activity>Riunione di avanzamento</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-08T08:00:00Z</startUtc><endUtc>2026-10-08T09:30:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>e1673aed-ace2-5670-8c04-7d45a83cdca6</key><companyKey>ACME-01</companyKey><clientKey>CLI-200</clientKey>
+      <activity>Ticket INC0099</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-08T09:00:00Z</startUtc><endUtc>2026-10-08T10:45:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>a3c4e589-6b01-5696-a406-efe773d563bb</key><companyKey>ACME-01</companyKey><clientKey>CLI-100</clientKey>
+      <activity>Intervento notturno</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-11T20:30:00Z</startUtc><endUtc>2026-10-11T21:59:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>2a543893-f5e4-5f81-b698-775897aed8bc</key><companyKey>ACME-01</companyKey><clientKey>CLI-100</clientKey>
+      <activity>Intervento notturno (seguito)</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-11T22:00:00Z</startUtc><endUtc>2026-10-12T00:15:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>51bd9dbb-df97-512b-be42-1a840675da25</key><companyKey>ACME-01</companyKey><clientKey>CLI-200</clientKey>
+      <activity>Patch server</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-14T06:30:00Z</startUtc><endUtc>2026-10-14T10:30:00Z</endUtc></segment><segment><kind>PAUSE</kind><startUtc>2026-10-14T10:30:00Z</startUtc><endUtc>2026-10-14T11:15:00Z</endUtc></segment><segment><kind>WORK</kind><startUtc>2026-10-14T11:15:00Z</startUtc><endUtc>2026-10-14T14:40:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>5c1fad2a-99de-55cd-961c-790c67174bdb</key><companyKey>ACME-01</companyKey><clientKey>CLI-100</clientKey>
+      <activity>Documentazione</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>WORK</kind><startUtc>2026-10-15T07:15:00Z</startUtc><endUtc>2026-10-15T09:00:00Z</endUtc></segment></segments>
+    </entry>
+    <entry>
+      <key>75322cbf-1cea-506e-813e-83404e001285</key><companyKey>ACME-01</companyKey><clientKey>CLI-200</clientKey>
+      <activity>Verifica backup</activity><status>CLOSED</status><locality>Milano</locality><locationKind>CLIENT</locationKind><zone>Europe/Rome</zone>
+      <segments><segment><kind>TRAVEL</kind><startUtc>2026-10-16T06:00:00Z</startUtc><endUtc>2026-10-16T06:35:00Z</endUtc><kmEstimated>18.5</kmEstimated></segment><segment><kind>WORK</kind><startUtc>2026-10-16T06:35:00Z</startUtc><endUtc>2026-10-16T10:50:00Z</endUtc></segment></segments>
+    </entry>
+  </entries>
+</activitytrack>

@@ -21,6 +21,9 @@
   <string name="archived_suffix">Archiviato</string>
 
   <string name="home_no_open_entries">Nessuna attività aperta.</string>
+
+  <string name="home_empty_hint">Nessuna attività in corso.
+Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="entry_no_client">Cliente non impostato</string>
   <string name="mode_work">In lavoro</string>
   <string name="mode_travel">In trasferta</string>

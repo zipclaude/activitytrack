@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -22,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +33,7 @@ import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryDetails
+import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
 import it.infraconsulting.activitytrack.domain.model.LocationKind
@@ -48,6 +51,7 @@ import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.clockOf
+import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.hmOf
 import it.infraconsulting.activitytrack.ui.common.localRange
 import it.infraconsulting.activitytrack.ui.common.parseDate
@@ -193,7 +197,10 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				OutlinedButton(onClick = vm::reopen) { Text(stringResource(R.string.cmd_reopen)) }
 			OutlinedButton(onClick = { vm.save(details(), onBack) }) { Text(stringResource(R.string.action_save)) }
 			if (e.status == EntryStatus.TO_COMPLETE)
-				Button(onClick = { vm.complete(details(), onBack) }) { Text(stringResource(R.string.cmd_complete)) }
+				Button(
+					onClick = { vm.complete(details(), onBack) },
+					colors = ButtonDefaults.buttonColors(containerColor = commandStyle(EntryCommand.WORK)!!.container, contentColor = Color.White),
+				) { Text(stringResource(R.string.cmd_complete)) }
 		}
 	}
 
