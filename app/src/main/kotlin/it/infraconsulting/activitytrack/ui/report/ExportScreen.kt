@@ -355,7 +355,7 @@ fun ExportScreen(onBack: () -> Unit) {
 		AlertDialog(
 			onDismissRequest = vm::reset,
 			title = { Text(stringResource(R.string.restore_section)) },
-			text = { Text(stringResource(R.string.restore_confirm, r.staged.createdUtc, r.staged.appVersion)) },
+			text = { Text(stringResource(R.string.restore_confirm, localTime(r.staged.createdUtc), r.staged.appVersion)) },
 			confirmButton = {
 				TextButton(onClick = { vm.confirmRestore(context, r.staged) }) {
 					Text(stringResource(R.string.restore_do), color = MaterialTheme.colorScheme.error)
@@ -412,3 +412,9 @@ private fun ImportReportDialog(r: ImportReport, onClose: () -> Unit) {
 }
 
 private const val MAX_LINES = 50
+
+/* The backup time in the phone's zone ("2026-10-18 11:13"); the raw text if it is not an instant. */
+private fun localTime(utc: String): String =
+	runCatching {
+		java.time.Instant.parse(utc).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+	}.getOrDefault(utc)
