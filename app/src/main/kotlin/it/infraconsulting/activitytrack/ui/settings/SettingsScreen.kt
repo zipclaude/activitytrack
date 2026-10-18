@@ -244,7 +244,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				}
 			}
 
-			Text(
+			/* the note is about values typed in a form; Notifications and Calendar have none */
+			if (section.form) Text(
 				stringResource(R.string.settings_note),
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
