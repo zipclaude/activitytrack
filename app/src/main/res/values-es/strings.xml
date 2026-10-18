@@ -371,8 +371,4 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="sec_advanced">Avanzado</string>
   <string name="set_plan_lead">Recordatorio de actividades planificadas (min antes)</string>
   <string name="set_plan_snooze">Posponer (min)</string>
-  <string name="tag_work">#trabajo</string>
-  <string name="tag_travel">#viaje</string>
-  <string name="tag_pause">#pausa</string>
-  <string name="tag_planned">#planificada</string>
 </resources>

@@ -311,7 +311,8 @@ Descrizione", nella descrizione i tempi arrotondati, km, riferimenti e note.
 Le *Da fare* pianificate e aperte diventano eventi "provvisori" (Cliente –
 Titolo) fino a un anno avanti; quando sono fatte escono dal calendario.
 L'ultima riga della descrizione porta dei tag per tipo di tempo: `#lavoro`,
-`#viaggio`, `#pausa`, `#pianificata` (cercali nell'app calendario).
+`#viaggio`, `#pausa`, `#pianificata`, sempre in italiano qualunque sia la
+lingua del telefono (cercali nell'app calendario).
 La sincronizzazione è solo dall'app al calendario: modifiche fatte nel
 calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 "Sincronizza 90 giorni" riallinea più indietro.

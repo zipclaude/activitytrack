@@ -145,10 +145,7 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		val labels = EventLabels(
 			context.getString(R.string.cmd_work), context.getString(R.string.cmd_travel),
 			context.getString(R.string.cmd_pause), context.getString(R.string.external_refs), "km",
-			EventTags(
-				context.getString(R.string.tag_work), context.getString(R.string.tag_travel),
-				context.getString(R.string.tag_pause), context.getString(R.string.tag_planned),
-			),
+			EventTags.ITALIAN,
 		)
 		val report = container.reports.report(from, to, zone, s.rounding, s.carryOverMin)
 		val entries = container.reports.entriesAround(from, to, zone).associateBy { it.entry.id }

@@ -21,7 +21,12 @@ data class EventLabels(
  * (M9, owner: "i tag per i diversi segmenti"), so calendar searches find
  * work, travel, pause and planned blocks apart; blank = no tag.
  */
-data class EventTags(val work: String = "", val travel: String = "", val pause: String = "", val planned: String = "")
+data class EventTags(val work: String = "", val travel: String = "", val pause: String = "", val planned: String = "") {
+	companion object {
+		/* always Italian, whatever the phone language (owner, 2026-10-18): searches stay the same */
+		val ITALIAN = EventTags("#lavoro", "#viaggio", "#pausa", "#pianificata")
+	}
+}
 
 /* A planned, open to-do to show as a tentative event (M9). */
 data class TodoEvent(
