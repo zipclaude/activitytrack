@@ -117,6 +117,11 @@ been merged into their stacked bases, not retargeted to `main`). CI green.
 Branch `beta` = copy of what is under device test; CI builds it on push and
 publishes the `app-debug` APK artifact (14 days).
 
+M10 (branch `m10-ui`, from `main`): UI per the approved mockup, see decisions
+2026-10-18 (pickers, Home cards, swipe gestures, ignored to-dos). Open: which
+lists show ignored to-dos and for how long (proposal: Home only on the day they
+were ignored; To-dos list always, at the bottom).
+
 ### Device tests
 Done on 2026-10-18 (M4, M5 local calendar, M6, M9, restore); fixes in PR #9:
 agenda editor company, list time span, due-date overdue, restore time.
@@ -228,6 +233,9 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
+| 2026-10-18 | M10 UI (mockup https://claude.ai/artifact/5fmq8LyttMzhbbLbMiYm5j approved): Material date and time pickers for every date/time field; Home: the running-entry card always shown (empty state message when none), most recent entry in the big card, every other open entry (paused, suspended) in its own small card (1/3 height) below, tapping one brings it to the big card; to-do area under a separator, one card per to-do; UI language Italian (phone stays English: per-app language) |
+| 2026-10-18 | M10 swipe gestures, configurable per direction (start/end, RTL-safe) and per card type, everywhere (Home, Agenda list, To-dos): to-do left = Start, right = Postpone or Ignore; entry left = Pause / Resume, right = Stop (same questions as the Stop button) or Suspend; short swipe reveals the buttons, full swipe runs the first one with Undo (switchable) |
+| 2026-10-18 | To-do "ignored" state instead of delete: struck through, at the bottom of the lists, restored with another swipe; imports never re-create or un-ignore it |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
 | 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |
