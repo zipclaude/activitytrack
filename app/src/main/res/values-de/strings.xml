@@ -62,7 +62,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="err_invalid_time">Ungültige Uhrzeit: hh:mm verwenden, z. B. 08:30.</string>
   <string name="late_entry_title">Späterer Arbeitsbeginn</string>
   <string name="late_entry_hint">Beginn am %1$s. Wird als späterer Beginn erfasst; starte die Tätigkeit, wenn du anfängst.</string>
-  <string name="field_time">Uhrzeit (hh:mm)</string>
+  <string name="field_time">Uhrzeit</string>
   <string name="notif_day_start_title">Heute noch keine Tätigkeit</string>
   <string name="notif_day_start_text">Abwesenheit oder späteren Beginn erfassen oder eine Tätigkeit starten.</string>
   <string name="action_absence">Heute abwesend</string>
@@ -140,7 +140,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="set_stationary_min">Ankunftszeit (min)</string>
   <string name="set_km_factor">Straßenentfernungsfaktor</string>
   <string name="sec_reports">Berichte</string>
-  <string name="set_carry_over">Nachttätigkeiten zählen zum Starttag bis (HH:MM)</string>
+  <string name="set_carry_over">Nachttätigkeiten zählen zum Starttag bis</string>
   <string name="set_round_work">Rundung Arbeit</string>
   <string name="set_round_travel">Rundung Reise</string>
   <string name="set_round_pause">Rundung Pause</string>
@@ -265,7 +265,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="err_storage">Der Datenordner ist nicht nutzbar: in den Einstellungen prüfen.</string>
   <string name="err_no_viewer">Keine App kann diese Datei öffnen.</string>
   <string name="confirm_delete_segment">Diesen Abschnitt löschen?</string>
-  <string name="field_date">Datum (jjjj-mm-tt)</string>
+  <string name="field_date">Datum</string>
   <string name="field_km">km</string>
   <string name="segment_hint">Ein Ende vor dem Beginn fällt auf den Folgetag.</string>
   <string name="ref_ticket">Ticket</string>
@@ -311,8 +311,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_edit">Aufgabe bearbeiten</string>
   <string name="todo_show_done">Erledigte anzeigen</string>
   <string name="todo_field_title">Titel</string>
-  <string name="todo_field_due">Fällig am (jjjj-mm-tt)</string>
-  <string name="todo_field_time">Fällig um (hh:mm)</string>
+  <string name="todo_field_due">Fällig am</string>
+  <string name="todo_field_time">Fällig um</string>
   <string name="todo_field_priority">Priorität (1 = höchste)</string>
   <string name="todo_field_refs">Referenzen (eine pro Zeile)</string>
   <string name="todo_done_question">Ist die Aufgabe erledigt?</string>
@@ -344,8 +344,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="import_conflicts">Konflikte (App-Daten behalten): %1$d</string>
   <string name="import_skipped">Nicht importiert: %1$d</string>
   <string name="action_close">Schließen</string>
-  <string name="export_from">Von (jjjj-mm-tt)</string>
-  <string name="export_to">Bis (jjjj-mm-tt)</string>
+  <string name="export_from">Von</string>
+  <string name="export_to">Bis</string>
   <string name="export_hint">Eine Zeile pro Tätigkeit und Tag, gerundet wie in den Einstellungen. Die Datei landet im Ordner export des Datenordners; Koordinaten werden nie exportiert.</string>
   <string name="export_csv">CSV exportieren</string>
   <string name="export_invalid">Ungültiger Zeitraum: Datum als jjjj-mm-tt, höchstens ein Jahr.</string>
@@ -361,8 +361,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="notif_planned_title">%1$s um %2$s</string>
   <string name="action_postpone">%1$d Min. verschieben</string>
   <string name="action_replan">Neu planen</string>
-  <string name="todo_field_plan_date">Geplant am (jjjj-mm-tt)</string>
-  <string name="todo_field_plan_time">Geplante Uhrzeit (hh:mm)</string>
+  <string name="todo_field_plan_date">Geplant am</string>
+  <string name="todo_field_plan_time">Geplante Uhrzeit</string>
   <string name="todo_field_duration">Dauer (Min.; leer = 1 Std., wächst)</string>
   <string name="todo_planned">geplant %1$s</string>
   <string name="todo_overdue">überfällig</string>
