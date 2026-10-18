@@ -402,4 +402,20 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="quick_company">Nuova azienda</string>
   <string name="quick_client">Nuovo cliente</string>
   <string name="start_travel">Avvia viaggio</string>
+  <!-- M12 colours, to-do filter -->
+  <string name="color_blue">blu</string>
+  <string name="color_teal">verde acqua</string>
+  <string name="color_green">verde</string>
+  <string name="color_lime">lime</string>
+  <string name="color_yellow">giallo</string>
+  <string name="color_orange">arancio</string>
+  <string name="color_red">rosso</string>
+  <string name="color_magenta">magenta</string>
+  <string name="color_purple">viola</string>
+  <string name="color_indigo">indaco</string>
+  <string name="color_brown">marrone</string>
+  <string name="color_grey">grigio</string>
+  <string name="color_none">Nessun colore</string>
+  <string name="sec_color">Colore</string>
+  <string name="todo_filter_all">Tutte le aziende</string>
 </resources>

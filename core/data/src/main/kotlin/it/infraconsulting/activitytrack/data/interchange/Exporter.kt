@@ -16,6 +16,7 @@ import it.infraconsulting.activitytrack.domain.interchange.XPreset
 import it.infraconsulting.activitytrack.domain.interchange.XRole
 import it.infraconsulting.activitytrack.domain.interchange.XSegment
 import it.infraconsulting.activitytrack.domain.interchange.XSite
+import it.infraconsulting.activitytrack.domain.interchange.XColor
 import it.infraconsulting.activitytrack.domain.interchange.XTodo
 import java.math.BigDecimal
 import java.time.Instant
@@ -62,8 +63,8 @@ class Exporter(private val db: ActivityTrackDatabase) {
 
 		if (ExportSection.MASTER_DATA in f.sections) {
 			out = out.copy(
-				companies = companies.map { XCompany(key(it), it.name, it.archived) },
-				clients = clients.map { XClient(key(it), companyKey.getValue(it.companyId), it.name, it.archived) },
+				companies = companies.map { XCompany(key(it), it.name, it.archived, XColor.format(it.color)) },
+				clients = clients.map { XClient(key(it), companyKey.getValue(it.companyId), it.name, it.archived, XColor.format(it.color)) },
 				sites = master.allCompanySites().filter { it.companyId in companyIds && f.clientId == null }.map {
 					XSite("company", companyKey.getValue(it.companyId), it.label, it.address,
 						it.lat.takeIf { f.siteCoordinates }, it.lon.takeIf { f.siteCoordinates }, it.radiusM)
