@@ -62,7 +62,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_invalid_time">Ora non valida: usa hh:mm, es. 08:30.</string>
   <string name="late_entry_title">Entrata in ritardo</string>
   <string name="late_entry_hint">Ora di entrata del %1$s. Viene registrata come entrata in ritardo; avvia l\'attività quando inizi.</string>
-  <string name="field_time">Ora (hh:mm)</string>
+  <string name="field_time">Ora</string>
   <string name="notif_day_start_title">Nessuna attività oggi</string>
   <string name="notif_day_start_text">Registra un\'assenza, un\'entrata in ritardo o avvia un\'attività.</string>
   <string name="action_absence">Assente oggi</string>
@@ -140,7 +140,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="set_stationary_min">Tempo di arrivo (min)</string>
   <string name="set_km_factor">Fattore distanza stradale</string>
   <string name="sec_reports">Rendicontazione</string>
-  <string name="set_carry_over">Le attività notturne restano sul giorno di inizio fino alle (HH:MM)</string>
+  <string name="set_carry_over">Le attività notturne restano sul giorno di inizio fino alle</string>
   <string name="set_round_work">Arrotondamento lavoro</string>
   <string name="set_round_travel">Arrotondamento trasferta</string>
   <string name="set_round_pause">Arrotondamento pausa</string>
@@ -265,7 +265,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_storage">La cartella dati non è utilizzabile: verificala nelle Impostazioni.</string>
   <string name="err_no_viewer">Nessuna app può aprire questo file.</string>
   <string name="confirm_delete_segment">Eliminare questo segmento?</string>
-  <string name="field_date">Data (aaaa-mm-gg)</string>
+  <string name="field_date">Data</string>
   <string name="field_km">km</string>
   <string name="segment_hint">Una fine precedente all\'inizio cade il giorno dopo.</string>
   <string name="ref_ticket">Ticket</string>
@@ -311,8 +311,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_edit">Modifica</string>
   <string name="todo_show_done">Mostra anche le fatte</string>
   <string name="todo_field_title">Titolo</string>
-  <string name="todo_field_due">Scadenza (aaaa-mm-gg)</string>
-  <string name="todo_field_time">Ora scadenza (hh:mm)</string>
+  <string name="todo_field_due">Scadenza</string>
+  <string name="todo_field_time">Ora scadenza</string>
   <string name="todo_field_priority">Priorità (1 = massima)</string>
   <string name="todo_field_refs">Riferimenti (uno per riga)</string>
   <string name="todo_done_question">L\'attività da fare è conclusa?</string>
@@ -344,8 +344,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="import_conflicts">Conflitti (dati dell\'app mantenuti): %1$d</string>
   <string name="import_skipped">Non importati: %1$d</string>
   <string name="action_close">Chiudi</string>
-  <string name="export_from">Dal (aaaa-mm-gg)</string>
-  <string name="export_to">Al (aaaa-mm-gg)</string>
+  <string name="export_from">Dal</string>
+  <string name="export_to">Al</string>
   <string name="export_hint">Una riga per attività e giorno, arrotondata come nelle Impostazioni. Il file va nella cartella export della cartella dati; le coordinate non vengono mai esportate.</string>
   <string name="export_csv">Esporta CSV</string>
   <string name="export_invalid">Intervallo non valido: date come aaaa-mm-gg, al massimo un anno.</string>
@@ -362,8 +362,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="notif_planned_title">%1$s alle %2$s</string>
   <string name="action_postpone">Posticipa %1$d min</string>
   <string name="action_replan">Ripianifica</string>
-  <string name="todo_field_plan_date">Data pianificata (aaaa-mm-gg)</string>
-  <string name="todo_field_plan_time">Ora pianificata (hh:mm)</string>
+  <string name="todo_field_plan_date">Data pianificata</string>
+  <string name="todo_field_plan_time">Ora pianificata</string>
   <string name="todo_field_duration">Durata (min; vuota = 1 h, si allunga)</string>
   <string name="todo_planned">pianificata %1$s</string>
   <string name="todo_overdue">in ritardo</string>

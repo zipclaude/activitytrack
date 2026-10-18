@@ -62,7 +62,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="err_invalid_time">Hora no válida: usa hh:mm, p. ej. 08:30.</string>
   <string name="late_entry_title">Entrada tardía</string>
   <string name="late_entry_hint">Hora de entrada del %1$s. Se registra como entrada tardía; inicia la actividad cuando empieces.</string>
-  <string name="field_time">Hora (hh:mm)</string>
+  <string name="field_time">Hora</string>
   <string name="notif_day_start_title">Ninguna actividad hoy</string>
   <string name="notif_day_start_text">Registra una ausencia, una entrada tardía o inicia una actividad.</string>
   <string name="action_absence">Ausente hoy</string>
@@ -140,7 +140,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="set_stationary_min">Tiempo de llegada (min)</string>
   <string name="set_km_factor">Factor de distancia por carretera</string>
   <string name="sec_reports">Informes</string>
-  <string name="set_carry_over">Las actividades nocturnas cuentan para el día de inicio hasta (HH:MM)</string>
+  <string name="set_carry_over">Las actividades nocturnas cuentan para el día de inicio hasta</string>
   <string name="set_round_work">Redondeo de trabajo</string>
   <string name="set_round_travel">Redondeo de viaje</string>
   <string name="set_round_pause">Redondeo de pausa</string>
@@ -265,7 +265,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="err_storage">La carpeta de datos no se puede usar: revísala en Ajustes.</string>
   <string name="err_no_viewer">Ninguna app puede abrir este archivo.</string>
   <string name="confirm_delete_segment">¿Eliminar este tramo?</string>
-  <string name="field_date">Fecha (aaaa-mm-dd)</string>
+  <string name="field_date">Fecha</string>
   <string name="field_km">km</string>
   <string name="segment_hint">Un fin anterior al inicio cae al día siguiente.</string>
   <string name="ref_ticket">Ticket</string>
@@ -311,8 +311,8 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_edit">Editar pendiente</string>
   <string name="todo_show_done">Mostrar las hechas</string>
   <string name="todo_field_title">Título</string>
-  <string name="todo_field_due">Fecha límite (aaaa-mm-dd)</string>
-  <string name="todo_field_time">Hora límite (hh:mm)</string>
+  <string name="todo_field_due">Fecha límite</string>
+  <string name="todo_field_time">Hora límite</string>
   <string name="todo_field_priority">Prioridad (1 = máxima)</string>
   <string name="todo_field_refs">Referencias (una por línea)</string>
   <string name="todo_done_question">¿Está hecho el pendiente?</string>
@@ -344,8 +344,8 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="import_conflicts">Conflictos (se mantienen los datos de la app): %1$d</string>
   <string name="import_skipped">No importados: %1$d</string>
   <string name="action_close">Cerrar</string>
-  <string name="export_from">Desde (aaaa-mm-dd)</string>
-  <string name="export_to">Hasta (aaaa-mm-dd)</string>
+  <string name="export_from">Desde</string>
+  <string name="export_to">Hasta</string>
   <string name="export_hint">Una línea por actividad y día, redondeada según los Ajustes. El archivo va a la carpeta export de la carpeta de datos; las coordenadas nunca se exportan.</string>
   <string name="export_csv">Exportar CSV</string>
   <string name="export_invalid">Rango no válido: fechas como aaaa-mm-dd, como máximo un año.</string>
@@ -362,8 +362,8 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="notif_planned_title">%1$s a las %2$s</string>
   <string name="action_postpone">Posponer %1$d min</string>
   <string name="action_replan">Replanificar</string>
-  <string name="todo_field_plan_date">Fecha planificada (aaaa-mm-dd)</string>
-  <string name="todo_field_plan_time">Hora planificada (hh:mm)</string>
+  <string name="todo_field_plan_date">Fecha planificada</string>
+  <string name="todo_field_plan_time">Hora planificada</string>
   <string name="todo_field_duration">Duración (min; vacía = 1 h, crece)</string>
   <string name="todo_planned">planificada %1$s</string>
   <string name="todo_overdue">atrasada</string>

@@ -69,6 +69,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M7 UI polish | first pass (PR #7 → #10, on `main`), owner review pending |
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
+| M10 UI | **implemented** (branch `m10-ui`): pickers, Home cards, swipes, Gestures screen, ignored to-dos (schema v5); smoke-tested on the debug app 2026-10-18 |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
 
 Repository: GitHub `zipclaude/activitytrack` (public), branch `main`. Docs are
@@ -96,6 +97,10 @@ core/domain/…/calendar/         ItalianHolidays.kt (Easter, 4 Oct from 2026)
 core/domain/…/start/            StartDefaults.kt (pre-fill, nearestContaining), ClientPicker.kt, ArrivalAdvice.kt
 core/domain/…/settings/         AppSettings.kt (defaults + validated())
 core/domain/…/todo/             TodoPlan.kt (planned slot: start, growing end, postpone)
+core/domain/…/settings/         Gestures.kt (swipe settings and the buttons they reveal)
+app/…/ui/common/                Pickers.kt (DateField, TimeField), Swipe.kt (SwipeCard, settle)
+app/…/ui/home/                  EntryCommands.kt (commands + Stop/Resume dialogs shared by Home and Agenda)
+app/…/ui/settings/              GesturesScreen.kt
 core/domain/src/test/…          Rounding, DailyReport, EntryStateMachine, EntryInvariants, StartDefaults,
                                 ClientPicker, AppSettings, ReminderPlanner, CsvExporter, LocalMinutes
 core/data/…/db/                 Entities.kt, EntryDao.kt, MasterDataDao.kt, ActivityTrackDatabase.kt (lunch seed)

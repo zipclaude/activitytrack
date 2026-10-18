@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -72,6 +73,7 @@ import it.infraconsulting.activitytrack.ui.common.parseHhMm
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /* To-dos (M4, planned M9, cards and swipes M10): list, add/edit, plan, start, done, ignore. */
 class TodosViewModel(
@@ -117,10 +119,12 @@ internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean {
 		dueOverdue(t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, now, zone)
 }
 
+/* "today", else a short local date ("sab 17/10") */
 @Composable
 private fun dayText(epochDay: Long): String {
 	val date = LocalDate.ofEpochDay(epochDay)
-	return if (date == LocalDate.now()) stringResource(R.string.todo_today) else date.toString()
+	val locale = LocalConfiguration.current.locales[0]
+	return if (date == LocalDate.now()) stringResource(R.string.todo_today) else date.format(DateTimeFormatter.ofPattern("EEE d/MM", locale))
 }
 
 /* "client · planned day time (min) · due date time · P1" (the actions dialog). */
