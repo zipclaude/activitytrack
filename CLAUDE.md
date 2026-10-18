@@ -138,6 +138,29 @@ M10 (PR #12, merged, v0.3.0): UI per the approved mockup, see decisions
 lists show ignored to-dos and for how long (proposal: Home only on the day they
 were ignored; To-dos list always, at the bottom).
 
+### Backlog (owner notes, 2026-10-18; not started)
+Colours (mockup row 3, https://claude.ai/artifact/5fmq8LyttMzhbbLbMiYm5j, awaiting
+answers): colour per company and client; thin vertical band at the card start
+in the company colour; to-do filter by company (Home); with one company shown,
+the band is the client colour.
+1. Company, client, role, preset lists sortable: per list alphabetical, by last
+   use / creation, or manual.
+2. Settings grouped in sub-menus.
+3. Time selection: an agenda-like slider / Windows "logon hours" style grid,
+   5-minute steps (instead of the Material clock).
+4. "+" quick add also for role and preset in the start screen.
+5. Notification type per event: banner, sound (chosen), vibration, ...
+6. Agenda: a more compact view fitting the whole working day; the day view
+   opens on the current activity.
+7. Planned date without time: show the error on the field (today only a
+   generic "invalid time" at the bottom of the dialog).
+8. Update the manual.
+9. To-do filter also by day: planned for today only, or all.
+10. A travel or an activity under one minute is an error.
+11. Entry segments editable and deletable.
+12. Entry screen: attachments, expenses etc. as coloured icon buttons.
+13. Tags on entries, also afterwards.
+
 ### Device tests
 Done on 2026-10-18 (M4, M5 local calendar, M6, M9, restore); fixes in PR #9:
 agenda editor company, list time span, due-date overdue, restore time.
