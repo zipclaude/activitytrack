@@ -252,6 +252,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 					title = x.title.trim(), notes = x.notes?.trim()?.ifEmpty { null }, refs = refs, dueEpochDay = due,
 					dueTimeMin = time, priority = x.priority, done = x.done, createdUtcMs = now, updatedUtcMs = now,
 					planEpochDay = planDay, planStartMin = planTime, durationMin = duration,
+					ignoredUtcMs = now.takeIf { x.ignored },
 				),
 			)
 			r.added("todos")
@@ -266,6 +267,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			"priority".takeIf { existing.priority != x.priority },
 			"plan".takeIf { existing.planEpochDay != planDay || existing.planStartMin != planTime || existing.durationMin != duration },
 			"done".takeIf { existing.done != x.done },
+			"ignored".takeIf { (existing.ignoredUtcMs != null) != x.ignored },
 		)
 		if (diff.isEmpty()) r.same("todos") else r.conflict("todos", x.key, diff.joinToString())
 	}

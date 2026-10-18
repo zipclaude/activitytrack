@@ -20,6 +20,7 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 	private val master = db.masterDataDao()
 
 	val open = dao.observeOpen()
+	val ignored = dao.observeIgnored()
 	val all = dao.observeAll()
 
 	fun observe(id: Long) = dao.observe(id)
@@ -27,10 +28,10 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 
 	/* Open to-dos due or planned by [day] (overdue included): the home list. */
 	fun dueBy(todos: List<TodoEntity>, day: LocalDate): List<TodoEntity> =
-		todos.filter { t -> !t.done && listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= day.toEpochDay() } }
+		todos.filter { t -> t.isOpen() && listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= day.toEpochDay() } }
 
-	/* Open planned to-dos (reminders, calendars). */
-	suspend fun planned(): List<TodoEntity> = dao.all().filter { !it.done && it.plan() != null }
+	/* Open planned to-dos (reminders, calendars); ignored ones are not commitments. */
+	suspend fun planned(): List<TodoEntity> = dao.all().filter { it.isOpen() && it.plan() != null }
 
 	/*
 	 * Create ([id] 0) or edit; the client must belong to the company; a plan
@@ -63,6 +64,13 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 		dao.update(t.copy(done = done, updatedUtcMs = clock.millis()))
 	}
 
+	/* Ignore (struck through, at the bottom, no reminders or calendar event) or restore. */
+	suspend fun setIgnored(id: Long, ignored: Boolean) = db.withTransaction {
+		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
+		val now = clock.millis()
+		dao.update(t.copy(ignoredUtcMs = if (ignored) t.ignoredUtcMs ?: now else null, updatedUtcMs = now))
+	}
+
 	/* The plan moved [minutes] after its start, or after now once started ("postpone"); the duration stays. */
 	suspend fun postpone(id: Long, minutes: Int) = db.withTransaction {
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
@@ -75,6 +83,9 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 
 	suspend fun entriesOf(id: Long): Int = dao.entriesOf(id)
 }
+
+/* Neither done nor ignored. */
+fun TodoEntity.isOpen(): Boolean = !done && ignoredUtcMs == null
 
 /* The planned slot of a to-do, if any. */
 fun TodoEntity.plan(): TodoPlan? = TodoPlan.of(planEpochDay, planStartMin, durationMin)
