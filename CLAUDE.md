@@ -125,7 +125,7 @@ and publishes the `app-debug` APK artifact (14 days).
 Done on 2026-10-18 (M4, M5 local calendar, M6, M9, restore); fixes in PR #9:
 agenda editor company, list time span, due-date overdue, restore time.
 Cleanup done 2026-10-18 (clean DB restored and migrated to v4, TEST backups/export
-deleted, local calendar empty; samples left in Download). Still open: item 7 (manual); share sheet and company
+deleted, local calendar empty; samples left in Download). Still open: item 7 (manual, owner reads it at leisure); share sheet and company
 "Management system" not exercised; week view text wraps in narrow blocks.
 
 1. **M4** (`docs/samples/gestionale-test.xml` → Download): More → Import /
@@ -157,7 +157,6 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 ### Provisional decisions to confirm
 - M5: on every change re-sync the last 14 days; "Sync 90 days" on demand;
   without a target calendar nothing is created and old events are kept.
-- M5: the local calendar is green, named "ActivityTrack", on this phone only.
 - M6: tabs Home · Agenda · Report (the existing day report) · More
   (To-dos, Import / export, Master data, Settings); agenda opens in List;
   weeks start on Monday; one colour per company from a fixed palette.
@@ -233,6 +232,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
+| 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |
 | 2026-10-18 | "Overdue" also for a passed due date (after the due time; date only: from the next day), not only for a planned block that is over |
 | 2026-10-18 | M9 planned to-dos: manual add also from the agenda; planned slot separate from the due date; optional duration, else 1 h growing hourly; in agenda and calendar, tags per kind of time; states open → planned (date+time) → done, overdue highlighted on Home; reminder lead and postpone step configurable (advanced, defaults 15 / 30 min); plan in the interchange format; own PR |
 
