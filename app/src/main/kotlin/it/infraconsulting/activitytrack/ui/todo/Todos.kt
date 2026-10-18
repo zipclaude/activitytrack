@@ -40,6 +40,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.rgb
+import it.infraconsulting.activitytrack.ui.common.Banded
+import it.infraconsulting.activitytrack.data.db.CompanyEntity
+import it.infraconsulting.activitytrack.data.db.ClientEntity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
 import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
@@ -83,14 +98,17 @@ import java.time.format.DateTimeFormatter
 class TodosViewModel(
 	private val todos: TodoRepository,
 	master: MasterDataRepository,
-	settings: SettingsRepository,
+	private val settingsRepo: SettingsRepository,
 ) : ActionViewModel() {
 	val open = todos.open.state(emptyList())
 	val ignored = todos.ignored.state(emptyList())
 	val all = todos.all.state(emptyList())
 	val clients = master.clients.state(emptyList())
 	val companies = master.companies.state(emptyList())
-	val settings = settings.settings.state(null)
+	val settings = settingsRepo.settings.state(null)
+
+	/* to-dos of one company only (M12, owner: kept until removed); null = all */
+	fun setCompanyFilter(companyId: Long?) = run { settingsRepo.update { it.copy(todoCompanyFilter = companyId) } }
 
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
 	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
@@ -170,7 +188,7 @@ private fun Chip(text: String, container: Color, content: Color) {
  * one is struck through and dimmed.
  */
 @Composable
-fun TodoCard(t: TodoEntity, clientName: String?, onClick: () -> Unit) {
+fun TodoCard(t: TodoEntity, clientName: String?, band: Int? = null, onClick: () -> Unit) {
 	val ignored = t.ignoredUtcMs != null
 	val late = overdue(t)
 	val compact = LocalCompact.current
@@ -206,9 +224,9 @@ fun TodoCard(t: TodoEntity, clientName: String?, onClick: () -> Unit) {
 		}
 	}
 	if (ignored)
-		OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth().alpha(0.6f)) { body() }
+		OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth().alpha(0.6f)) { Banded(band) { body() } }
 	else
-		Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) { body() }
+		Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Banded(band) { body() } }
 }
 
 /* The buttons a swipe reveals on a to-do card ([swipe] for that direction). */
@@ -242,6 +260,7 @@ fun TodoSwipeCard(
 	vm: TodosViewModel,
 	onStart: (Long) -> Unit,
 	onReplan: (TodoEntity) -> Unit,
+	band: Int? = null,
 	onClick: () -> Unit,
 ) {
 	val settings by vm.settings.collectAsState()
@@ -252,17 +271,64 @@ fun TodoSwipeCard(
 		toEnd = todoSwipeActions(t, g.todoToEnd, vm, snooze, onStart, onReplan),
 		fullSwipe = g.fullSwipe,
 		shape = CardDefaults.shape,
-	) { TodoCard(t, clientName, onClick) }
+	) { TodoCard(t, clientName, band, onClick) }
 }
 
-/* "To do today ———— n" (M10: the to-do area under a separator). */
+/* "To do today —— n [company filter]" (M10 separator, M12 filter). */
 @Composable
-private fun TodoHeader(count: Int) {
+private fun TodoHeader(count: Int, vm: TodosViewModel) {
 	Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
 		Text(stringResource(R.string.todo_due_today), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 		HorizontalDivider(Modifier.weight(1f))
 		Text(count.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+		CompanyFilter(vm)
 	}
+}
+
+/*
+ * The to-do company filter (M12): "All companies" or one, with its colour;
+ * the ✕ removes it. Shared by Home and the To-dos screen.
+ */
+@Composable
+private fun CompanyFilter(vm: TodosViewModel) {
+	val settings by vm.settings.collectAsState()
+	val companies by vm.companies.collectAsState()
+	val current = companies.firstOrNull { it.id == settings?.todoCompanyFilter }
+	var open by remember { mutableStateOf(false) }
+	Box {
+		FilterChip(
+			selected = current != null,
+			onClick = { open = true },
+			label = { Text(current?.name ?: stringResource(R.string.todo_filter_all), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+			leadingIcon = current?.color?.let { c -> { Box(Modifier.size(10.dp).clip(CircleShape).background(rgb(c))) } },
+			trailingIcon = if (current != null) ({
+				Icon(
+					painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.todo_filter_all),
+					modifier = Modifier.size(18.dp).clickable { vm.setCompanyFilter(null) },
+				)
+			}) else null,
+		)
+		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+			DropdownMenuItem(text = { Text(stringResource(R.string.todo_filter_all)) }, onClick = { open = false; vm.setCompanyFilter(null) })
+			for (c in companies.filter { !it.archived })
+				DropdownMenuItem(
+					text = { Text(c.name) },
+					leadingIcon = { Box(Modifier.size(12.dp).clip(CircleShape).background(c.color?.let(::rgb) ?: Color.Transparent)) },
+					onClick = { open = false; vm.setCompanyFilter(c.id) },
+				)
+		}
+	}
+}
+
+/*
+ * The band of each to-do (owner, 2026-10-18): the company colour, or the
+ * client colour when the list shows a single company.
+ */
+private fun bands(list: List<TodoEntity>, companies: List<CompanyEntity>, clients: List<ClientEntity>): Map<Long, Int?> {
+	val one = list.map { it.companyId }.distinct().size == 1
+	val co = companies.associate { it.id to it.color }
+	val cl = clients.associate { it.id to it.color }
+	return list.associate { t -> t.id to if (one) t.clientId?.let { cl[it] } else co[t.companyId] }
 }
 
 /*
@@ -275,21 +341,27 @@ fun TodoTodaySection(onStart: (Long) -> Unit) {
 	val open by vm.open.collectAsState()
 	val ignored by vm.ignored.collectAsState()
 	val clients by vm.clients.collectAsState()
+	val companies by vm.companies.collectAsState()
+	val filter = vm.settings.collectAsState().value?.todoCompanyFilter
 	val today = LocalDate.now()
-	val due = open.filter { t -> listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today.toEpochDay() } }
+	val due = open.filter { t -> (filter == null || t.companyId == filter) && listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today.toEpochDay() } }
 		.sortedWith(compareBy({ it.planEpochDay ?: it.dueEpochDay }, { it.planStartMin ?: it.dueTimeMin ?: 1440 }))
 	val zone = ZoneId.systemDefault()
-	val ignoredToday = ignored.filter { t -> t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == today }
-	if (due.isEmpty() && ignoredToday.isEmpty())
+	val ignoredToday = ignored.filter { t ->
+		(filter == null || t.companyId == filter) && t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == today
+	}
+	/* with a filter the header stays, so the filter can be removed */
+	if (due.isEmpty() && ignoredToday.isEmpty() && filter == null)
 		return
+	val band = bands(due + ignoredToday, companies, clients)
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 10.dp)) {
-		TodoHeader(due.size)
+		TodoHeader(due.size, vm)
 		for (t in due + ignoredToday)
 			TodoSwipeCard(
 				t, clients.firstOrNull { it.id == t.clientId }?.name, vm, onStart,
-				onReplan = { vm.clearError(); editing = it },
+				onReplan = { vm.clearError(); editing = it }, band = band[t.id],
 			) { selected = t }
 	}
 	selected?.let { t -> TodoActions(t, vm, onStart = { onStart(t.id) }, onEdit = { vm.clearError(); editing = t }) { selected = null } }
@@ -352,7 +424,10 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	var opened by rememberSaveable { mutableStateOf(false) }
-	val list = if (showDone) all else open + ignored
+	val companies by vm.companies.collectAsState()
+	val filter = vm.settings.collectAsState().value?.todoCompanyFilter
+	val list = (if (showDone) all else open + ignored).filter { filter == null || it.companyId == filter }
+	val band = bands(list, companies, clients)
 
 	LaunchedEffect(editId, all) {
 		if (editId != null && !opened)
@@ -372,14 +447,19 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 			modifier = Modifier.fillMaxSize().padding(padding),
 			verticalArrangement = Arrangement.spacedBy(10.dp),
 		) {
-			item { Column(Modifier.padding(horizontal = 16.dp)) { SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it } } }
+			item {
+				Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+					Box(Modifier.weight(1f)) { SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it } }
+					CompanyFilter(vm)
+				}
+			}
 			if (list.isEmpty())
 				item { EmptyText() }
 			items(list, key = { it.id }) { t ->
 				Column(Modifier.padding(horizontal = 16.dp)) {
 					TodoSwipeCard(
 						t, clients.firstOrNull { it.id == t.clientId }?.name, vm, onStart,
-						onReplan = { vm.clearError(); editing = it },
+						onReplan = { vm.clearError(); editing = it }, band = band[t.id],
 					) { selected = t }
 				}
 			}

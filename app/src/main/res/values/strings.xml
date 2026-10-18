@@ -413,4 +413,20 @@ Tap the green play button below to start one.</string>
   <string name="quick_company">New company</string>
   <string name="quick_client">New client</string>
   <string name="start_travel">Start travel</string>
+  <!-- M12 colours, to-do filter -->
+  <string name="color_blue">blue</string>
+  <string name="color_teal">teal</string>
+  <string name="color_green">green</string>
+  <string name="color_lime">lime</string>
+  <string name="color_yellow">yellow</string>
+  <string name="color_orange">orange</string>
+  <string name="color_red">red</string>
+  <string name="color_magenta">magenta</string>
+  <string name="color_purple">purple</string>
+  <string name="color_indigo">indigo</string>
+  <string name="color_brown">brown</string>
+  <string name="color_grey">grey</string>
+  <string name="color_none">No colour</string>
+  <string name="sec_color">Colour</string>
+  <string name="todo_filter_all">All companies</string>
 </resources>

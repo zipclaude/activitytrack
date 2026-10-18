@@ -63,7 +63,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* data folder, calendars and gestures change through their own rows, not this form */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures) }
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter) }
 			onDone()
 		}
 	}
