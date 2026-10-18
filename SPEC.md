@@ -137,7 +137,7 @@ With q = 15: 7 → 15, 19:59 → 15, 20 → 30.
 | Stationary ≤ 100 m for 15 min during TRAVEL | "Arrived?"; near a client site proposes WORK, near HOME proposes closing |
 | No entry 15 min after working-day start | actions: *Absence (full day) / Late entry at… / Start entry* |
 | Entries TO_COMPLETE | reminder until completed |
-| Planned to-do | 15 min (configurable, advanced) before the planned start: *Start / Postpone 30 min (configurable) / Re-plan*; also outside working hours and on days off; once per planned start, dropped when the block is over, the to-do is done or an entry runs from it |
+| Planned to-do | 15 min (configurable, advanced) before the planned start: *Start / Postpone 30 min (configurable; from the planned start, or from now once it has passed) / Re-plan*; also outside working hours and on days off; once per planned start, dropped when the block is over, the to-do is done or an entry runs from it |
 
 Working hours: several intervals per weekday. Public holidays (Italian national,
 Easter Monday computed) and manual days off suppress the day-start prompt.

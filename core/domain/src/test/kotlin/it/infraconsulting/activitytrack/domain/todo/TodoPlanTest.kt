@@ -58,6 +58,18 @@ class TodoPlanTest {
 	}
 
 	@Test
+	fun postponeFromTheStartOrFromNowWhenLate() {
+		val p = TodoPlan(day, 9 * 60, 60)
+		/* answered at the reminder, before the start: start + 30 */
+		assertEquals(TodoPlan(day, 9 * 60 + 30, 60), p.postponed(30, at(day, 8, 45), zone))
+		assertEquals(TodoPlan(day, 9 * 60 + 30, 60), p.postponed(30, at(day, 9, 0), zone))
+		/* answered late: now (next whole minute) + 30 */
+		assertEquals(TodoPlan(day, 9 * 60 + 50, 60), p.postponed(30, at(day, 9, 20), zone))
+		assertEquals(TodoPlan(day, 9 * 60 + 51, 60), p.postponed(30, at(day, 9, 20, 10), zone))
+		assertEquals(TodoPlan(day.plusDays(1), 10), TodoPlan(day, 23 * 60).postponed(30, at(day, 23, 40), zone))
+	}
+
+	@Test
 	fun dstDayKeepsTheWallClock() {
 		/* 25 October 2026: clocks go back at 03:00 in Rome */
 		val dst = LocalDate.of(2026, 10, 25)
