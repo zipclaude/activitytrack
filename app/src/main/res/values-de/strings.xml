@@ -121,6 +121,16 @@
   <string name="set_day_start_delay">Verzögerung Tagesbeginn-Hinweis (min)</string>
   <string name="sec_location">Standort</string>
   <string name="sec_dictation">Diktat</string>
+  <string name="sec_calendar">Kalender</string>
+  <string name="calendar_permission">Kalenderzugriff erlauben, um die Tätigkeiten in einen Kalender zu schreiben.</string>
+  <string name="calendar_generic">Kalender für die Tätigkeiten</string>
+  <string name="calendar_none">Keiner (keine Synchronisierung)</string>
+  <string name="calendar_new_local">Neuer Kalender „ActivityTrack“ auf dem Telefon</string>
+  <string name="calendar_hint">Ein Termin pro Tätigkeit und Tag ab dem Start; Google- oder CalDAV-Kalender synchronisieren ihn.</string>
+  <string name="calendar_sync_now">90 Tage synchronisieren</string>
+  <string name="calendar_synced">Synchronisiert: %1$d Änderungen</string>
+  <string name="calendar_company">Kalender dieser Firma</string>
+  <string name="calendar_use_generic">Der allgemeine Kalender</string>
   <string name="set_dictation_language">Diktiersprache</string>
   <string name="set_movement">Schwelle Bewegungswarnung (m)</string>
   <string name="set_stationary_radius">Ankunftsradius (m)</string>

@@ -35,7 +35,16 @@ data class AppSettings(
 	val rounding: ReportRounding = ReportRounding.DEFAULT,
 	/* speech recognition language, independent of the phone language (owner decision 2026-10-17) */
 	val dictationLanguage: String = "it-IT",
+	/*
+	 * External calendar sync (M5): device calendar ids, valid on this phone
+	 * only (never exported). A company's calendar replaces the generic one.
+	 */
+	val calendarId: Long? = null,
+	val companyCalendars: Map<Long, Long> = emptyMap(),
 ) {
+	/* Calendar for the entries of [companyId]; null = not synced. */
+	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId
+
 	fun validated(): AppSettings = copy(
 		confirmIntervalMin = confirmIntervalMin.coerceIn(10, 240),
 		maxConfirmations = maxConfirmations.coerceIn(0, 100),

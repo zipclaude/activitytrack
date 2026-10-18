@@ -59,6 +59,9 @@ class SettingsRepository(context: Context) {
 		val backupRetention = intPreferencesKey("backup_retention")
 		val rootUri = stringPreferencesKey("root_uri")
 		val dictationLanguage = stringPreferencesKey("dictation_language")
+		val calendarId = longPreferencesKey("calendar_id")
+		/* "companyId:calendarId,..." */
+		val companyCalendars = stringPreferencesKey("company_calendars")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -81,6 +84,10 @@ class SettingsRepository(context: Context) {
 			kmFactor = p[K.kmFactor] ?: d.kmFactor,
 			backupRetention = p[K.backupRetention] ?: d.backupRetention,
 			dictationLanguage = p[K.dictationLanguage] ?: d.dictationLanguage,
+			calendarId = p[K.calendarId],
+			companyCalendars = p[K.companyCalendars].orEmpty().split(',').mapNotNull { pair ->
+				pair.split(':').takeIf { it.size == 2 }?.let { (c, cal) -> c.toLongOrNull()?.let { k -> cal.toLongOrNull()?.let { k to it } } }
+			}.toMap(),
 			rootUri = p[K.rootUri],
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
@@ -105,6 +112,8 @@ class SettingsRepository(context: Context) {
 		p[K.kmFactor] = s.kmFactor
 		p[K.backupRetention] = s.backupRetention
 		p[K.dictationLanguage] = s.dictationLanguage
+		s.calendarId?.let { p[K.calendarId] = it } ?: p.remove(K.calendarId)
+		p[K.companyCalendars] = s.companyCalendars.entries.joinToString(",") { "${it.key}:${it.value}" }
 		s.rootUri.let { if (it != null) p[K.rootUri] = it else p.remove(K.rootUri) }
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
