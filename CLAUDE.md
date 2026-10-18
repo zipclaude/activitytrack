@@ -166,7 +166,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 - Open: notification icons/colours (text actions kept, see 2026-10-17).
 - M9: "tags per segment" read as hashtags on the last line of the calendar
   event description (#lavoro #viaggio #pausa per kind of time in the entry,
-  #pianificata on planned to-dos; localised); planned events are TENTATIVE.
+  #pianificata on planned to-dos; always Italian); planned events are TENTATIVE.
 - M9: the reminder also fires outside working hours and on days off; it is dropped
   once the block is over, the to-do is done/re-planned or an entry runs from it.
 - M9: no duration → 1 h block growing hour by hour while open, capped at the
@@ -232,6 +232,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
+| 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
 | 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |
 | 2026-10-18 | "Overdue" also for a passed due date (after the due time; date only: from the next day), not only for a planned block that is over |
 | 2026-10-18 | M9 planned to-dos: manual add also from the agenda; planned slot separate from the due date; optional duration, else 1 h growing hourly; in agenda and calendar, tags per kind of time; states open → planned (date+time) → done, overdue highlighted on Home; reminder lead and postpone step configurable (advanced, defaults 15 / 30 min); plan in the interchange format; own PR |

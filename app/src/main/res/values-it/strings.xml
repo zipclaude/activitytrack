@@ -371,8 +371,4 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="sec_advanced">Avanzate</string>
   <string name="set_plan_lead">Promemoria attività pianificate (min prima)</string>
   <string name="set_plan_snooze">Posticipo (min)</string>
-  <string name="tag_work">#lavoro</string>
-  <string name="tag_travel">#viaggio</string>
-  <string name="tag_pause">#pausa</string>
-  <string name="tag_planned">#pianificata</string>
 </resources>

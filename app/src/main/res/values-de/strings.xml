@@ -370,8 +370,4 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="sec_advanced">Erweitert</string>
   <string name="set_plan_lead">Erinnerung an geplante Tätigkeiten (Min. vorher)</string>
   <string name="set_plan_snooze">Verschieben um (Min.)</string>
-  <string name="tag_work">#arbeit</string>
-  <string name="tag_travel">#reise</string>
-  <string name="tag_pause">#pause</string>
-  <string name="tag_planned">#geplant</string>
 </resources>

@@ -204,7 +204,7 @@ the description, locality as location. A generic calendar (chosen, or a local
 "ActivityTrack" one) and optionally one per company, which replaces it.
 Planned open to-dos become tentative events ("Client – Title") up to a year
 ahead; done ones leave the calendar. The last description line carries
-hashtags per kind of time (#work #travel #pause, #planned; localised).
+hashtags per kind of time (#lavoro #viaggio #pausa, #pianificata; always Italian).
 
 ### 8.2 Consultation and navigation
 

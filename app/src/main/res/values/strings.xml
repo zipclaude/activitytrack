@@ -380,8 +380,4 @@ Tap the green play button below to start one.</string>
   <string name="sec_advanced">Advanced</string>
   <string name="set_plan_lead">Planned activity reminder (min before)</string>
   <string name="set_plan_snooze">Postpone step (min)</string>
-  <string name="tag_work">#work</string>
-  <string name="tag_travel">#travel</string>
-  <string name="tag_pause">#pause</string>
-  <string name="tag_planned">#planned</string>
 </resources>
