@@ -48,6 +48,8 @@ data class AppSettings(
 	val gestures: GestureSettings = GestureSettings(),
 	/* compact display (M11): smaller text, tighter cards */
 	val compactDisplay: Boolean = false,
+	/* Home and To-dos show the to-dos of this company only (M12); kept until removed */
+	val todoCompanyFilter: Long? = null,
 ) {
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId

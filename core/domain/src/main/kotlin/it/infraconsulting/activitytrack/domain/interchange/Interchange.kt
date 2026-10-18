@@ -36,10 +36,10 @@ data class Interchange(
 }
 
 @Serializable
-data class XCompany(val key: String, val name: String, val archived: Boolean = false)
+data class XCompany(val key: String, val name: String, val archived: Boolean = false, val color: String? = null)
 
 @Serializable
-data class XClient(val key: String, val companyKey: String, val name: String, val archived: Boolean = false)
+data class XClient(val key: String, val companyKey: String, val name: String, val archived: Boolean = false, val color: String? = null)
 
 /* A site of a company or of a client ([ownerKind] "company" / "client"). */
 @Serializable
@@ -55,6 +55,12 @@ data class XSite(
 	/* for client sites: the client's company, when client keys repeat across companies */
 	val companyKey: String? = null,
 )
+
+/* "#RRGGBB" <-> 0xRRGGBB (M12 colours); anything else is no colour */
+object XColor {
+	fun parse(s: String?): Int? = s?.trim()?.removePrefix("#")?.takeIf { it.length == 6 }?.toIntOrNull(16)
+	fun format(c: Int?): String? = c?.let { "#%06X".format(it and 0xFFFFFF) }
+}
 
 @Serializable
 data class XRole(val name: String, val archived: Boolean = false)

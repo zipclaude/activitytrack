@@ -401,4 +401,20 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="quick_company">Neue Firma</string>
   <string name="quick_client">Neuer Kunde</string>
   <string name="start_travel">Reise starten</string>
+  <!-- M12 colours, to-do filter -->
+  <string name="color_blue">blau</string>
+  <string name="color_teal">petrol</string>
+  <string name="color_green">grün</string>
+  <string name="color_lime">hellgrün</string>
+  <string name="color_yellow">gelb</string>
+  <string name="color_orange">orange</string>
+  <string name="color_red">rot</string>
+  <string name="color_magenta">magenta</string>
+  <string name="color_purple">violett</string>
+  <string name="color_indigo">indigo</string>
+  <string name="color_brown">braun</string>
+  <string name="color_grey">grau</string>
+  <string name="color_none">Keine Farbe</string>
+  <string name="sec_color">Farbe</string>
+  <string name="todo_filter_all">Alle Firmen</string>
 </resources>

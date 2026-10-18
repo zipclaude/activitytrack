@@ -22,6 +22,7 @@ import it.infraconsulting.activitytrack.domain.interchange.XClient
 import it.infraconsulting.activitytrack.domain.interchange.XCompany
 import it.infraconsulting.activitytrack.domain.interchange.XEntry
 import it.infraconsulting.activitytrack.domain.interchange.XSite
+import it.infraconsulting.activitytrack.domain.interchange.XColor
 import it.infraconsulting.activitytrack.domain.interchange.XTodo
 import it.infraconsulting.activitytrack.domain.todo.TodoPlan
 import it.infraconsulting.activitytrack.domain.model.EntryInvariants
@@ -148,7 +149,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			?: all.firstOrNull { it.name.equals(name, ignoreCase = true) || it.name.equals(x.key, ignoreCase = true) }
 		if (existing == null) {
 			val code = x.key.takeIf { it != name }
-			r.companies[x.key] = master.insertCompany(CompanyEntity(name = name, archived = x.archived, externalCode = code))
+			r.companies[x.key] = master.insertCompany(CompanyEntity(name = name, archived = x.archived, externalCode = code, color = XColor.parse(x.color)))
 			r.added("companies")
 			return
 		}
@@ -156,6 +157,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		val diff = listOfNotNull(
 			"name".takeIf { existing.name != name },
 			"archived".takeIf { existing.archived != x.archived },
+			"color".takeIf { x.color != null && existing.color != XColor.parse(x.color) },
 		)
 		if (diff.isEmpty()) r.same("companies") else r.conflict("companies", x.key, diff.joinToString())
 	}
@@ -172,7 +174,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		val existing = all.firstOrNull { it.externalCode == x.key }
 			?: all.firstOrNull { it.name.equals(name, ignoreCase = true) || it.name.equals(x.key, ignoreCase = true) }
 		if (existing == null) {
-			val id = master.insertClient(ClientEntity(companyId = companyId, name = name, archived = x.archived, externalCode = x.key.takeIf { it != name }))
+			val id = master.insertClient(ClientEntity(companyId = companyId, name = name, archived = x.archived, externalCode = x.key.takeIf { it != name }, color = XColor.parse(x.color)))
 			r.clients[companyId to x.key] = id
 			r.clientCompany[id] = companyId
 			r.added("clients")
@@ -180,7 +182,11 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		}
 		r.clients[companyId to x.key] = existing.id
 		r.clientCompany[existing.id] = companyId
-		val diff = listOfNotNull("name".takeIf { existing.name != name }, "archived".takeIf { existing.archived != x.archived })
+		val diff = listOfNotNull(
+			"name".takeIf { existing.name != name },
+			"archived".takeIf { existing.archived != x.archived },
+			"color".takeIf { x.color != null && existing.color != XColor.parse(x.color) },
+		)
 		if (diff.isEmpty()) r.same("clients") else r.conflict("clients", x.key, diff.joinToString())
 	}
 

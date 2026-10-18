@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.10 (2026-10-18, M11: Home start controls, compact display, quick add). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.11 (2026-10-18, M12: company and client colours, to-do company filter). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -230,6 +230,13 @@ about the running entries). **Compact display** (setting): text at 88 %,
 tighter cards and buttons. **Quick add**: "+" beside Company and Client in
 the start screen and the to-do editor creates one and selects it.
 
+**Colours (M12)**: a colour per company and client (12-colour palette or
+none; interchange `color` "#RRGGBB"). Entry and to-do cards carry a thin
+band at the start edge in the company colour; a to-do list that shows a
+single company uses the client colour. The agenda uses the chosen company
+colours. A to-do **company filter** (Home section and To-dos screen) stays
+until removed; entries are not filtered.
+
 **Pickers (M10)**: every date and time field uses the Material date and time
 pickers (optional ones can be cleared).
 
@@ -253,6 +260,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M12 | colours of companies and clients (bands, agenda), to-do company filter (schema v6) |
 | M11 | Home start controls (empty card, top bar), compact display, quick add of companies and clients |
 | M10 | UI: Home cards, swipe gestures (Gestures screen), date/time pickers, ignored to-dos (schema v5) |
 | M9 | planned to-dos: manual and imported, planned date/time and duration, reminder with postpone / re-plan, agenda planning, calendar events, tags |

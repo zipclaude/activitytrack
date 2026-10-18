@@ -112,6 +112,18 @@ uno lungo esegue subito il primo.
 Si cambiano in "Altro" → **"Gesti"**: per ogni direzione cosa proporre
 (anche nessuna azione), e se il trascinamento lungo esegue subito la prima.
 
+### Colori di aziende e clienti
+Nella scheda di un'azienda o di un cliente ("Altro" → "Anagrafiche") scegli
+un **colore** fra dodici, o "Nessun colore". I riquadri delle attività e
+delle voci da fare hanno una sottile **banda verticale** a sinistra con il
+colore dell'azienda; quando la lista mostra una sola azienda, la banda ha il
+colore del **cliente**. L'Agenda usa i colori scelti (le aziende senza colore
+ne hanno uno automatico).
+
+Accanto a "Da fare oggi" (e nella schermata "Da fare") il pulsante **"Tutte
+le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
+lo togli con la ✕. Le attività in corso non vengono filtrate.
+
 ### Visualizzazione compatta
 Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
 riquadri e pulsanti più stretti, per vedere più attività e voci insieme.
