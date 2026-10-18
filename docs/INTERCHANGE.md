@@ -30,7 +30,8 @@ Management-system plugins map their own APIs or files to this model
   "roles": [ { "name": "Sysadmin" } ],
   "presets": [ { "text": "Backup check", "companyKey": "ACME", "roleName": "Sysadmin" } ],
   "todos": [ { "key": "T-9", "companyKey": "ACME", "clientKey": "C-1", "title": "Patch servers",
-               "refs": [ "INC0012" ], "dueDate": "2026-10-20", "dueTime": "09:00", "priority": 2 } ],
+               "refs": [ "INC0012" ], "dueDate": "2026-10-20", "dueTime": "09:00", "priority": 2,
+               "plannedDate": "2026-10-19", "plannedTime": "14:30", "durationMin": 90 } ],
   "entries": [ { "key": "6f1c0f4e-…", "companyKey": "ACME", "clientKey": "C-1", "todoKey": "T-9",
                  "activity": "Patched 3 servers", "status": "CLOSED", "zone": "Europe/Rome",
                  "segments": [ { "kind": "WORK", "startUtc": "2026-10-17T07:00:00Z", "endUtc": "2026-10-17T11:00:00Z" } ],
@@ -60,6 +61,7 @@ are text. Root element `<activitytrack>`; DTDs are refused.
       <title>Patch servers</title>
       <refs><ref>INC0012</ref></refs>
       <dueDate>2026-10-20</dueDate>
+      <plannedDate>2026-10-19</plannedDate><plannedTime>14:30</plannedTime><durationMin>90</durationMin>
     </todo>
   </todos>
 </activitytrack>
@@ -79,3 +81,5 @@ expenses/expense, refs/ref, absences/absence, daysOff/dayOff.
 | `locationKind` | COMPANY, CLIENT, HOME, OTHER |
 | `absences.kind` | FULL_DAY, LATE_ENTRY, EARLY_EXIT |
 | `sites.ownerKind` | company, client |
+| `todos.plannedDate` / `plannedTime` | local date and hh:mm of the planned start, both or neither (added 2026-10-18, still version 1: older apps ignore them) |
+| `todos.durationMin` | 1..1440; absent = one hour, growing hour by hour in the app while the to-do is open |

@@ -312,7 +312,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_show_done">Mostrar las hechas</string>
   <string name="todo_field_title">Título</string>
   <string name="todo_field_due">Fecha límite (aaaa-mm-dd)</string>
-  <string name="todo_field_time">Hora (hh:mm)</string>
+  <string name="todo_field_time">Hora límite (hh:mm)</string>
   <string name="todo_field_priority">Prioridad (1 = máxima)</string>
   <string name="todo_field_refs">Referencias (una por línea)</string>
   <string name="todo_done_question">¿Está hecho el pendiente?</string>
@@ -357,4 +357,18 @@ Toca el botón verde de abajo para iniciar una.</string>
     <item quantity="many">%1$d de líneas escritas en %2$s</item>
     <item quantity="other">%1$d líneas escritas en %2$s</item>
   </plurals>
+  <!-- M9 planned to-dos -->
+  <string name="ch_planned">Actividades planificadas</string>
+  <string name="notif_planned_title">%1$s a las %2$s</string>
+  <string name="action_postpone">Posponer %1$d min</string>
+  <string name="action_replan">Replanificar</string>
+  <string name="todo_field_plan_date">Fecha planificada (aaaa-mm-dd)</string>
+  <string name="todo_field_plan_time">Hora planificada (hh:mm)</string>
+  <string name="todo_field_duration">Duración (min; vacía = 1 h, crece)</string>
+  <string name="todo_planned">planificada %1$s</string>
+  <string name="todo_overdue">atrasada</string>
+  <string name="todo_new">Nuevo pendiente</string>
+  <string name="sec_advanced">Avanzado</string>
+  <string name="set_plan_lead">Recordatorio de actividades planificadas (min antes)</string>
+  <string name="set_plan_snooze">Posponer (min)</string>
 </resources>

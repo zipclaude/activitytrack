@@ -59,6 +59,7 @@ class InterchangeTest {
 			TodoEntity(
 				uid = "u-1", companyId = acme, clientId = bank, externalKey = "T-9", title = "Patch",
 				refs = "INC1", dueEpochDay = 20_744, createdUtcMs = 0, updatedUtcMs = 0,
+				planEpochDay = 20_743, planStartMin = 9 * 60, durationMin = 45,
 			),
 		)
 		val entries = EntryRepository(a, clock)

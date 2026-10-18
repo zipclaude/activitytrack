@@ -48,6 +48,8 @@ sealed interface Screen {
 	data object Todos : Screen
 	/* start flow pre-filled from a to-do */
 	data class StartFromTodo(val todoId: Long) : Screen
+	/* to-dos with one open for editing (re-plan from the reminder) */
+	data class Todo(val id: Long) : Screen
 	/* late entry for a day, from the day-start prompt */
 	data class LateEntry(val epochDay: Long) : Screen
 
@@ -59,6 +61,7 @@ sealed interface Screen {
 		is LateEntry -> "late/$epochDay"
 		is StartFor -> "start/$clientId"
 		is StartFromTodo -> "start-todo/$todoId"
+		is Todo -> "todo/$id"
 		else -> this::class.simpleName!!
 	}
 
@@ -80,6 +83,7 @@ sealed interface Screen {
 				"late" -> LateEntry(n)
 				"start" -> StartFor(n)
 				"start-todo" -> StartFromTodo(n)
+				"todo" -> Todo(n)
 				else -> null
 			}
 		}

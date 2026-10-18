@@ -40,6 +40,9 @@ interface TodoDao {
 	@Query("SELECT * FROM todo")
 	suspend fun all(): List<TodoEntity>
 
+	@Query("UPDATE todo SET plan_reminded_utc_ms = :startMs WHERE id = :id")
+	suspend fun markPlanReminded(id: Long, startMs: Long)
+
 	@Query("SELECT COUNT(*) FROM time_entry WHERE todo_id = :todoId")
 	suspend fun entriesOf(todoId: Long): Int
 }
