@@ -53,6 +53,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.todo.todoSwipeActions
+import it.infraconsulting.activitytrack.ui.todo.TodosViewModel
+import it.infraconsulting.activitytrack.ui.home.rememberEntryCommands
+import it.infraconsulting.activitytrack.ui.home.entrySwipeActions
+import it.infraconsulting.activitytrack.ui.home.EntryCommander
+import it.infraconsulting.activitytrack.ui.common.SwipeCard
+import it.infraconsulting.activitytrack.domain.settings.GestureSettings
+import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import androidx.compose.ui.graphics.RectangleShape
 import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
 import it.infraconsulting.activitytrack.data.repo.TodoRepository
@@ -99,6 +109,8 @@ data class AgendaItem(
 	val reported: Duration,
 	val companyId: Long?,
 	val running: Boolean,
+	/* the entry itself: open ones swipe (M10) */
+	val entry: TimeEntryEntity? = null,
 )
 
 /*
@@ -176,6 +188,7 @@ class AgendaViewModel(
 					reported = l.reported,
 					companyId = e?.companyId,
 					running = e?.status == EntryStatus.ACTIVE,
+					entry = e,
 				)
 			}
 		}
@@ -230,6 +243,13 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	/* planning from the agenda (M9): a tap on a free slot or "Add" opens a new planned to-do */
 	val plan: (LocalDate, Int) -> Unit = { day, min -> todosVm.clearError(); editing = newTodo(day, min) }
 	val onTodo: (TodoEntity) -> Unit = { selected = it }
+	/* swipes on open entries run the commands like Home (owner, 2026-10-18: gestures everywhere) */
+	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries) }
+	val settings by todosVm.settings.collectAsState()
+	val gestures = settings?.gestures ?: GestureSettings()
+	val fallback = stringResource(R.string.entry_no_client)
+	val run = rememberEntryCommands(commander) { id -> data?.items?.firstOrNull { it.entryId == id }?.title?.ifBlank { null } ?: fallback }
+	val swipes = ListSwipes(gestures, run, todosVm, onStartTodo) { todosVm.clearError(); editing = it }
 
 	ScreenScaffold(
 		title = stringResource(R.string.nav_agenda),
@@ -260,7 +280,7 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 			HorizontalDivider()
 			val d = data ?: return@Column
 			when (mode) {
-				AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onTodo)
+				AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onTodo, swipes)
 				AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, minuteHeight = 1.2.dp, onOpenEntry, onTodo, plan)
 				AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, minuteHeight = 0.8.dp, onOpenEntry, onTodo, plan) {
 					vm.open(it, AgendaMode.DAY)
@@ -274,6 +294,15 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	}
 	editing?.let { t -> TodoEditDialog(t, todosVm) { editing = null } }
 }
+
+/* What the list rows need to swipe (M10). */
+private class ListSwipes(
+	val gestures: GestureSettings,
+	val run: (TimeEntryEntity, EntryCommand) -> Unit,
+	val todos: TodosViewModel,
+	val onStartTodo: (Long) -> Unit,
+	val onReplan: (TodoEntity) -> Unit,
+)
 
 /* "Add": the next half hour today, 09:00 on other days. */
 private fun defaultSlot(day: LocalDate): Int {
@@ -295,7 +324,7 @@ private fun periodTitle(m: AgendaMode, a: LocalDate, locale: Locale): String = w
 
 /* Days of the month with their lines and to-dos; the search matches client and activity. */
 @Composable
-private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit, onTodo: (TodoEntity) -> Unit) {
+private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit, onTodo: (TodoEntity) -> Unit, swipes: ListSwipes) {
 	var query by rememberSaveable { mutableStateOf("") }
 	val zone = ZoneId.systemDefault()
 	val q = fold(query)
@@ -322,8 +351,15 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 					}
 				}
 				items(items.filter { it.day == day }.sortedBy { it.start }, key = { "e${it.entryId}/$day" }) { it ->
+					val e = it.entry?.takeIf { e -> e.status == EntryStatus.ACTIVE || e.status == EntryStatus.SUSPENDED }
+					SwipeCard(
+						toStart = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToStart) { swipes.run(e, it) } }.orEmpty(),
+						toEnd = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToEnd) { swipes.run(e, it) } }.orEmpty(),
+						fullSwipe = swipes.gestures.fullSwipe,
+						shape = RectangleShape,
+					) {
 					Row(
-						Modifier.fillMaxWidth().clickable { onOpenEntry(it.entryId) }.padding(horizontal = 16.dp, vertical = 6.dp),
+						Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).clickable { onOpenEntry(it.entryId) }.padding(horizontal = 16.dp, vertical = 6.dp),
 						verticalAlignment = Alignment.CenterVertically,
 					) {
 						Box(Modifier.size(10.dp).clip(CircleShape).background(colorOf(it.companyId)))
@@ -339,16 +375,26 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 						}
 						Text(hm(it.reported), style = MaterialTheme.typography.bodyMedium)
 					}
+					}
 				}
 				items(todos.filter { it.day == day }.sortedBy { it.timeMin ?: 1440 }, key = { "t${it.id}" }) { t ->
+					val g = swipes.gestures
+					val snooze = swipes.todos.settings.collectAsState().value?.planSnoozeMin ?: 30
+					SwipeCard(
+						toStart = todoSwipeActions(t.todo, g.todoToStart, swipes.todos, snooze, swipes.onStartTodo, swipes.onReplan),
+						toEnd = todoSwipeActions(t.todo, g.todoToEnd, swipes.todos, snooze, swipes.onStartTodo, swipes.onReplan),
+						fullSwipe = g.fullSwipe,
+						shape = RectangleShape,
+					) {
 					Text(
 						"☐ " + listOfNotNull(
 							t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.let { e -> "–${clock(e, zone)}" } ?: "") },
 							t.title,
 						).joinToString(" "),
-						modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
+						modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
 						color = MaterialTheme.colorScheme.primary,
 					)
+					}
 				}
 			}
 		}

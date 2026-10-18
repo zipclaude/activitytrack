@@ -58,6 +58,7 @@ import it.infraconsulting.activitytrack.ui.masterdata.ScheduleScreen
 import it.infraconsulting.activitytrack.ui.rememberBackStack
 import it.infraconsulting.activitytrack.ui.report.DayScreen
 import it.infraconsulting.activitytrack.ui.report.ExportScreen
+import it.infraconsulting.activitytrack.ui.settings.GesturesScreen
 import it.infraconsulting.activitytrack.ui.settings.SettingsScreen
 import it.infraconsulting.activitytrack.ui.setup.SetupScreen
 import it.infraconsulting.activitytrack.ui.start.StartScreen
@@ -203,6 +204,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		Screen.Day -> DayScreen(null, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })
 		Screen.Export -> ExportScreen(back)
 		Screen.Settings -> SettingsScreen(back)
+		Screen.Gestures -> GesturesScreen(back)
 		Screen.MasterData -> MasterDataScreen(back, open)
 		Screen.Companies -> CompaniesScreen(back) { open(Screen.Company(it)) }
 		is Screen.Company -> CompanyScreen(top.id, back)

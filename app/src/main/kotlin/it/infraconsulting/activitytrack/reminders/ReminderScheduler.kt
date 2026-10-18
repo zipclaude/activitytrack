@@ -19,6 +19,7 @@ import it.infraconsulting.activitytrack.domain.reminder.ReminderConfig
 import it.infraconsulting.activitytrack.domain.reminder.ReminderEntry
 import it.infraconsulting.activitytrack.domain.reminder.ReminderPlanner
 import it.infraconsulting.activitytrack.domain.reminder.ReminderTodo
+import it.infraconsulting.activitytrack.data.repo.isOpen
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.notify.EntryInfo
@@ -117,7 +118,7 @@ class ReminderScheduler(
 			val start = p?.start(zone)
 			/* the block as planned (duration or first hour): a reminder after it is moot */
 			val end = p?.end(zone, open = false, now = now)
-			val live = start != null && end != null && !t.done && t.id !in started && now.isBefore(end)
+			val live = start != null && end != null && t.isOpen() && t.id !in started && now.isBefore(end)
 			if (live)
 				out += ReminderTodo(t.id, start!!, end!!, t.planRemindedUtcMs)
 			if (t.planRemindedUtcMs != null && (!live || t.planRemindedUtcMs != start?.toEpochMilli()))
