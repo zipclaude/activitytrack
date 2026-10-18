@@ -276,6 +276,7 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.STORAGE -> R.string.err_storage
 		Reason.NO_VIEWER -> R.string.err_no_viewer
 		Reason.INVALID_AMOUNT -> R.string.err_invalid_amount
+		Reason.TOO_SHORT -> R.string.err_too_short
 		else -> R.string.err_generic
 	},
 )

@@ -421,4 +421,11 @@ Toca el botón verde de abajo para iniciar una.</string>
   <!-- M13 backlog -->
   <string name="todo_plan_time_missing">Indica también la hora planificada</string>
   <string name="todo_plan_date_missing">Indica también la fecha planificada</string>
+  <string name="quick_role">Nuevo rol</string>
+  <string name="quick_preset">Nueva predefinida</string>
+  <string name="err_too_short">Menos de un minuto: revisa las horas.</string>
+  <string name="short_title">«%1$s» duró menos de un minuto</string>
+  <string name="short_text">Probablemente iniciada por error. ¿Descartarla?</string>
+  <string name="short_discard">Descartar</string>
+  <string name="short_keep">Conservar y terminar</string>
 </resources>

@@ -39,6 +39,14 @@ open class EntryCommander(private val entries: EntryRepository) : ActionViewMode
 			_resume.value = entries.suspendedToResume(id)
 	}
 
+	/* stopping: [then] gets whether the entry is under a minute and discardable */
+	fun checkShort(id: Long, then: (Boolean) -> Unit) {
+		var short = false
+		run({ then(short) }) { short = entries.isDiscardable(id) }
+	}
+
+	fun discard(id: Long) = run { entries.discard(id) }
+
 	fun dismissResume() {
 		_resume.value = null
 	}
@@ -58,7 +66,25 @@ open class EntryCommander(private val entries: EntryRepository) : ActionViewMode
 @Composable
 fun rememberEntryCommands(vm: EntryCommander, titleOf: (Long) -> String): (TimeEntryEntity, EntryCommand) -> Unit {
 	var stopping by remember { mutableStateOf<TimeEntryEntity?>(null) }
+	var short by remember { mutableStateOf<TimeEntryEntity?>(null) }
 	val resume by vm.resume.collectAsState()
+	fun stop(e: TimeEntryEntity) {
+		if (e.mode != SegmentKind.TRAVEL)
+			stopping = e
+		else
+			vm.command(e.id, EntryCommand.STOP)
+	}
+
+	/* under a minute: discard it, or stop it as usual (backlog 10, 2026-10-18) */
+	short?.let { e ->
+		AlertDialog(
+			onDismissRequest = { short = null },
+			title = { Text(stringResource(R.string.short_title, titleOf(e.id))) },
+			text = { Text(stringResource(R.string.short_text)) },
+			confirmButton = { TextButton(onClick = { short = null; vm.discard(e.id) }) { Text(stringResource(R.string.short_discard)) } },
+			dismissButton = { TextButton(onClick = { short = null; stop(e) }) { Text(stringResource(R.string.short_keep)) } },
+		)
+	}
 
 	stopping?.let { e ->
 		AlertDialog(
@@ -81,8 +107,8 @@ fun rememberEntryCommands(vm: EntryCommander, titleOf: (Long) -> String): (TimeE
 		)
 	}
 	return { e, cmd ->
-		if (cmd == EntryCommand.STOP && e.mode != SegmentKind.TRAVEL)
-			stopping = e
+		if (cmd == EntryCommand.STOP)
+			vm.checkShort(e.id) { isShort -> if (isShort) short = e else stop(e) }
 		else
 			vm.command(e.id, cmd)
 	}

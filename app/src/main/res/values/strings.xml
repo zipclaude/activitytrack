@@ -432,4 +432,11 @@ Tap the green play button below to start one.</string>
   <!-- M13 backlog -->
   <string name="todo_plan_time_missing">Set the planned time too</string>
   <string name="todo_plan_date_missing">Set the planned date too</string>
+  <string name="quick_role">New role</string>
+  <string name="quick_preset">New preset</string>
+  <string name="err_too_short">Shorter than one minute: check the times.</string>
+  <string name="short_title">\"%1$s\" lasted less than a minute</string>
+  <string name="short_text">Probably started by mistake. Discard it?</string>
+  <string name="short_discard">Discard</string>
+  <string name="short_keep">Keep and stop</string>
 </resources>
