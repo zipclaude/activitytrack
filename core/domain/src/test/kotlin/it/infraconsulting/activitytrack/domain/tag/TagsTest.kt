@@ -11,6 +11,9 @@ class TagsTest {
 		assertEquals("urgente", Tags.normalize("  #Urgente "))
 		assertEquals("lavoro-remoto", Tags.normalize("lavoro   remoto"))
 		assertNull(Tags.normalize(" # "))
+		assertEquals("remoto", Tags.normalize("\\#remoto%"))
+		assertEquals("però_sì", Tags.normalize("però_sì!"))
+		assertNull(Tags.normalize("?!"))
 		assertEquals(Tags.MAX, Tags.normalize("x".repeat(50))!!.length)
 	}
 
