@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.common.companyColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.draw.alpha
 import it.infraconsulting.activitytrack.ui.common.SwipeCard
@@ -104,7 +105,7 @@ class HomeViewModel(
 		val co = companies.associateBy { it.id }
 		val bySeg = segs.groupBy { it.entryId }
 		list.map { e ->
-			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), e.companyId?.let { co[it]?.color })
+			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), companyColor(e.companyId, e.companyId?.let { co[it]?.color }))
 		}.sortedByDescending { it.lastChange }
 	}.state(emptyList())
 
@@ -118,7 +119,7 @@ class HomeViewModel(
 		val co = companies.associateBy { it.id }
 		val bySeg = segs.groupBy { it.entryId }
 		list.map { e ->
-			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), e.companyId?.let { co[it]?.color })
+			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), companyColor(e.companyId, e.companyId?.let { co[it]?.color }))
 		}
 	}.state(emptyList())
 
@@ -296,13 +297,17 @@ private fun SmallEntryCard(card: EntryCard, now: Long, onSelect: () -> Unit, onC
 						listOfNotNull(card.title ?: stringResource(R.string.entry_no_client), e.activity).joinToString(" · "),
 						style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
 					)
-					val since = card.segments.mapNotNull { it.endUtcMs ?: it.startUtcMs }.maxOrNull()
 					val state = statusText(e.status, e.mode)
+					/* "11:00–11:45 (0:45)": from the first start to the last end, work and travel (owner, 2026-10-19) */
+					val from = card.segments.minOfOrNull { it.startUtcMs }
+					val to = card.segments.takeIf { s -> s.all { it.endUtcMs != null } }?.maxOfOrNull { it.endUtcMs!! }
+					val span = from?.let { clock(it, zone) + "–" + (to?.let { t -> clock(t, zone) } ?: "…") }
+					val length = hm(total(card.segments, SegmentKind.WORK, now) + total(card.segments, SegmentKind.TRAVEL, now))
 					Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 						val style = stateStyle(e.status, e.mode)
 						if (style != null) StatePill(style, state) else Text(state, style = MaterialTheme.typography.bodySmall)
 						Text(
-							listOfNotNull(since?.let { clock(it, zone) }, hm(total(card.segments, SegmentKind.WORK, now))).joinToString(" · "),
+							listOfNotNull(span, "($length)").joinToString(" "),
 							style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
 						)
 					}

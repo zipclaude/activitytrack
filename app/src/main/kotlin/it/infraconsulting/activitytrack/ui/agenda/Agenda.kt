@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
+import it.infraconsulting.activitytrack.ui.common.companyColor
 import it.infraconsulting.activitytrack.ui.common.ClearButton
 import it.infraconsulting.activitytrack.ui.common.TagFilterChip
 import androidx.compose.foundation.horizontalScroll
@@ -239,18 +240,12 @@ class AgendaViewModel(
 	}
 }
 
-/* A stable colour per company (so the same client keeps its colour across views). */
-private val PALETTE = listOf(
-	Color(0xFF1565C0), Color(0xFF2E7D32), Color(0xFFEF6C00), Color(0xFF6A1B9A),
-	Color(0xFF00838F), Color(0xFFAD1457), Color(0xFF4E342E), Color(0xFF546E7A),
-)
-
 /* company colours chosen by the owner (M12); the others keep the automatic one */
 private val LocalCompanyColors = staticCompositionLocalOf { emptyMap<Long, Int>() }
 
 @Composable
 private fun colorOf(companyId: Long?): Color =
-	companyId?.let { LocalCompanyColors.current[it] }?.let(::rgb) ?: PALETTE[((companyId ?: 0L) % PALETTE.size).toInt()]
+	rgb(companyColor(companyId ?: 0L, companyId?.let { LocalCompanyColors.current[it] })!!)
 
 private fun hm(d: Duration) = "%d:%02d".format(d.toHours(), d.toMinutesPart())
 

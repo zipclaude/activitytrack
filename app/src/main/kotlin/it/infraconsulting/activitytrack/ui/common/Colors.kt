@@ -36,6 +36,16 @@ import it.infraconsulting.activitytrack.R
  * apart on the dark theme, stored as 0xRRGGBB. The names describe them
  * for accessibility.
  */
+/*
+ * Automatic colour of a company without a chosen one (the agenda's, since
+ * M6): every view shows the same colour for it (owner, 2026-10-19: Home
+ * cards had no band when no colour was chosen).
+ */
+private val AUTO = intArrayOf(0x1565C0, 0x2E7D32, 0xEF6C00, 0x6A1B9A, 0x00838F, 0xAD1457, 0x4E342E, 0x546E7A)
+
+fun companyColor(companyId: Long?, chosen: Int?): Int? =
+	chosen ?: companyId?.let { AUTO[(it % AUTO.size).toInt()] }
+
 val PALETTE: List<Pair<Int, Int>> = listOf(
 	0x3D7BEA to R.string.color_blue, 0x00A3A3 to R.string.color_teal, 0x2E9D4E to R.string.color_green,
 	0x8BB82D to R.string.color_lime, 0xF2B705 to R.string.color_yellow, 0xE8862A to R.string.color_orange,

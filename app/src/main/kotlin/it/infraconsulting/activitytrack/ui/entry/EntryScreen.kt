@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.dateText
 import it.infraconsulting.activitytrack.ui.common.TimeGridSheet
@@ -120,11 +121,21 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	val companyId = clients.firstOrNull { it.id == clientId }?.companyId ?: initial.companyId
 	fun details() = EntryDetails(companyId, clientId, roleId, activity, locality, locationKind, notes)
 
+	/* compact display (M11): tighter spacing; locality, place and notes folded while empty */
+	val compact = LocalCompact.current
+	var more by remember { mutableStateOf(false) }
 	Column(modifier = modifier.fillMaxSize()) {
 		LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
 			item {
-				Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-					Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary)
+				Column(Modifier.padding(if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)) {
+					/* + Travel and + Pause at the top, no scrolling to reach them (owner, 2026-10-19) */
+					Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+						Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+						val travel = commandStyle(EntryCommand.TRAVEL)!!
+						val pause = commandStyle(EntryCommand.PAUSE)!!
+						ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
+						ColoredActionButton(stringResource(R.string.add_pause), pause.icon, pause.container, { vm.clearError(); adding = SegmentKind.PAUSE }, pause.content)
+					}
 					val coNames = companies.associate { it.id to it.name }
 					/* by company in the company order, then in the client order (M16; stable sort) */
 					val coIndex = companies.withIndex().associate { (i, c) -> c.id to i }
@@ -160,27 +171,24 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 						roleId,
 						importance = Importance.IMPORTANT,
 					) { roleId = it }
-					TextInput(stringResource(R.string.field_locality), locality, { locality = it }, importance = Importance.OPTIONAL)
-					ChoiceField(
-						stringResource(R.string.field_location_kind),
-						listOf<Pair<LocationKind?, String>>(null to none) + LocationKind.entries.map { it to locationLabel(it) },
-						locationKind,
-						importance = Importance.OPTIONAL,
-					) { locationKind = it }
-					TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
+					val folded = compact && !more && locality.isEmpty() && locationKind == null && notes.isEmpty()
+					if (folded)
+						TextButton(onClick = { more = true }) { Text(stringResource(R.string.more_details) + " ▾") }
+					else {
+						TextInput(stringResource(R.string.field_locality), locality, { locality = it }, importance = Importance.OPTIONAL)
+						ChoiceField(
+							stringResource(R.string.field_location_kind),
+							listOf<Pair<LocationKind?, String>>(null to none) + LocationKind.entries.map { it to locationLabel(it) },
+							locationKind,
+							importance = Importance.OPTIONAL,
+						) { locationKind = it }
+						TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
+					}
 				}
 			}
 
 			item {
-				Column {
-					SectionHeader(stringResource(R.string.segments))
-					Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-						val travel = commandStyle(EntryCommand.TRAVEL)!!
-						val pause = commandStyle(EntryCommand.PAUSE)!!
-						ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
-						ColoredActionButton(stringResource(R.string.add_pause), pause.icon, pause.container, { vm.clearError(); adding = SegmentKind.PAUSE }, pause.content)
-					}
-				}
+				SectionHeader(stringResource(R.string.segments))
 			}
 			if (segments.isEmpty())
 				item { EmptyText() }
