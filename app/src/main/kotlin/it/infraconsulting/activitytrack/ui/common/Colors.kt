@@ -37,14 +37,14 @@ import it.infraconsulting.activitytrack.R
  * for accessibility.
  */
 /*
- * Automatic colour of a company without a chosen one (the agenda's, since
- * M6): every view shows the same colour for it (owner, 2026-10-19: Home
- * cards had no band when no colour was chosen).
+ * Colour of a company: only the one chosen by the owner (2026-10-19, after
+ * 0.6.0: no automatic colours); null = no band.
  */
-private val AUTO = intArrayOf(0x1565C0, 0x2E7D32, 0xEF6C00, 0x6A1B9A, 0x00838F, 0xAD1457, 0x4E342E, 0x546E7A)
+@Suppress("UNUSED_PARAMETER")
+fun companyColor(companyId: Long?, chosen: Int?): Int? = chosen
 
-fun companyColor(companyId: Long?, chosen: Int?): Int? =
-	chosen ?: companyId?.let { AUTO[(it % AUTO.size).toInt()] }
+/* agenda blocks of companies without a colour: a neutral grey */
+const val NO_COLOR = 0x6B7280
 
 val PALETTE: List<Pair<Int, Int>> = listOf(
 	0x3D7BEA to R.string.color_blue, 0x00A3A3 to R.string.color_teal, 0x2E9D4E to R.string.color_green,
