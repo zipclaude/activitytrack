@@ -71,6 +71,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
 | M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
+| 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **done** (PR #18, on `main`, v0.5.0): backlog 1 (schema v8); device-tested 2026-10-19 |
@@ -140,9 +141,12 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
-Released v0.5.0 (2026-10-19): M14–M19 and private calendar events (#16–#22)
-are on `main`; no open PRs. Instrumented tests 47/47 on the OnePlus. Backlog
-empty; next: owner feedback on 0.5.0 (time grid comfort, field borders).
+Released v0.6.0 (2026-10-19): clear buttons, Home colours / neutral closed /
+from-to, entry top buttons and compact folding, to-do window and filters, end
+time at start + planned-end reminder, close on stop when complete (schema v9),
+user docs it/en with PDF (#23-#26). Instrumented tests 50/50 on the OnePlus.
+Work queue: GitHub issues (owner, 2026-10-19). Future: OCR receipts, free
+offline STT, policy lock for editable times, tags on to-dos if wanted.
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.
