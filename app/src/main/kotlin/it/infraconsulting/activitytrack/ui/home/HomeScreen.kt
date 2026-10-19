@@ -361,6 +361,8 @@ private fun EntryCardView(
 					StatePill(style, text)
 				else
 					Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+				/* the end chosen when starting (M22), asked about at that time */
+				e.plannedEndUtcMs?.let { Text(stringResource(R.string.planned_end_fmt, clock(it, zone)), style = MaterialTheme.typography.bodySmall) }
 				Text(
 					stringResource(
 						R.string.totals_fmt,

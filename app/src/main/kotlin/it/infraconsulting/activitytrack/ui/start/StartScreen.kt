@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import java.time.ZoneId
+import it.infraconsulting.activitytrack.ui.common.clockOf
+import it.infraconsulting.activitytrack.ui.common.parseHhMm
+import it.infraconsulting.activitytrack.ui.common.formatMin
+import it.infraconsulting.activitytrack.ui.common.TimeGridSheet
 import kotlinx.coroutines.flow.map
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import androidx.compose.foundation.layout.Arrangement
@@ -68,6 +73,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	val pending by vm.pending.collectAsState()
 	val error by vm.error.collectAsState()
 	val editableTimes by vm.editableTimes.collectAsState()
+	val askEnded by vm.askEnded.collectAsState()
+	var rangeGrid by remember { mutableStateOf(false) }
 	val none = stringResource(R.string.field_none)
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
@@ -160,6 +167,12 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						if (editableTimes) {
 							TimeField(stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() }, clearable = true, importance = Importance.OPTIONAL)
 							Text(stringResource(R.string.time_now_hint), style = MaterialTheme.typography.bodySmall)
+							/* M22: the end too, picked as a range on the grid (start and end together) */
+							TimeField(
+								stringResource(R.string.field_end_optional), f.endTime, { vm.setEndTime(it); vm.clearError() },
+								clearable = true, importance = Importance.OPTIONAL, onOpen = { rangeGrid = true },
+							)
+							Text(stringResource(R.string.end_hint), style = MaterialTheme.typography.bodySmall)
 						}
 						if (error != null)
 							Text(reasonText(error!!), color = MaterialTheme.colorScheme.error)
@@ -179,6 +192,29 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	}
 
 	pending.firstOrNull()?.let { r -> RunningDialog(r, vm) }
+	askEnded?.let { end ->
+		AlertDialog(
+			onDismissRequest = vm::cancelEnded,
+			title = { Text(stringResource(R.string.ended_title)) },
+			text = { Text(stringResource(R.string.ended_text, clockOf(end, ZoneId.systemDefault()))) },
+			confirmButton = { TextButton(onClick = { vm.answerEnded(true) }) { Text(stringResource(R.string.action_yes)) } },
+			dismissButton = { TextButton(onClick = { vm.answerEnded(false) }) { Text(stringResource(R.string.action_no)) } },
+		)
+	}
+	if (rangeGrid) {
+		val a = parseHhMm(f.startTime)?.takeIf { it < 1440 }
+		val b = parseHhMm(f.endTime)
+		TimeGridSheet(
+			title = stringResource(R.string.start_title),
+			initial = if (a != null && b != null && b > a) a until b else null,
+			range = true,
+			onDismiss = { rangeGrid = false },
+		) { from, to ->
+			rangeGrid = false
+			vm.setStartTime(formatMin(from))
+			vm.setEndTime(formatMin(to))
+		}
+	}
 	if (addCompany)
 		QuickCompanyDialog(onDone = { addCompany = false; vm.setCompany(it) }, onDismiss = { addCompany = false })
 	if (addRole)

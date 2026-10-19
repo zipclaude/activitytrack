@@ -93,7 +93,7 @@ class ReminderScheduler(
 			isDayOff = { it in daysOff || ItalianHolidays.isHoliday(it) },
 		)
 		val entries = container.entries.openEntries.first().map {
-			ReminderEntry(it.id, it.status, it.mode, it.lastConfirmedUtcMs, it.unansweredReminders)
+			ReminderEntry(it.id, it.status, it.mode, it.lastConfirmedUtcMs, it.unansweredReminders, it.plannedEndUtcMs)
 		}
 		val last = prefs.getLong(KEY_SUMMARY_DAY, Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let(LocalDate::ofEpochDay)
 		val lastDayStart = prefs.getLong(KEY_DAY_START, Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let(LocalDate::ofEpochDay)
@@ -174,6 +174,12 @@ class ReminderScheduler(
 						prefs.edit { putLong(KEY_DAY_START, r.day.toEpochDay()) }
 					}
 					is Reminder.Planned -> postPlanned(nm, r.todoId)
+					is Reminder.PlannedEnd -> {
+						infos[r.entryId]?.let {
+							nm.notify(NotificationIds.of(it.entry.id, NotificationIds.PLANNED_END), ReminderNotifications.plannedEnd(context, it, r.at.toEpochMilli()))
+						}
+						container.entries.clearPlannedEnd(r.entryId)
+					}
 				}
 			}
 		}

@@ -142,7 +142,9 @@ le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
 lo togli con la ✕. Le attività in corso non vengono filtrate. Nella schermata
 "Da fare" il filtro del periodo (**24 h**, **7 gg**, **30 gg**, **Tutti**)
 mostra le voci pianificate o in scadenza entro quel tempo (quelle in ritardo
-sempre), **"Ignorate"** mostra o nasconde le voci ignorate.
+sempre), **"Ignorate"** mostra o nasconde le voci ignorate. **"Filtri"** apre
+i filtri avanzati: cliente, priorità, stato (aperta, pianificata, in ritardo),
+pianificata sì/no; "Azzera" li toglie.
 
 ### Visualizzazione compatta
 Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
@@ -204,6 +206,13 @@ Nella schermata "Nuova attività":
 - **Inizio** (con "Orari modificabili", attivo all'inizio): vuoto = adesso;
   un orario già passato fa partire l'attività da lì (un orario che oggi non è
   ancora arrivato vale per ieri).
+- **Fine (facoltativa)**: toccandola, la griglia sceglie inizio e fine insieme.
+  - Fine già passata (per registrare un'attività passata): l'app chiede
+    **"L'attività è conclusa?"**. "Sì" la registra ferma a quell'ora, come con
+    Stop, senza chiedere delle attività in corso; "No" la avvia aperta.
+  - Fine nel futuro: è la **fine prevista**, scritta sul riquadro. A quell'ora
+    arriva la notifica **"… finita?"**: "Sì, stop alle HH:MM" la ferma lì,
+    "No, continua" (o nessuna risposta) la lascia andare.
 - Il pulsante verde in basso avvia (blu con l'auto se è un viaggio).
 
 **Se un'altra attività è già in corso**, l'app chiede cosa farne:
@@ -288,7 +297,10 @@ Se fermi dall'app un'attività durata **meno di un minuto** (senza allegati né
 spese), l'app la considera un errore e chiede se **scartarla** o tenerla e
 fermarla come sempre.
 
-Dopo lo Stop l'attività è **da completare** (notifica persistente e card rossa).
+Dopo lo Stop, se cliente e descrizione sono già compilati l'attività è subito
+**chiusa**; altrimenti è **da completare** (notifica persistente e card
+rossa). Quelle partite da una voce *Da fare* passano sempre da "da
+completare", per la domanda sulla voce.
 Nella schermata dell'attività:
 - controlla cliente, descrizione (dettabile), ruolo, località, luogo, note;
 - "Tempi": i pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
