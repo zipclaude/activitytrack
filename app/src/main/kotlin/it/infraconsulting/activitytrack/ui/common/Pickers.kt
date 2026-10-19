@@ -73,21 +73,47 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, clearabl
 	}
 }
 
-/* [endOfDay]: a picked 00:00 means 24:00 (the end of a working interval). */
+/*
+ * [endOfDay]: a picked 00:00 means 24:00 (the end of a working interval).
+ * A tap opens the 5-minute grid (backlog 3); its "Exact time" opens the
+ * clock. [onOpen] replaces the grid, e.g. with one choosing a whole range.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimeField(label: String, value: String, onChange: (String) -> Unit, clearable: Boolean = false, endOfDay: Boolean = false, error: String? = null, importance: Importance? = null) {
+fun TimeField(
+	label: String,
+	value: String,
+	onChange: (String) -> Unit,
+	clearable: Boolean = false,
+	endOfDay: Boolean = false,
+	error: String? = null,
+	importance: Importance? = null,
+	onOpen: (() -> Unit)? = null,
+) {
+	var grid by remember { mutableStateOf(false) }
 	var open by remember { mutableStateOf(false) }
 	val min = parseHhMm(value)
 	PickerTextField(
 		label = label,
 		shown = min?.let(::formatMin) ?: value,
 		icon = R.drawable.ic_clock,
-		onOpen = { open = true },
+		onOpen = onOpen ?: { grid = true },
 		onClear = if (clearable && value.isNotBlank()) ({ onChange("") }) else null,
 		error = error,
 		importance = importance,
 	)
+	if (grid)
+		TimeGridSheet(
+			title = label,
+			/* the exact minute: OK without a tap keeps it */
+			initial = min?.takeIf { it < 1440 }?.let { it..it },
+			range = false,
+			onExact = { grid = false; open = true },
+			onDismiss = { grid = false },
+		) { start, _ ->
+			grid = false
+			onChange(formatMin(if (endOfDay && start == 0) 1440 else start))
+		}
 	if (open) {
 		val start = (min ?: java.time.LocalTime.now().let { it.hour * 60 + it.minute }) % 1440
 		val state = rememberTimePickerState(initialHour = start / 60, initialMinute = start % 60, is24Hour = true)

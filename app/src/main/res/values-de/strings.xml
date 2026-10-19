@@ -451,4 +451,12 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="time_now_hint">Leer = jetzt</string>
   <string name="err_future_time">Die Uhrzeit liegt in der Zukunft.</string>
   <string name="err_before_segment">Die Uhrzeit liegt vor dem Beginn des laufenden Abschnitts.</string>
+  <!-- M18 time grid -->
+  <string name="grid_hint_range">Erstes Feld berühren und bis zum letzten ziehen, oder erst das erste, dann das letzte antippen.</string>
+  <string name="grid_hint_single">Ein Feld antippen.</string>
+  <string name="grid_earlier">Früher</string>
+  <string name="grid_later">Später</string>
+  <string name="grid_this">dieser Abschnitt</string>
+  <string name="grid_others">andere Tätigkeiten</string>
+  <string name="grid_exact">Genaue Uhrzeit</string>
 </resources>

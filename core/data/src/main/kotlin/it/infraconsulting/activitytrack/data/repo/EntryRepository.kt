@@ -204,6 +204,10 @@ class EntryRepository(
 		apply(entryId, cmd, atUtcMs)
 	}
 
+	/* Segments of every entry touching [fromUtcMs, toUtcMs): busy cells of the time grid (M18). */
+	suspend fun segmentsTouching(fromUtcMs: Long, toUtcMs: Long): List<SegmentEntity> =
+		dao.segmentsOfEntriesTouching(fromUtcMs, toUtcMs)
+
 	val absences = dao.observeAbsences()
 
 	fun expenses(entryId: Long) = dao.observeExpenses(entryId)
