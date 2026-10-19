@@ -24,8 +24,7 @@ class GenericConnectorTest {
 				activity = "Patched 3 servers", status = "CLOSED", zone = "Europe/Rome",
 				segments = listOf(
 					XSegment("TRAVEL", "2026-10-17T06:30:00Z", "2026-10-17T07:00:00Z", kmEstimated = 23.4),
-					XSegment("WORK", "2026-10-17T07:00:00Z", "2026-10-17T11:00:00Z", source = "CORRECTED",
-						origStartUtc = "2026-10-17T07:04:00Z", origEndUtc = "2026-10-17T10:52:00Z"),
+					XSegment("WORK", "2026-10-17T07:00:00Z", "2026-10-17T11:00:00Z"),
 				),
 				expenses = listOf(XExpense("12.50", "Parking", "2026-10-17T07:01:00Z", receipt = true)),
 				refs = listOf("INC0012", "https://example.org/t/1"),

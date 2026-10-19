@@ -511,7 +511,7 @@ class RepositoryTest {
 	}
 
 	@Test
-	fun aCorrectedSegmentKeepsItsTrackedTimes() = runBlocking<Unit> {
+	fun anEditedSegmentTakesTheNewTimes() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		val t0 = clock.millis()
 		clock.advance(120)
@@ -519,12 +519,9 @@ class RepositoryTest {
 		val s = db.entryDao().segments(id).single()
 		entries.updateSegment(s.id, t0 + 300_000, t0 + 7_000_000)
 		val c = db.entryDao().segment(s.id)!!
-		assertEquals(SegmentSource.CORRECTED, c.source)
-		assertEquals(t0, c.origStartUtcMs)
-		assertEquals(t0 + 7_200_000, c.origEndUtcMs)
-		/* a second edit keeps the first originals */
-		entries.updateSegment(s.id, t0 + 600_000, t0 + 7_000_000)
-		assertEquals(t0, db.entryDao().segment(s.id)!!.origStartUtcMs)
+		assertEquals(t0 + 300_000, c.startUtcMs)
+		assertEquals(t0 + 7_000_000, c.endUtcMs)
+		assertEquals(SegmentSource.TRACKED, c.source)
 		assertEquals(Reason.TOO_SHORT, reason { entries.updateSegment(s.id, t0, t0 + 30_000) })
 	}
 

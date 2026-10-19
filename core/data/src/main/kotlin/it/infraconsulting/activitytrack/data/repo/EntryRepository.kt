@@ -404,10 +404,10 @@ class EntryRepository(
 	}
 
 	/*
-	 * Segments are editable and deletable (backlog 11, owner 2026-10-18,
-	 * revising A13): a tracked one that is edited becomes CORRECTED and keeps
-	 * its tracked times. The running segment and an entry's last segment
-	 * cannot be removed; the running one cannot be edited.
+	 * Segments are editable and deletable (backlog 11, revising A13): the
+	 * values entered replace the recorded ones, nothing of the old times is
+	 * kept (owner, 2026-10-19). The running segment and an entry's last
+	 * segment cannot be removed; the running one cannot be edited.
 	 */
 	suspend fun deleteSegment(segmentId: Long) = db.withTransaction {
 		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
@@ -429,15 +429,11 @@ class EntryRepository(
 			(kmDeclared != null && (kmDeclared.isNaN() || kmDeclared < 0 || s.kind != SegmentKind.TRAVEL)))
 			throw ValidationException(Reason.INVALID_SEGMENT)
 		val e = load(s.entryId)
-		val corrected = s.source == SegmentSource.TRACKED && (startUtcMs != s.startUtcMs || endUtcMs != s.endUtcMs)
 		dao.updateSegment(
 			s.copy(
 				startUtcMs = startUtcMs,
 				endUtcMs = endUtcMs,
 				kmDeclared = if (s.kind == SegmentKind.TRAVEL) kmDeclared else s.kmDeclared,
-				source = if (corrected) SegmentSource.CORRECTED else s.source,
-				origStartUtcMs = s.origStartUtcMs ?: s.startUtcMs.takeIf { corrected },
-				origEndUtcMs = s.origEndUtcMs ?: s.endUtcMs.takeIf { corrected },
 			),
 		)
 		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))

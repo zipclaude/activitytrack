@@ -301,9 +301,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			val start = runCatching { Instant.parse(s.startUtc) }.getOrNull() ?: return r.skip("entries", x.key, "segment start ${s.startUtc}")
 			val end = runCatching { Instant.parse(s.endUtc!!) }.getOrNull() ?: return r.skip("entries", x.key, "segment end ${s.endUtc}")
 			val source = runCatching { SegmentSource.valueOf(s.source) }.getOrDefault(SegmentSource.TRACKED)
-			val orig = { t: String? -> t?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } }
-			SegmentEntity(entryId = 0, kind = kind, startUtcMs = start.toEpochMilli(), endUtcMs = end.toEpochMilli(), zoneId = zone.id, source = source,
-				kmEstimated = s.kmEstimated, kmDeclared = s.kmDeclared, origStartUtcMs = orig(s.origStartUtc), origEndUtcMs = orig(s.origEndUtc))
+			SegmentEntity(entryId = 0, kind = kind, startUtcMs = start.toEpochMilli(), endUtcMs = end.toEpochMilli(), zoneId = zone.id, source = source, kmEstimated = s.kmEstimated, kmDeclared = s.kmDeclared)
 		}
 		val violations = EntryInvariants.violations(status, null, segs.map { Segment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli)) })
 		if (violations.isNotEmpty())

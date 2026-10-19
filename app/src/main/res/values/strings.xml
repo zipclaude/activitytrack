@@ -450,6 +450,5 @@ Tap the green play button below to start one.</string>
   <string name="tags">Tags</string>
   <string name="tag_new">New tags (e.g. #urgent remote)</string>
   <string name="segment_edit">Edit segment</string>
-  <string name="segment_corrected">corrected, tracked %1$s</string>
   <string name="err_last_segment">The running segment and the only remaining one cannot be deleted.</string>
 </resources>

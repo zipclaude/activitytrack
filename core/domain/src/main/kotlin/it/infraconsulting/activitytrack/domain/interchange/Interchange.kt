@@ -117,9 +117,6 @@ data class XSegment(
 	val source: String = "TRACKED",
 	val kmEstimated: Double? = null,
 	val kmDeclared: Double? = null,
-	/* M15: a CORRECTED segment keeps the tracked times */
-	val origStartUtc: String? = null,
-	val origEndUtc: String? = null,
 )
 
 /* EUR; the receipt file does not travel, only the fact that there is one. */
