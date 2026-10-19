@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import it.infraconsulting.activitytrack.domain.time.atMinute
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.Flow
 import java.time.ZoneId
@@ -45,6 +46,8 @@ data class StartForm(
 	val clientTouched: Boolean = false,
 	/* chosen start "hh:mm" (M17 editable times); blank = now */
 	val startTime: String = "",
+	/* chosen end "hh:mm" (M22); blank = open */
+	val endTime: String = "",
 ) {
 	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
 }
@@ -128,6 +131,48 @@ class StartViewModel(
 	fun setMode(mode: SegmentKind) = _form.update { it.copy(mode = mode) }
 
 	fun setStartTime(hhmm: String) = _form.update { it.copy(startTime = hhmm) }
+	fun setEndTime(hhmm: String) = _form.update { it.copy(endTime = hhmm) }
+
+	/* an end already passed (M22): "is the activity over?" before starting; the end in ms */
+	private val _askEnded = MutableStateFlow<Long?>(null)
+	val askEnded = _askEnded.asStateFlow()
+	private var endMs: Long? = null
+
+	/*
+	 * Start and end of the form: a time without date is the latest one (today,
+	 * or yesterday if still to come); the end follows the start, across
+	 * midnight if earlier. null start = now.
+	 */
+	private fun times(f: StartForm): Pair<Long?, Long?> {
+		if (!editableTimes.value)
+			return null to null
+		val zone = ZoneId.systemDefault()
+		val now = Instant.now()
+		val start = parseHhMm(f.startTime)?.takeIf { it < 1440 }?.let { latestAt(it, now, zone) }
+		val end = parseHhMm(f.endTime)?.let { min ->
+			val from = (start ?: now).atZone(zone)
+			var t = from.toLocalDate().atMinute(min, zone)
+			if (!t.isAfter(start ?: now))
+				t = from.toLocalDate().plusDays(1).atMinute(min, zone)
+			t
+		}
+		return start?.toEpochMilli() to end?.toEpochMilli()
+	}
+
+	/* The answer about an end already passed: yes = recorded as stopped then; no = started open. */
+	fun answerEnded(over: Boolean) {
+		val end = _askEnded.value ?: return
+		_askEnded.value = null
+		endMs = end.takeIf { over }
+		if (over)
+			doStart()	/* a past activity: the running ones are not asked about */
+		else
+			askRunning()
+	}
+
+	fun cancelEnded() {
+		_askEnded.value = null
+	}
 
 	/* Changing the company filter drops a client of another company. */
 	fun setCompany(companyId: Long?) = _form.update { f ->
@@ -183,8 +228,21 @@ class StartViewModel(
 		val t = _form.value.startTime
 		if (t.isNotBlank() && (parseHhMm(t) ?: 1440) >= 1440)
 			return fail(ValidationException.Reason.INVALID_TIME)
+		val e = _form.value.endTime
+		if (e.isNotBlank() && parseHhMm(e) == null)
+			return fail(ValidationException.Reason.INVALID_TIME)
 		onStarted = onDone
 		decisions.clear()
+		val end = times(_form.value).second
+		endMs = end
+		if (end != null && end <= System.currentTimeMillis()) {
+			_askEnded.value = end
+			return
+		}
+		askRunning()
+	}
+
+	private fun askRunning() {
 		viewModelScope.launch {
 			val clients = master.clients.first().associateBy { it.id }
 			val companies = master.companies.first().associateBy { it.id }
@@ -225,8 +283,8 @@ class StartViewModel(
 					locationKind = f.locationKind,
 					todoId = todoId,
 					/* a time without date is the latest one: today, or yesterday if still to come */
-					startUtcMs = parseHhMm(f.startTime)?.takeIf { editableTimes.value && it < 1440 }
-						?.let { latestAt(it, Instant.now(), ZoneId.systemDefault()).toEpochMilli() },
+					startUtcMs = times(f).first,
+					endUtcMs = endMs,
 				),
 				HashMap(decisions),
 			)

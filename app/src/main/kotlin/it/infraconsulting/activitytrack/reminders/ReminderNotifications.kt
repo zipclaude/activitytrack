@@ -43,6 +43,22 @@ object ReminderNotifications {
 		return b.build()
 	}
 
+	/* "X finished?" at the end chosen when starting (M22): stop then, or go on. */
+	fun plannedEnd(context: Context, info: EntryInfo, atMs: Long): Notification {
+		val id = info.entry.id
+		val hhmm = clock(atMs)
+		return Notification.Builder(context, NotificationChannels.CONFIRM)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(context.getString(R.string.notif_planned_end_title, info.title))
+			.setContentText(context.getString(R.string.notif_planned_end_text, hhmm))
+			.setContentIntent(EntryLinks.openEntry(context, id))
+			.setAutoCancel(true)
+			.setCategory(Notification.CATEGORY_REMINDER)
+			.addAction(action(context.getString(R.string.notif_planned_end_stop, hhmm), ActionReceiver.stopAtPlannedEnd(context, id, atMs)))
+			.addAction(action(context.getString(R.string.notif_planned_end_go_on), ActionReceiver.goOn(context, id)))
+			.build()
+	}
+
 	/* "Still on pause?" — Resume / Stop. */
 	fun pause(context: Context, info: EntryInfo): Notification {
 		val id = info.entry.id

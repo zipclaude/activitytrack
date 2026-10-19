@@ -462,13 +462,17 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 	val settings by vm.settings.collectAsState()
 	val filter = settings?.todoCompanyFilter
 	val window = settings?.todoWindowHours ?: 0
+	/* the advanced filters (owner, 2026-10-19), kept while the screen is open */
+	var more by rememberSaveable(stateSaver = TodoFilters.Saver) { mutableStateOf(TodoFilters()) }
+	var editingFilters by remember { mutableStateOf(false) }
 	val showIgnored = settings?.todoShowIgnored != false
 	val zone = ZoneId.systemDefault()
 	val now = Instant.now()
 	val list = (if (showDone) all else open + ignored).filter { t ->
 		(filter == null || t.companyId == filter) &&
 			(showIgnored || t.ignoredUtcMs == null) &&
-			(window == 0 || withinHours(moment(t, zone), now, window.toLong()))
+			(window == 0 || withinHours(moment(t, zone), now, window.toLong())) &&
+			more.accepts(t, now)
 	}
 	val band = bands(list, companies, clients)
 
@@ -495,6 +499,11 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 					SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it }
 					Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
 						WindowFilter(window, vm::setWindow)
+						FilterChip(
+							selected = more.count > 0,
+							onClick = { editingFilters = true },
+							label = { Text(stringResource(R.string.todo_filters) + if (more.count > 0) " (${more.count})" else "") },
+						)
 						FilterChip(selected = showIgnored, onClick = { vm.setShowIgnored(!showIgnored) }, label = { Text(stringResource(R.string.todo_filter_ignored)) })
 						CompanyFilter(vm)
 					}
@@ -514,6 +523,73 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 	}
 	selected?.let { t -> TodoActions(t, vm, onStart = { onStart(t.id) }, onEdit = { vm.clearError(); editing = t }) { selected = null } }
 	editing?.let { t -> TodoEditDialog(t, vm) { editing = null } }
+	if (editingFilters)
+		TodoFiltersDialog(more, clients.filter { filter == null || it.companyId == filter }.map { it.id to it.name }, { editingFilters = false }) { more = it }
+}
+
+enum class TodoState { OPEN, PLANNED, OVERDUE }
+
+/* Advanced to-do filters (owner, 2026-10-19): client, priority, state, planned or not. */
+data class TodoFilters(
+	val clientId: Long? = null,
+	val priority: Int? = null,
+	val state: TodoState? = null,
+	val planned: Boolean? = null,
+) {
+	val count get() = listOfNotNull(clientId, priority, state, planned).size
+
+	fun accepts(t: TodoEntity, now: Instant): Boolean =
+		(clientId == null || t.clientId == clientId) &&
+			(priority == null || t.priority == priority) &&
+			(planned == null || (t.plan() != null) == planned) &&
+			when (state) {
+				null -> true
+				TodoState.OPEN -> t.plan() == null && !overdue(t, now)
+				TodoState.PLANNED -> t.plan() != null && !overdue(t, now)
+				TodoState.OVERDUE -> overdue(t, now)
+			}
+
+	companion object {
+		val Saver = androidx.compose.runtime.saveable.Saver<TodoFilters, List<Any?>>(
+			save = { listOf(it.clientId, it.priority, it.state?.name, it.planned) },
+			restore = { TodoFilters(it[0] as Long?, it[1] as Int?, (it[2] as String?)?.let(TodoState::valueOf), it[3] as Boolean?) },
+		)
+	}
+}
+
+@Composable
+private fun TodoFiltersDialog(current: TodoFilters, clients: List<Pair<Long, String>>, onClose: () -> Unit, onApply: (TodoFilters) -> Unit) {
+	var f by remember { mutableStateOf(current) }
+	val any = stringResource(R.string.todo_filter_any)
+	AlertDialog(
+		onDismissRequest = onClose,
+		title = { Text(stringResource(R.string.todo_filters)) },
+		text = {
+			Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+				ChoiceField(stringResource(R.string.field_client), listOf<Pair<Long?, String>>(null to any) + clients, f.clientId) { f = f.copy(clientId = it) }
+				ChoiceField(
+					stringResource(R.string.todo_field_priority),
+					listOf<Pair<Int?, String>>(null to any) + (1..5).map { it to it.toString() },
+					f.priority,
+				) { f = f.copy(priority = it) }
+				ChoiceField(
+					stringResource(R.string.todo_filter_state),
+					listOf(
+						null to any, TodoState.OPEN to stringResource(R.string.todo_state_open),
+						TodoState.PLANNED to stringResource(R.string.todo_state_planned), TodoState.OVERDUE to stringResource(R.string.todo_state_overdue),
+					),
+					f.state,
+				) { f = f.copy(state = it) }
+				ChoiceField(
+					stringResource(R.string.todo_filter_planned),
+					listOf(null to any, true to stringResource(R.string.action_yes), false to stringResource(R.string.action_no)),
+					f.planned,
+				) { f = f.copy(planned = it) }
+			}
+		},
+		confirmButton = { TextButton(onClick = { onApply(f); onClose() }) { Text(stringResource(R.string.action_ok)) } },
+		dismissButton = { TextButton(onClick = { onApply(TodoFilters()); onClose() }) { Text(stringResource(R.string.todo_filters_reset)) } },
+	)
 }
 
 /* "" -> null; anything else must parse, or the field is reported. */
