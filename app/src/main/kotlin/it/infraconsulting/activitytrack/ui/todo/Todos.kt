@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.Importance
 import it.infraconsulting.activitytrack.ui.common.rgb
 import it.infraconsulting.activitytrack.ui.common.Banded
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
@@ -557,33 +558,38 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			)
 		},
 	) {
-		TextInput(stringResource(R.string.todo_field_title), title, { title = it })
+		TextInput(stringResource(R.string.todo_field_title), title, { title = it }, importance = Importance.REQUIRED)
 		WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
 			SearchableChoiceField(
 				stringResource(R.string.field_client),
 				listOf<Pair<Long?, String>>(null to stringResource(R.string.field_none)) +
 					clients.filter { !it.archived }.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
 				clientId,
+				importance = Importance.IMPORTANT,
+				colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
 			) { clientId = it }
 		}
 		if (clientId == null)
 			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
-				ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
+				ChoiceField(
+					stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId,
+					importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
+				) { picked = it }
 			}
 		DateField(
 			stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true,
-			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing },
+			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing }, importance = Importance.IMPORTANT,
 		)
 		TimeField(
 			stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true,
-			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing },
+			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = Importance.IMPORTANT,
 		)
-		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)
-		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true)
-		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true)
-		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it })
-		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false)
-		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false)
+		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number, importance = Importance.OPTIONAL)
+		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true, importance = Importance.OPTIONAL)
+		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true, importance = Importance.OPTIONAL)
+		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it }, importance = Importance.OPTIONAL)
+		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
+		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false, importance = Importance.OPTIONAL)
 	}
 	if (addCompany)
 		QuickCompanyDialog(onDone = { addCompany = false; picked = it; clientId = null }, onDismiss = { addCompany = false })

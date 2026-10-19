@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.Importance
 import it.infraconsulting.activitytrack.ui.common.ColoredActionButton
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
@@ -117,6 +118,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 								.sortedBy { "${coNames[it.companyId]} ${it.name}".lowercase() }
 								.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
 						clientId,
+						importance = Importance.REQUIRED,
+						colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
 					) { clientId = it }
 					val usable = presets.filter { it.companyId == null || it.companyId == companyId }
 					if (usable.isNotEmpty())
@@ -124,26 +127,29 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 							stringResource(R.string.field_preset),
 							listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
 							null,
+							importance = Importance.OPTIONAL,
 						) { id ->
 							usable.firstOrNull { it.id == id }?.let { p ->
 								activity = p.text
 								if (roleId == null) roleId = p.defaultRoleId
 							}
 						}
-					DictationInput(stringResource(R.string.field_activity), activity) { activity = it }
+					DictationInput(stringResource(R.string.field_activity), activity, { activity = it }, Importance.REQUIRED)
 					ChoiceField(
 						stringResource(R.string.field_role),
 						listOf<Pair<Long?, String>>(null to none) +
 							roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
 						roleId,
+						importance = Importance.IMPORTANT,
 					) { roleId = it }
-					TextInput(stringResource(R.string.field_locality), locality, { locality = it })
+					TextInput(stringResource(R.string.field_locality), locality, { locality = it }, importance = Importance.OPTIONAL)
 					ChoiceField(
 						stringResource(R.string.field_location_kind),
 						listOf<Pair<LocationKind?, String>>(null to none) + LocationKind.entries.map { it to locationLabel(it) },
 						locationKind,
+						importance = Importance.OPTIONAL,
 					) { locationKind = it }
-					TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false)
+					TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
 				}
 			}
 

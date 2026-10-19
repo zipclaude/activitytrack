@@ -33,6 +33,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.Importance
 import androidx.compose.foundation.layout.Box
 import it.infraconsulting.activitytrack.ui.common.MAGENTA
 import it.infraconsulting.activitytrack.ui.common.ColoredActionButton
@@ -165,8 +166,8 @@ private fun ExpenseFields(
 		} else
 			File(f).delete()
 	}
-	TextInput(stringResource(R.string.expense_amount), amount, onAmount, KeyboardType.Decimal)
-	TextInput(stringResource(R.string.expense_description), description, onDescription)
+	TextInput(stringResource(R.string.expense_amount), amount, onAmount, KeyboardType.Decimal, importance = Importance.REQUIRED)
+	TextInput(stringResource(R.string.expense_description), description, onDescription, importance = Importance.REQUIRED)
 	OutlinedButton(onClick = {
 		val f = receiptFile(context)
 		pending = f.path
