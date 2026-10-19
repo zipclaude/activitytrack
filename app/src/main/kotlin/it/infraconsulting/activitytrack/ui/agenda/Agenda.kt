@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
+import it.infraconsulting.activitytrack.ui.common.ClearButton
 import it.infraconsulting.activitytrack.ui.common.TagFilterChip
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
@@ -386,6 +387,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 		OutlinedTextField(
 			value = query, onValueChange = { query = it }, singleLine = true,
 			label = { Text(stringResource(R.string.agenda_search)) },
+			trailingIcon = if (query.isEmpty()) null else ({ ClearButton { query = "" } }),
 			modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
 		)
 		if (days.isEmpty()) {

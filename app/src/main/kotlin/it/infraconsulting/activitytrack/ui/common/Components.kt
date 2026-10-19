@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.common
 
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -174,7 +176,14 @@ fun TextInput(
 		value = value,
 		onValueChange = onChange,
 		label = { Text(label) },
-		trailingIcon = trailing,
+		/* the ✕ empties the field at once (owner, 2026-10-19), before any other button */
+		trailingIcon = if (value.isEmpty() && trailing == null) null else ({
+			Row(verticalAlignment = Alignment.CenterVertically) {
+				if (value.isNotEmpty())
+					ClearButton { onChange("") }
+				trailing?.invoke()
+			}
+		}),
 		singleLine = singleLine,
 		isError = isError,
 		colors = importanceColors(importance, value.isNotBlank()),
@@ -211,7 +220,14 @@ fun <T> SearchableChoiceField(
 			singleLine = true,
 			label = { Text(label) },
 			leadingIcon = colorOf(selected)?.let { c -> { ColorDot(c) } },
-			trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+			/* ✕ empties the search (the choice stays until another is picked) */
+			trailingIcon = {
+				Row(verticalAlignment = Alignment.CenterVertically) {
+					if (text.isNotEmpty())
+						ClearButton { text = ""; expanded = true }
+					ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+				}
+			},
 			colors = importanceColors(importance, selected != null),
 			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
 				.onFocusChanged { if (!it.isFocused) text = selectedText },
@@ -229,6 +245,14 @@ fun <T> SearchableChoiceField(
 				)
 			}
 		}
+	}
+}
+
+/* ✕ inside a text field: empties it. */
+@Composable
+fun ClearButton(onClick: () -> Unit) {
+	IconButton(onClick = onClick) {
+		Icon(painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.action_clear))
 	}
 }
 

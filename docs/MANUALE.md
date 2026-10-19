@@ -177,6 +177,13 @@ volta (**▲ Prima** / **Dopo ▼** spostano la finestra di 3 ore).
   sono occupate da altri tratti di quel giorno.
 I campi facoltativi hanno la ✕ per svuotarli.
 
+### Svuotare un campo
+Nei campi in cui si scrive (descrizione, note, nomi, tag, riferimenti,
+ricerca dell'Agenda…) compare una **✕** appena contengono del testo: la
+tocchi e il campo si svuota. Nelle caselle cliente con ricerca la ✕ svuota
+la ricerca e mostra di nuovo tutto l'elenco; il cliente scelto resta finché
+non ne scegli un altro.
+
 ---
 
 ## 4. Avviare un'attività
