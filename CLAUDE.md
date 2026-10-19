@@ -170,6 +170,8 @@ Released v0.6.0 (2026-10-19). On `main` after it: #27 no automatic colours
   tests (contacts/calls, call pause, migration 9→10), device test, manual
   screenshots. Future: contacts may receive activity reports.
 - PR #29 must move its schema to **v11** (AutoMigration 10→11) before merging.
+- PR #33 merged: calls also outside working hours (setting `calls_always`, default off; owner: on-call duty).
+- Issue #34 (Antares: offer Sync when an entry closes + scheduled fetch, 5 min–1 day, default 1 h): questions asked, waiting for answers; WorkManager periodic minimum is 15 min.
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.
