@@ -206,7 +206,9 @@ In the "New activity" screen:
   otherwise the app proposes the company of today's last activity.
 - **Description** and **role** are proposed from the last activity on the
   same client in the last 30 days. The microphone in the field dictates.
-- **Start** (with "Times freely editable", on by default): empty = now; a
+- **Start** (with "Times freely editable", on by default): tapped while empty
+  it opens the range grid, which sets start and end together; when already set,
+  the time picker; empty = now; a
   time already passed starts the activity from there (a time that has not
   come yet today means yesterday).
 - **End (optional)**: tapping it, the grid picks start and end together.
