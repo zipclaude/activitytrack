@@ -214,6 +214,8 @@ event per entry and report day, from the entry start (a running entry ends
 "now"), title "Client – Activity", rounded times, km, references and notes in
 the description, locality as location. A generic calendar (chosen, or a local
 "ActivityTrack" one) and optionally one per company, which replaces it.
+Events are private (ACCESS_PRIVATE): people sharing the calendar see only
+"busy"; events written before are made private by the next sync.
 Planned open to-dos become tentative events ("Client – Title") up to a year
 ahead; done ones leave the calendar. The last description line carries
 hashtags per kind of time (#lavoro #viaggio #pausa, #pianificata; always Italian).
