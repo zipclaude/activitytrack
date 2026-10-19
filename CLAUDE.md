@@ -141,12 +141,38 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
-Released v0.6.0 (2026-10-19): clear buttons, Home colours / neutral closed /
-from-to, entry top buttons and compact folding, to-do window and filters, end
-time at start + planned-end reminder, close on stop when complete (schema v9),
-user docs it/en with PDF (#23-#26). Instrumented tests 50/50 on the OnePlus.
-Work queue: GitHub issues (owner, 2026-10-19). Future: OCR receipts, free
-offline STT, policy lock for editable times, tags on to-dos if wanted.
+Released v0.6.0 (2026-10-19). On `main` after it: #27 no automatic colours
+(bands only for chosen colours, agenda grey). Work queue = GitHub issues
+(owner answers questions in issue comments, numbered).
+
+**Open (2026-10-19 evening):**
+- PR #29 `m24-antares-auth` (CI green, NOT to merge before a test on
+  demo.goantares.uno): Antares Public API v3 connector. Public OAuth client
+  (PKCE, no secret, redirect `<applicationId>:/oauth2redirect`), refresh
+  token in SecretStore; AntaresPlan (one activity per report day, from first
+  work start, length rounded by work rule with pauses inside, pause >
+  `pause_split_min` (default 60) splits, travel minutes/km to nearest block);
+  schema v10 (remote_portfolio, remote_activity_type, remote_activity, entry
+  remote_* fields, todo remote_portfolio_id); AntaresSync (services/projects
+  active via /v3/Enums EntityState, activity types, tickets with TechnicianId
+  = me → to-dos, POST/PUT(Timestamp)/DELETE with payload hash); entry
+  "Antares" section; company screen Log in / Sync. Waiting: Saidea must
+  register a public client (owner asks); customer list endpoint unknown
+  (clients matched by externalCode = CustomerId). Saidea's API doc is NOT
+  to be committed (public repo). Instrumented tests for v10 not run yet.
+- Issue #28 "Riconoscimento chiamate": start after midnight (owner, credits).
+  Answers: 1 READ_PHONE_STATE + READ_CALL_LOG ok; 2 contacts = app master
+  data (name, numbers, one client; a client has many) with "import from
+  phone contacts"; 3 only within working hours, not on days off; 4 start
+  floor / end ceil to 5 min; 5 call during another client's entry → pause it
+  and resume at the end, a pause under a minute is not saved (the call is);
+  the "create activity from the call" prompt is an optional setting; 6
+  unknown numbers: nothing; 7 pause description editable also with editable
+  times off; 8 incoming and outgoing tracked, two separate settings; plus
+  recognition on/off and auto-pause on/off settings; pause segments get an
+  optional description ("Telefonata CLIENTE" when from a call); a view of all
+  calls with a client and their duration. Future: contacts may receive
+  activity reports.
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.
