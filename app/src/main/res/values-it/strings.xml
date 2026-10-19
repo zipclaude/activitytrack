@@ -497,7 +497,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="set_calls_outgoing">Riconosci le chiamate in uscita</string>
   <string name="set_call_pause">Metti in pausa l\'attività di un altro cliente durante la chiamata</string>
   <string name="set_call_propose">Proponi un\'attività dopo la chiamata</string>
-  <string name="set_calls_hint">Solo chiamate con un numero in Anagrafiche → Contatti, in orario di lavoro. Serve l\'accesso allo stato del telefono e al registro chiamate.</string>
+  <string name="set_calls_hint">Solo chiamate con un numero in Anagrafiche → Contatti; in orario di lavoro, salvo con \"Anche fuori orario\". Serve l\'accesso allo stato del telefono e al registro chiamate.</string>
+  <string name="set_calls_always">Anche fuori orario (reperibilità)</string>
   <string name="call_entry_activity">Chiamata telefonica con %1$s</string>
   <string name="call_pause_note">Telefonata %1$s</string>
   <string name="call_propose_title">Chiamata con %1$s (%2$s)</string>
