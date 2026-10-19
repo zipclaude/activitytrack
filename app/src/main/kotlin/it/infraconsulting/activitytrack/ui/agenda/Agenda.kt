@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
+import it.infraconsulting.activitytrack.ui.common.TagFilterChip
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -261,7 +263,10 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val todosVm = todosViewModel()
 	val mode by vm.mode.collectAsState()
 	val anchor by vm.anchor.collectAsState()
-	val data by vm.data.collectAsState()
+	val loaded by vm.data.collectAsState()
+	/* tag filter (M19): only the entries with that tag, to-dos hidden, totals of what is shown */
+	var tag by rememberSaveable { mutableStateOf<String?>(null) }
+	val data = loaded?.let { d -> tag?.let { d.withTag(it) } ?: d }
 	val locale = LocalConfiguration.current.locales[0]
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
@@ -290,12 +295,13 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 			},
 		) { padding ->
 			Column(Modifier.fillMaxSize().padding(padding)) {
-				Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+				Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 					for ((m, label) in listOf(
 						AgendaMode.LIST to R.string.agenda_list, AgendaMode.DAY to R.string.agenda_day,
 						AgendaMode.WEEK to R.string.agenda_week, AgendaMode.MONTH to R.string.agenda_month,
 					))
 						FilterChip(selected = mode == m, onClick = { vm.mode.value = m }, label = { Text(stringResource(label)) })
+					TagFilterChip(loaded?.items?.flatMap { it.tags }?.distinct().orEmpty(), tag) { tag = it }
 				}
 				Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
 					TextButton(onClick = { vm.move(-1) }) { Text("‹", style = MaterialTheme.typography.titleLarge) }
@@ -324,6 +330,16 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 		}
 		editing?.let { t -> TodoEditDialog(t, todosVm) { editing = null } }
 	}
+}
+
+/* Only the entries carrying [tag]; to-dos have no tags and leave; day totals of what stays. */
+private fun AgendaData.withTag(tag: String): AgendaData {
+	val kept = items.filter { tag in it.tags }
+	return copy(
+		items = kept,
+		todos = emptyList(),
+		reported = kept.groupBy { it.day }.mapValues { (_, l) -> l.fold(Duration.ZERO) { a, i -> a + i.reported } },
+	)
 }
 
 /* What the list rows need to swipe (M10). */
