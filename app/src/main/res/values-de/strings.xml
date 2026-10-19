@@ -496,7 +496,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="set_calls_outgoing">Ausgehende Anrufe erkennen</string>
   <string name="set_call_pause">Laufende Tätigkeit eines anderen Kunden während des Anrufs pausieren</string>
   <string name="set_call_propose">Nach dem Anruf eine Tätigkeit vorschlagen</string>
-  <string name="set_calls_hint">Nur Anrufe mit einer Nummer in Stammdaten → Kontakte, innerhalb der Arbeitszeit. Braucht Zugriff auf Telefonstatus und Anrufliste.</string>
+  <string name="set_calls_hint">Nur Anrufe mit einer Nummer in Stammdaten → Kontakte; innerhalb der Arbeitszeit, außer mit „Auch außerhalb der Arbeitszeit“. Braucht Zugriff auf Telefonstatus und Anrufliste.</string>
+  <string name="set_calls_always">Auch außerhalb der Arbeitszeit (Bereitschaft)</string>
   <string name="call_entry_activity">Telefonat mit %1$s</string>
   <string name="call_pause_note">Telefonat %1$s</string>
   <string name="call_propose_title">Anruf mit %1$s (%2$s)</string>
