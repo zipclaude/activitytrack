@@ -295,7 +295,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="agenda_day">Día</string>
   <string name="agenda_week">Semana</string>
   <string name="agenda_month">Mes</string>
-  <string name="agenda_search">Buscar cliente o actividad</string>
+  <string name="agenda_search">Buscar cliente, actividad o #etiqueta</string>
   <string name="agenda_empty">No hay actividades en este periodo.</string>
   <string name="connector_title">Sistema de gestión</string>
   <string name="connector_external_code">Código en el sistema de gestión</string>

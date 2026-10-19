@@ -327,8 +327,9 @@ private fun TagsSection(vm: EntryViewModel) {
 	var text by remember { mutableStateOf("") }
 	val typed = Tags.normalize(text.substringAfterLast(' '))
 	val suggestions = all.filter { it !in tags && (typed == null || it.startsWith(typed)) }.take(8)
+	/* the header carries its own padding, like the other sections */
+	SectionHeader(stringResource(R.string.tags))
 	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-		SectionHeader(stringResource(R.string.tags))
 		if (tags.isNotEmpty())
 			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
 				for (t in tags)
