@@ -252,9 +252,8 @@ Nella schermata dell'attività:
 - "Tempi": i pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
   dimenticati (anche con i km; almeno un minuto). Toccando un tratto concluso
   si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
-  **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). Un
-  tratto registrato dall'app e poi modificato diventa **"corretto"** e mostra
-  gli orari registrati in origine;
+  **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). I
+  valori inseriti sostituiscono quelli registrati;
 - **Tag**: etichette libere (es. `#remoto`, `#urgente`); scrivine uno o più
   nel campo e tocca "+", oppure tocca un suggerimento tra quelli già usati;
   la ✕ su un tag lo toglie. Si aggiungono anche dopo la chiusura;

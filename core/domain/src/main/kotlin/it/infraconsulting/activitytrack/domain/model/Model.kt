@@ -31,8 +31,6 @@ enum class LocationKind {
 enum class SegmentSource {
 	TRACKED,
 	MANUAL,
-	/* tracked, then edited by hand (backlog 11): the original times are kept */
-	CORRECTED,
 }
 
 /* Half-open time interval [start, end). */

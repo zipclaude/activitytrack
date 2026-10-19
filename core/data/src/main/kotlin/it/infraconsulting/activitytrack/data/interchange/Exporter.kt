@@ -130,9 +130,7 @@ class Exporter(private val db: ActivityTrackDatabase) {
 						zone = e.zoneId,
 						segments = segments[e.id].orEmpty().map {
 							XSegment(it.kind.name, Instant.ofEpochMilli(it.startUtcMs).toString(), it.endUtcMs?.let { m -> Instant.ofEpochMilli(m).toString() },
-								it.source.name, it.kmEstimated, it.kmDeclared,
-								it.origStartUtcMs?.let { m -> Instant.ofEpochMilli(m).toString() },
-								it.origEndUtcMs?.let { m -> Instant.ofEpochMilli(m).toString() })
+								it.source.name, it.kmEstimated, it.kmDeclared)
 						},
 						expenses = expenses[e.id].orEmpty().map {
 							XExpense(BigDecimal.valueOf(it.amountCents, 2).toPlainString(), it.description,

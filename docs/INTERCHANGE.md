@@ -77,8 +77,7 @@ expenses/expense, refs/ref, absences/absence, daysOff/dayOff, tags/tag.
 |---|---|
 | `status` | ACTIVE, SUSPENDED, TO_COMPLETE, CLOSED |
 | `segments.kind` | WORK, TRAVEL, PAUSE |
-| `segments.source` | TRACKED, MANUAL, CORRECTED (a tracked segment edited by hand; added 2026-10-19) |
-| `segments.origStartUtc` / `origEndUtc` | CORRECTED only: the tracked times before the edit (added 2026-10-19, still version 1) |
+| `segments.source` | TRACKED, MANUAL |
 | `entries.tags` | free tags without `#`, lower case, blanks as `-`, letters, digits, `-` and `_` only, at most 30 characters each (added 2026-10-19, still version 1) |
 | `locationKind` | COMPANY, CLIENT, HOME, OTHER |
 | `absences.kind` | FULL_DAY, LATE_ENTRY, EARLY_EXIT |

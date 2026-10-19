@@ -179,17 +179,10 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			items(segments, key = { "s${it.id}" }) { s ->
 				val end = s.endUtcMs
 				val range = clockOf(s.startUtcMs, zone) + " – " + (end?.let { clockOf(it, zone) } ?: "…")
-				val os = s.origStartUtcMs
-				val oe = s.origEndUtcMs
-				val tracked = if (os != null && oe != null) clockOf(os, zone) + "–" + clockOf(oe, zone) else ""
 				val extra = listOfNotNull(
 					end?.let { hmOf(it - s.startUtcMs) },
 					(s.kmDeclared ?: s.kmEstimated)?.let { "%.1f km".format(it) },
-					when (s.source) {
-						SegmentSource.MANUAL -> stringResource(R.string.segment_manual)
-						SegmentSource.CORRECTED -> stringResource(R.string.segment_corrected, tracked)
-						SegmentSource.TRACKED -> null
-					},
+					if (s.source == SegmentSource.MANUAL) stringResource(R.string.segment_manual) else null,
 				).joinToString(" · ")
 				/* every closed segment can be edited or deleted (backlog 11); the running one cannot */
 				ClickableRow("${kindLabel(s.kind)}  $range", extra) { if (end != null) { vm.clearError(); editingSegment = s } }
@@ -268,7 +261,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 
 /*
  * Edit or delete a closed segment (backlog 11): date, start, end, km of a
- * travel; a tracked one becomes "corrected" and keeps its tracked times.
+ * travel; the new values replace the recorded ones.
  */
 @Composable
 private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, onClose: () -> Unit) {
@@ -301,13 +294,6 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 		TimeField(stringResource(R.string.field_end), end, { end = it }, importance = Importance.REQUIRED)
 		if (s.kind == SegmentKind.TRAVEL)
 			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = Importance.OPTIONAL)
-		val os = s.origStartUtcMs
-		val oe = s.origEndUtcMs
-		if (os != null && oe != null)
-			Text(
-				stringResource(R.string.segment_corrected, clockOf(os, zone) + "–" + clockOf(oe, zone)),
-				style = MaterialTheme.typography.bodySmall,
-			)
 	}
 	if (deleting)
 		ConfirmDialog(stringResource(R.string.confirm_delete_segment), { deleting = false }) {

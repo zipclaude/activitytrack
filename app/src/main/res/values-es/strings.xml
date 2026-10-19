@@ -439,7 +439,6 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="tags">Etiquetas</string>
   <string name="tag_new">Nuevas etiquetas (p. ej. #urgente remoto)</string>
   <string name="segment_edit">Editar tramo</string>
-  <string name="segment_corrected">corregido, registrado %1$s</string>
   <string name="err_last_segment">El tramo en curso y el último tramo de una actividad no se pueden eliminar.</string>
   <!-- M16 list order -->
   <string name="order_alpha">A–Z</string>
