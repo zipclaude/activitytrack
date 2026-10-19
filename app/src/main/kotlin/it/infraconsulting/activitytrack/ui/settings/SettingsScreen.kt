@@ -145,6 +145,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var callsOut by remember { mutableStateOf(initial.callsOutgoing) }
 	var callPause by remember { mutableStateOf(initial.callAutoPause) }
 	var callPropose by remember { mutableStateOf(initial.callProposeEntry) }
+	var callsAlways by remember { mutableStateOf(initial.callsAlways) }
 	/* recognition needs the phone state and the call log: asked when switched on */
 	val callPermissions = androidx.activity.compose.rememberLauncherForActivityResult(
 		androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
@@ -187,6 +188,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		callsOutgoing = callsOut,
 		callAutoPause = callPause,
 		callProposeEntry = callPropose,
+		callsAlways = callsAlways,
 		rounding = ReportRounding(
 			work.copy(minimum = minutes(F.WORK_MIN, work.minimum)),
 			travel.copy(minimum = minutes(F.TRAVEL_MIN, travel.minimum)),
@@ -218,6 +220,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					SwitchRow(stringResource(R.string.set_calls_outgoing), callsOut) { callsOut = it; if (it) askCalls() }
 					SwitchRow(stringResource(R.string.set_call_pause), callPause) { callPause = it }
 					SwitchRow(stringResource(R.string.set_call_propose), callPropose) { callPropose = it }
+					SwitchRow(stringResource(R.string.set_calls_always), callsAlways) { callsAlways = it }
 					Text(stringResource(R.string.set_calls_hint), style = MaterialTheme.typography.bodySmall)
 				}
 				SettingsSection.REMINDERS -> {
