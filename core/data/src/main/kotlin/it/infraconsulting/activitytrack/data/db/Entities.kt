@@ -303,9 +303,6 @@ data class SegmentEntity(
 	val source: SegmentSource = SegmentSource.TRACKED,
 	@ColumnInfo(name = "km_estimated") val kmEstimated: Double? = null,
 	@ColumnInfo(name = "km_declared") val kmDeclared: Double? = null,
-	/* a CORRECTED segment's times as tracked (backlog 11) */
-	@ColumnInfo(name = "orig_start_utc_ms") val origStartUtcMs: Long? = null,
-	@ColumnInfo(name = "orig_end_utc_ms") val origEndUtcMs: Long? = null,
 )
 
 /* Coordinates are displayed only; they are never exported. */

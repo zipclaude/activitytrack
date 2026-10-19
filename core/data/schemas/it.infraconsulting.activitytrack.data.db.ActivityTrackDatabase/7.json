@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 7,
-    "identityHash": "fd32c53be897cd3d86a27361f4205637",
+    "identityHash": "069d39d5985038c494ec74f85f99e728",
     "entities": [
       {
         "tableName": "company",
@@ -683,7 +683,7 @@
       },
       {
         "tableName": "segment",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `entry_id` INTEGER NOT NULL, `kind` TEXT NOT NULL, `start_utc_ms` INTEGER NOT NULL, `end_utc_ms` INTEGER, `zone_id` TEXT NOT NULL, `source` TEXT NOT NULL, `km_estimated` REAL, `km_declared` REAL, `orig_start_utc_ms` INTEGER, `orig_end_utc_ms` INTEGER, FOREIGN KEY(`entry_id`) REFERENCES `time_entry`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `entry_id` INTEGER NOT NULL, `kind` TEXT NOT NULL, `start_utc_ms` INTEGER NOT NULL, `end_utc_ms` INTEGER, `zone_id` TEXT NOT NULL, `source` TEXT NOT NULL, `km_estimated` REAL, `km_declared` REAL, FOREIGN KEY(`entry_id`) REFERENCES `time_entry`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -735,16 +735,6 @@
             "fieldPath": "kmDeclared",
             "columnName": "km_declared",
             "affinity": "REAL"
-          },
-          {
-            "fieldPath": "origStartUtcMs",
-            "columnName": "orig_start_utc_ms",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "origEndUtcMs",
-            "columnName": "orig_end_utc_ms",
-            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -1546,7 +1536,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fd32c53be897cd3d86a27361f4205637')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '069d39d5985038c494ec74f85f99e728')"
     ]
   }
 }

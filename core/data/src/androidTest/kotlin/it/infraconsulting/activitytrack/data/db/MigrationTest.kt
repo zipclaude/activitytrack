@@ -109,7 +109,7 @@ class MigrationTest {
 	}
 
 	@Test
-	fun v6ToV7AddsTagsAndTrackedTimes() {
+	fun v6ToV7AddsTags() {
 		helper.createDatabase(DB, 6).use { db ->
 			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
 			db.execSQL(
@@ -119,10 +119,9 @@ class MigrationTest {
 			db.execSQL("INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source) VALUES (1, 'WORK', 0, 60000, 'Europe/Rome', 'TRACKED')")
 		}
 		helper.runMigrationsAndValidate(DB, 7, true).use { db ->
-			db.query("SELECT orig_start_utc_ms, orig_end_utc_ms FROM segment").use { c ->
+			db.query("SELECT COUNT(*) FROM segment").use { c ->
 				c.moveToFirst()
-				assertEquals(true, c.isNull(0))
-				assertEquals(true, c.isNull(1))
+				assertEquals(1, c.getInt(0))
 			}
 			db.execSQL("INSERT INTO entry_tag (entry_id, tag) VALUES (1, 'remoto')")
 		}

@@ -439,7 +439,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="tags">Tag</string>
   <string name="tag_new">Nuovi tag (es. #urgente remoto)</string>
   <string name="segment_edit">Modifica tratto</string>
-  <string name="segment_corrected">corretto, registrato %1$s</string>
   <string name="err_last_segment">Il tratto in corso e l\'ultimo tratto di un\'attività non si possono eliminare.</string>
   <!-- M16 list order -->
   <string name="order_alpha">A–Z</string>

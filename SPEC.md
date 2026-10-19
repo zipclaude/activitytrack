@@ -82,8 +82,8 @@ mode   : WORK | TRAVEL | PAUSE      (only when ACTIVE)
   the same client, or go back to editing.
 - TRAVEL and PAUSE segments can be added manually afterwards (time and km).
 - Every closed segment can be edited (date, start, end, km of a travel) or
-  deleted (not the running one, not the only one left); a tracked segment
-  edited by hand becomes CORRECTED and keeps its tracked times (M15).
+  deleted (not the running one, not the only one left); the values entered
+  replace the recorded ones (M15).
 - Free tags per entry, also after closing: shown in the entry screen and the
   agenda list, searchable, exported (CSV `tags` column, interchange
   `tags`) and appended to the calendar hashtag line (M15).
