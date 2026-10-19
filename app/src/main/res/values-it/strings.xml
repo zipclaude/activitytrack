@@ -452,4 +452,12 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="time_now_hint">Vuoto = adesso</string>
   <string name="err_future_time">L\'orario è nel futuro.</string>
   <string name="err_before_segment">L\'orario è prima dell\'inizio del tratto in corso.</string>
+  <!-- M18 time grid -->
+  <string name="grid_hint_range">Tocca la prima casella e trascina fino all\'ultima, oppure tocca la prima e poi l\'ultima.</string>
+  <string name="grid_hint_single">Tocca una casella.</string>
+  <string name="grid_earlier">Prima</string>
+  <string name="grid_later">Dopo</string>
+  <string name="grid_this">questo tratto</string>
+  <string name="grid_others">altre attività</string>
+  <string name="grid_exact">Orario esatto</string>
 </resources>
