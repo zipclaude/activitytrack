@@ -54,6 +54,8 @@ data class AppSettings(
 	val todoNext24h: Boolean = false,
 	/* ignored to-dos listed (struck through) or hidden */
 	val todoShowIgnored: Boolean = true,
+	/* order of the master-data lists and drop-downs (M16) */
+	val listOrders: ListOrders = ListOrders(),
 ) {
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId

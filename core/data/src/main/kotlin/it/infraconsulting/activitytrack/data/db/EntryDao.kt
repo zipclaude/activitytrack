@@ -15,6 +15,12 @@ data class ClientLastUse(
 	@ColumnInfo(name = "last_ms") val lastMs: Long,
 )
 
+/* Newest entry on a company or role (M16 "last use" order). */
+data class LastUse(
+	val id: Long,
+	@ColumnInfo(name = "last_ms") val lastMs: Long,
+)
+
 data class ExpenseTotal(
 	@ColumnInfo(name = "entry_id") val entryId: Long,
 	@ColumnInfo(name = "cents") val cents: Long,
@@ -83,6 +89,18 @@ interface EntryDao {
 			"WHERE client_id IS NOT NULL GROUP BY client_id",
 	)
 	fun observeClientLastUse(): Flow<List<ClientLastUse>>
+
+	@Query(
+		"SELECT company_id AS id, MAX(created_utc_ms) AS last_ms FROM time_entry " +
+			"WHERE company_id IS NOT NULL GROUP BY company_id",
+	)
+	fun observeCompanyLastUse(): Flow<List<LastUse>>
+
+	@Query(
+		"SELECT role_id AS id, MAX(created_utc_ms) AS last_ms FROM time_entry " +
+			"WHERE role_id IS NOT NULL GROUP BY role_id",
+	)
+	fun observeRoleLastUse(): Flow<List<LastUse>>
 
 	/* Segments of every entry that is not CLOSED (home screen timers). */
 	@Query(

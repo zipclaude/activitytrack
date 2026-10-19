@@ -67,8 +67,8 @@ class StartViewModel(
 		clients.map { ClientChoice(it.id, it.companyId, it.name, it.archived, last[it.id]) }
 	}.state(emptyList())
 
-	/* Clients shown for the current company filter, most recent first. */
-	val clients = combine(allChoices, _form) { all, f -> ClientPicker.order(all, f.companyId, f.clientId) }
+	/* Clients shown for the current company filter, in the Master data order (M16). */
+	val clients = combine(allChoices, _form) { all, f -> ClientPicker.order(all, f.companyId, f.clientId, byLastUse = false) }
 		.state(emptyList())
 
 	/* Running entries still to be asked about (head = current dialog). */
@@ -140,6 +140,7 @@ class StartViewModel(
 
 	fun applyPreset(presetId: Long) {
 		val p = presets.value.firstOrNull { it.id == presetId } ?: return
+		viewModelScope.launch { master.touchPreset(p.id) }
 		_form.update {
 			it.copy(
 				activity = p.text,
