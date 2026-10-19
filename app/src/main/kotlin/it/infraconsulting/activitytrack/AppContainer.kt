@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import kotlinx.coroutines.flow.map
 import android.content.Context
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.geo.Nominatim
@@ -30,7 +31,7 @@ class AppContainer(context: Context) {
 	val clock: Clock = DefaultZoneClock
 
 	val database: ActivityTrackDatabase by lazy { ActivityTrackDatabase.build(appContext) }
-	val masterData: MasterDataRepository by lazy { MasterDataRepository(database) }
+	val masterData: MasterDataRepository by lazy { MasterDataRepository(database, settings.settings.map { it.listOrders }, clock) }
 	val entries: EntryRepository by lazy { EntryRepository(database, clock) }
 	val reports: ReportRepository by lazy { ReportRepository(database, clock) }
 	val settings: SettingsRepository by lazy { SettingsRepository(appContext) }

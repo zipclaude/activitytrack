@@ -108,6 +108,40 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v6ToV7AddsTags() {
+		helper.createDatabase(DB, 6).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL(
+				"INSERT INTO time_entry (id, uid, company_id, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) " +
+					"VALUES (1, 'e1', 1, 'CLOSED', 'Europe/Rome', 0, 0, 0)",
+			)
+			db.execSQL("INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source) VALUES (1, 'WORK', 0, 60000, 'Europe/Rome', 'TRACKED')")
+		}
+		helper.runMigrationsAndValidate(DB, 7, true).use { db ->
+			db.query("SELECT COUNT(*) FROM segment").use { c ->
+				c.moveToFirst()
+				assertEquals(1, c.getInt(0))
+			}
+			db.execSQL("INSERT INTO entry_tag (entry_id, tag) VALUES (1, 'remoto')")
+		}
+	}
+
+	@Test
+	fun v7ToV8AddsListOrder() {
+		helper.createDatabase(DB, 7).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO activity_preset (id, text) VALUES (1, 'Patch')")
+		}
+		helper.runMigrationsAndValidate(DB, 8, true).use { db ->
+			db.query("SELECT company.sort_position, activity_preset.sort_position, activity_preset.last_used_utc_ms FROM company, activity_preset").use { c ->
+				c.moveToFirst()
+				for (i in 0..2)
+					assertEquals(true, c.isNull(i))
+			}
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

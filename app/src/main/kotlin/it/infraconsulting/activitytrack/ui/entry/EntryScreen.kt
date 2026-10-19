@@ -118,12 +118,14 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
 					Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary)
 					val coNames = companies.associate { it.id to it.name }
+					/* by company in the company order, then in the client order (M16; stable sort) */
+					val coIndex = companies.withIndex().associate { (i, c) -> c.id to i }
 					SearchableChoiceField(
 						stringResource(R.string.field_client),
 						listOf<Pair<Long?, String>>(null to none) +
 							clients.filter { !it.archived || it.id == clientId }
 								.filter { initial.companyId == null || initial.clientId != null || it.companyId == initial.companyId }
-								.sortedBy { "${coNames[it.companyId]} ${it.name}".lowercase() }
+								.sortedBy { coIndex[it.companyId] ?: Int.MAX_VALUE }
 								.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
 						clientId,
 						importance = Importance.REQUIRED,

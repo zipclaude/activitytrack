@@ -1,6 +1,15 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.repo
 
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.Flow
+import java.time.Clock
+import it.infraconsulting.activitytrack.domain.settings.Ordering
+import it.infraconsulting.activitytrack.domain.settings.OrderedList
+import it.infraconsulting.activitytrack.domain.settings.ListOrders
 import android.database.sqlite.SQLiteConstraintException
 import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.data.db.ActivityPresetEntity
@@ -24,14 +33,54 @@ import java.time.LocalDate
  * Master data with input validation. Names are trimmed; unique-index and
  * foreign-key violations surface as [ValidationException].
  */
-class MasterDataRepository(private val db: ActivityTrackDatabase) {
+/*
+ * [orders]: the list orders chosen in Master data (M16); every list flow
+ * below comes sorted by them, so the screens and the drop-downs agree.
+ */
+class MasterDataRepository(
+	private val db: ActivityTrackDatabase,
+	orders: Flow<ListOrders> = flowOf(ListOrders()),
+	private val clock: Clock = Clock.systemUTC(),
+) {
 	private val dao = db.masterDataDao()
+	private val entryDao = db.entryDao()
+	private val order = orders.distinctUntilChanged()
 
-	val companies = dao.observeCompanies()
-	val clients = dao.observeClients()
+	val companies: Flow<List<CompanyEntity>> =
+		combine(dao.observeCompanies(), order.map { it.companies }.distinctUntilChanged(), entryDao.observeCompanyLastUse()) { list, o, uses ->
+			val last = uses.associate { it.id to it.lastMs }
+			Ordering.sort(list, o, { it.name }, { it.archived }, { last[it.id] }, { it.position }, { it.id })
+		}
+	val clients: Flow<List<ClientEntity>> =
+		combine(dao.observeClients(), order.map { it.clients }.distinctUntilChanged(), entryDao.observeClientLastUse()) { list, o, uses ->
+			val last = uses.associate { it.clientId to it.lastMs }
+			Ordering.sort(list, o, { it.name }, { it.archived }, { last[it.id] }, { it.position }, { it.id })
+		}
 	val places = dao.observePlaces()
-	val roles = dao.observeRoles()
-	val presets = dao.observePresets()
+	val roles: Flow<List<RoleEntity>> =
+		combine(dao.observeRoles(), order.map { it.roles }.distinctUntilChanged(), entryDao.observeRoleLastUse()) { list, o, uses ->
+			val last = uses.associate { it.id to it.lastMs }
+			Ordering.sort(list, o, { it.name }, { it.archived }, { last[it.id] }, { it.position }, { it.id })
+		}
+	val presets: Flow<List<ActivityPresetEntity>> =
+		combine(dao.observePresets(), order.map { it.presets }.distinctUntilChanged()) { list, o ->
+			Ordering.sort(list, o, { it.text }, lastUse = { it.lastUsedUtcMs }, position = { it.position }, id = { it.id })
+		}
+
+	/* Manual order (M16): [ids] in their new order get positions 0..n-1. */
+	suspend fun reorder(list: OrderedList, ids: List<Long>) = db.withTransaction {
+		ids.forEachIndexed { i, id ->
+			when (list) {
+				OrderedList.COMPANIES -> dao.setCompanyPosition(id, i)
+				OrderedList.CLIENTS -> dao.setClientPosition(id, i)
+				OrderedList.ROLES -> dao.setRolePosition(id, i)
+				OrderedList.PRESETS -> dao.setPresetPosition(id, i)
+			}
+		}
+	}
+
+	/* A preset picked for an entry: its "last use" (M16). */
+	suspend fun touchPreset(id: Long) = dao.touchPreset(id, clock.millis())
 	val schedule = dao.observeSchedule()
 	val lunchBreaks = dao.observeLunchBreaks()
 	val daysOff = dao.observeDaysOff()

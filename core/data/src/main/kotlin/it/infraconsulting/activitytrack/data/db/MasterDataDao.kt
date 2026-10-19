@@ -22,6 +22,22 @@ interface MasterDataDao {
 	@Query("SELECT * FROM role")
 	suspend fun allRoles(): List<RoleEntity>
 
+	/* manual order and last use (M16) */
+	@Query("UPDATE company SET sort_position = :position WHERE id = :id")
+	suspend fun setCompanyPosition(id: Long, position: Int)
+
+	@Query("UPDATE client SET sort_position = :position WHERE id = :id")
+	suspend fun setClientPosition(id: Long, position: Int)
+
+	@Query("UPDATE role SET sort_position = :position WHERE id = :id")
+	suspend fun setRolePosition(id: Long, position: Int)
+
+	@Query("UPDATE activity_preset SET sort_position = :position WHERE id = :id")
+	suspend fun setPresetPosition(id: Long, position: Int)
+
+	@Query("UPDATE activity_preset SET last_used_utc_ms = :utcMs WHERE id = :id")
+	suspend fun touchPreset(id: Long, utcMs: Long)
+
 	/* companies */
 	@Query("SELECT * FROM company ORDER BY archived, name COLLATE NOCASE")
 	fun observeCompanies(): Flow<List<CompanyEntity>>
