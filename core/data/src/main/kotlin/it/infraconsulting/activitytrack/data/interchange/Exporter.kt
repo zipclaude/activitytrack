@@ -38,6 +38,8 @@ data class ExportFilter(
 	/* site coordinates are master data, still off unless asked (SPEC §6) */
 	val siteCoordinates: Boolean = false,
 	val zone: ZoneId = ZoneId.systemDefault(),
+	/* only entries with this tag (M19); null = all */
+	val tag: String? = null,
 )
 
 /* Builds an interchange package from the database; location samples never leave. */
@@ -112,6 +114,7 @@ class Exporter(private val db: ActivityTrackDatabase) {
 			out = out.copy(
 				entries = candidates.filter { e ->
 					val segs = segments[e.id].orEmpty()
+					(f.tag == null || f.tag in tags[e.id].orEmpty()) &&
 					/* touching the period: an open segment counts as "until now" */
 					(fromMs == null || segs.any { (it.endUtcMs ?: now.toEpochMilli()) > fromMs }) &&
 						(toMs == null || segs.any { it.startUtcMs < toMs })

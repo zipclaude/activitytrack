@@ -66,6 +66,7 @@ class InterchangeTest {
 		val id = entries.start(StartRequest(SegmentKind.WORK, bank, activity = "Patched", todoId = todo))
 		entries.addExpense(id, 1250, "Parking")
 		entries.addExternalRef(id, "INC1")
+		entries.setTags(id, listOf("remoto"))
 		entries.apply(id, EntryCommand.STOP)
 		a.entryDao().insertAbsence(AbsenceEntity(dateEpochDay = 20_745, kind = AbsenceKind.LATE_ENTRY, timeMin = 630))
 		m.upsertDayOff(DayOffEntity(20_800, "Patrono"))
@@ -100,6 +101,16 @@ class InterchangeTest {
 		val again = Importer(b, clock).import(first)
 		assertEquals(0, again.total)
 		assertTrue(again.conflicts.isEmpty(), "conflicts: ${again.conflicts}")
+	}
+
+	@Test
+	fun tagFilterKeepsOnlyTaggedEntries() = runBlocking<Unit> {
+		val tagged = Exporter(a).build(ExportFilter(zone = ZoneId.of("UTC"), tag = "remoto"), "test", clock.instant())
+		assertEquals(listOf("remoto"), tagged.entries.single().tags)
+		val none = Exporter(a).build(ExportFilter(zone = ZoneId.of("UTC"), tag = "altro"), "test", clock.instant())
+		assertTrue(none.entries.isEmpty())
+		/* the other sections are not filtered */
+		assertEquals(2, none.companies.size)
 	}
 
 	@Test

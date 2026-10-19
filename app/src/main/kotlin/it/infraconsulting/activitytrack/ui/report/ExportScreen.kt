@@ -95,6 +95,7 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 
 	val companies = c.masterData.companies
 	val clients = c.masterData.clients
+	val tags = c.entries.allTags
 
 	fun reset() {
 		_state.value = ExchangeState.Idle
@@ -110,6 +111,7 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 		to: LocalDate?,
 		companyId: Long?,
 		clientId: Long?,
+		tag: String?,
 		sections: Set<ExportSection>,
 		siteCoordinates: Boolean,
 		share: Boolean,
@@ -133,7 +135,7 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 						val company = companyId?.let { c.masterData.company(it)?.name }
 						val client = clientId?.let { c.masterData.client(it)?.name }
 						val rows = c.reports.exportRows(from!!, to!!, zone, s.rounding, s.carryOverMin)
-							.filter { (company == null || it.company == company) && (client == null || it.client == client) }
+							.filter { (company == null || it.company == company) && (client == null || it.client == client) && (tag == null || tag in it.tags) }
 						val exporter = CsvExporter(locale)
 						val name = "activitytrack-$stamp.${exporter.extension}"
 						val uri = c.userDataDir.createFile(tree, UserDataDir.Sub.EXPORT, name, exporter.mimeType)
@@ -143,7 +145,7 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 					OutFormat.JSON, OutFormat.XML -> {
 						val ff = if (format == OutFormat.JSON) FileFormat.JSON else FileFormat.XML
 						val data = c.exporter.build(
-							ExportFilter(sections, from, to, companyId, clientId, siteCoordinates, zone),
+							ExportFilter(sections, from, to, companyId, clientId, siteCoordinates, zone, tag),
 							generator = c.generator,
 						)
 						val name = "activitytrack-$stamp.${ff.extension}"
@@ -231,6 +233,7 @@ fun ExportScreen(onBack: () -> Unit) {
 	val state by vm.state.collectAsState()
 	val companies by vm.companies.collectAsState(emptyList())
 	val clients by vm.clients.collectAsState(emptyList())
+	val tags by vm.tags.collectAsState(emptyList())
 	val context = LocalContext.current
 	val locale = LocalConfiguration.current.locales[0]
 	val today = LocalDate.now()
@@ -240,6 +243,7 @@ fun ExportScreen(onBack: () -> Unit) {
 	var to by rememberSaveable { mutableStateOf(today.toString()) }
 	var companyId by rememberSaveable { mutableStateOf<Long?>(null) }
 	var clientId by rememberSaveable { mutableStateOf<Long?>(null) }
+	var tag by rememberSaveable { mutableStateOf<String?>(null) }
 	var sections by remember { mutableStateOf(ExportSection.entries.toSet()) }
 	var coordinates by rememberSaveable { mutableStateOf(false) }
 	val all = stringResource(R.string.export_all)
@@ -257,7 +261,7 @@ fun ExportScreen(onBack: () -> Unit) {
 		if ((from.isNotBlank() && f == null) || (to.isNotBlank() && t == null))
 			vm.invalidRange()
 		else
-			vm.export(format, f, t, companyId, clientId, sections, coordinates, share, locale)
+			vm.export(format, f, t, companyId, clientId, tag, sections, coordinates, share, locale)
 	}
 
 	/* the share sheet opens once per export */
@@ -296,6 +300,13 @@ fun ExportScreen(onBack: () -> Unit) {
 					clients.filter { companyId == null || it.companyId == companyId }.map { it.id to it.name },
 				clientId,
 			) { clientId = it }
+			/* M19: only the entries with this tag (the other sections are not filtered) */
+			if (tags.isNotEmpty())
+				ChoiceField(
+					stringResource(R.string.tags),
+					listOf<Pair<String?, String>>(null to all) + tags.map { it to "#$it" },
+					tag,
+				) { tag = it }
 			if (format == OutFormat.CSV)
 				Text(stringResource(R.string.export_hint), style = MaterialTheme.typography.bodySmall)
 			else {

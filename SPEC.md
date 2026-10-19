@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.13 (2026-10-19, M14: field importance, 24-hour to-dos, recent completed entries). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.14 (2026-10-19, release 0.5.0: M14–M19, private calendar events). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -292,6 +292,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M19 | tag filters: agenda (all views), day report, export (CSV and interchange entries) |
 | M18 | time grid (backlog 3, mockup B): 5-minute cells, 12-hour window, range by drag or two taps with other segments hatched; exact time via the clock |
 | M17 | editable times setting: chosen start and end, segment editing only when on |
 | M16 | list order per master-data list: alphabetical, last use or manual by dragging; drop-downs follow it (schema v8) |

@@ -70,6 +70,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
 | M14 fields | **implemented** (branch `m14-fields`): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home; device test pending |
+| M19 tag filters | **implemented** (branch `m19-tag-filters`, on top of M18): agenda, day report, export; instrumented 47/47; device UI test pending |
 | M18 time grid | **implemented** (branch `m18-time-grid`, on top of M17): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **implemented** (PR #20, on top of M16 PR #18): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **implemented** (PR #18, branch `m16-list-order`, on top of M15 PR #17): backlog 1 (schema v8); device test pending |
@@ -136,7 +137,7 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 ## 5. Next steps (review with the owner, 2026-10-18)
 
 Open PRs (2026-10-19), all with base `main`, merge in this order: #16 (M14) →
-#17 (M15, schema v7) → #18 (M16, schema v8) → #20 (M17) → #21 (M18); #19 (private
+#17 (M15, schema v7) → #18 (M16, schema v8) → #20 (M17) → #21 (M18) → #22 (M19); #19 (private
 calendar events) is independent. After each merge the next one shows only
 its own commits. Instrumented tests 46/46 on the OnePlus (2026-10-19);
 M15, M16 and M17 device-tested on the debug app (2026-10-19).
@@ -153,8 +154,8 @@ were ignored; To-dos list always, at the bottom).
 
 ### Backlog (owner notes, 2026-10-18)
 Done in M13: 2, 4, 5, 6, 7, 8, 9, 10, 12; in M14: 14; in M15: 11, 13; in M16: 1.
-Done in M18: 3 (grid, mockup B, owner 2026-10-19). Open: tag filters in agenda
-and reports later.
+Done in M18: 3 (grid, mockup B, owner 2026-10-19); in M19: tag filters in agenda
+and reports. Backlog empty.
 14. Show the company and client colour in the drop-down lists too (done in M14).
 Owner notes 2026-10-19 (done in M14): to-dos in the next 24 hours, not the
 current day; Home keeps the last 2/3 completed entries; field borders by
@@ -299,7 +300,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-19 | Calendar events are private (ACCESS_PRIVATE), PR #19 |
 | 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
 | 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
-| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11); debug icon orange |
+| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19); debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
