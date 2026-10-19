@@ -43,6 +43,8 @@ data class CompanyEntity(
 	/* connector plugin of this company and its plain settings (JSON); secrets live in the keystore */
 	@ColumnInfo(name = "connector_id") val connectorId: String? = null,
 	@ColumnInfo(name = "connector_config") val connectorConfig: String? = null,
+	/* manual list order (M16); null = never placed, after the placed ones */
+	@ColumnInfo(name = "sort_position") val position: Int? = null,
 )
 
 @Entity(
@@ -90,6 +92,8 @@ data class ClientEntity(
 	/* band colour when one company is shown (M12), 0xRRGGBB; null = none */
 	val color: Int? = null,
 	@ColumnInfo(name = "external_code") val externalCode: String? = null,
+	/* manual list order (M16); null = never placed, after the placed ones */
+	@ColumnInfo(name = "sort_position") val position: Int? = null,
 )
 
 @Entity(
@@ -129,6 +133,8 @@ data class RoleEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	val name: String,
 	val archived: Boolean = false,
+	/* manual list order (M16); null = never placed, after the placed ones */
+	@ColumnInfo(name = "sort_position") val position: Int? = null,
 )
 
 @Entity(
@@ -154,6 +160,10 @@ data class ActivityPresetEntity(
 	val text: String,
 	@ColumnInfo(name = "default_role_id") val defaultRoleId: Long? = null,
 	@ColumnInfo(name = "company_id") val companyId: Long? = null,
+	/* manual list order (M16); null = never placed, after the placed ones */
+	@ColumnInfo(name = "sort_position") val position: Int? = null,
+	/* last time it was picked for an entry (M16 "last use" order) */
+	@ColumnInfo(name = "last_used_utc_ms") val lastUsedUtcMs: Long? = null,
 )
 
 /*

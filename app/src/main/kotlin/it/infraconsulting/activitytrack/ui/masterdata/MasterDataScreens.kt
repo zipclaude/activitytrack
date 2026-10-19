@@ -1,6 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import it.infraconsulting.activitytrack.ui.common.rememberReorder
+import it.infraconsulting.activitytrack.ui.common.ReorderRow
+import it.infraconsulting.activitytrack.ui.common.Reorder
+import it.infraconsulting.activitytrack.ui.common.ListOrderChips
+import it.infraconsulting.activitytrack.domain.settings.OrderedList
+import it.infraconsulting.activitytrack.domain.settings.ListOrder
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -51,7 +59,29 @@ import java.time.DayOfWeek
 import java.time.format.TextStyle
 
 @Composable
-internal fun masterDataViewModel() = appViewModel { MasterDataViewModel(it.masterData) }
+internal fun masterDataViewModel() = appViewModel { MasterDataViewModel(it.masterData, it.settings) }
+
+/*
+ * Order chips and, in manual order, the drag state of a master-data list
+ * (M16); null reorder = not manual.
+ */
+@Composable
+private fun <T> orderedList(
+	vm: MasterDataViewModel,
+	list: OrderedList,
+	listState: LazyListState,
+	items: List<T>,
+	id: (T) -> Long,
+	group: (T) -> Any? = { null },
+): Pair<ListOrder, Reorder<T>?> {
+	val orders by vm.orders.collectAsState()
+	val order = orders.of(list)
+	val r = rememberReorder(listState, items, id, group) { vm.reorder(list, it.map(id)) }
+	return order to r.takeIf { order == ListOrder.MANUAL }
+}
+
+/* What a reorderable list shows: the local order while dragging. */
+private fun <T> shown(items: List<T>, r: Reorder<T>?): List<T> = r?.items?.takeIf { it.size == items.size } ?: items
 
 /* Asks before running [action]; returns the trigger. */
 @Composable
@@ -117,17 +147,20 @@ fun CompaniesScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 	val companies by vm.companies.collectAsState()
 	val error by vm.error.collectAsState()
 	var adding by remember { mutableStateOf(false) }
+	val listState = rememberLazyListState()
+	val (order, reorder) = orderedList(vm, OrderedList.COMPANIES, listState, companies, { it.id }, { it.archived })
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_companies),
 		onBack = onBack,
 		actions = { AddButton { vm.clearError(); adding = true } },
 	) { padding ->
-		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
+			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.COMPANIES, it) } }
 			if (companies.isEmpty())
 				item { EmptyText() }
-			items(companies, key = { it.id }) { c ->
-				ClickableRow(c.name, archivedSuffix(c.archived)) { onOpen(c.id) }
+			items(shown(companies, reorder), key = { it.id }) { c ->
+				ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id) { onOpen(c.id) }
 			}
 		}
 	}
@@ -227,25 +260,29 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 	val error by vm.error.collectAsState()
 	var adding by remember { mutableStateOf(false) }
 	val active = companies.filter { !it.archived }
+	val listState = rememberLazyListState()
+	val (order, reorder) = orderedList(vm, OrderedList.CLIENTS, listState, clients, { it.id }, { it.companyId to it.archived })
+	val list = shown(clients, reorder)
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_clients),
 		onBack = onBack,
 		actions = { if (active.isNotEmpty()) AddButton { vm.clearError(); adding = true } },
 	) { padding ->
-		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
+			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.CLIENTS, it) } }
 			if (companies.isEmpty())
 				item { EmptyText(stringResource(R.string.clients_need_company)) }
 			else if (clients.isEmpty())
 				item { EmptyText() }
-			/* grouped by company, in company order */
+			/* grouped by company, in company order; manual order within each company */
 			for (co in companies) {
-				val own = clients.filter { it.companyId == co.id }
+				val own = list.filter { it.companyId == co.id }
 				if (own.isEmpty())
 					continue
 				item(key = "h${co.id}") { SectionHeader(co.name) }
 				items(own, key = { it.id }) { c ->
-					ClickableRow(c.name, archivedSuffix(c.archived)) { onOpen(c.id) }
+					ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id) { onOpen(c.id) }
 				}
 			}
 		}
@@ -327,17 +364,20 @@ fun RolesScreen(onBack: () -> Unit) {
 	val roles by vm.roles.collectAsState()
 	val error by vm.error.collectAsState()
 	var editing by remember { mutableStateOf<RoleEntity?>(null) }
+	val listState = rememberLazyListState()
+	val (order, reorder) = orderedList(vm, OrderedList.ROLES, listState, roles, { it.id }, { it.archived })
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_roles),
 		onBack = onBack,
 		actions = { AddButton { vm.clearError(); editing = RoleEntity(name = "") } },
 	) { padding ->
-		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
+			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.ROLES, it) } }
 			if (roles.isEmpty())
 				item { EmptyText() }
-			items(roles, key = { it.id }) { r ->
-				ClickableRow(r.name, archivedSuffix(r.archived)) { vm.clearError(); editing = r }
+			items(shown(roles, reorder), key = { it.id }) { r ->
+				ReorderRow(r.name, archivedSuffix(r.archived), reorder, r.id) { vm.clearError(); editing = r }
 			}
 		}
 	}
@@ -358,21 +398,24 @@ fun PresetsScreen(onBack: () -> Unit) {
 	val error by vm.error.collectAsState()
 	var editing by remember { mutableStateOf<ActivityPresetEntity?>(null) }
 	val none = stringResource(R.string.field_none)
+	val listState = rememberLazyListState()
+	val (order, reorder) = orderedList(vm, OrderedList.PRESETS, listState, presets, { it.id })
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_presets),
 		onBack = onBack,
 		actions = { AddButton { vm.clearError(); editing = ActivityPresetEntity(text = "") } },
 	) { padding ->
-		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
+			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.PRESETS, it) } }
 			if (presets.isEmpty())
 				item { EmptyText() }
-			items(presets, key = { it.id }) { p ->
+			items(shown(presets, reorder), key = { it.id }) { p ->
 				val extra = listOfNotNull(
 					roles.firstOrNull { it.id == p.defaultRoleId }?.name,
 					companies.firstOrNull { it.id == p.companyId }?.name,
 				).joinToString(" · ").ifEmpty { null }
-				ClickableRow(p.text, extra) { vm.clearError(); editing = p }
+				ReorderRow(p.text, extra, reorder, p.id) { vm.clearError(); editing = p }
 			}
 		}
 	}

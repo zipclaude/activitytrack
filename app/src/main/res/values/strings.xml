@@ -452,4 +452,9 @@ Tap the green play button below to start one.</string>
   <string name="segment_edit">Edit segment</string>
   <string name="segment_corrected">corrected, tracked %1$s</string>
   <string name="err_last_segment">The running segment and the only remaining one cannot be deleted.</string>
+  <!-- M16 list order -->
+  <string name="order_alpha">A–Z</string>
+  <string name="order_last_use">Last used</string>
+  <string name="order_manual">Manual</string>
+  <string name="order_drag">Drag to reorder</string>
 </resources>

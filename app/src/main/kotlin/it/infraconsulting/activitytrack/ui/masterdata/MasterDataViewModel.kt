@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import kotlinx.coroutines.flow.map
+import it.infraconsulting.activitytrack.domain.settings.OrderedList
+import it.infraconsulting.activitytrack.domain.settings.ListOrders
+import it.infraconsulting.activitytrack.domain.settings.ListOrder
+import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.data.db.ActivityPresetEntity
 import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.ClientSiteEntity
@@ -20,7 +25,13 @@ import kotlinx.coroutines.flow.StateFlow
  * Shared by the master-data screens: they are small CRUD lists over the same
  * repository, so one ViewModel per feature instead of one per screen.
  */
-class MasterDataViewModel(private val repo: MasterDataRepository) : ActionViewModel() {
+class MasterDataViewModel(private val repo: MasterDataRepository, private val settings: SettingsRepository) : ActionViewModel() {
+	/* list orders (M16) */
+	val orders = settings.settings.map { it.listOrders }.state(ListOrders())
+
+	fun setOrder(list: OrderedList, order: ListOrder) = run { settings.update { it.copy(listOrders = it.listOrders.with(list, order)) } }
+	fun reorder(list: OrderedList, ids: List<Long>) = run { repo.reorder(list, ids) }
+
 	val companies = repo.companies.state(emptyList())
 	val clients = repo.clients.state(emptyList())
 	val roles = repo.roles.state(emptyList())

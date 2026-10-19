@@ -361,6 +361,14 @@ cambia la scadenza del gestionale.
   "Posizione attuale" o da "Mappa" (sposta la mappa sotto il mirino e "Usa
   questo punto").
 - **Ruoli**, **Attività predefinite** (testi ricorrenti, con ruolo proposto).
+- **Ordine degli elenchi** — in cima ad Aziende, Clienti, Ruoli e Attività
+  predefinite scegli **A–Z**, **Ultimo uso** (prima quelli usati più di
+  recente; per le predefinite, l'ultima volta che le hai scelte) o
+  **Manuale**: in manuale ogni riga ha la maniglia ≡ a destra; tienila e
+  trascina la riga dove vuoi (i clienti si spostano dentro la loro azienda).
+  Le nuove voci vanno in fondo. L'ordine scelto vale anche nei menu a tendina
+  (es. "Nuova attività"); gli archiviati restano sempre in fondo.
+  All'inizio: clienti per ultimo uso, il resto in ordine alfabetico.
 - **Luoghi** — casa e altri luoghi (casa serve per l'arrivo a fine viaggio).
 - **Orario di lavoro e pausa pranzo** — per giorno della settimana.
 - **Giorni liberi**.
