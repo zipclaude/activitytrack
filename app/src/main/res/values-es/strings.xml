@@ -467,4 +467,22 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_window_7d">7 días</string>
   <string name="todo_window_30d">30 días</string>
   <string name="todo_window_all">Todos</string>
+  <!-- M22 end at start -->
+  <string name="notif_planned_end_title">¿%1$s terminada?</string>
+  <string name="notif_planned_end_text">Fin previsto %1$s</string>
+  <string name="notif_planned_end_stop">Sí, parar a las %1$s</string>
+  <string name="notif_planned_end_go_on">No, seguir</string>
+  <string name="field_end_optional">Fin (opcional)</string>
+  <string name="end_hint">Vacío = abierta; ya pasado = la actividad se registra como terminada.</string>
+  <string name="ended_title">¿La actividad ha terminado?</string>
+  <string name="ended_text">El fin %1$s ya ha pasado.</string>
+  <string name="planned_end_fmt">Fin previsto %1$s</string>
+  <string name="todo_filters">Filtros</string>
+  <string name="todo_filter_any">Cualquiera</string>
+  <string name="todo_filter_state">Estado</string>
+  <string name="todo_filter_planned">Planificada</string>
+  <string name="todo_state_open">Abierta</string>
+  <string name="todo_state_planned">Planificada</string>
+  <string name="todo_state_overdue">Atrasada</string>
+  <string name="todo_filters_reset">Borrar</string>
 </resources>

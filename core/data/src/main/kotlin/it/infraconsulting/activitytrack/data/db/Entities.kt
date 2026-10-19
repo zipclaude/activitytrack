@@ -277,6 +277,8 @@ data class TimeEntryEntity(
 	@ColumnInfo(name = "zone_id") val zoneId: String,
 	@ColumnInfo(name = "last_confirmed_utc_ms") val lastConfirmedUtcMs: Long? = null,
 	@ColumnInfo(name = "unanswered_reminders") val unansweredReminders: Int = 0,
+	/* indicative end chosen at start (M22): "finished?" asked then; cleared once asked */
+	@ColumnInfo(name = "planned_end_utc_ms") val plannedEndUtcMs: Long? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
 	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
 )

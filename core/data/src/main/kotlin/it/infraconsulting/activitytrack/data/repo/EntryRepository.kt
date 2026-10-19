@@ -44,6 +44,11 @@ data class StartRequest(
 	val roleId: Long? = null,
 	/* chosen start (M17 editable times); null = now */
 	val startUtcMs: Long? = null,
+	/*
+	 * Chosen end (M22): in the past the entry starts and stops at once, as
+	 * with Stop; in the future it is the planned end, asked about then.
+	 */
+	val endUtcMs: Long? = null,
 	val activity: String? = null,
 	val locality: String? = null,
 	val locationKind: LocationKind? = null,
@@ -117,7 +122,9 @@ class EntryRepository(
 	suspend fun start(req: StartRequest, others: Map<Long, EntryCommand> = emptyMap()): Long =
 		db.withTransaction {
 			others.forEach { (id, cmd) -> apply(id, cmd) }
-			startEntry(req)
+			val id = startEntry(req)
+			req.endUtcMs?.let { end -> if (end <= clock.millis()) applyAt(id, EntryCommand.STOP, end) }
+			id
 		}
 
 	private suspend fun startEntry(req: StartRequest): Long {
@@ -129,6 +136,8 @@ class EntryRepository(
 		if (req.startUtcMs != null && req.startUtcMs > now)
 			throw ValidationException(Reason.FUTURE_TIME)
 		val start = req.startUtcMs ?: now
+		if (req.endUtcMs != null && req.endUtcMs - start < MIN_LENGTH_MS)
+			throw ValidationException(if (req.endUtcMs > start) Reason.TOO_SHORT else Reason.INVALID_TIME_RANGE)
 		val zone = clock.zone.id
 		val id = dao.startEntry(
 			TimeEntryEntity(
@@ -144,6 +153,7 @@ class EntryRepository(
 				locationKind = req.locationKind,
 				zoneId = zone,
 				lastConfirmedUtcMs = now,
+				plannedEndUtcMs = req.endUtcMs?.takeIf { it > now },
 				createdUtcMs = now,
 				updatedUtcMs = now,
 			),
@@ -177,10 +187,19 @@ class EntryRepository(
 					dao.retagSamples(entryId, segId, at)
 			}
 			val resumed = t.openSegment != null
+			/*
+			 * Stopped with client and activity already there: closed at once, no
+			 * completion step (owner, 2026-10-19). From a to-do it still stops
+			 * to complete, which asks whether the to-do is done.
+			 */
+			val next = if (t.next.status == EntryStatus.TO_COMPLETE && e.clientId != null && !e.activity.isNullOrBlank() && e.todoId == null)
+				EntryStateMachine.apply(t.next, EntryCommand.COMPLETE).next
+			else
+				t.next
 			dao.updateEntry(
 				e.copy(
-					status = t.next.status,
-					mode = t.next.mode,
+					status = next.status,
+					mode = next.mode,
 					lastConfirmedUtcMs = if (resumed) at else e.lastConfirmedUtcMs,
 					unansweredReminders = if (resumed) 0 else e.unansweredReminders,
 					updatedUtcMs = at,
@@ -207,6 +226,13 @@ class EntryRepository(
 	/* Segments of every entry touching [fromUtcMs, toUtcMs): busy cells of the time grid (M18). */
 	suspend fun segmentsTouching(fromUtcMs: Long, toUtcMs: Long): List<SegmentEntity> =
 		dao.segmentsOfEntriesTouching(fromUtcMs, toUtcMs)
+
+	/* The planned end was asked about (M22): it is not asked again. */
+	suspend fun clearPlannedEnd(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (e.plannedEndUtcMs != null)
+			dao.updateEntry(e.copy(plannedEndUtcMs = null))
+	}
 
 	val absences = dao.observeAbsences()
 

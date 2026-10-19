@@ -467,4 +467,22 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_window_7d">7 gg</string>
   <string name="todo_window_30d">30 gg</string>
   <string name="todo_window_all">Tutti</string>
+  <!-- M22 end at start -->
+  <string name="notif_planned_end_title">%1$s finita?</string>
+  <string name="notif_planned_end_text">Fine prevista %1$s</string>
+  <string name="notif_planned_end_stop">Sì, stop alle %1$s</string>
+  <string name="notif_planned_end_go_on">No, continua</string>
+  <string name="field_end_optional">Fine (facoltativa)</string>
+  <string name="end_hint">Vuota = aperta; già passata = l\'attività viene registrata come conclusa.</string>
+  <string name="ended_title">L\'attività è conclusa?</string>
+  <string name="ended_text">La fine %1$s è già passata.</string>
+  <string name="planned_end_fmt">Fine prevista %1$s</string>
+  <string name="todo_filters">Filtri</string>
+  <string name="todo_filter_any">Qualsiasi</string>
+  <string name="todo_filter_state">Stato</string>
+  <string name="todo_filter_planned">Pianificata</string>
+  <string name="todo_state_open">Aperta</string>
+  <string name="todo_state_planned">Pianificata</string>
+  <string name="todo_state_overdue">In ritardo</string>
+  <string name="todo_filters_reset">Azzera</string>
 </resources>

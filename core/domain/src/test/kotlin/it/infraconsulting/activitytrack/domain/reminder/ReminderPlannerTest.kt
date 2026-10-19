@@ -138,4 +138,13 @@ class ReminderPlannerTest {
 	fun noDayStartWithoutState() {
 		assertTrue(planner.planned(emptyList(), null, at(wed, 10, 0)).none { it is Reminder.DayStart })
 	}
+
+	@Test
+	fun plannedEndWhileActive() {
+		val end = Instant.parse("2026-10-19T15:00:00Z")
+		val p = ReminderPlanner(ReminderConfig(Duration.ofMinutes(30), 0, Duration.ofMinutes(15)), emptyList(), emptyList(), ZoneId.of("UTC"))
+		val e = ReminderEntry(1, EntryStatus.ACTIVE, SegmentKind.WORK, end.minusSeconds(600).toEpochMilli(), 0, end.toEpochMilli())
+		assertTrue(p.planned(listOf(e), null, end.minusSeconds(60)).contains(Reminder.PlannedEnd(1, end)))
+		assertTrue(p.planned(listOf(e.copy(status = EntryStatus.SUSPENDED)), null, end).none { it is Reminder.PlannedEnd })
+	}
 }

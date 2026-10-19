@@ -17,6 +17,8 @@ data class ReminderEntry(
 	/* last "still working?" yes, or the start of the current mode; last pause reminder while in PAUSE */
 	val lastConfirmedMs: Long?,
 	val unanswered: Int,
+	/* indicative end chosen at start (M22) */
+	val plannedEndMs: Long? = null,
 )
 
 /* A daily time window in local minutes since midnight; dayOfWeek 1 = Monday. */
@@ -60,6 +62,9 @@ sealed interface Reminder {
 
 	/* "Planned at HH:MM": start / postpone / re-plan, lead time before a planned to-do */
 	data class Planned(val todoId: Long, override val at: Instant) : Reminder
+
+	/* "X finished?" at the end chosen when starting (M22): stop there or go on */
+	data class PlannedEnd(val entryId: Long, override val at: Instant) : Reminder
 }
 
 /*
@@ -80,6 +85,8 @@ sealed interface Reminder {
  * - Planned: planned start - lead, once per planned start (a new plan or a
  *   postponement reminds again), also outside working hours and on days off;
  *   dropped once the planned block is over.
+ * - PlannedEnd: at the end chosen when starting, while the entry is active
+ *   (also paused); asked once, then the planned end is cleared.
  */
 class ReminderPlanner(
 	private val config: ReminderConfig,
@@ -100,6 +107,8 @@ class ReminderPlanner(
 			if (t.remindedFor != t.start.toEpochMilli() && now.isBefore(t.end))
 				out += Reminder.Planned(t.id, t.start - config.planLead)
 		for (e in entries) {
+			if (e.status == EntryStatus.ACTIVE && e.plannedEndMs != null)
+				out += Reminder.PlannedEnd(e.id, Instant.ofEpochMilli(e.plannedEndMs))
 			if (e.status != EntryStatus.ACTIVE || e.lastConfirmedMs == null)
 				continue
 			val base = Instant.ofEpochMilli(e.lastConfirmedMs)

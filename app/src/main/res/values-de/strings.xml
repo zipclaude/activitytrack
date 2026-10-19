@@ -466,4 +466,22 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_window_7d">7 Tage</string>
   <string name="todo_window_30d">30 Tage</string>
   <string name="todo_window_all">Alle</string>
+  <!-- M22 end at start -->
+  <string name="notif_planned_end_title">%1$s beendet?</string>
+  <string name="notif_planned_end_text">Geplantes Ende %1$s</string>
+  <string name="notif_planned_end_stop">Ja, Stopp um %1$s</string>
+  <string name="notif_planned_end_go_on">Nein, weiter</string>
+  <string name="field_end_optional">Ende (optional)</string>
+  <string name="end_hint">Leer = offen; schon vorbei = die Tätigkeit wird als beendet erfasst.</string>
+  <string name="ended_title">Ist die Tätigkeit beendet?</string>
+  <string name="ended_text">Das Ende %1$s ist schon vorbei.</string>
+  <string name="planned_end_fmt">Geplantes Ende %1$s</string>
+  <string name="todo_filters">Filter</string>
+  <string name="todo_filter_any">Beliebig</string>
+  <string name="todo_filter_state">Status</string>
+  <string name="todo_filter_planned">Geplant</string>
+  <string name="todo_state_open">Offen</string>
+  <string name="todo_state_planned">Geplant</string>
+  <string name="todo_state_overdue">Überfällig</string>
+  <string name="todo_filters_reset">Zurücksetzen</string>
 </resources>
