@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.common.formatMin
+import it.infraconsulting.activitytrack.ui.common.dateText
+import it.infraconsulting.activitytrack.ui.common.TimeGridSheet
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.runtime.produceState
 import kotlinx.coroutines.flow.map
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -280,6 +285,7 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 	var end by remember { mutableStateOf(s.endUtcMs?.let { clockOf(it, zone) }.orEmpty()) }
 	var km by remember { mutableStateOf(s.kmDeclared?.toString().orEmpty()) }
 	var deleting by remember { mutableStateOf(false) }
+	var grid by remember { mutableStateOf(false) }
 	EditDialog(
 		title = stringResource(R.string.segment_edit),
 		error = error,
@@ -298,11 +304,13 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 		},
 	) {
 		DateField(stringResource(R.string.field_date), date, { date = it }, importance = Importance.REQUIRED)
-		TimeField(stringResource(R.string.field_start), start, { start = it }, importance = Importance.REQUIRED)
-		TimeField(stringResource(R.string.field_end), end, { end = it }, importance = Importance.REQUIRED)
+		TimeField(stringResource(R.string.field_start), start, { start = it }, importance = Importance.REQUIRED, onOpen = { grid = true })
+		TimeField(stringResource(R.string.field_end), end, { end = it }, importance = Importance.REQUIRED, onOpen = { grid = true })
 		if (s.kind == SegmentKind.TRAVEL)
 			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = Importance.OPTIONAL)
 	}
+	if (grid)
+		SegmentGrid(kindLabel(s.kind), date, start, end, s.id, zone, vm, { grid = false }) { a, b -> start = a; end = b }
 	if (deleting)
 		ConfirmDialog(stringResource(R.string.confirm_delete_segment), { deleting = false }) {
 			deleting = false
@@ -362,6 +370,7 @@ private fun ManualSegmentDialog(
 	var start by remember { mutableStateOf("") }
 	var end by remember { mutableStateOf("") }
 	var km by remember { mutableStateOf("") }
+	var grid by remember { mutableStateOf(false) }
 	EditDialog(
 		title = stringResource(if (kind == SegmentKind.TRAVEL) R.string.add_travel else R.string.add_pause),
 		error = error,
@@ -380,11 +389,47 @@ private fun ManualSegmentDialog(
 		},
 	) {
 		DateField(stringResource(R.string.field_date), date, { date = it })
-		TimeField(stringResource(R.string.field_start), start, { start = it })
-		TimeField(stringResource(R.string.field_end), end, { end = it })
+		TimeField(stringResource(R.string.field_start), start, { start = it }, onOpen = { grid = true })
+		TimeField(stringResource(R.string.field_end), end, { end = it }, onOpen = { grid = true })
 		if (kind == SegmentKind.TRAVEL)
 			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal)
 		Text(stringResource(R.string.segment_hint), style = MaterialTheme.typography.bodySmall)
+	}
+	if (grid)
+		SegmentGrid(kindLabel(kind), date, start, end, null, zone, vm, { grid = false }) { a, b -> start = a; end = b }
+}
+
+/*
+ * Start and end of a segment on the 5-minute grid (backlog 3): the other
+ * segments of that day are hatched; "Exact time" is not offered here, the
+ * fields keep any minute typed before.
+ */
+@Composable
+private fun SegmentGrid(
+	kind: String,
+	date: String,
+	start: String,
+	end: String,
+	except: Long?,
+	zone: ZoneId,
+	vm: EntryViewModel,
+	onClose: () -> Unit,
+	onPick: (String, String) -> Unit,
+) {
+	val day = parseDate(date) ?: LocalDate.now(zone)
+	val busy by produceState(emptyList<IntRange>(), day, except) { value = vm.busyOn(day, except, zone) }
+	val locale = LocalConfiguration.current.locales[0]
+	val a = parseHhMm(start)
+	val b = parseHhMm(end)
+	TimeGridSheet(
+		title = "$kind · ${dateText(day, locale)}",
+		initial = if (a != null && b != null && b > a && a < 1440) a until b else null,
+		range = true,
+		busy = busy,
+		onDismiss = onClose,
+	) { from, to ->
+		onClose()
+		onPick(formatMin(from), formatMin(to))
 	}
 }
 
