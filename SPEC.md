@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.13 (2026-10-19, M14: field importance, 24-hour to-dos, recent completed entries). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.14 (2026-10-19, release 0.5.0: M14–M19, private calendar events). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
