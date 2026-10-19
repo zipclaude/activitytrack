@@ -81,7 +81,13 @@ mode   : WORK | TRAVEL | PAUSE      (only when ACTIVE)
   note or attachment the app asks: leave it empty, copy the last activity on
   the same client, or go back to editing.
 - TRAVEL and PAUSE segments can be added manually afterwards (time and km).
-- Every closed segment can be edited (date, start, end, km of a travel) or
+- Editable times (M17, setting, default on; the app is for freelancers):
+  a start time when starting and an end time when stopping from the app
+  (empty = now; a time without date is the latest one; not in the future,
+  not before the running segment); the notification, widget and tile stop
+  at once. Off: times as recorded, segments not editable, forgotten TRAVEL
+  and PAUSE segments can still be added. To be settable by policy later.
+- With editable times on, every closed segment can be edited (date, start, end, km of a travel) or
   deleted (not the running one, not the only one left); the values entered
   replace the recorded ones (M15).
 - Free tags per entry, also after closing: shown in the entry screen and the
@@ -284,6 +290,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M17 | editable times setting: chosen start and end, segment editing only when on |
 | M16 | list order per master-data list: alphabetical, last use or manual by dragging; drop-downs follow it (schema v8) |
 | M15 | entry tags, editable and deletable segments (schema v7) |
 | M14 | field importance borders, drop-down colours, 24-hour to-dos, ignored filter, recent completed entries on Home |

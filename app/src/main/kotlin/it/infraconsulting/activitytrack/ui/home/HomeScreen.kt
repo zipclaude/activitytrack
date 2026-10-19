@@ -160,7 +160,7 @@ fun HomeScreen(
 	val settings by vm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
-	val run = rememberEntryCommands(vm) { id -> cards.firstOrNull { it.entry.id == id }?.title ?: fallback }
+	val run = rememberEntryCommands(vm, settings?.editableTimes == true) { id -> cards.firstOrNull { it.entry.id == id }?.title ?: fallback }
 
 	/* elapsed times refresh every 30 s; the DB keeps exact timestamps */
 	val now by produceState(System.currentTimeMillis()) {

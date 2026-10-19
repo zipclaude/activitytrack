@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.Flow
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.data.repo.EntryDetails
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
@@ -20,7 +22,10 @@ class EntryViewModel(
 	private val entries: EntryRepository,
 	master: MasterDataRepository,
 	private val todos: TodoRepository,
+	editableTimes: Flow<Boolean> = flowOf(false),
 ) : ActionViewModel() {
+	/* segments editable and deletable only with the option on (M17) */
+	val editableTimes = editableTimes.state(false)
 	val entry = entries.entry(entryId).state(null)
 	val segments = entries.segments(entryId).state(emptyList())
 	val refs = entries.externalRefs(entryId).state(emptyList())

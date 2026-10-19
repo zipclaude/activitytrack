@@ -70,6 +70,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
 | M14 fields | **implemented** (branch `m14-fields`): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home; device test pending |
+| M17 editable times | **implemented** (PR #20, on top of M16 PR #18): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **implemented** (PR #18, branch `m16-list-order`, on top of M15 PR #17): backlog 1 (schema v8); device test pending |
 | M15 tags, segments | **implemented** (PR #17, branch `m15-tags-segments`, on top of M14 PR #16): backlog 11 and 13 (schema v7); device test pending |
 | M13 backlog | **done** (PR #15, on `main`, v0.4.2): backlog items 2, 4, 5, 6, 7, 8, 9, 10, 12; device-tested 2026-10-18 |
@@ -134,9 +135,10 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 ## 5. Next steps (review with the owner, 2026-10-18)
 
 Open PRs (2026-10-19), all with base `main`, merge in this order: #16 (M14) →
-#17 (M15, schema v7) → #18 (M16, schema v8); after each merge the next one
-shows only its own commits. CI green on all three; device tests pending
-(instrumented tests for v7/v8 not run yet).
+#17 (M15, schema v7) → #18 (M16, schema v8) → #20 (M17); #19 (private
+calendar events) is independent. After each merge the next one shows only
+its own commits. Instrumented tests 46/46 on the OnePlus (2026-10-19);
+M15, M16 and M17 device-tested on the debug app (2026-10-19).
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.
@@ -291,6 +293,8 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-18 | To-do "ignored" state instead of delete: struck through, at the bottom of the lists, restored with another swipe; imports never re-create or un-ignore it |
 | 2026-10-18 | M11: no bottom start button; empty card: Start + Travel buttons and swipes (left = start screen, right = travel at once, no destination); with entries open, Start / Travel icons in the top bar (Travel opens the start screen in travel mode); compact display setting (text 88 %, tighter cards); "+" quick add of company and client (start screen, to-do editor; client quick add did not exist before) |
 | 2026-10-18 | M12 colours (mockup row 3 approved): 12-colour palette per company and client; band at the card start = company colour, client colour when a to-do list shows one company; the to-do company filter applies to to-dos only (Home section, To-dos screen) and stays until removed; the agenda uses the chosen company colours, automatic ones otherwise |
+| 2026-10-19 | M17 editable times (owner: the app is for freelancers, not employees): setting "Orari modificabili", default on, later settable by policy; on = start time at start, end time in the app's Stop question (also for travel), segments editable/deletable and the new values replace the recorded ones (no "corrected" mark, removed from M15); off = times as recorded, "+ Travel"/"+ Pause" still allowed; a time without date is the latest occurrence; closing other running entries at a backdated start happens now; notification/widget/tile stop at once |
+| 2026-10-19 | Calendar events are private (ACCESS_PRIVATE), PR #19 |
 | 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
 | 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
 | 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11); debug icon orange |
@@ -337,6 +341,12 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
   throws `SecurityException`: `LocationService.update` catches it and stops.
 - Notification `NotificationManager.cancel` is ignored for the FGS notification:
   switch with `startForeground(newId)` first, then cancel the old id.
+- Backing up the device DB: copy `databases/*` and inspect only a copy; opening
+  it with sqlite3 checkpoints and deletes the WAL. When restoring, delete the
+  device's `-wal`/`-shm` first, or Room finds a stale WAL and recreates an
+  empty DB.
+- ViewModel `state()` flows are `WhileSubscribed`: reading `.value` of one no
+  composable collects returns the initial value forever; collect it in the screen.
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 

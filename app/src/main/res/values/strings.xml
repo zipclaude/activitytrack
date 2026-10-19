@@ -456,4 +456,11 @@ Tap the green play button below to start one.</string>
   <string name="order_last_use">Last used</string>
   <string name="order_manual">Manual</string>
   <string name="order_drag">Drag to reorder</string>
+  <!-- M17 editable times -->
+  <string name="sec_times">Times</string>
+  <string name="set_editable_times">Times freely editable</string>
+  <string name="set_editable_times_hint">On: choose the start time when starting and the end time when stopping; segments can be edited or deleted, the new values replace the recorded ones. Off: times stay as recorded; forgotten travels and pauses can still be added.</string>
+  <string name="time_now_hint">Empty = now</string>
+  <string name="err_future_time">The time is in the future.</string>
+  <string name="err_before_segment">The time is before the start of the current segment.</string>
 </resources>

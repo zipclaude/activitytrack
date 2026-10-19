@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import kotlinx.coroutines.flow.map
+import it.infraconsulting.activitytrack.ui.common.TimeField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,7 +56,7 @@ import it.infraconsulting.activitytrack.ui.common.reasonText
 fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null, travel: Boolean = false) {
 	val context = LocalContext.current.applicationContext
 	val vm = appViewModel {
-		StartViewModel(it.entries, it.masterData, clientId, todoId, it.todos) { CurrentPosition.get(context) }
+		StartViewModel(it.entries, it.masterData, clientId, todoId, it.todos, { CurrentPosition.get(context) }, it.settings.settings.map { s -> s.editableTimes })
 			.also { vm -> if (travel) vm.setMode(SegmentKind.TRAVEL) }
 	}
 	val f by vm.form.collectAsState()
@@ -65,6 +67,7 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	val clientColors by vm.clientColors.collectAsState()
 	val pending by vm.pending.collectAsState()
 	val error by vm.error.collectAsState()
+	val editableTimes by vm.editableTimes.collectAsState()
 	val none = stringResource(R.string.field_none)
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
@@ -99,7 +102,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 								listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) +
 									companies.filter { !it.archived || it.id == f.companyId }.map { it.id to it.name },
 								f.companyId,
-								importance = Importance.REQUIRED,
+								/* a filter here (the client is what is required): neutral on "All companies", green once set */
+								importance = if (f.companyId == null) null else Importance.REQUIRED,
 								colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 							) { vm.setCompany(it) }
 						}
@@ -151,6 +155,11 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 								f.roleId,
 								importance = Importance.IMPORTANT,
 							) { vm.setRole(it) }
+						}
+						/* M17: start in the past; empty = now */
+						if (editableTimes) {
+							TimeField(stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() }, clearable = true, importance = Importance.OPTIONAL)
+							Text(stringResource(R.string.time_now_hint), style = MaterialTheme.typography.bodySmall)
 						}
 						if (error != null)
 							Text(reasonText(error!!), color = MaterialTheme.colorScheme.error)

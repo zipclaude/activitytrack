@@ -1,6 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.Flow
+import java.time.ZoneId
+import java.time.Instant
+import it.infraconsulting.activitytrack.ui.common.parseHhMm
+import it.infraconsulting.activitytrack.domain.time.latestAt
+import it.infraconsulting.activitytrack.data.repo.ValidationException
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
@@ -36,6 +43,8 @@ data class StartForm(
 	val roleTouched: Boolean = false,
 	/* a late position-based proposal must not override a picked company or client */
 	val clientTouched: Boolean = false,
+	/* chosen start "hh:mm" (M17 editable times); blank = now */
+	val startTime: String = "",
 ) {
 	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
 }
@@ -52,7 +61,10 @@ class StartViewModel(
 	private val todoId: Long?,
 	private val todos: TodoRepository,
 	private val position: suspend () -> GeoPoint?,
+	editableTimes: Flow<Boolean> = flowOf(false),
 ) : ActionViewModel() {
+	val editableTimes = editableTimes.state(false)
+
 	private val _form = MutableStateFlow(StartForm())
 	val form = _form.asStateFlow()
 
@@ -115,6 +127,8 @@ class StartViewModel(
 
 	fun setMode(mode: SegmentKind) = _form.update { it.copy(mode = mode) }
 
+	fun setStartTime(hhmm: String) = _form.update { it.copy(startTime = hhmm) }
+
 	/* Changing the company filter drops a client of another company. */
 	fun setCompany(companyId: Long?) = _form.update { f ->
 		val keep = f.clientId?.let { id -> allChoices.value.firstOrNull { it.id == id } }
@@ -166,6 +180,9 @@ class StartViewModel(
 
 	/* Start, asking first about every ACTIVE entry (SPEC §3.1). */
 	fun requestStart(onDone: () -> Unit) {
+		val t = _form.value.startTime
+		if (t.isNotBlank() && (parseHhMm(t) ?: 1440) >= 1440)
+			return fail(ValidationException.Reason.INVALID_TIME)
 		onStarted = onDone
 		decisions.clear()
 		viewModelScope.launch {
@@ -207,6 +224,9 @@ class StartViewModel(
 					activity = f.activity,
 					locationKind = f.locationKind,
 					todoId = todoId,
+					/* a time without date is the latest one: today, or yesterday if still to come */
+					startUtcMs = parseHhMm(f.startTime)?.takeIf { editableTimes.value && it < 1440 }
+						?.let { latestAt(it, Instant.now(), ZoneId.systemDefault()).toEpochMilli() },
 				),
 				HashMap(decisions),
 			)
