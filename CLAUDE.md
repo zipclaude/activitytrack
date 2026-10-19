@@ -94,6 +94,7 @@ SPEC.md                         functional specification (v0.7)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
 docs/INTERCHANGE.md             generic import/export format (M4)
 docs/manual/{it,en}/           quickstart.md + manual.md (owner: it/en, PDF with screenshots and diagrams);
+                                connectors/<name>.md = one guide per management-system connector (own PDF);
                                 diagrams/diagrams.py (Graphviz), img/ screenshots, style.css
 scripts/build-manual.sh         PDFs into build/manual (pandoc + dot + headless Chromium)
 scripts/check-manual.sh         release step: version line, docs changed since the last tag, images present
@@ -318,6 +319,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-17 | Owner away: M4–M7 implemented autonomously as stacked PRs #4–#7; provisional choices listed in §5 for review |
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
 | 2026-10-19 | User docs: quick start + full manual (usage, every setting, entities, state diagrams, flows) in Italian and English, PDF with screenshots in the matching UI language; the release job fails unless the manual carries the tag version, changed since the previous tag and has its images; PDFs attached to the GitHub Release |
+| 2026-10-19 | Every management-system connector (Antares, later NIT System) is documented in its own guide `docs/manual/{it,en}/connectors/<name>.md` with its own PDF (`ActivityTrack-<Name>-Guida/Guide-<v>.pdf`); the main manual only points to them |
 | 2026-10-19 | The assistant may merge its PRs once green (owner); GitHub issues as the work queue (see §5) |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |

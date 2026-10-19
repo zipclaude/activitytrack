@@ -516,29 +516,12 @@ stato importato con il motivo. Reimportare lo stesso file non crea doppioni.
 **"Ripristina backup"** sostituisce tutti i dati con un backup scelto: prima
 salva i dati attuali come backup `…-before-restore.zip`, poi riavvia l'app.
 
-### Antares (gestionale Saidea)
-Per un'azienda che usa Antares: scheda azienda → "Gestionale" → connettore
-**Antares (Saidea)**.
-- **API URL**, **Identity provider** e **Client ID** li fornisce Saidea (per
-  le prove l'ambiente demo è già proposto); **Pausa che spezza l'attività**
-  è in minuti (predefinito 60).
-- **Accedi** apre la pagina di login di Antares nel browser; al ritorno la
-  scheda mostra "Collegato come …". L'app non conserva password né segreti:
-  solo un token di rinnovo, cifrato sul telefono. **Esci** lo cancella.
-- **Sync** scarica servizi, progetti, tipi di attività e i ticket assegnati
-  a te (diventano voci *Da fare*; quelli chiusi in Antares vengono segnati
-  come fatti), poi invia le attività chiuse non ancora inviate o modificate
-  dopo l'invio, e mostra il resoconto (anche le attività non inviate e
-  perché).
-- Nella scheda di un'attività di quell'azienda, la sezione **Antares**:
-  servizio o progetto (filtrato sul cliente, se il cliente ha il codice
-  Antares), tipo di attività, "Compresa nel contratto"; per un'attività nata
-  da un ticket basta il tipo. All'inizio vengono proposti quelli dell'ultima
-  attività sullo stesso cliente.
-- Come viene inviata: un'attività Antares per giorno di report, dall'inizio
-  del primo tratto di lavoro, con durata arrotondata secondo la regola del
-  lavoro e le pause comprese; una pausa più lunga della soglia la divide in
-  due; il viaggio va nei minuti e nei km di viaggio dell'attività più vicina.
+### Connettori dei gestionali
+Un'azienda può avere un connettore verso il suo gestionale (scheda azienda →
+"Gestionale"): oltre al formato generico a file, ogni gestionale ha una
+**guida a parte**, pubblicata insieme a questo manuale:
+- **Antares (Saidea)** — `connectors/antares.md`, PDF
+  *ActivityTrack-Antares-Guida-…*.
 
 ---
 
