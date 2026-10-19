@@ -363,6 +363,19 @@ class RepositoryTest {
 	}
 
 	@Test
+	fun chosenStartAndEndTimes() = runBlocking<Unit> {
+		val t0 = clock.millis()
+		clock.advance(60)
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, startUtcMs = t0))
+		assertEquals(t0, db.entryDao().segments(id).single().startUtcMs)
+		assertEquals(Reason.FUTURE_TIME, reason { entries.start(StartRequest(SegmentKind.WORK, client, startUtcMs = clock.millis() + 60_000)) })
+		assertEquals(Reason.BEFORE_SEGMENT, reason { entries.applyAt(id, EntryCommand.STOP, t0 - 60_000) })
+		assertEquals(Reason.FUTURE_TIME, reason { entries.applyAt(id, EntryCommand.STOP, clock.millis() + 60_000) })
+		entries.applyAt(id, EntryCommand.STOP, t0 + 1_800_000)
+		assertEquals(t0 + 1_800_000, db.entryDao().segments(id).single().endUtcMs)
+	}
+
+	@Test
 	fun listOrders() = runBlocking<Unit> {
 		val orders = MutableStateFlow(ListOrders())
 		val m = MasterDataRepository(db, orders, clock)

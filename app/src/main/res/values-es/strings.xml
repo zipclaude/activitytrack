@@ -445,4 +445,11 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="order_last_use">Último uso</string>
   <string name="order_manual">Manual</string>
   <string name="order_drag">Arrastra para reordenar</string>
+  <!-- M17 editable times -->
+  <string name="sec_times">Horarios</string>
+  <string name="set_editable_times">Horarios editables libremente</string>
+  <string name="set_editable_times_hint">Activado: eliges la hora de inicio al empezar y la de fin al parar; los tramos se pueden editar o eliminar y los nuevos valores sustituyen a los registrados. Desactivado: los horarios quedan como se registraron; los viajes y pausas olvidados se pueden añadir siempre.</string>
+  <string name="time_now_hint">Vacío = ahora</string>
+  <string name="err_future_time">La hora está en el futuro.</string>
+  <string name="err_before_segment">La hora es anterior al inicio del tramo en curso.</string>
 </resources>

@@ -273,7 +273,7 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val settings by todosVm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
-	val run = rememberEntryCommands(commander) { id -> data?.items?.firstOrNull { it.entryId == id }?.title?.ifBlank { null } ?: fallback }
+	val run = rememberEntryCommands(commander, settings?.editableTimes == true) { id -> data?.items?.firstOrNull { it.entryId == id }?.title?.ifBlank { null } ?: fallback }
 	val swipes = ListSwipes(gestures, run, todosVm, onStartTodo) { todosVm.clearError(); editing = it }
 
 	val companies by todosVm.companies.collectAsState()

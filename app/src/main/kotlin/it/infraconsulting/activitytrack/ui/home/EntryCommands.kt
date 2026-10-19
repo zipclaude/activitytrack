@@ -1,6 +1,18 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import java.time.ZoneId
+import java.time.Instant
+import it.infraconsulting.activitytrack.ui.common.reasonText
+import it.infraconsulting.activitytrack.ui.common.parseHhMm
+import it.infraconsulting.activitytrack.ui.common.TimeField
+import it.infraconsulting.activitytrack.ui.common.Importance
+import it.infraconsulting.activitytrack.domain.time.latestAt
+import it.infraconsulting.activitytrack.data.repo.ValidationException
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,6 +51,15 @@ open class EntryCommander(private val entries: EntryRepository) : ActionViewMode
 			_resume.value = entries.suspendedToResume(id)
 	}
 
+	/* at a time the user chose (M17 editable times); [done] closes the dialog */
+	fun commandAt(id: Long, cmd: EntryCommand, atUtcMs: Long, done: () -> Unit) = run(done) {
+		entries.applyAt(id, cmd, atUtcMs)
+		if (cmd == EntryCommand.STOP)
+			_resume.value = entries.suspendedToResume(id)
+	}
+
+	fun invalidTime() = fail(ValidationException.Reason.INVALID_TIME)
+
 	/* stopping: [then] gets whether the entry is under a minute and discardable */
 	fun checkShort(id: Long, then: (Boolean) -> Unit) {
 		var short = false
@@ -61,15 +82,16 @@ open class EntryCommander(private val entries: EntryRepository) : ActionViewMode
  * Runs entry commands the way the Stop button does (owner, 2026-10-18: a
  * swipe Stop asks the same): STOP while working asks "stop now / start the
  * return travel", from TRAVEL it stops at once. Shows its dialogs; returns
- * the dispatcher. [titleOf] names an entry in the dialogs.
+ * the dispatcher. [titleOf] names an entry in the dialogs. With
+ * [editableTimes] (M17) the question always comes, with an end time.
  */
 @Composable
-fun rememberEntryCommands(vm: EntryCommander, titleOf: (Long) -> String): (TimeEntryEntity, EntryCommand) -> Unit {
+fun rememberEntryCommands(vm: EntryCommander, editableTimes: Boolean = false, titleOf: (Long) -> String): (TimeEntryEntity, EntryCommand) -> Unit {
 	var stopping by remember { mutableStateOf<TimeEntryEntity?>(null) }
 	var short by remember { mutableStateOf<TimeEntryEntity?>(null) }
 	val resume by vm.resume.collectAsState()
 	fun stop(e: TimeEntryEntity) {
-		if (e.mode != SegmentKind.TRAVEL)
+		if (editableTimes || e.mode != SegmentKind.TRAVEL)
 			stopping = e
 		else
 			vm.command(e.id, EntryCommand.STOP)
@@ -86,7 +108,8 @@ fun rememberEntryCommands(vm: EntryCommander, titleOf: (Long) -> String): (TimeE
 		)
 	}
 
-	stopping?.let { e ->
+	stopping?.takeIf { editableTimes }?.let { e -> StopAtDialog(e, vm, titleOf(e.id)) { stopping = null } }
+	stopping?.takeIf { !editableTimes }?.let { e ->
 		AlertDialog(
 			onDismissRequest = { stopping = null },
 			title = { Text(stringResource(R.string.stop_title, titleOf(e.id))) },
@@ -112,6 +135,40 @@ fun rememberEntryCommands(vm: EntryCommander, titleOf: (Long) -> String): (TimeE
 		else
 			vm.command(e.id, cmd)
 	}
+}
+
+/*
+ * Stop with an end time (M17): empty = now; a time without date is the
+ * latest one (today, or yesterday if it has not come yet). From work the
+ * return travel starts at the same time.
+ */
+@Composable
+private fun StopAtDialog(e: TimeEntryEntity, vm: EntryCommander, title: String, onClose: () -> Unit) {
+	val error by vm.error.collectAsState()
+	var end by remember { mutableStateOf("") }
+	fun go(cmd: EntryCommand) {
+		val min = parseHhMm(end)
+		when {
+			end.isBlank() -> { vm.command(e.id, cmd); onClose() }
+			min == null || min >= 1440 -> vm.invalidTime()
+			else -> vm.commandAt(e.id, cmd, latestAt(min, Instant.now(), ZoneId.systemDefault()).toEpochMilli(), onClose)
+		}
+	}
+	AlertDialog(
+		onDismissRequest = { vm.clearError(); onClose() },
+		title = { Text(stringResource(R.string.stop_title, title)) },
+		text = {
+			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+				TimeField(stringResource(R.string.field_end), end, { end = it }, clearable = true, importance = Importance.OPTIONAL)
+				Text(stringResource(R.string.time_now_hint), style = MaterialTheme.typography.bodySmall)
+				error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error) }
+			}
+		},
+		confirmButton = { TextButton(onClick = { go(EntryCommand.STOP) }) { Text(stringResource(R.string.cmd_stop)) } },
+		dismissButton = if (e.mode == SegmentKind.TRAVEL) null else ({
+			TextButton(onClick = { go(EntryCommand.TRAVEL) }) { Text(stringResource(R.string.stop_return)) }
+		}),
+	)
 }
 
 /* The buttons a swipe on an open entry reveals (none for closed entries). */
