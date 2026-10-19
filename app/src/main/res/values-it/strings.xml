@@ -303,7 +303,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="connector_not_set">Non impostato</string>
   <string name="connector_generic_hint">Scambio con file JSON / XML da Importa / esporta.</string>
   <string name="todo_title">Da fare</string>
-  <string name="todo_due_today">Da fare oggi</string>
+  <string name="todo_due_today">Da fare · prossime 24 h</string>
   <string name="todo_today">oggi</string>
   <string name="todo_start">Avvia attività</string>
   <string name="todo_mark_done">Segna come fatta</string>
@@ -428,10 +428,11 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="short_text">Probabilmente avviata per errore. La scarto?</string>
   <string name="short_discard">Scarta</string>
   <string name="short_keep">Tieni e termina</string>
-  <string name="todo_filter_today">Oggi</string>
   <string name="sec_notifications">Notifiche</string>
   <string name="notif_settings_hint">Banner, suono e vibrazione di ogni tipo di notifica si impostano in Android: toccane uno per cambiarlo.</string>
   <string name="notif_all">Tutte le notifiche dell\'app</string>
   <string name="agenda_fit">Adatta</string>
   <string name="agenda_scroll">Scorri</string>
+  <string name="todo_filter_next24h">Prossime 24 h</string>
+  <string name="todo_filter_ignored">Ignorate</string>
 </resources>

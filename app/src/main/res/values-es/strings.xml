@@ -303,7 +303,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="connector_not_set">Sin definir</string>
   <string name="connector_generic_hint">Intercambio con archivos JSON / XML desde Importar / exportar.</string>
   <string name="todo_title">Pendientes</string>
-  <string name="todo_due_today">Pendientes de hoy</string>
+  <string name="todo_due_today">Pendientes · próximas 24 h</string>
   <string name="todo_today">hoy</string>
   <string name="todo_start">Iniciar actividad</string>
   <string name="todo_mark_done">Marcar como hecha</string>
@@ -428,10 +428,11 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="short_text">Probablemente iniciada por error. ¿Descartarla?</string>
   <string name="short_discard">Descartar</string>
   <string name="short_keep">Conservar y terminar</string>
-  <string name="todo_filter_today">Hoy</string>
   <string name="sec_notifications">Notificaciones</string>
   <string name="notif_settings_hint">El banner, el sonido y la vibración de cada tipo de notificación se ajustan en Android: toca uno para cambiarlo.</string>
   <string name="notif_all">Todas las notificaciones de la app</string>
   <string name="agenda_fit">Ajustar</string>
   <string name="agenda_scroll">Desplazar</string>
+  <string name="todo_filter_next24h">Próximas 24 h</string>
+  <string name="todo_filter_ignored">Ignorados</string>
 </resources>

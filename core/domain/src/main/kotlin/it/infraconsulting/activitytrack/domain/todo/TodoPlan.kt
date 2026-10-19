@@ -90,3 +90,14 @@ fun dueOverdue(dueDay: LocalDate?, dueMin: Int?, now: Instant, zone: ZoneId): Bo
 	val limit = if (dueMin != null) dueDay.atMinute(dueMin.coerceIn(0, 1440), zone) else dueDay.plusDays(1).atStartOfDay(zone).toInstant()
 	return now.isAfter(limit)
 }
+
+/*
+ * When a to-do next asks for attention: its planned start, else its due
+ * time (a due date without time: the start of that day); null = neither.
+ */
+fun todoMoment(plan: TodoPlan?, dueDay: LocalDate?, dueMin: Int?, zone: ZoneId): Instant? =
+	plan?.start(zone) ?: dueDay?.atMinute((dueMin ?: 0).coerceIn(0, 1440), zone)
+
+/* In the next [hours] (owner, 2026-10-19: not limited to the current day), overdue included. */
+fun withinHours(moment: Instant?, now: Instant, hours: Long = 24): Boolean =
+	moment != null && !moment.isAfter(now.plus(Duration.ofHours(hours)))
