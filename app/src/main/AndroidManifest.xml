@@ -54,6 +54,10 @@
           android:resource="@xml/shortcuts" />
     </activity>
 
+    <!-- Antares: "Send" on the question shown after an entry closed (issue #34). -->
+    <receiver
+        android:name=".connect.antares.AntaresSendReceiver"
+        android:exported="false" />
     <!-- Call recognition (issue #28): end of a call, the number comes from the call log. -->
     <receiver
         android:name=".calls.CallReceiver"

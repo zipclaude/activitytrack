@@ -11,8 +11,8 @@ For a company that reports on Antares, the connector:
 - sends the **closed activities** to Antares, one per day, and updates or
   deletes them when you change them after sending.
 
-The exchange starts only when you tap **Sync**: nothing is sent
-automatically.
+Sending starts when you tap **Sync** or, if you choose so, when an activity
+closes (§5); updates are also downloaded automatically (§5).
 
 ## 2. Requirements
 
@@ -38,6 +38,15 @@ Company screen → **"Management system"** → connector **Antares (Saidea)**:
 
 For tests the app proposes the demo environment (`demo.goantares.uno`).
 
+After the login, in the same screen:
+
+| Field | Values | Default |
+|---|---|---|
+| When an activity closes | Ask whether to send it / Send it without asking / Do nothing | Ask |
+| For | Activities from an Antares ticket / All activities | from a ticket |
+| Send | Full Sync / Only that activity | Full Sync |
+| Download updates | every 15 min, 30 min, 1, 2, 4, 8, 12 or 24 h | every 1 h |
+
 ## 4. Login
 
 - **Log in** opens the Antares login page in the browser; after the login the
@@ -62,6 +71,30 @@ activities (sent, updated, deleted) and the list of those **not sent**, with
 the reason (activity type missing, service or project missing). At the first
 API error Sync stops; what was done stays recorded and the next Sync goes on
 from there.
+
+### Automatic updates
+At the chosen interval (at least 15 minutes: Android's limit for periodic
+work), with the network available, the app downloads services, projects,
+activity types and tickets, **sending nothing**. With the phone idle Android
+may delay it. Every **new ticket** assigned to you comes as a notification
+opening the to-do (more than three: one notification with their number).
+
+### When an activity closes
+When an activity of the company closes (Stop of a complete activity, or
+"Complete") and falls within **"For"**:
+- **Ask whether to send it**: with the app open the question "Send the
+  activity to Antares now?" appears; with the app in the background a
+  notification with **"Send now"** comes;
+- **Send it without asking**: it starts at once.
+
+Sending runs a **Full Sync** or sends **only that activity** ("Send"
+option), with the updates in both cases. Without network it stays **queued**
+and starts as soon as the network is back; on errors it retries several
+times at growing intervals, then reports it with a notification. When the
+activity lacks its type or service, a notification says so and opens it.
+
+Notifications use the **"Management systems"** channel (Settings →
+Notifications).
 
 ## 6. In the activity
 
@@ -96,3 +129,4 @@ proposed. The section also shows whether and when the activity was sent.
 | The browser does not return to the app after login | Redirect URI not registered or spelled differently |
 | No service or project for a client | the client's management-system code does not match the Antares code |
 | Activities "not sent" in the report | fill in the activity's Antares section and Sync again |
+| Updates arrive late | Android postpones periodic work when idle and in battery saver; "Sync" downloads them at once |

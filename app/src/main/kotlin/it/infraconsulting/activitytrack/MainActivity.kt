@@ -79,7 +79,10 @@ class MainActivity : ComponentActivity() {
 		val settings = (application as ActivityTrackApp).container.settings.settings
 		setContent {
 			val compact by settings.map { it.compactDisplay }.collectAsState(initial = false)
-			ActivityTrackTheme(compact) { Root(deepLink.value) { deepLink.value = null } }
+			ActivityTrackTheme(compact) {
+				Root(deepLink.value) { deepLink.value = null }
+				it.infraconsulting.activitytrack.connect.antares.AntaresCloseDialog((application as ActivityTrackApp).antaresWatcher)
+			}
 		}
 	}
 

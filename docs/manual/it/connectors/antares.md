@@ -11,8 +11,8 @@ Per un'azienda che rendiconta su Antares, il connettore:
 - invia ad Antares le **attività chiuse**, una per giorno, e le aggiorna o le
   cancella se le modifichi dopo l'invio.
 
-Lo scambio parte solo quando tocchi **Sync**: nulla viene inviato in
-automatico.
+L'invio parte quando tocchi **Sync** o, se lo scegli, alla chiusura di
+un'attività (§5); gli aggiornamenti si scaricano anche in automatico (§5).
 
 ## 2. Requisiti
 
@@ -37,6 +37,15 @@ Scheda azienda → **"Gestionale"** → connettore **Antares (Saidea)**:
 | Pausa che spezza l'attività | minuti oltre i quali una pausa divide l'attività in due | 60 |
 
 Per le prove l'app propone l'ambiente demo (`demo.goantares.uno`).
+
+Dopo l'accesso, nella stessa scheda:
+
+| Campo | Valori | Predefinito |
+|---|---|---|
+| Alla chiusura di un'attività | Chiedi se inviarla / Inviala senza chiedere / Non fare nulla | Chiedi |
+| Per | Attività da ticket Antares / Tutte le attività | da ticket |
+| Invio | Sync completo / Solo quell'attività | Sync completo |
+| Scarica gli aggiornamenti | ogni 15 min, 30 min, 1, 2, 4, 8, 12 o 24 h | ogni 1 h |
 
 ## 4. Accesso
 
@@ -64,6 +73,31 @@ attività (inviate, aggiornate, eliminate) e l'elenco di quelle **non
 inviate**, con il motivo (manca il tipo di attività, manca il servizio o il
 progetto). Al primo errore dell'API il Sync si ferma; quanto già fatto resta
 registrato e il Sync successivo riprende da lì.
+
+### Aggiornamenti automatici
+Ogni intervallo scelto (minimo 15 minuti: è il limite di Android per i
+lavori periodici), con la rete disponibile, l'app scarica servizi,
+progetti, tipi di attività e ticket, **senza inviare nulla**. Con il
+telefono in standby Android può ritardarlo. Ogni **nuovo ticket**
+assegnato a te arriva come notifica che apre la voce *Da fare* (se sono
+più di tre, una notifica sola con il numero).
+
+### Alla chiusura di un'attività
+Quando un'attività dell'azienda si chiude (Stop di un'attività completa,
+oppure "Completa"), se rientra in **"Per"**:
+- **Chiedi se inviarla**: con l'app aperta compare la domanda "Inviare
+  subito l'attività ad Antares?"; con l'app in secondo piano arriva una
+  notifica con **"Invia ora"**;
+- **Inviala senza chiedere**: parte subito.
+
+L'invio fa un **Sync completo** o invia **solo quell'attività**
+(opzione "Invio"), in entrambi i casi insieme agli aggiornamenti. Se
+manca la rete resta **in coda** e parte appena torna; in caso di errore
+riprova più volte a intervalli crescenti, poi lo segnala con una
+notifica. Se all'attività manca il tipo o il servizio, una notifica
+lo dice e apre l'attività.
+
+Le notifiche usano il canale **"Gestionali"** (Impostazioni → Notifiche).
 
 ## 6. Nell'attività
 
@@ -100,3 +134,4 @@ inviata e quando.
 | Il browser non torna all'app dopo il login | Redirect URI non registrato o scritto diversamente |
 | Nessun servizio o progetto per un cliente | il codice nel gestionale del cliente non corrisponde al codice Antares |
 | Attività "non inviate" nel resoconto | completa la sezione Antares dell'attività e rifai Sync |
+| Gli aggiornamenti arrivano in ritardo | Android rinvia i lavori periodici in standby e con il risparmio energetico; "Sync" li scarica subito |

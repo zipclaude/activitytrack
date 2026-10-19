@@ -33,6 +33,8 @@ data class AntaresSyncReport(
 	/* entry title → why it was not sent */
 	val skipped: List<Pair<String, String>> = emptyList(),
 	val errors: List<String> = emptyList(),
+	/* tickets that became to-dos in this sync: to-do id → title (issue #34: notified) */
+	val newTickets: List<Pair<Long, String>> = emptyList(),
 )
 
 /*
@@ -46,12 +48,14 @@ data class AntaresSyncReport(
  *    day and block (AntaresPlan), POST when new, PUT when changed since
  *    the last send (hash of the payload), DELETE for blocks gone.
  * Stops at the first API error of a phase; what was done stays recorded.
+ * Issue #34: [send] false = download only (scheduled fetch); [entryId] =
+ * send only that entry (Sync at its closing, "entry" mode).
  */
 class AntaresSync(private val app: ActivityTrackApp) {
 	private val c get() = app.container
 	private val dao get() = c.remote
 
-	suspend fun sync(companyId: Long): AntaresSyncReport = lock.withLock {
+	suspend fun sync(companyId: Long, send: Boolean = true, entryId: Long? = null): AntaresSyncReport = lock.withLock {
 		val company = c.masterData.company(companyId) ?: error("company $companyId")
 		val config = AntaresConfig.of(company.connectorConfig)
 		val api = AntaresApi(app.antares, companyId, config)
@@ -116,17 +120,23 @@ class AntaresSync(private val app: ActivityTrackApp) {
 				done = if (open) base.done else true,
 				updatedUtcMs = now,
 			)
-			if (t != existing) dao.saveTodo(t)
+			if (t != existing) {
+				val todoId = dao.saveTodo(t)
+				if (existing == null)
+					report = report.copy(newTickets = report.newTickets + (todoId to t.title))
+			}
 			tickets++
 		}
 		report = report.copy(tickets = tickets)
+		if (!send)
+			return@withLock report
 
 		/* 3. closed entries */
 		val s = c.settings.current()
 		val zoneOf = { id: String -> runCatching { ZoneId.of(id) }.getOrDefault(ZoneId.systemDefault()) }
 		val split = Duration.ofMinutes(json.optLong(PAUSE_SPLIT, 60).coerceAtLeast(1))
 		val policy = DayAttributionPolicy(LocalTime.of(s.carryOverMin / 60, s.carryOverMin % 60))
-		for (e in dao.entriesToSync(companyId)) {
+		for (e in dao.entriesToSync(companyId).filter { entryId == null || it.id == entryId }) {
 			val title = e.clientId?.let { id -> clients.firstOrNull { it.id == id }?.name } ?: company.name
 			val todo = e.todoId?.let { dao.todo(it) }
 			val ticket = todo?.takeIf { it.companyId == companyId && it.remotePortfolioId != null }?.externalKey

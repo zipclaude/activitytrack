@@ -106,6 +106,7 @@ fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
 							syncing = false
 						}
 					}) { Text(stringResource(if (syncing) R.string.antares_syncing else R.string.antares_sync)) }
+				AntaresOptions(company, config, vm)
 				Text(stringResource(R.string.antares_redirect_hint, app.antares.redirectUri), style = MaterialTheme.typography.bodySmall)
 				error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 			}
@@ -160,4 +161,41 @@ private fun SyncReportDialog(r: Result<it.infraconsulting.activitytrack.connect.
 		},
 		confirmButton = { androidx.compose.material3.TextButton(onClick = onClose) { Text(stringResource(R.string.action_ok)) } },
 	)
+}
+
+/* Issue #34: what closing an entry does, and how often the updates are downloaded. */
+@Composable
+private fun AntaresOptions(company: CompanyEntity, config: JSONObject, vm: MasterDataViewModel) {
+	fun set(key: String, value: String) = vm.save(company.copy(connectorConfig = JSONObject(config.toString()).put(key, value).toString())) {}
+	ChoiceField(
+		stringResource(R.string.antares_close_mode),
+		listOf(
+			AntaresConnector.MODE_ASK to stringResource(R.string.antares_close_ask),
+			AntaresConnector.MODE_ALWAYS to stringResource(R.string.antares_close_always),
+			AntaresConnector.MODE_OFF to stringResource(R.string.antares_close_off),
+		),
+		config.optString(AntaresConnector.CLOSE_MODE).ifEmpty { AntaresConnector.MODE_ASK },
+	) { set(AntaresConnector.CLOSE_MODE, it) }
+	ChoiceField(
+		stringResource(R.string.antares_close_scope),
+		listOf(
+			AntaresConnector.SCOPE_TICKETS to stringResource(R.string.antares_scope_tickets),
+			AntaresConnector.SCOPE_ALL to stringResource(R.string.antares_scope_all),
+		),
+		config.optString(AntaresConnector.CLOSE_SCOPE).ifEmpty { AntaresConnector.SCOPE_TICKETS },
+	) { set(AntaresConnector.CLOSE_SCOPE, it) }
+	ChoiceField(
+		stringResource(R.string.antares_close_sync),
+		listOf(
+			AntaresConnector.SYNC_FULL to stringResource(R.string.antares_sync_full),
+			AntaresConnector.SYNC_ENTRY to stringResource(R.string.antares_sync_entry),
+		),
+		config.optString(AntaresConnector.CLOSE_SYNC).ifEmpty { AntaresConnector.SYNC_FULL },
+	) { set(AntaresConnector.CLOSE_SYNC, it) }
+	val every = stringResource(R.string.antares_fetch_every)
+	ChoiceField(
+		stringResource(R.string.antares_fetch),
+		AntaresConnector.FETCH_CHOICES.map { m -> m to every.format(if (m < 60) "$m min" else "${m / 60} h") },
+		AntaresConnector.fetchMinutes(config.optString(AntaresConnector.FETCH_MIN)),
+	) { set(AntaresConnector.FETCH_MIN, it.toString()) }
 }

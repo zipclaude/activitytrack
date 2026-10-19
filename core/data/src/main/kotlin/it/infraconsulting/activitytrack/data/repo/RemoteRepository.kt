@@ -42,9 +42,8 @@ class RemoteRepository(private val db: ActivityTrackDatabase) {
 
 	suspend fun todoByKey(companyId: Long, key: String): TodoEntity? = todos.byExternalKey(companyId, key)
 	suspend fun todo(id: Long): TodoEntity? = todos.byId(id)
-	suspend fun saveTodo(t: TodoEntity) {
-		if (t.id == 0L) todos.insert(t) else todos.update(t)
-	}
+	suspend fun saveTodo(t: TodoEntity): Long =
+		if (t.id == 0L) todos.insert(t) else t.id.also { todos.update(t) }
 
 	suspend fun entriesToSync(companyId: Long): List<TimeEntryEntity> = dao.entriesToSync(companyId)
 	suspend fun segments(entryId: Long): List<SegmentEntity> = dao.segmentsOf(entryId)
