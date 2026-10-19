@@ -40,6 +40,7 @@ class CsvExporter(
 					r.km?.let { number(BigDecimal.valueOf(it), 1) }.orEmpty(),
 					if (r.expensesCents == 0L) "" else number(BigDecimal.valueOf(r.expensesCents, 2), 2),
 					r.notes, r.externalRefs.joinToString(", "), r.locality,
+					r.tags.joinToString(" ") { "#$it" },
 				),
 			)
 		w.flush()
@@ -70,6 +71,8 @@ class CsvExporter(
 			"work_hours", "pause_hours", "travel_hours",
 			"company", "client", "role", "activity",
 			"km", "expenses_eur", "notes", "external_refs", "locality",
+			/* M15: added at the end, the earlier columns keep their positions */
+			"tags",
 		)
 		private val DATE = DateTimeFormatter.ISO_LOCAL_DATE
 		private val TIME = DateTimeFormatter.ofPattern("HH:mm")

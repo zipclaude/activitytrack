@@ -70,6 +70,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
 | M14 fields | **implemented** (branch `m14-fields`): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home; device test pending |
+| M15 tags, segments | **implemented** (branch `m15-tags-segments`, on top of M14): backlog 11 and 13 (schema v7); device test pending |
 | M13 backlog | **done** (PR #15, on `main`, v0.4.2): backlog items 2, 4, 5, 6, 7, 8, 9, 10, 12; device-tested 2026-10-18 |
 | M12 colours | **done** (PR #14, on `main`, v0.4.1): company/client colours, card bands, to-do company filter, agenda colours (schema v6); device-tested 2026-10-18 |
 | M11 UI | **done** (PR #13, on `main`, release v0.4.0): start/travel on the empty card and the bar, compact display, quick add; device-tested 2026-10-18 |
@@ -142,10 +143,10 @@ lists show ignored to-dos and for how long (proposal: Home only on the day they
 were ignored; To-dos list always, at the bottom).
 
 ### Backlog (owner notes, 2026-10-18)
-Done in M13: 2, 4, 5, 6, 7, 8, 9, 10, 12. Open: 1, 3, 11, 13 (answers 2026-10-18:
-11 yes, an edited tracked segment becomes "corrected by hand" and keeps its
-original times; 13 yes as proposed, filters by tag in agenda and reports
-later; 1 yes as proposed, manual order by dragging; 3 mockup first).
+Done in M13: 2, 4, 5, 6, 7, 8, 9, 10, 12; in M14: 14; in M15: 11, 13. Open: 1
+(yes as proposed, manual order by dragging), 3 (mockup on the canvas, row 4:
+A strip / B grid, waiting for the owner's choice); tag filters in agenda and
+reports later.
 14. Show the company and client colour in the drop-down lists too (done in M14).
 Owner notes 2026-10-19 (done in M14): to-dos in the next 24 hours, not the
 current day; Home keeps the last 2/3 completed entries; field borders by

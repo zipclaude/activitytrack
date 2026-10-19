@@ -58,6 +58,18 @@ class CalendarEventsTest {
 	}
 
 	@Test
+	fun entryTagsFollowTheKindTags() {
+		val tagged = labels.copy(tags = EventTags("#work", "#travel", "#pause", "#planned"))
+		val days = listOf(DayTotals(day, Duration.ofMinutes(110), Duration.ofMinutes(110), listOf(line(1, 110))))
+		val m = meta("Bank").copy(tags = listOf("remoto", "urgente"))
+		val e = CalendarEvents.plan(days, mapOf(1L to m), mapOf(1L to "u-1"), mapOf(1L to 5L), tagged).single()
+		assertEquals("Work 2:00\n#work #remoto #urgente", e.description)
+		/* without kind tags the entry tags still make the last line */
+		val plain = CalendarEvents.plan(days, mapOf(1L to m), mapOf(1L to "u-1"), mapOf(1L to 5L), labels).single()
+		assertEquals("Work 2:00\n#remoto #urgente", plain.description)
+	}
+
+	@Test
 	fun plannedTodoIsTentativeWithItsTag() {
 		val tagged = labels.copy(tags = EventTags(planned = "#planned"))
 		val e = CalendarEvents.planTodos(
