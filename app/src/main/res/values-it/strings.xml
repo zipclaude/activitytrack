@@ -462,4 +462,5 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="grid_exact">Orario esatto</string>
   <!-- M19 tag filters -->
   <string name="tag_filter_all">Tutti i tag</string>
+  <string name="more_details">Altri dettagli</string>
 </resources>

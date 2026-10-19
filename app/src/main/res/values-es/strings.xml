@@ -462,4 +462,5 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="grid_exact">Hora exacta</string>
   <!-- M19 tag filters -->
   <string name="tag_filter_all">Todas las etiquetas</string>
+  <string name="more_details">Más detalles</string>
 </resources>

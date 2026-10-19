@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.todo
 
+import it.infraconsulting.activitytrack.ui.common.companyColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -341,7 +342,7 @@ private fun bands(list: List<TodoEntity>, companies: List<CompanyEntity>, client
 	val one = list.map { it.companyId }.distinct().size == 1
 	val co = companies.associate { it.id to it.color }
 	val cl = clients.associate { it.id to it.color }
-	return list.associate { t -> t.id to if (one) t.clientId?.let { cl[it] } else co[t.companyId] }
+	return list.associate { t -> t.id to if (one) t.clientId?.let { cl[it] } else companyColor(t.companyId, co[t.companyId]) }
 }
 
 /*
