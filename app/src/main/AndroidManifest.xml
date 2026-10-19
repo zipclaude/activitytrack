@@ -7,6 +7,9 @@
   <!-- Voice notes (M3), asked at first use. -->
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <!-- issue #28: call recognition, asked only when enabled in Settings -> Calls -->
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+  <uses-permission android:name="android.permission.READ_CALL_LOG" />
   <!-- Optional online services (A10): Nominatim, OSRM, map tiles. -->
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -50,6 +53,16 @@
           android:name="android.app.shortcuts"
           android:resource="@xml/shortcuts" />
     </activity>
+
+    <!-- Call recognition (issue #28): end of a call, the number comes from the call log. -->
+    <receiver
+        android:name=".calls.CallReceiver"
+        android:exported="true"
+        android:permission="android.permission.READ_PHONE_STATE">
+      <intent-filter>
+        <action android:name="android.intent.action.PHONE_STATE" />
+      </intent-filter>
+    </receiver>
 
     <!-- Notification actions; explicit intents only. -->
     <receiver
