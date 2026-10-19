@@ -77,6 +77,9 @@ fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
 			val user = config.optString(AntaresConnector.USERNAME)
 			val logged = app.antares.loggedIn(company.id)
 			var error by remember { mutableStateOf<String?>(null) }
+			var syncing by remember { mutableStateOf(false) }
+			var result by remember { mutableStateOf<Result<it.infraconsulting.activitytrack.connect.antares.AntaresSyncReport>?>(null) }
+			result?.let { r -> SyncReportDialog(r) { result = null } }
 			Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
 				Text(
 					if (logged) stringResource(R.string.antares_connected_as, user.ifEmpty { "?" }) else stringResource(R.string.antares_not_connected),
@@ -95,6 +98,14 @@ fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
 							Text(stringResource(R.string.antares_logout))
 						}
 				}
+				if (logged)
+					androidx.compose.material3.Button(enabled = !syncing, onClick = {
+						syncing = true
+						scope.launch {
+							result = runCatching { it.infraconsulting.activitytrack.connect.antares.AntaresSync(app).sync(company.id) }
+							syncing = false
+						}
+					}) { Text(stringResource(if (syncing) R.string.antares_syncing else R.string.antares_sync)) }
 				Text(stringResource(R.string.antares_redirect_hint, app.antares.redirectUri), style = MaterialTheme.typography.bodySmall)
 				error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 			}
@@ -127,4 +138,26 @@ fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
 			},
 		) { TextInput(f.label, value, { value = it }) }
 	}
+}
+
+/* What "Sync" did: counts, entries left out with the reason, or the error. */
+@Composable
+private fun SyncReportDialog(r: Result<it.infraconsulting.activitytrack.connect.antares.AntaresSyncReport>, onClose: () -> Unit) {
+	androidx.compose.material3.AlertDialog(
+		onDismissRequest = onClose,
+		title = { Text(stringResource(R.string.antares_sync_title)) },
+		text = {
+			Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+				r.onSuccess { s ->
+					Text(stringResource(R.string.antares_sync_counts, s.portfolios, s.tickets, s.sent, s.updated, s.deleted))
+					if (s.skipped.isNotEmpty()) {
+						Text(stringResource(R.string.antares_sync_skipped), style = MaterialTheme.typography.titleSmall)
+						for ((title, why) in s.skipped.take(20))
+							Text("• $title: " + stringResource(if (why == "activity type") R.string.antares_missing_type else R.string.antares_missing_portfolio), style = MaterialTheme.typography.bodySmall)
+					}
+				}.onFailure { Text(it.message.orEmpty(), color = MaterialTheme.colorScheme.error) }
+			}
+		},
+		confirmButton = { androidx.compose.material3.TextButton(onClick = onClose) { Text(stringResource(R.string.action_ok)) } },
+	)
 }

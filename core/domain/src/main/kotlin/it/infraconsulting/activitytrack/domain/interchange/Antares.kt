@@ -21,11 +21,14 @@ object AntaresConnector : Connector {
 		SettingField(API_URL, "API URL"),
 		SettingField(IDENTITY_URL, "Identity provider"),
 		SettingField(CLIENT_ID, "Client ID"),
+		SettingField(PAUSE_SPLIT_MIN, "Pause splitting the activity (min)"),
 	)
 
 	const val API_URL = "api_url"
 	const val IDENTITY_URL = "identity_url"
 	const val CLIENT_ID = "client_id"
+	/* a pause longer than this splits the activity (owner, 2026-10-19; default 60) */
+	const val PAUSE_SPLIT_MIN = "pause_split_min"
 	/* filled by the app after login (/me/claims) */
 	const val PERSON_ID = "person_id"
 	const val USERNAME = "username"

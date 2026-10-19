@@ -504,4 +504,19 @@ Tap the green play button below to start one.</string>
   <string name="antares_logged_in">Antares: connected as %1$s</string>
   <string name="antares_login_failed">Antares login failed: %1$s</string>
   <string name="antares_redirect_hint">Redirect URI to register: %1$s</string>
+  <string name="antares_portfolio">Service or project</string>
+  <string name="antares_activity_type">Activity type</string>
+  <string name="antares_included">Included in the contract</string>
+  <string name="antares_on_ticket">Reported on the Antares ticket</string>
+  <string name="antares_not_sent">Not sent to Antares yet</string>
+  <string name="antares_sent_at">Sent to Antares on %1$s</string>
+  <string name="antares_service">Service</string>
+  <string name="antares_project">Project</string>
+  <string name="antares_sync">Sync</string>
+  <string name="antares_syncing">Syncing…</string>
+  <string name="antares_sync_title">Antares sync</string>
+  <string name="antares_sync_counts">Active services and projects: %1$d · tickets: %2$d · activities sent: %3$d, updated: %4$d, removed: %5$d</string>
+  <string name="antares_sync_skipped">Not sent:</string>
+  <string name="antares_missing_type">activity type missing</string>
+  <string name="antares_missing_portfolio">service or project missing</string>
 </resources>

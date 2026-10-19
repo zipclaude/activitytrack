@@ -23,6 +23,9 @@ class AntaresApi(private val auth: AntaresAuth, private val companyId: Long, pri
 	suspend fun list(path: String, query: Map<String, String> = emptyMap()): JSONArray = JSONArray(get(path, query))
 	suspend fun post(path: String, body: JSONObject): JSONObject = JSONObject(call("POST", path, emptyMap(), body.toString()))
 	suspend fun put(path: String, body: JSONObject): JSONObject = JSONObject(call("PUT", path, emptyMap(), body.toString()))
+	suspend fun delete(path: String) {
+		call("DELETE", path, emptyMap(), null)
+	}
 
 	/* Who the token belongs to: person id (the activities' OwnerId) and username. */
 	suspend fun me(): Pair<String, String> {

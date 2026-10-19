@@ -159,6 +159,20 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v9ToV10AddsAntares() {
+		helper.createDatabase(DB, 9).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+		}
+		helper.runMigrationsAndValidate(DB, 10, true).use { db ->
+			db.execSQL("INSERT INTO remote_portfolio (id, company_id, kind, name, active) VALUES ('p1', 1, 'SERVICE', 'Assistenza', 1)")
+			db.query("SELECT COUNT(*) FROM remote_portfolio").use { c ->
+				c.moveToFirst()
+				assertEquals(1, c.getInt(0))
+			}
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

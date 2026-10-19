@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.repo
 
+import it.infraconsulting.activitytrack.data.db.RemoteActivityTypeEntity
+import it.infraconsulting.activitytrack.data.db.RemotePortfolioEntity
 import it.infraconsulting.activitytrack.data.db.ActivityPresetEntity
 import it.infraconsulting.activitytrack.domain.settings.OrderedList
 import it.infraconsulting.activitytrack.domain.settings.ListOrder
@@ -167,6 +169,26 @@ class RepositoryTest {
 		assertEquals(clock.millis() + 1_800_000, db.entryDao().entry(open)?.plannedEndUtcMs)
 		entries.clearPlannedEnd(open)
 		assertNull(db.entryDao().entry(open)?.plannedEndUtcMs)
+	}
+
+	@Test
+	fun antaresEntriesAndProposal() = runBlocking<Unit> {
+		val remote = RemoteRepository(db)
+		remote.replacePortfolios(acme, listOf(RemotePortfolioEntity("p1", acme, "SERVICE", "Assistenza", "c-1")))
+		remote.replaceTypes("p1", listOf(RemoteActivityTypeEntity("p1", "t1", "On site", included = true)))
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Patch"))
+		clock.advance(60)
+		entries.apply(id, EntryCommand.STOP)
+		/* closed but without Antares data: not to sync */
+		assertEquals(emptyList(), remote.entriesToSync(acme).map { it.id })
+		remote.setEntryRemote(id, "p1", "t1", true)
+		assertEquals(listOf(id), remote.entriesToSync(acme).map { it.id })
+		/* the next entry on the client is proposed the same service and type */
+		val last = remote.lastOnClient(client)!!
+		assertEquals("p1" to "t1", last.remotePortfolioId to last.remoteActivityTypeId)
+		/* a service gone from the remote system becomes inactive */
+		remote.replacePortfolios(acme, emptyList())
+		assertEquals(false, remote.portfolio("p1")?.active)
 	}
 
 	@Test

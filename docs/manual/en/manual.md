@@ -475,6 +475,29 @@ with the reason. Importing the same file again creates no duplicates.
 replaces all data with a chosen backup: first it saves the current data as
 `…-before-restore.zip`, then it restarts the app.
 
+### Antares (Saidea management system)
+For a company on Antares: company screen → "Management system" → connector
+**Antares (Saidea)**.
+- **API URL**, **Identity provider** and **Client ID** come from Saidea (the
+  demo environment is proposed for tests); **Pause splitting the activity** is
+  in minutes (default 60).
+- **Log in** opens the Antares login page in the browser; back in the app the
+  screen shows "Connected as …". The app keeps no password and no secret:
+  only a refresh token, encrypted on the phone. **Log out** deletes it.
+- **Sync** downloads services, projects, activity types and the tickets
+  assigned to you (they become to-dos; those closed in Antares are marked
+  done), then sends the closed activities not sent yet or changed since, and
+  shows a report (including the activities not sent, and why).
+- In an activity of that company, the **Antares** section: service or project
+  (filtered on the client when the client has its Antares code), activity
+  type, "Included in the contract"; an activity started from a ticket needs
+  only the type. The ones of the last activity on the same client are
+  proposed.
+- How it is sent: one Antares activity per report day, from the start of the
+  first work segment, its length rounded by the work rule with the pauses
+  inside; a pause longer than the threshold splits it in two; travel goes into
+  the travel minutes and km of the nearest activity.
+
 ---
 
 ## 12. Calendar

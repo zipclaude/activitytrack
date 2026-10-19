@@ -493,4 +493,19 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="antares_logged_in">Antares: conectado como %1$s</string>
   <string name="antares_login_failed">Error de acceso a Antares: %1$s</string>
   <string name="antares_redirect_hint">Redirect URI a registrar: %1$s</string>
+  <string name="antares_portfolio">Servicio o proyecto</string>
+  <string name="antares_activity_type">Tipo de actividad</string>
+  <string name="antares_included">Incluida en el contrato</string>
+  <string name="antares_on_ticket">Registrada en el ticket de Antares</string>
+  <string name="antares_not_sent">Aún no enviada a Antares</string>
+  <string name="antares_sent_at">Enviada a Antares el %1$s</string>
+  <string name="antares_service">Servicio</string>
+  <string name="antares_project">Proyecto</string>
+  <string name="antares_sync">Sync</string>
+  <string name="antares_syncing">Sincronizando…</string>
+  <string name="antares_sync_title">Sincronización Antares</string>
+  <string name="antares_sync_counts">Servicios y proyectos activos: %1$d · tickets: %2$d · actividades enviadas: %3$d, actualizadas: %4$d, eliminadas: %5$d</string>
+  <string name="antares_sync_skipped">No enviadas:</string>
+  <string name="antares_missing_type">falta el tipo de actividad</string>
+  <string name="antares_missing_portfolio">falta el servicio o proyecto</string>
 </resources>

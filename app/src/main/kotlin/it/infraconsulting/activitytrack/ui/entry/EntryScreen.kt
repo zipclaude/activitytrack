@@ -210,6 +210,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			}
 
 			item { TagsSection(vm) }
+			item { AntaresSection(e.id) }
 			item { SectionHeader(stringResource(R.string.external_refs)) }
 			items(refs, key = { "r${it.id}" }) { r ->
 				ClickableRow(r.value, refKindLabel(r.kind)) { deletingRef = r }
