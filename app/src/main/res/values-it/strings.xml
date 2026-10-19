@@ -460,4 +460,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="grid_this">questo tratto</string>
   <string name="grid_others">altre attività</string>
   <string name="grid_exact">Orario esatto</string>
+  <!-- M19 tag filters -->
+  <string name="tag_filter_all">Tutti i tag</string>
 </resources>

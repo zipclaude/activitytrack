@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.report
 
+import it.infraconsulting.activitytrack.ui.common.TagFilterChip
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -69,6 +73,8 @@ fun DayScreen(onBack: (() -> Unit)?, onOpenEntry: (Long) -> Unit, onExport: () -
 	val vm = appViewModel { DayViewModel(it.reports, it.settings) }
 	val day by vm.day.collectAsState()
 	val loaded by vm.report.collectAsState()
+	/* tag filter (M19): lines and totals of the entries with that tag */
+	var tag by rememberSaveable { mutableStateOf<String?>(null) }
 	val locale = LocalConfiguration.current.locales[0]
 	val fmt = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
 
@@ -96,28 +102,40 @@ fun DayScreen(onBack: (() -> Unit)?, onOpenEntry: (Long) -> Unit, onExport: () -
 					Text(stringResource(R.string.day_today))
 				}
 			val report = loaded?.takeIf { it.first == day }?.second
-			if (report != null)
-				DayContent(report, vm.zone, onOpenEntry)
+			if (report != null) {
+				Row(Modifier.padding(horizontal = 16.dp)) {
+					TagFilterChip(report.meta.values.flatMap { it.tags }.distinct(), tag) { tag = it }
+				}
+				DayContent(report, tag, vm.zone, onOpenEntry)
+			}
 		}
 	}
 }
 
 @Composable
-private fun DayContent(report: Report, zone: ZoneId, onOpenEntry: (Long) -> Unit) {
+private fun DayContent(report: Report, tag: String?, zone: ZoneId, onOpenEntry: (Long) -> Unit) {
 	val totals = report.days.firstOrNull()
+	val lines = totals?.lines.orEmpty().filter { tag == null || tag in report.meta[it.entryId]?.tags.orEmpty() }
 	LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 		item {
 			Row(
 				modifier = Modifier.fillMaxWidth().padding(16.dp),
 				horizontalArrangement = Arrangement.SpaceEvenly,
 			) {
-				Total(stringResource(R.string.day_solar), totals?.solar ?: Duration.ZERO)
-				Total(stringResource(R.string.day_reported), totals?.reported ?: Duration.ZERO)
+				/* with a tag: the exact work and travel of those entries instead of the day's span */
+				Total(
+					stringResource(R.string.day_solar),
+					if (tag == null) totals?.solar ?: Duration.ZERO else lines.fold(Duration.ZERO) { a, l -> a + l.work + l.travel },
+				)
+				Total(
+					stringResource(R.string.day_reported),
+					if (tag == null) totals?.reported ?: Duration.ZERO else lines.fold(Duration.ZERO) { a, l -> a + l.reported },
+				)
 			}
 		}
-		if (totals == null)
+		if (lines.isEmpty())
 			item { EmptyText(stringResource(R.string.day_empty)) }
-		items(totals?.lines.orEmpty(), key = { it.entryId }) { line ->
+		items(lines, key = { it.entryId }) { line ->
 			LineCard(line, report, zone) { onOpenEntry(line.entryId) }
 		}
 	}

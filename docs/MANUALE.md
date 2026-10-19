@@ -1,9 +1,22 @@
 # ActivityTrack — manuale d'uso
 
-Versione 0.1.0 (sviluppo fino alla milestone M9, 18 ottobre 2026).
-Le funzioni di M4–M9 (importazione/esportazione, calendario, agenda, grafica,
-attività pianificate) sono state scritte ma non ancora provate sul telefono: segnalare ogni
-differenza tra questo manuale e l'app.
+Versione 0.5.0 (19 ottobre 2026). Segnalare ogni differenza tra questo
+manuale e l'app.
+
+**Novità della 0.5.0**
+- Bordi dei campi per importanza (rosso → verde, giallo, blu) e colori di
+  aziende e clienti nei menu (§3).
+- *Da fare* delle prossime 24 ore invece che del solo giorno, filtro per le
+  ignorate, ultime attività completate in Home (§3, §8).
+- Tag sulle attività, con ricerca e filtri in Agenda, Report ed esportazione
+  (§6, §7, §11).
+- Tratti modificabili ed eliminabili; opzione **"Orari modificabili"**
+  (attiva all'inizio) con orario di inizio all'avvio e di fine allo Stop
+  (§4, §5, §6, §14).
+- Ordine degli elenchi delle anagrafiche: A–Z, ultimo uso o manuale con
+  trascinamento (§10).
+- Orari scelti su una **griglia a 5 minuti** (§3).
+- Eventi del calendario **privati** (§12).
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
 telefono in un'altra lingua l'app usa inglese, tedesco o spagnolo.
@@ -76,7 +89,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre, "Da fare oggi" |
+| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre, ultime completate, "Da fare · prossime 24 h" |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
 | **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Impostazioni" (con "Gesti") |
@@ -124,7 +137,7 @@ colore dell'azienda; quando la lista mostra una sola azienda, la banda ha il
 colore del **cliente**. L'Agenda usa i colori scelti (le aziende senza colore
 ne hanno uno automatico).
 
-Accanto a "Da fare oggi" (e nella schermata "Da fare") il pulsante **"Tutte
+Accanto a "Da fare · prossime 24 h" (e nella schermata "Da fare") il pulsante **"Tutte
 le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
 lo togli con la ✕. Le attività in corso non vengono filtrate. Nella schermata
 "Da fare" il filtro **"Prossime 24 h"** mostra solo le voci delle prossime 24
@@ -168,13 +181,14 @@ I campi facoltativi hanno la ✕ per svuotarli.
 
 ## 4. Avviare un'attività
 
-Pulsante **verde con il play** in fondo alla Home ("Avvia attività").
+In Home: **▶ Avvia** nel riquadro "Nessuna attività in corso" (o trascinalo a
+sinistra), oppure **▶** nella barra in alto quando altre attività sono aperte.
 
 Nella schermata "Nuova attività":
 - **Lavoro / Viaggio** in alto: un viaggio può partire senza cliente.
 - **Azienda** filtra i clienti; **Cliente** è una casella in cui scrivere per
-  cercare (maiuscole e accenti non contano) oppure scegliere dall'elenco, con i
-  più recenti in cima.
+  cercare (maiuscole e accenti non contano) oppure scegliere dall'elenco,
+  nell'ordine scelto in Anagrafiche (all'inizio i più recenti in cima).
 - Se ti trovi entro il raggio di una sede, cliente e azienda sono già proposti;
   altrimenti l'app propone l'azienda dell'ultima attività di oggi.
 - **Descrizione** e **ruolo** vengono proposti dall'ultima attività sullo
@@ -309,6 +323,10 @@ oggi; a destra il totale rendicontato del periodo).
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
+**Filtro per tag**: il chip "Tutti i tag ▾" accanto alle modalità (compare
+quando nel periodo ci sono attività con tag) mostra solo le attività con quel
+tag; le *Da fare* si nascondono e i totali contano solo ciò che si vede.
+
 Ogni azienda ha il suo colore. Toccando un'attività si apre la sua scheda;
 toccando una *Da fare* si aprono le sue azioni (avvia, posticipa, fatta,
 ripianifica).
@@ -321,6 +339,10 @@ prossima mezz'ora; altri giorni: le 09:00).
 ### Report
 Il report di un giorno: totale solare e rendicontato, una riga per attività
 con lavoro, viaggio e pausa reali → arrotondati; da qui anche l'esportazione.
+Con il filtro per tag restano le attività con quel tag: il rendicontato è la
+loro somma, il "solare" la somma di lavoro e viaggio esatti. Anche
+l'esportazione ha il campo **Tag** (solo le attività con quel tag; le altre
+sezioni dell'interscambio non sono filtrate).
 
 ---
 
@@ -344,8 +366,8 @@ cambia la scadenza del gestionale.
   (apre la voce). Arriva anche fuori orario e nei giorni liberi; sparisce se
   la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
   passato.
-- In Home, **"Da fare oggi"** mostra quelle in scadenza o pianificate oggi o
-  prima; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
+- In Home, **"Da fare · prossime 24 h"** mostra quelle in scadenza o
+  pianificate nelle prossime 24 ore, comprese quelle in ritardo; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
   pianificato o dopo la scadenza (dopo l'ora di scadenza, o dal giorno dopo
   se la scadenza non ha ora).
 - **Ignorare** una voce (gesto o azione "Ignora") invece di cancellarla: resta
@@ -405,6 +427,8 @@ cambia la scadenza del gestionale.
   contenuto (anagrafiche, da fare, attività, assenze e giorni liberi), il
   periodo (vuoto = tutto), azienda e cliente; "Coordinate delle sedi" solo se
   servono.
+- **Tag** (se ci sono attività con tag): solo le attività con quel tag, nel
+  CSV e nell'interscambio (le anagrafiche e le altre sezioni restano intere).
 - "Esporta" salva nella cartella `export`; "Esporta e condividi" apre anche
   il menu Condividi (email, Drive…).
 
@@ -493,6 +517,7 @@ I valori fuori intervallo vengono corretti al salvataggio.
 - Tutto resta sul telefono e nella cartella dati che hai scelto.
 - Le **coordinate** dei tuoi spostamenti non vengono mai esportate né mandate
   al calendario; solo la località (es. "Milano").
+- Gli eventi nel calendario sono privati: chi lo condivide vede solo "occupato".
 - I servizi online (indirizzi, distanze, mappe) ricevono solo coordinate di
   singoli punti; si possono disattivare o puntare a server propri.
 - Le credenziali dei gestionali sono cifrate con il keystore del telefono.

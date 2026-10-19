@@ -471,4 +471,6 @@ Tap the green play button below to start one.</string>
   <string name="grid_this">this segment</string>
   <string name="grid_others">other activities</string>
   <string name="grid_exact">Exact time</string>
+  <!-- M19 tag filters -->
+  <string name="tag_filter_all">All tags</string>
 </resources>
