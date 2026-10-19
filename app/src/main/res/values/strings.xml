@@ -519,4 +519,23 @@ Tap the green play button below to start one.</string>
   <string name="antares_sync_skipped">Not sent:</string>
   <string name="antares_missing_type">activity type missing</string>
   <string name="antares_missing_portfolio">service or project missing</string>
+  <!-- issue #28 calls -->
+  <string name="md_contacts">Contacts</string>
+  <string name="contacts_import">Import from the phone book</string>
+  <string name="contact_edit">Contact</string>
+  <string name="contact_numbers">Numbers (one per line)</string>
+  <string name="contact_numbers_missing">At least one number is needed.</string>
+  <string name="client_calls">Calls</string>
+  <string name="sec_calls">Calls</string>
+  <string name="set_calls_incoming">Recognise incoming calls</string>
+  <string name="set_calls_outgoing">Recognise outgoing calls</string>
+  <string name="set_call_pause">Pause the running activity of another client during a call</string>
+  <string name="set_call_propose">Propose an activity after a call</string>
+  <string name="set_calls_hint">Only calls with a number in Master data → Contacts, within working hours. Needs access to the phone state and the call log.</string>
+  <string name="call_entry_activity">Phone call with %1$s</string>
+  <string name="call_pause_note">Phone call %1$s</string>
+  <string name="call_propose_title">Call with %1$s (%2$s)</string>
+  <string name="call_propose_text">%1$s–%2$s: record it as an activity?</string>
+  <string name="call_propose_action">Create activity</string>
+  <string name="segment_note">Description</string>
 </resources>

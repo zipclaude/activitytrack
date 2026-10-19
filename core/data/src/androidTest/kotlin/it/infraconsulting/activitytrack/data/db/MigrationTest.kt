@@ -160,11 +160,33 @@ class MigrationTest {
 	}
 
 	@Test
-	fun v9ToV10AddsAntares() {
+	fun v9ToV10AddsCallsAndPauseNotes() {
 		helper.createDatabase(DB, 9).use { db ->
 			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL(
+				"INSERT INTO time_entry (id, uid, company_id, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) " +
+					"VALUES (1, 'e1', 1, 'CLOSED', 'Europe/Rome', 0, 0, 0)",
+			)
+			db.execSQL("INSERT INTO segment (id, entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source) VALUES (1, 1, 'PAUSE', 0, 60000, 'Europe/Rome', 'TRACKED')")
 		}
 		helper.runMigrationsAndValidate(DB, 10, true).use { db ->
+			db.query("SELECT note FROM segment").use { c ->
+				c.moveToFirst()
+				assertEquals(true, c.isNull(0))
+			}
+			db.query("SELECT COUNT(*) FROM contact").use { c ->
+				c.moveToFirst()
+				assertEquals(0, c.getInt(0))
+			}
+		}
+	}
+
+	@Test
+	fun v10ToV11AddsAntares() {
+		helper.createDatabase(DB, 10).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+		}
+		helper.runMigrationsAndValidate(DB, 11, true).use { db ->
 			db.execSQL("INSERT INTO remote_portfolio (id, company_id, kind, name, active) VALUES ('p1', 1, 'SERVICE', 'Assistenza', 1)")
 			db.query("SELECT COUNT(*) FROM remote_portfolio").use { c ->
 				c.moveToFirst()

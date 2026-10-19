@@ -72,6 +72,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
 | 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
+| Issue #28 calls | **implemented** (PR #32, on `main`): contacts, call recognition, call pauses, client calls (schema v10); device test pending |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **done** (PR #18, on `main`, v0.5.0): backlog 1 (schema v8); device-tested 2026-10-19 |
@@ -141,12 +142,34 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
-Released v0.6.0 (2026-10-19): clear buttons, Home colours / neutral closed /
-from-to, entry top buttons and compact folding, to-do window and filters, end
-time at start + planned-end reminder, close on stop when complete (schema v9),
-user docs it/en with PDF (#23-#26). Instrumented tests 50/50 on the OnePlus.
-Work queue: GitHub issues (owner, 2026-10-19). Future: OCR receipts, free
-offline STT, policy lock for editable times, tags on to-dos if wanted.
+Released v0.6.0 (2026-10-19). On `main` after it: #27 no automatic colours
+(bands only for chosen colours, agenda grey). Work queue = GitHub issues
+(owner answers questions in issue comments, numbered).
+
+**Open (2026-10-19 evening):**
+- PR #29 `m24-antares-auth` (CI green, NOT to merge before a test on
+  demo.goantares.uno): Antares Public API v3 connector. Public OAuth client
+  (PKCE, no secret, redirect `<applicationId>:/oauth2redirect`), refresh
+  token in SecretStore; AntaresPlan (one activity per report day, from first
+  work start, length rounded by work rule with pauses inside, pause >
+  `pause_split_min` (default 60) splits, travel minutes/km to nearest block);
+  schema v11 (remote_portfolio, remote_activity_type, remote_activity, entry
+  remote_* fields, todo remote_portfolio_id); AntaresSync (services/projects
+  active via /v3/Enums EntityState, activity types, tickets with TechnicianId
+  = me → to-dos, POST/PUT(Timestamp)/DELETE with payload hash); entry
+  "Antares" section; company screen Log in / Sync. Waiting: Saidea must
+  register a public client (owner asks); customer list endpoint unknown
+  (clients matched by externalCode = CustomerId). Saidea's API doc is NOT
+  to be committed (public repo). Instrumented tests for v11 not run yet.
+- Issue #28 calls: **implemented** (PR #32, merged 2026-10-19, schema v10;
+  closed). CallReceiver (PHONE_STATE, OFFHOOK → IDLE) + CallMonitor reads
+  the latest call-log row; Contacts master data (import via ACTION_PICK,
+  no READ_CONTACTS); client screen "Calls"; Settings → Calls (incoming /
+  outgoing off by default, auto pause and proposal on); pause notes
+  editable also with editable times off. Not yet on the phone: instrumented
+  tests (contacts/calls, call pause, migration 9→10), device test, manual
+  screenshots. Future: contacts may receive activity reports.
+- PR #29 moved to schema v11 (AutoMigration 10→11, main merged in, 2026-10-19).
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.

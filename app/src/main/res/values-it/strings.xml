@@ -508,4 +508,23 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="antares_sync_skipped">Non inviate:</string>
   <string name="antares_missing_type">manca il tipo attività</string>
   <string name="antares_missing_portfolio">manca il servizio o progetto</string>
+  <!-- issue #28 calls -->
+  <string name="md_contacts">Contatti</string>
+  <string name="contacts_import">Importa dalla rubrica</string>
+  <string name="contact_edit">Contatto</string>
+  <string name="contact_numbers">Numeri (uno per riga)</string>
+  <string name="contact_numbers_missing">Serve almeno un numero.</string>
+  <string name="client_calls">Chiamate</string>
+  <string name="sec_calls">Chiamate</string>
+  <string name="set_calls_incoming">Riconosci le chiamate in entrata</string>
+  <string name="set_calls_outgoing">Riconosci le chiamate in uscita</string>
+  <string name="set_call_pause">Metti in pausa l\'attività di un altro cliente durante la chiamata</string>
+  <string name="set_call_propose">Proponi un\'attività dopo la chiamata</string>
+  <string name="set_calls_hint">Solo chiamate con un numero in Anagrafiche → Contatti, in orario di lavoro. Serve l\'accesso allo stato del telefono e al registro chiamate.</string>
+  <string name="call_entry_activity">Chiamata telefonica con %1$s</string>
+  <string name="call_pause_note">Telefonata %1$s</string>
+  <string name="call_propose_title">Chiamata con %1$s (%2$s)</string>
+  <string name="call_propose_text">%1$s–%2$s: registrarla come attività?</string>
+  <string name="call_propose_action">Crea attività</string>
+  <string name="segment_note">Descrizione</string>
 </resources>

@@ -206,7 +206,9 @@ In the "New activity" screen:
   otherwise the app proposes the company of today's last activity.
 - **Description** and **role** are proposed from the last activity on the
   same client in the last 30 days. The microphone in the field dictates.
-- **Start** (with "Times freely editable", on by default): empty = now; a
+- **Start** (with "Times freely editable", on by default): tapped while empty
+  it opens the range grid, which sets start and end together; when already set,
+  the time picker; empty = now; a
   time already passed starts the activity from there (a time that has not
   come yet today means yesterday).
 - **End (optional)**: tapping it, the grid picks start and end together.
@@ -294,6 +296,26 @@ activity).
 save"), "File" (any document). Tapping an attachment: "Open" or "Delete".
 Files live in the data folder, under `attachments/<year>/<activity>/`.
 
+### Calls with clients
+With recognition on (Settings → **Calls**, incoming and outgoing
+separately), at the end of every call with a number listed in Master data →
+**Contacts** the app reads the call log and:
+- records the call (shown in the client screen, **"Calls"** section, with its
+  length);
+- while you are working for **the same client**, does nothing else: the call
+  is part of the activity;
+- while you are working for **another client**, **pauses** that activity for
+  the length of the call, with the description "Phone call CLIENT", and
+  resumes it at the end ("Pause …" option); a call under a minute makes no
+  pause;
+- except for the same client, proposes with a notification to **record the
+  call as an activity** ("Propose …" option): "Create activity" opens "New
+  activity" with the client, the description "Phone call with NAME" and the
+  times rounded to 5 minutes (start down, end up).
+
+It works only within working hours (not on holidays and days off); calls with
+unknown numbers are ignored.
+
 ---
 
 ## 6. Stopping and completing
@@ -315,6 +337,9 @@ complete", for the question about the to-do. In the activity screen:
   **"Edit segment"**: date, start, end and, for travels, km; **"Delete"**
   removes it (not the running one nor the only one left). The new values
   replace the recorded ones;
+- **pauses** have an optional **description** (e.g. "Phone call CLIENT" for
+  those made by a call; empty for manual ones): tap a pause to edit or clear
+  it, also with "Times freely editable" off;
 - **Tags**: free labels (e.g. `#remote`, `#urgent`); type one or more and tap
   "+", or tap a suggestion among those already used; the ✕ on a tag removes
   it. They can be added after closing too;
@@ -429,7 +454,8 @@ system's due date.
   management system, connector; for now the generic file one) and **"This
   company's calendar"**; below, the company's **sites**.
 - **Clients** — belong to a company (it cannot change after the first
-  activity); they have their own sites.
+  activity); they have their own sites and, at the bottom of the screen, the
+  **calls** recorded with their contacts.
 - **Sites** — label, coordinates, radius, address. Coordinates from "Current
   position" or "Map" (move the map under the crosshair and "Use this point").
 - **Roles**, **Presets** (recurring descriptions, with a proposed role).
@@ -443,6 +469,10 @@ system's due date.
 
 ![Manual order: the ≡ handle drags the row](img/order.png)
 
+- **Contacts** — the clients' people: name, client and one or more numbers
+  (one per line). **"Import from the phone book"** picks a number from the
+  phone's contacts and proposes it as a new contact. They drive call
+  recognition (§5); numbers match with or without the international prefix.
 - **Places** — home and other places (home ends a return travel).
 - **Working hours and lunch break** — per weekday.
 - **Days off**.
@@ -548,6 +578,8 @@ Settings are split into sections, each with its own page and "Save";
 |---|---|---|
 | Display | Normal / Compact | Normal |
 | Times | Times freely editable: start and end chosen when starting and stopping, segments editable and deletable (off: times as recorded; "+ Travel" and "+ Pause" stay) | on |
+| Calls | Recognise incoming / outgoing calls | off |
+| | Pause the activity of another client / Propose an activity | on |
 | Reminders | Confirm interval | 30 min |
 | | Maximum confirmations | 0 (unlimited) |
 | | Pause reminder interval | 15 min |
@@ -579,6 +611,9 @@ Out-of-range values are adjusted when saving.
 - Online services (addresses, distances, maps) receive only the coordinates
   of single points; they can be switched off or pointed to your own servers.
 - Management-system credentials are encrypted with the phone's keystore.
+- With call recognition the app reads the call log on the phone and keeps
+  only the calls with your contacts; it does not read the phone book (the
+  import uses the number you pick).
 
 ---
 
@@ -612,6 +647,15 @@ to the nearest limit.
 | Item | Effect | Default |
 |---|---|---|
 | Times freely editable | On: **Start** and **End** fields when starting, an **End** field in the Stop question, segments editable and deletable (new values replace the recorded ones). Off: times stay as recorded, segments cannot be touched; "+ Travel" and "+ Pause" stay available. It may later be set by a policy. | on |
+
+### Calls
+
+| Item | Effect | Default |
+|---|---|---|
+| Recognise incoming calls | calls received from contacts are recorded and handled (§5); switching it on asks for access to the phone state and the call log | off |
+| Recognise outgoing calls | the same for calls you make | off |
+| Pause the running activity of another client | during the call, another client's running activity is paused (at least a minute) | on |
+| Propose an activity after a call | "Create activity" notification with client, description and rounded times | on |
 
 ### Reminders
 
@@ -701,11 +745,13 @@ stay until you change them.
 | Role | name | proposed by presets, chosen on the activity |
 | Preset | text, proposed role, company (optional) | fills the description |
 | Activity | client, company, role, description, locality, place, notes, state, planned end | has segments, expenses, attachments, references, tags; may come from a to-do |
-| Segment | kind (work, travel, pause), start, end, km, source (tracked or by hand) | of an activity; location samples belong to segments |
+| Segment | kind (work, travel, pause), start, end, km, source (tracked or by hand), description (pauses) | of an activity; location samples belong to segments |
 | Expense | amount, description, receipt | of an activity |
 | Attachment | photo, voice note, file | of an activity, in the data folder |
 | External reference | ticket, URL, code | of an activity |
 | Tag | free word | of an activity |
+| Contact | name, numbers | of a client; recognises calls |
+| Call | contact, direction, start, end | of a contact and its client |
 | To-do | title, client, plan, duration, due date, priority, notes, references, state | of a company (and a client); gives activities |
 | Place | home or other, coordinates | home ends return travels |
 | Working hours, lunch break, days off, absences | per day | drive reminders and summaries |

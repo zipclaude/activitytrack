@@ -52,6 +52,9 @@ data class StartForm(
 	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
 }
 
+/* A recognised call to record (issue #28): rounded start and end, contact name. */
+data class CallPrefill(val startMs: Long, val endMs: Long, val contact: String)
+
 /* A running entry the user must decide about before the new one starts. */
 data class RunningEntry(val entry: TimeEntryEntity, val title: String)
 
@@ -131,7 +134,21 @@ class StartViewModel(
 	fun setMode(mode: SegmentKind) = _form.update { it.copy(mode = mode) }
 
 	fun setStartTime(hhmm: String) = _form.update { it.copy(startTime = hhmm) }
+
+	/* "Telefonata con NOME" from start to end of the call (issue #28); the client comes as picked */
+	fun prefillCall(c: CallPrefill) {
+		val zone = ZoneId.systemDefault()
+		fun hhmm(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).let { "%02d:%02d".format(it.hour, it.minute) }
+		callActivity = c.contact
+		_form.update { it.copy(startTime = hhmm(c.startMs), endTime = hhmm(c.endMs)) }
+	}
+
+	/* applied after the client's defaults, which would otherwise replace it */
+	private var callActivity: String? = null
 	fun setEndTime(hhmm: String) = _form.update { it.copy(endTime = hhmm) }
+
+	/* the description of an entry from a call (set by the screen in the app language) */
+	var callText: (String) -> String = { "Chiamata telefonica con $it" }
 
 	/* an end already passed (M22): "is the activity over?" before starting; the end in ms */
 	private val _askEnded = MutableStateFlow<Long?>(null)
@@ -211,6 +228,10 @@ class StartViewModel(
 
 	/* Activity and role of the last entry on the client (30 d), unless edited. */
 	private suspend fun applyDefaults(clientId: Long) {
+		callActivity?.let { name ->
+			_form.update { it.copy(activity = callText(name), activityTouched = true) }
+			return
+		}
 		val d = entries.clientDefaults(clientId) ?: return
 		_form.update { f ->
 			if (f.clientId != clientId)

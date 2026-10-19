@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "7a8b180c8a50c132b4c0facd3bd82bb0",
+    "identityHash": "d2923f32f404e194641f7c99a01e6a8c",
     "entities": [
       {
         "tableName": "company",
@@ -503,7 +503,7 @@
       },
       {
         "tableName": "time_entry",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT, `todo_id` INTEGER, `company_id` INTEGER, `client_id` INTEGER, `role_id` INTEGER, `activity` TEXT, `status` TEXT NOT NULL, `mode` TEXT, `locality` TEXT, `location_kind` TEXT, `notes` TEXT, `zone_id` TEXT NOT NULL, `last_confirmed_utc_ms` INTEGER, `unanswered_reminders` INTEGER NOT NULL, `planned_end_utc_ms` INTEGER, `remote_portfolio_id` TEXT, `remote_activity_type_id` TEXT, `remote_included` INTEGER, `created_utc_ms` INTEGER NOT NULL, `updated_utc_ms` INTEGER NOT NULL, FOREIGN KEY(`company_id`) REFERENCES `company`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`client_id`) REFERENCES `client`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`role_id`) REFERENCES `role`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`todo_id`) REFERENCES `todo`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT, `todo_id` INTEGER, `company_id` INTEGER, `client_id` INTEGER, `role_id` INTEGER, `activity` TEXT, `status` TEXT NOT NULL, `mode` TEXT, `locality` TEXT, `location_kind` TEXT, `notes` TEXT, `zone_id` TEXT NOT NULL, `last_confirmed_utc_ms` INTEGER, `unanswered_reminders` INTEGER NOT NULL, `planned_end_utc_ms` INTEGER, `created_utc_ms` INTEGER NOT NULL, `updated_utc_ms` INTEGER NOT NULL, FOREIGN KEY(`company_id`) REFERENCES `company`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`client_id`) REFERENCES `client`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`role_id`) REFERENCES `role`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`todo_id`) REFERENCES `todo`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -587,21 +587,6 @@
           {
             "fieldPath": "plannedEndUtcMs",
             "columnName": "planned_end_utc_ms",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "remotePortfolioId",
-            "columnName": "remote_portfolio_id",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "remoteActivityTypeId",
-            "columnName": "remote_activity_type_id",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "remoteIncluded",
-            "columnName": "remote_included",
             "affinity": "INTEGER"
           },
           {
@@ -728,7 +713,7 @@
       },
       {
         "tableName": "segment",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `entry_id` INTEGER NOT NULL, `kind` TEXT NOT NULL, `start_utc_ms` INTEGER NOT NULL, `end_utc_ms` INTEGER, `zone_id` TEXT NOT NULL, `source` TEXT NOT NULL, `km_estimated` REAL, `km_declared` REAL, FOREIGN KEY(`entry_id`) REFERENCES `time_entry`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `entry_id` INTEGER NOT NULL, `kind` TEXT NOT NULL, `start_utc_ms` INTEGER NOT NULL, `end_utc_ms` INTEGER, `zone_id` TEXT NOT NULL, `source` TEXT NOT NULL, `km_estimated` REAL, `km_declared` REAL, `note` TEXT, FOREIGN KEY(`entry_id`) REFERENCES `time_entry`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -780,6 +765,11 @@
             "fieldPath": "kmDeclared",
             "columnName": "km_declared",
             "affinity": "REAL"
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -1352,7 +1342,7 @@
       },
       {
         "tableName": "todo",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT NOT NULL, `company_id` INTEGER NOT NULL, `client_id` INTEGER, `external_key` TEXT, `title` TEXT NOT NULL, `notes` TEXT, `refs` TEXT NOT NULL, `due_epoch_day` INTEGER, `due_time_min` INTEGER, `priority` INTEGER, `done` INTEGER NOT NULL, `created_utc_ms` INTEGER NOT NULL, `updated_utc_ms` INTEGER NOT NULL, `plan_epoch_day` INTEGER, `plan_start_min` INTEGER, `duration_min` INTEGER, `plan_reminded_utc_ms` INTEGER, `ignored_utc_ms` INTEGER, `remote_portfolio_id` TEXT, FOREIGN KEY(`company_id`) REFERENCES `company`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`client_id`) REFERENCES `client`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT NOT NULL, `company_id` INTEGER NOT NULL, `client_id` INTEGER, `external_key` TEXT, `title` TEXT NOT NULL, `notes` TEXT, `refs` TEXT NOT NULL, `due_epoch_day` INTEGER, `due_time_min` INTEGER, `priority` INTEGER, `done` INTEGER NOT NULL, `created_utc_ms` INTEGER NOT NULL, `updated_utc_ms` INTEGER NOT NULL, `plan_epoch_day` INTEGER, `plan_start_min` INTEGER, `duration_min` INTEGER, `plan_reminded_utc_ms` INTEGER, `ignored_utc_ms` INTEGER, FOREIGN KEY(`company_id`) REFERENCES `company`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`client_id`) REFERENCES `client`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1456,11 +1446,6 @@
             "fieldPath": "ignoredUtcMs",
             "columnName": "ignored_utc_ms",
             "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "remotePortfolioId",
-            "columnName": "remote_portfolio_id",
-            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -1584,25 +1569,19 @@
         ]
       },
       {
-        "tableName": "remote_portfolio",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `company_id` INTEGER NOT NULL, `kind` TEXT NOT NULL, `name` TEXT NOT NULL, `customer_id` TEXT, `active` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`company_id`) REFERENCES `company`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "tableName": "contact",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `client_id` INTEGER NOT NULL, `name` TEXT NOT NULL, FOREIGN KEY(`client_id`) REFERENCES `client`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "companyId",
-            "columnName": "company_id",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "kind",
-            "columnName": "kind",
-            "affinity": "TEXT",
+            "fieldPath": "clientId",
+            "columnName": "client_id",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -1610,43 +1589,32 @@
             "columnName": "name",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "customerId",
-            "columnName": "customer_id",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "active",
-            "columnName": "active",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
             "id"
           ]
         },
         "indices": [
           {
-            "name": "index_remote_portfolio_company_id",
+            "name": "index_contact_client_id",
             "unique": false,
             "columnNames": [
-              "company_id"
+              "client_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_remote_portfolio_company_id` ON `${TABLE_NAME}` (`company_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_contact_client_id` ON `${TABLE_NAME}` (`client_id`)"
           }
         ],
         "foreignKeys": [
           {
-            "table": "company",
+            "table": "client",
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "company_id"
+              "client_id"
             ],
             "referencedColumns": [
               "id"
@@ -1655,54 +1623,47 @@
         ]
       },
       {
-        "tableName": "remote_activity_type",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`portfolio_id` TEXT NOT NULL, `type_id` TEXT NOT NULL, `name` TEXT NOT NULL, `included` INTEGER NOT NULL, `sort_order` INTEGER NOT NULL, PRIMARY KEY(`portfolio_id`, `type_id`), FOREIGN KEY(`portfolio_id`) REFERENCES `remote_portfolio`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "tableName": "contact_phone",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`contact_id` INTEGER NOT NULL, `number` TEXT NOT NULL, PRIMARY KEY(`contact_id`, `number`), FOREIGN KEY(`contact_id`) REFERENCES `contact`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
-            "fieldPath": "portfolioId",
-            "columnName": "portfolio_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "typeId",
-            "columnName": "type_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "included",
-            "columnName": "included",
+            "fieldPath": "contactId",
+            "columnName": "contact_id",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "order",
-            "columnName": "sort_order",
-            "affinity": "INTEGER",
+            "fieldPath": "number",
+            "columnName": "number",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "portfolio_id",
-            "type_id"
+            "contact_id",
+            "number"
           ]
         },
+        "indices": [
+          {
+            "name": "index_contact_phone_number",
+            "unique": false,
+            "columnNames": [
+              "number"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_contact_phone_number` ON `${TABLE_NAME}` (`number`)"
+          }
+        ],
         "foreignKeys": [
           {
-            "table": "remote_portfolio",
+            "table": "contact",
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "portfolio_id"
+              "contact_id"
             ],
             "referencedColumns": [
               "id"
@@ -1711,66 +1672,100 @@
         ]
       },
       {
-        "tableName": "remote_activity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`entry_id` INTEGER NOT NULL, `day` INTEGER NOT NULL, `idx` INTEGER NOT NULL, `remote_id` TEXT NOT NULL, `remote_timestamp` TEXT, `hash` TEXT NOT NULL, `synced_utc_ms` INTEGER NOT NULL, PRIMARY KEY(`entry_id`, `day`, `idx`), FOREIGN KEY(`entry_id`) REFERENCES `time_entry`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "tableName": "call_log",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contact_id` INTEGER NOT NULL, `client_id` INTEGER NOT NULL, `direction` TEXT NOT NULL, `start_utc_ms` INTEGER NOT NULL, `end_utc_ms` INTEGER NOT NULL, FOREIGN KEY(`contact_id`) REFERENCES `contact`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`client_id`) REFERENCES `client`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
-            "fieldPath": "entryId",
-            "columnName": "entry_id",
+            "fieldPath": "id",
+            "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "epochDay",
-            "columnName": "day",
+            "fieldPath": "contactId",
+            "columnName": "contact_id",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "idx",
-            "columnName": "idx",
+            "fieldPath": "clientId",
+            "columnName": "client_id",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "remoteId",
-            "columnName": "remote_id",
+            "fieldPath": "direction",
+            "columnName": "direction",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "remoteTimestamp",
-            "columnName": "remote_timestamp",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "hash",
-            "columnName": "hash",
-            "affinity": "TEXT",
+            "fieldPath": "startUtcMs",
+            "columnName": "start_utc_ms",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "syncedUtcMs",
-            "columnName": "synced_utc_ms",
+            "fieldPath": "endUtcMs",
+            "columnName": "end_utc_ms",
             "affinity": "INTEGER",
             "notNull": true
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
-            "entry_id",
-            "day",
-            "idx"
+            "id"
           ]
         },
+        "indices": [
+          {
+            "name": "index_call_log_contact_id",
+            "unique": false,
+            "columnNames": [
+              "contact_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_call_log_contact_id` ON `${TABLE_NAME}` (`contact_id`)"
+          },
+          {
+            "name": "index_call_log_client_id",
+            "unique": false,
+            "columnNames": [
+              "client_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_call_log_client_id` ON `${TABLE_NAME}` (`client_id`)"
+          },
+          {
+            "name": "index_call_log_start_utc_ms_contact_id",
+            "unique": true,
+            "columnNames": [
+              "start_utc_ms",
+              "contact_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_call_log_start_utc_ms_contact_id` ON `${TABLE_NAME}` (`start_utc_ms`, `contact_id`)"
+          }
+        ],
         "foreignKeys": [
           {
-            "table": "time_entry",
+            "table": "contact",
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "entry_id"
+              "contact_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "client",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "client_id"
             ],
             "referencedColumns": [
               "id"
@@ -1781,7 +1776,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7a8b180c8a50c132b4c0facd3bd82bb0')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd2923f32f404e194641f7c99a01e6a8c')"
     ]
   }
 }
