@@ -290,6 +290,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M19 | tag filters: agenda (all views), day report, export (CSV and interchange entries) |
 | M18 | time grid (backlog 3, mockup B): 5-minute cells, 12-hour window, range by drag or two taps with other segments hatched; exact time via the clock |
 | M17 | editable times setting: chosen start and end, segment editing only when on |
 | M16 | list order per master-data list: alphabetical, last use or manual by dragging; drop-downs follow it (schema v8) |

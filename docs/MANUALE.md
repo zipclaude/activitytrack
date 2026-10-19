@@ -309,6 +309,10 @@ oggi; a destra il totale rendicontato del periodo).
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
+**Filtro per tag**: il chip "Tutti i tag ▾" accanto alle modalità (compare
+quando nel periodo ci sono attività con tag) mostra solo le attività con quel
+tag; le *Da fare* si nascondono e i totali contano solo ciò che si vede.
+
 Ogni azienda ha il suo colore. Toccando un'attività si apre la sua scheda;
 toccando una *Da fare* si aprono le sue azioni (avvia, posticipa, fatta,
 ripianifica).
@@ -321,6 +325,10 @@ prossima mezz'ora; altri giorni: le 09:00).
 ### Report
 Il report di un giorno: totale solare e rendicontato, una riga per attività
 con lavoro, viaggio e pausa reali → arrotondati; da qui anche l'esportazione.
+Con il filtro per tag restano le attività con quel tag: il rendicontato è la
+loro somma, il "solare" la somma di lavoro e viaggio esatti. Anche
+l'esportazione ha il campo **Tag** (solo le attività con quel tag; le altre
+sezioni dell'interscambio non sono filtrate).
 
 ---
 
