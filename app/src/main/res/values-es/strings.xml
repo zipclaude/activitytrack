@@ -497,7 +497,8 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="set_calls_outgoing">Reconocer llamadas salientes</string>
   <string name="set_call_pause">Pausar la actividad de otro cliente durante la llamada</string>
   <string name="set_call_propose">Proponer una actividad tras la llamada</string>
-  <string name="set_calls_hint">Solo llamadas con un número en Datos maestros → Contactos, en horario laboral. Necesita acceso al estado del teléfono y al registro de llamadas.</string>
+  <string name="set_calls_hint">Solo llamadas con un número en Datos maestros → Contactos; en horario laboral, salvo con «También fuera del horario». Necesita acceso al estado del teléfono y al registro de llamadas.</string>
+  <string name="set_calls_always">También fuera del horario (guardia)</string>
   <string name="call_entry_activity">Llamada telefónica con %1$s</string>
   <string name="call_pause_note">Llamada %1$s</string>
   <string name="call_propose_title">Llamada con %1$s (%2$s)</string>
