@@ -434,4 +434,10 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="agenda_scroll">Scrollen</string>
   <string name="todo_filter_next24h">Nächste 24 Std.</string>
   <string name="todo_filter_ignored">Ignorierte</string>
+  <!-- M15 tags, segments -->
+  <string name="tags">Tags</string>
+  <string name="tag_new">Neue Tags (z. B. #dringend remote)</string>
+  <string name="segment_edit">Abschnitt bearbeiten</string>
+  <string name="segment_corrected">korrigiert, erfasst %1$s</string>
+  <string name="err_last_segment">Der laufende und der letzte Abschnitt einer Tätigkeit können nicht gelöscht werden.</string>
 </resources>

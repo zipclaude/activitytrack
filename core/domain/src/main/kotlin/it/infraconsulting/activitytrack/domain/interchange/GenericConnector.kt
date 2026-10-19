@@ -72,6 +72,7 @@ object GenericConnector : Connector {
 		"companies" to "company", "clients" to "client", "sites" to "site", "roles" to "role",
 		"presets" to "preset", "todos" to "todo", "entries" to "entry", "segments" to "segment",
 		"expenses" to "expense", "refs" to "ref", "absences" to "absence", "daysOff" to "dayOff",
+		"tags" to "tag",
 	)
 	private const val ROOT = "activitytrack"
 

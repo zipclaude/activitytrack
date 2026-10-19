@@ -78,6 +78,7 @@ class ReportRepository(
 			return Report(days, emptyMap())
 		val refs = dao.externalRefs(ids).groupBy({ it.entryId }, { it.value })
 		val expenses = dao.expenseTotals(ids).associate { it.entryId to it.cents }
+		val tags = dao.tagsOf(ids).groupBy({ it.entryId }, { it.tag }).mapValues { it.value.sorted() }
 		val companies = master.allCompanies().associate { it.id to it.name }
 		val clients = master.allClients().associate { it.id to it.name }
 		val roles = master.allRoles().associate { it.id to it.name }
@@ -93,6 +94,7 @@ class ReportRepository(
 				externalRefs = refs[e.id].orEmpty(),
 				km = if (km.isEmpty()) null else km.sum(),
 				expensesCents = expenses[e.id] ?: 0,
+				tags = tags[e.id].orEmpty(),
 			)
 		}
 		return Report(days, meta)

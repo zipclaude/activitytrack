@@ -108,6 +108,7 @@ class Exporter(private val db: ActivityTrackDatabase) {
 			val segments = if (ids.isEmpty()) emptyMap() else bulk.segmentsOf(ids).groupBy { it.entryId }
 			val expenses = if (ids.isEmpty()) emptyMap() else bulk.expensesOf(ids).groupBy { it.entryId }
 			val refs = if (ids.isEmpty()) emptyMap() else entries.externalRefs(ids).groupBy { it.entryId }
+			val tags = if (ids.isEmpty()) emptyMap() else entries.tagsOf(ids).groupBy({ it.entryId }, { it.tag })
 			out = out.copy(
 				entries = candidates.filter { e ->
 					val segs = segments[e.id].orEmpty()
@@ -129,13 +130,16 @@ class Exporter(private val db: ActivityTrackDatabase) {
 						zone = e.zoneId,
 						segments = segments[e.id].orEmpty().map {
 							XSegment(it.kind.name, Instant.ofEpochMilli(it.startUtcMs).toString(), it.endUtcMs?.let { m -> Instant.ofEpochMilli(m).toString() },
-								it.source.name, it.kmEstimated, it.kmDeclared)
+								it.source.name, it.kmEstimated, it.kmDeclared,
+								it.origStartUtcMs?.let { m -> Instant.ofEpochMilli(m).toString() },
+								it.origEndUtcMs?.let { m -> Instant.ofEpochMilli(m).toString() })
 						},
 						expenses = expenses[e.id].orEmpty().map {
 							XExpense(BigDecimal.valueOf(it.amountCents, 2).toPlainString(), it.description,
 								Instant.ofEpochMilli(it.createdUtcMs).toString(), receipt = it.attachmentId != null)
 						},
 						refs = refs[e.id].orEmpty().map { it.value },
+						tags = tags[e.id].orEmpty().sorted(),
 					)
 				},
 			)

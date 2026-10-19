@@ -24,6 +24,9 @@ class EntryViewModel(
 	val entry = entries.entry(entryId).state(null)
 	val segments = entries.segments(entryId).state(emptyList())
 	val refs = entries.externalRefs(entryId).state(emptyList())
+	val tags = entries.tags(entryId).state(emptyList())
+	/* suggestions: every tag in use, most used first */
+	val allTags = entries.allTags.state(emptyList())
 	val clients = master.clients.state(emptyList())
 	val companies = master.companies.state(emptyList())
 	val roles = master.roles.state(emptyList())
@@ -92,7 +95,12 @@ class EntryViewModel(
 	fun addSegment(kind: SegmentKind, startMs: Long, endMs: Long, km: Double?, done: () -> Unit) =
 		run(done) { entries.addManualSegment(entryId, kind, startMs, endMs, km) }
 
-	fun deleteSegment(segmentId: Long) = run { entries.deleteManualSegment(segmentId) }
+	fun updateSegment(segmentId: Long, startMs: Long, endMs: Long, km: Double?, done: () -> Unit) =
+		run(done) { entries.updateSegment(segmentId, startMs, endMs, km) }
+
+	fun deleteSegment(segmentId: Long, done: () -> Unit = {}) = run(done) { entries.deleteSegment(segmentId) }
+
+	fun setTags(tags: List<String>) = run { entries.setTags(entryId, tags) }
 
 	fun addRef(value: String, done: () -> Unit) = run(done) { entries.addExternalRef(entryId, value) }
 	fun removeRef(refId: Long) = run { entries.removeExternalRef(entryId, refId) }

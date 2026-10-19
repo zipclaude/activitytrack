@@ -90,7 +90,7 @@ object CalendarEvents {
 					labels.tags.work.takeIf { !l.work.isZero },
 					labels.tags.travel.takeIf { !l.travel.isZero },
 					labels.tags.pause.takeIf { !l.pause.isZero },
-				).filter(String::isNotBlank).joinToString(" "))
+				).filter(String::isNotBlank).plus(m.tags.map { "#$it" }).joinToString(" "))
 			}.filter(String::isNotBlank)
 			PlannedEvent(
 				key = "$uid/${d.day}",

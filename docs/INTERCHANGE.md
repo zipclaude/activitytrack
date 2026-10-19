@@ -36,7 +36,7 @@ Management-system plugins map their own APIs or files to this model
                  "activity": "Patched 3 servers", "status": "CLOSED", "zone": "Europe/Rome",
                  "segments": [ { "kind": "WORK", "startUtc": "2026-10-17T07:00:00Z", "endUtc": "2026-10-17T11:00:00Z" } ],
                  "expenses": [ { "amount": "12.50", "description": "Parking", "createdUtc": "2026-10-17T07:01:00Z", "receipt": true } ],
-                 "refs": [ "INC0012" ] } ],
+                 "refs": [ "INC0012" ], "tags": [ "remoto" ] } ],
   "absences": [ { "date": "2026-10-19", "kind": "LATE_ENTRY", "time": "10:30" } ],
   "daysOff": [ { "date": "2026-12-07", "note": "Sant'Ambrogio" } ]
 }
@@ -69,7 +69,7 @@ are text. Root element `<activitytrack>`; DTDs are refused.
 
 List containers and items: companies/company, clients/client, sites/site,
 roles/role, presets/preset, todos/todo, entries/entry, segments/segment,
-expenses/expense, refs/ref, absences/absence, daysOff/dayOff.
+expenses/expense, refs/ref, absences/absence, daysOff/dayOff, tags/tag.
 
 ## Values
 
@@ -77,7 +77,9 @@ expenses/expense, refs/ref, absences/absence, daysOff/dayOff.
 |---|---|
 | `status` | ACTIVE, SUSPENDED, TO_COMPLETE, CLOSED |
 | `segments.kind` | WORK, TRAVEL, PAUSE |
-| `segments.source` | TRACKED, MANUAL |
+| `segments.source` | TRACKED, MANUAL, CORRECTED (a tracked segment edited by hand; added 2026-10-19) |
+| `segments.origStartUtc` / `origEndUtc` | CORRECTED only: the tracked times before the edit (added 2026-10-19, still version 1) |
+| `entries.tags` | free tags without `#`, lower case, blanks as `-`, at most 30 characters each (added 2026-10-19, still version 1) |
 | `locationKind` | COMPANY, CLIENT, HOME, OTHER |
 | `absences.kind` | FULL_DAY, LATE_ENTRY, EARLY_EXIT |
 | `sites.ownerKind` | company, client |

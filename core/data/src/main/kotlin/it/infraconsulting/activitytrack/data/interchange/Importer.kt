@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.interchange
 
+import it.infraconsulting.activitytrack.data.db.EntryTagEntity
+import it.infraconsulting.activitytrack.domain.tag.Tags
 import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.data.db.AbsenceEntity
 import it.infraconsulting.activitytrack.data.db.AbsenceKind
@@ -299,7 +301,9 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			val start = runCatching { Instant.parse(s.startUtc) }.getOrNull() ?: return r.skip("entries", x.key, "segment start ${s.startUtc}")
 			val end = runCatching { Instant.parse(s.endUtc!!) }.getOrNull() ?: return r.skip("entries", x.key, "segment end ${s.endUtc}")
 			val source = runCatching { SegmentSource.valueOf(s.source) }.getOrDefault(SegmentSource.TRACKED)
-			SegmentEntity(entryId = 0, kind = kind, startUtcMs = start.toEpochMilli(), endUtcMs = end.toEpochMilli(), zoneId = zone.id, source = source, kmEstimated = s.kmEstimated, kmDeclared = s.kmDeclared)
+			val orig = { t: String? -> t?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } }
+			SegmentEntity(entryId = 0, kind = kind, startUtcMs = start.toEpochMilli(), endUtcMs = end.toEpochMilli(), zoneId = zone.id, source = source,
+				kmEstimated = s.kmEstimated, kmDeclared = s.kmDeclared, origStartUtcMs = orig(s.origStartUtc), origEndUtcMs = orig(s.origEndUtc))
 		}
 		val violations = EntryInvariants.violations(status, null, segs.map { Segment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli)) })
 		if (violations.isNotEmpty())
@@ -334,6 +338,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		x.refs.map(String::trim).filter(String::isNotEmpty).forEach {
 			entries.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(it), value = it))
 		}
+		entries.insertTags(x.tags.mapNotNull(Tags::normalize).distinct().map { EntryTagEntity(id, it) })
 		r.added("entries")
 	}
 
