@@ -33,6 +33,7 @@ class AppContainer(context: Context) {
 	val database: ActivityTrackDatabase by lazy { ActivityTrackDatabase.build(appContext) }
 	val masterData: MasterDataRepository by lazy { MasterDataRepository(database, settings.settings.map { it.listOrders }, clock) }
 	val entries: EntryRepository by lazy { EntryRepository(database, clock) }
+	val remote: it.infraconsulting.activitytrack.data.repo.RemoteRepository by lazy { it.infraconsulting.activitytrack.data.repo.RemoteRepository(database) }
 	val reports: ReportRepository by lazy { ReportRepository(database, clock) }
 	val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }

@@ -218,6 +218,8 @@ data class TodoEntity(
 	@ColumnInfo(name = "plan_reminded_utc_ms") val planRemindedUtcMs: Long? = null,
 	/* ignored (M10) instead of deleted: kept struck through, restorable, never re-created by imports */
 	@ColumnInfo(name = "ignored_utc_ms") val ignoredUtcMs: Long? = null,
+	/* Antares ticket (M24): the service or project the ticket belongs to */
+	@ColumnInfo(name = "remote_portfolio_id") val remotePortfolioId: String? = null,
 )
 
 @Entity(
@@ -279,6 +281,10 @@ data class TimeEntryEntity(
 	@ColumnInfo(name = "unanswered_reminders") val unansweredReminders: Int = 0,
 	/* indicative end chosen at start (M22): "finished?" asked then; cleared once asked */
 	@ColumnInfo(name = "planned_end_utc_ms") val plannedEndUtcMs: Long? = null,
+	/* Antares (M24): the service or project, the activity type and "included in the contract" */
+	@ColumnInfo(name = "remote_portfolio_id") val remotePortfolioId: String? = null,
+	@ColumnInfo(name = "remote_activity_type_id") val remoteActivityTypeId: String? = null,
+	@ColumnInfo(name = "remote_included") val remoteIncluded: Boolean? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
 	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
 )
@@ -464,4 +470,64 @@ data class LunchBreakEntity(
 	@ColumnInfo(name = "day_of_week") val dayOfWeek: Int,
 	@ColumnInfo(name = "start_min") val startMin: Int,
 	@ColumnInfo(name = "end_min") val endMin: Int,
+)
+
+/*
+ * A service or project of a company's Antares installation (M24): the
+ * portfolios an entry can be reported on. Refreshed by every sync; [active]
+ * = it accepts new activities.
+ */
+@Entity(
+	tableName = "remote_portfolio",
+	foreignKeys = [
+		ForeignKey(entity = CompanyEntity::class, parentColumns = ["id"], childColumns = ["company_id"], onDelete = ForeignKey.CASCADE),
+	],
+	indices = [Index("company_id")],
+)
+data class RemotePortfolioEntity(
+	@PrimaryKey val id: String,
+	@ColumnInfo(name = "company_id") val companyId: Long,
+	/* SERVICE (RelationType 1) or PROJECT (RelationType 5) */
+	val kind: String,
+	val name: String,
+	@ColumnInfo(name = "customer_id") val customerId: String? = null,
+	val active: Boolean = true,
+)
+
+/* An activity type enabled on a portfolio, with its default "included in the contract". */
+@Entity(
+	tableName = "remote_activity_type",
+	primaryKeys = ["portfolio_id", "type_id"],
+	foreignKeys = [
+		ForeignKey(entity = RemotePortfolioEntity::class, parentColumns = ["id"], childColumns = ["portfolio_id"], onDelete = ForeignKey.CASCADE),
+	],
+)
+data class RemoteActivityTypeEntity(
+	@ColumnInfo(name = "portfolio_id") val portfolioId: String,
+	@ColumnInfo(name = "type_id") val typeId: String,
+	val name: String,
+	val included: Boolean = false,
+	@ColumnInfo(name = "sort_order") val order: Int = 0,
+)
+
+/*
+ * An entry block sent to Antares (M24): one per report day and block
+ * ([idx]), with the remote Id and Timestamp for the next PUT, and the hash
+ * of what was sent to tell whether the entry changed since.
+ */
+@Entity(
+	tableName = "remote_activity",
+	primaryKeys = ["entry_id", "day", "idx"],
+	foreignKeys = [
+		ForeignKey(entity = TimeEntryEntity::class, parentColumns = ["id"], childColumns = ["entry_id"], onDelete = ForeignKey.CASCADE),
+	],
+)
+data class RemoteActivityEntity(
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	@ColumnInfo(name = "day") val epochDay: Long,
+	val idx: Int,
+	@ColumnInfo(name = "remote_id") val remoteId: String,
+	@ColumnInfo(name = "remote_timestamp") val remoteTimestamp: String? = null,
+	val hash: String,
+	@ColumnInfo(name = "synced_utc_ms") val syncedUtcMs: Long,
 )
