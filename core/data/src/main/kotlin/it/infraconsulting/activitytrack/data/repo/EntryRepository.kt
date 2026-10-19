@@ -2,6 +2,8 @@
 package it.infraconsulting.activitytrack.data.repo
 
 import androidx.room.withTransaction
+import it.infraconsulting.activitytrack.domain.tag.Tags
+import it.infraconsulting.activitytrack.data.db.EntryTagEntity
 import it.infraconsulting.activitytrack.data.db.AbsenceEntity
 import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
@@ -401,16 +403,61 @@ class EntryRepository(
 		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
 	}
 
-	/* Only segments added by hand can be removed; tracked time stays exact (A13). */
-	suspend fun deleteManualSegment(segmentId: Long) = db.withTransaction {
+	/*
+	 * Segments are editable and deletable (backlog 11, revising A13): the
+	 * values entered replace the recorded ones, nothing of the old times is
+	 * kept (owner, 2026-10-19). The running segment and an entry's last
+	 * segment cannot be removed; the running one cannot be edited.
+	 */
+	suspend fun deleteSegment(segmentId: Long) = db.withTransaction {
 		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
-		if (s.source != SegmentSource.MANUAL)
-			throw ValidationException(Reason.NOT_MANUAL)
+		if (s.endUtcMs == null || dao.segments(s.entryId).size <= 1)
+			throw ValidationException(Reason.LAST_SEGMENT)
 		val e = load(s.entryId)
 		dao.deleteSegment(segmentId)
 		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
 		verify(s.entryId)
 	}
+
+	suspend fun updateSegment(segmentId: Long, startUtcMs: Long, endUtcMs: Long, kmDeclared: Double? = null) = db.withTransaction {
+		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
+		if (s.endUtcMs == null)
+			throw ValidationException(Reason.INVALID_SEGMENT, "running segment")
+		if (startUtcMs < endUtcMs && endUtcMs - startUtcMs < MIN_LENGTH_MS)
+			throw ValidationException(Reason.TOO_SHORT)
+		if (startUtcMs >= endUtcMs || endUtcMs > clock.millis() ||
+			(kmDeclared != null && (kmDeclared.isNaN() || kmDeclared < 0 || s.kind != SegmentKind.TRAVEL)))
+			throw ValidationException(Reason.INVALID_SEGMENT)
+		val e = load(s.entryId)
+		dao.updateSegment(
+			s.copy(
+				startUtcMs = startUtcMs,
+				endUtcMs = endUtcMs,
+				kmDeclared = if (s.kind == SegmentKind.TRAVEL) kmDeclared else s.kmDeclared,
+			),
+		)
+		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
+		try {
+			verify(s.entryId)
+		} catch (x: InvariantViolationException) {
+			throw ValidationException(Reason.OVERLAPPING_SEGMENTS, x.message)
+		}
+	}
+
+	/* Tags (backlog 13): the entry's tags, all tags in use (suggestions), replace the entry's. */
+	fun tags(entryId: Long) = dao.observeTags(entryId)
+	val allTags = dao.observeAllTags()
+
+	suspend fun setTags(entryId: Long, tags: List<String>) = db.withTransaction {
+		val e = load(entryId)
+		dao.clearTags(entryId)
+		dao.insertTags(tags.mapNotNull(Tags::normalize).distinct().map { EntryTagEntity(entryId, it) })
+		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
+	}
+
+	suspend fun tagsOf(entryIds: List<Long>): Map<Long, List<String>> =
+		if (entryIds.isEmpty()) emptyMap()
+		else dao.tagsOf(entryIds).groupBy({ it.entryId }, { it.tag }).mapValues { it.value.sorted() }
 
 	/* Time recorded so far (open segments up to now). */
 	suspend fun recordedMs(entryId: Long): Long {

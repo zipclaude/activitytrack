@@ -307,7 +307,7 @@ Tap the green play button below to start one.</string>
   <string name="agenda_day">Day</string>
   <string name="agenda_week">Week</string>
   <string name="agenda_month">Month</string>
-  <string name="agenda_search">Search client or activity</string>
+  <string name="agenda_search">Search client, activity or #tag</string>
   <string name="agenda_empty">No activities in this period.</string>
   <string name="connector_title">Management system</string>
   <string name="connector_external_code">Code in the management system</string>
@@ -446,4 +446,9 @@ Tap the green play button below to start one.</string>
   <string name="agenda_scroll">Scroll</string>
   <string name="todo_filter_next24h">Next 24 h</string>
   <string name="todo_filter_ignored">Ignored</string>
+  <!-- M15 tags, segments -->
+  <string name="tags">Tags</string>
+  <string name="tag_new">New tags (e.g. #urgent remote)</string>
+  <string name="segment_edit">Edit segment</string>
+  <string name="err_last_segment">The running segment and the only remaining one cannot be deleted.</string>
 </resources>

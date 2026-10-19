@@ -295,7 +295,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="agenda_day">Tag</string>
   <string name="agenda_week">Woche</string>
   <string name="agenda_month">Monat</string>
-  <string name="agenda_search">Kunde oder Tätigkeit suchen</string>
+  <string name="agenda_search">Kunde, Tätigkeit oder #Tag suchen</string>
   <string name="agenda_empty">Keine Tätigkeiten in diesem Zeitraum.</string>
   <string name="connector_title">Verwaltungssystem</string>
   <string name="connector_external_code">Code im Verwaltungssystem</string>
@@ -434,4 +434,9 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="agenda_scroll">Scrollen</string>
   <string name="todo_filter_next24h">Nächste 24 Std.</string>
   <string name="todo_filter_ignored">Ignorierte</string>
+  <!-- M15 tags, segments -->
+  <string name="tags">Tags</string>
+  <string name="tag_new">Neue Tags (z. B. #dringend remote)</string>
+  <string name="segment_edit">Abschnitt bearbeiten</string>
+  <string name="err_last_segment">Der laufende und der letzte Abschnitt einer Tätigkeit können nicht gelöscht werden.</string>
 </resources>

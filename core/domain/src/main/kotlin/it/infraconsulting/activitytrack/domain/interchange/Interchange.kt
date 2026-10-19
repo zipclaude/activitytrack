@@ -105,6 +105,8 @@ data class XEntry(
 	val segments: List<XSegment> = emptyList(),
 	val expenses: List<XExpense> = emptyList(),
 	val refs: List<String> = emptyList(),
+	/* M15: free tags, without '#' */
+	val tags: List<String> = emptyList(),
 )
 
 @Serializable

@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.interchange
 
+import it.infraconsulting.activitytrack.data.db.EntryTagEntity
+import it.infraconsulting.activitytrack.domain.tag.Tags
 import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.data.db.AbsenceEntity
 import it.infraconsulting.activitytrack.data.db.AbsenceKind
@@ -334,6 +336,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		x.refs.map(String::trim).filter(String::isNotEmpty).forEach {
 			entries.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(it), value = it))
 		}
+		entries.insertTags(x.tags.mapNotNull(Tags::normalize).distinct().map { EntryTagEntity(id, it) })
 		r.added("entries")
 	}
 

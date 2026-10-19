@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -29,6 +30,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.InputChip
+import androidx.compose.foundation.layout.FlowRow
+import it.infraconsulting.activitytrack.domain.tag.Tags
 import it.infraconsulting.activitytrack.ui.common.Importance
 import it.infraconsulting.activitytrack.ui.common.ColoredActionButton
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
@@ -97,7 +105,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var locationKind by remember { mutableStateOf(initial.locationKind) }
 	var notes by remember { mutableStateOf(initial.notes.orEmpty()) }
 	var adding by remember { mutableStateOf<SegmentKind?>(null) }
-	var deletingSegment by remember { mutableStateOf<SegmentEntity?>(null) }
+	var editingSegment by remember { mutableStateOf<SegmentEntity?>(null) }
 	var deletingRef by remember { mutableStateOf<ExternalRefEntity?>(null) }
 	var newRef by remember { mutableStateOf("") }
 
@@ -167,17 +175,18 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			if (segments.isEmpty())
 				item { EmptyText() }
 			items(segments, key = { "s${it.id}" }) { s ->
-				val manual = s.source == SegmentSource.MANUAL
 				val end = s.endUtcMs
 				val range = clockOf(s.startUtcMs, zone) + " – " + (end?.let { clockOf(it, zone) } ?: "…")
 				val extra = listOfNotNull(
 					end?.let { hmOf(it - s.startUtcMs) },
 					(s.kmDeclared ?: s.kmEstimated)?.let { "%.1f km".format(it) },
-					if (manual) stringResource(R.string.segment_manual) else null,
+					if (s.source == SegmentSource.MANUAL) stringResource(R.string.segment_manual) else null,
 				).joinToString(" · ")
-				ClickableRow("${kindLabel(s.kind)}  $range", extra) { if (manual) deletingSegment = s }
+				/* every closed segment can be edited or deleted (backlog 11); the running one cannot */
+				ClickableRow("${kindLabel(s.kind)}  $range", extra) { if (end != null) { vm.clearError(); editingSegment = s } }
 			}
 
+			item { TagsSection(vm) }
 			item { SectionHeader(stringResource(R.string.external_refs)) }
 			items(refs, key = { "r${it.id}" }) { r ->
 				ClickableRow(r.value, refKindLabel(r.kind)) { deletingRef = r }
@@ -239,17 +248,94 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			?: LocalDate.now(zone)
 		ManualSegmentDialog(kind, firstDay, zone, vm) { adding = null }
 	}
-	deletingSegment?.let { s ->
-		ConfirmDialog(stringResource(R.string.confirm_delete_segment), { deletingSegment = null }) {
-			deletingSegment = null
-			vm.deleteSegment(s.id)
-		}
-	}
+	editingSegment?.let { s -> SegmentDialog(s, zone, vm) { editingSegment = null } }
 	deletingRef?.let { r ->
 		ConfirmDialog(stringResource(R.string.confirm_delete, r.value), { deletingRef = null }) {
 			deletingRef = null
 			vm.removeRef(r.id)
 		}
+	}
+}
+
+/*
+ * Edit or delete a closed segment (backlog 11): date, start, end, km of a
+ * travel; the new values replace the recorded ones.
+ */
+@Composable
+private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, onClose: () -> Unit) {
+	val error by vm.error.collectAsState()
+	val startAt = Instant.ofEpochMilli(s.startUtcMs).atZone(zone)
+	var date by remember { mutableStateOf(startAt.toLocalDate().toString()) }
+	var start by remember { mutableStateOf(clockOf(s.startUtcMs, zone)) }
+	var end by remember { mutableStateOf(s.endUtcMs?.let { clockOf(it, zone) }.orEmpty()) }
+	var km by remember { mutableStateOf(s.kmDeclared?.toString().orEmpty()) }
+	var deleting by remember { mutableStateOf(false) }
+	EditDialog(
+		title = stringResource(R.string.segment_edit),
+		error = error,
+		onDismiss = { vm.clearError(); onClose() },
+		onDelete = { deleting = true },
+		onConfirm = {
+			val d = parseDate(date)
+			val a = parseHhMm(start)
+			val b = parseHhMm(end)
+			if (d == null || a == null || b == null)
+				vm.updateSegment(s.id, 1, 0, null, onClose)
+			else {
+				val (from, to) = localRange(d, a, b, zone)
+				vm.updateSegment(s.id, from, to, if (s.kind == SegmentKind.TRAVEL) parseDecimal(km) else null, onClose)
+			}
+		},
+	) {
+		DateField(stringResource(R.string.field_date), date, { date = it }, importance = Importance.REQUIRED)
+		TimeField(stringResource(R.string.field_start), start, { start = it }, importance = Importance.REQUIRED)
+		TimeField(stringResource(R.string.field_end), end, { end = it }, importance = Importance.REQUIRED)
+		if (s.kind == SegmentKind.TRAVEL)
+			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = Importance.OPTIONAL)
+	}
+	if (deleting)
+		ConfirmDialog(stringResource(R.string.confirm_delete_segment), { deleting = false }) {
+			deleting = false
+			vm.deleteSegment(s.id, onClose)
+		}
+}
+
+/*
+ * Tags of the entry (backlog 13): chips with a remove button, a field to
+ * add one or more ("#urgente remoto"), suggestions from the tags in use.
+ */
+@Composable
+private fun TagsSection(vm: EntryViewModel) {
+	val tags by vm.tags.collectAsState()
+	val all by vm.allTags.collectAsState()
+	var text by remember { mutableStateOf("") }
+	val typed = Tags.normalize(text.substringAfterLast(' '))
+	val suggestions = all.filter { it !in tags && (typed == null || it.startsWith(typed)) }.take(8)
+	/* the header carries its own padding, like the other sections */
+	SectionHeader(stringResource(R.string.tags))
+	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+		if (tags.isNotEmpty())
+			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+				for (t in tags)
+					InputChip(
+						selected = false, onClick = { vm.setTags(tags - t) }, label = { Text("#$t") },
+						trailingIcon = { Icon(painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.action_delete), modifier = Modifier.size(16.dp)) },
+					)
+			}
+		Row(verticalAlignment = Alignment.CenterVertically) {
+			Column(Modifier.weight(1f)) {
+				TextInput(stringResource(R.string.tag_new), text, { text = it }, importance = Importance.OPTIONAL)
+			}
+			AddButton {
+				vm.setTags(tags + Tags.parse(text))
+				text = ""
+			}
+		}
+		if (suggestions.isNotEmpty())
+			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+				for (t in suggestions)
+					SuggestionChip(onClick = { vm.setTags(tags + t); text = "" }, label = { Text("#$t") })
+			}
 	}
 }
 

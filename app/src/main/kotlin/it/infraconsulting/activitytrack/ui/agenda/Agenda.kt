@@ -118,6 +118,7 @@ data class AgendaItem(
 	val running: Boolean,
 	/* the entry itself: open ones swipe (M10) */
 	val entry: TimeEntryEntity? = null,
+	val tags: List<String> = emptyList(),
 )
 
 /*
@@ -200,6 +201,7 @@ class AgendaViewModel(
 					companyId = e?.companyId,
 					running = e?.status == EntryStatus.ACTIVE,
 					entry = e,
+					tags = meta?.tags.orEmpty(),
 				)
 			}
 		}
@@ -351,13 +353,16 @@ private fun periodTitle(m: AgendaMode, a: LocalDate, locale: Locale): String = w
 		YearMonth.from(a).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)).replaceFirstChar { it.titlecase(locale) }
 }
 
-/* Days of the month with their lines and to-dos; the search matches client and activity. */
+/* Days of the month with their lines and to-dos; the search matches client, activity and tags ("#tag" too). */
 @Composable
 private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit, onTodo: (TodoEntity) -> Unit, swipes: ListSwipes) {
 	var query by rememberSaveable { mutableStateOf("") }
 	val zone = ZoneId.systemDefault()
 	val q = fold(query)
-	val items = d.items.filter { q.isEmpty() || fold(it.title).contains(q) || fold(it.activity).contains(q) }
+	val tq = q.removePrefix("#")
+	val items = d.items.filter {
+		q.isEmpty() || fold(it.title).contains(q) || fold(it.activity).contains(q) || (tq.isNotEmpty() && it.tags.any { t -> fold(t).contains(tq) })
+	}
 	val todos = d.todos.filter { q.isEmpty() || fold(it.title).contains(q) }
 	val days = (items.map { it.day } + todos.map { it.day }).distinct().sortedDescending()
 	val dayFmt = DateTimeFormatter.ofPattern("EEEE d", locale)
@@ -397,7 +402,8 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 							Text(it.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
 							Text(
 								"${clock(it.start, zone)}–${if (it.running) "…" else clock(it.end, zone)}" +
-									(if (it.activity.isNotBlank()) " · ${it.activity}" else ""),
+									(if (it.activity.isNotBlank()) " · ${it.activity}" else "") +
+									it.tags.joinToString("") { t -> " #$t" },
 								style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
 								color = MaterialTheme.colorScheme.onSurfaceVariant,
 							)

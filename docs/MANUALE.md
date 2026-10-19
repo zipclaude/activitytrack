@@ -250,8 +250,13 @@ Dopo lo Stop l'attività è **da completare** (notifica persistente e card rossa
 Nella schermata dell'attività:
 - controlla cliente, descrizione (dettabile), ruolo, località, luogo, note;
 - "Tempi": i pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
-  dimenticati (anche con i km; almeno un minuto); i tratti aggiunti a mano si
-  possono eliminare, quelli registrati no;
+  dimenticati (anche con i km; almeno un minuto). Toccando un tratto concluso
+  si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
+  **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). I
+  valori inseriti sostituiscono quelli registrati;
+- **Tag**: etichette libere (es. `#remoto`, `#urgente`); scrivine uno o più
+  nel campo e tocca "+", oppure tocca un suggerimento tra quelli già usati;
+  la ✕ su un tag lo toglie. Si aggiungono anche dopo la chiusura;
 - allegati (**Foto**, **Nota vocale**, **File**) e **Spesa** hanno pulsanti
   colorati con icona;
 - "Riferimenti esterni": ticket, URL o codici (riconosciuti automaticamente);
@@ -271,7 +276,8 @@ conclusa?"** ("Sì" la segna come fatta, "No, ci tornerò" la lascia aperta).
 ### Agenda
 In alto le modalità e il periodo ("‹ ›" per scorrere, "Oggi" per tornare a
 oggi; a destra il totale rendicontato del periodo).
-- **Lista** — il mese, giorno per giorno, con ricerca per cliente o
+- **Lista** — il mese, giorno per giorno, con ricerca per cliente,
+  descrizione o tag (`remoto` o `#remoto`); i tag compaiono dopo la
   descrizione; le voci *Da fare* pianificate o in scadenza compaiono con ☐.
 - **Giorno** — linea del tempo: ogni attività è un blocco dall'inizio alla
   fine; attività contemporanee affiancate; le *Da fare* pianificate sono

@@ -81,6 +81,12 @@ mode   : WORK | TRAVEL | PAUSE      (only when ACTIVE)
   note or attachment the app asks: leave it empty, copy the last activity on
   the same client, or go back to editing.
 - TRAVEL and PAUSE segments can be added manually afterwards (time and km).
+- Every closed segment can be edited (date, start, end, km of a travel) or
+  deleted (not the running one, not the only one left); the values entered
+  replace the recorded ones (M15).
+- Free tags per entry, also after closing: shown in the entry screen and the
+  agenda list, searchable, exported (CSV `tags` column, interchange
+  `tags`) and appended to the calendar hashtag line (M15).
 
 ### 3.2 Other entry data
 
@@ -278,6 +284,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M15 | entry tags, editable and deletable segments (schema v7) |
 | M14 | field importance borders, drop-down colours, 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M13 | owner backlog 2, 4, 5, 6, 7, 9, 10, 12 (settings sub-screens, notifications, quick add, agenda fit, Today filter, one-minute rule, coloured add buttons) |
 | M12 | colours of companies and clients (bands, agenda), to-do company filter (schema v6) |
