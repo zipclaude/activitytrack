@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.12 (2026-10-18, M13: owner backlog, first part). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.13 (2026-10-19, M14: field importance, 24-hour to-dos, recent completed entries). Application ID `it.infraconsulting.activitytrack`.
 
 Personal Android app for a freelancer who works for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -230,6 +230,13 @@ about the running entries). **Compact display** (setting): text at 88 %,
 tighter cards and buttons. **Quick add**: "+" beside Company and Client in
 the start screen and the to-do editor creates one and selects it.
 
+**M14**: field borders by importance (required red until filled, then
+green; important yellow; accessory blue); company and client colour dots in
+drop-downs; to-dos in the next 24 hours (overdue included) on Home and with
+the "Next 24 h" chip, "Ignored" chip to list or hide ignored ones; Home keeps
+the last 2 (normal) or 3 (compact) completed entries as small dimmed cards,
+open background entries taking their places first.
+
 **Backlog, first part (M13)**: settings in sub-screens (Gestures among
 them) and a Notifications section opening the Android page of each
 channel (banner, sound, vibration); "+" also for preset and role in the
@@ -271,6 +278,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M14 | field importance borders, drop-down colours, 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M13 | owner backlog 2, 4, 5, 6, 7, 9, 10, 12 (settings sub-screens, notifications, quick add, agenda fit, Today filter, one-minute rule, coloured add buttons) |
 | M12 | colours of companies and clients (bands, agenda), to-do company filter (schema v6) |
 | M11 | Home start controls (empty card, top bar), compact display, quick add of companies and clients |
