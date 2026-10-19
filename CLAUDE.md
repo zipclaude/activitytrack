@@ -70,7 +70,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
 | M14 fields | **implemented** (branch `m14-fields`): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home; device test pending |
-| M17 editable times | **implemented** (branch `m17-free-times`, on top of M16): setting (default on), start/end time when starting/stopping, segments editable only when on; device test pending |
+| M17 editable times | **implemented** (PR #20, on top of M16 PR #18): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **implemented** (PR #18, branch `m16-list-order`, on top of M15 PR #17): backlog 1 (schema v8); device test pending |
 | M15 tags, segments | **implemented** (PR #17, branch `m15-tags-segments`, on top of M14 PR #16): backlog 11 and 13 (schema v7); device test pending |
 | M13 backlog | **done** (PR #15, on `main`, v0.4.2): backlog items 2, 4, 5, 6, 7, 8, 9, 10, 12; device-tested 2026-10-18 |
@@ -138,7 +138,7 @@ Open PRs (2026-10-19), all with base `main`, merge in this order: #16 (M14) →
 #17 (M15, schema v7) → #18 (M16, schema v8) → #20 (M17); #19 (private
 calendar events) is independent. After each merge the next one shows only
 its own commits. Instrumented tests 46/46 on the OnePlus (2026-10-19);
-M15/M16 device-tested on the debug app, M17 device test pending.
+M15, M16 and M17 device-tested on the debug app (2026-10-19).
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.

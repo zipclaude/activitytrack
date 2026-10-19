@@ -159,7 +159,8 @@ private fun StopAtDialog(e: TimeEntryEntity, vm: EntryCommander, title: String, 
 		title = { Text(stringResource(R.string.stop_title, title)) },
 		text = {
 			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-				TimeField(stringResource(R.string.field_end), end, { end = it }, clearable = true, importance = Importance.OPTIONAL)
+				/* a new time drops the error about the previous one */
+				TimeField(stringResource(R.string.field_end), end, { end = it; vm.clearError() }, clearable = true, importance = Importance.OPTIONAL)
 				Text(stringResource(R.string.time_now_hint), style = MaterialTheme.typography.bodySmall)
 				error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error) }
 			}
