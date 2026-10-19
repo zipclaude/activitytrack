@@ -50,8 +50,10 @@ data class AppSettings(
 	val compactDisplay: Boolean = false,
 	/* Home and To-dos show the to-dos of this company only (M12); kept until removed */
 	val todoCompanyFilter: Long? = null,
-	/* To-dos screen: only those due or planned today, or overdue (backlog 9) */
-	val todoTodayOnly: Boolean = false,
+	/* to-dos due or planned in the next 24 hours (or overdue) only (backlog 9, owner 2026-10-19) */
+	val todoNext24h: Boolean = false,
+	/* ignored to-dos listed (struck through) or hidden */
+	val todoShowIgnored: Boolean = true,
 ) {
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId

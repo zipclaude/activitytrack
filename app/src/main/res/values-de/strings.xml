@@ -303,7 +303,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="connector_not_set">Nicht gesetzt</string>
   <string name="connector_generic_hint">Austausch über JSON-/XML-Dateien unter Import / Export.</string>
   <string name="todo_title">Aufgaben</string>
-  <string name="todo_due_today">Heute fällig</string>
+  <string name="todo_due_today">Zu tun · nächste 24 Std.</string>
   <string name="todo_today">heute</string>
   <string name="todo_start">Tätigkeit starten</string>
   <string name="todo_mark_done">Als erledigt markieren</string>
@@ -427,10 +427,11 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="short_text">Wahrscheinlich versehentlich gestartet. Verwerfen?</string>
   <string name="short_discard">Verwerfen</string>
   <string name="short_keep">Behalten und beenden</string>
-  <string name="todo_filter_today">Heute</string>
   <string name="sec_notifications">Benachrichtigungen</string>
   <string name="notif_settings_hint">Banner, Ton und Vibration jeder Benachrichtigungsart werden in Android eingestellt: zum Ändern antippen.</string>
   <string name="notif_all">Alle Benachrichtigungen der App</string>
   <string name="agenda_fit">Einpassen</string>
   <string name="agenda_scroll">Scrollen</string>
+  <string name="todo_filter_next24h">Nächste 24 Std.</string>
+  <string name="todo_filter_ignored">Ignorierte</string>
 </resources>

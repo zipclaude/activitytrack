@@ -80,7 +80,7 @@ fun QuickCompanyDialog(onDone: (Long) -> Unit, onDismiss: () -> Unit) {
 		error = error,
 		onDismiss = { vm.clearError(); onDismiss() },
 		onConfirm = { vm.addCompany(name) { onDone(it) } },
-	) { TextInput(stringResource(R.string.field_name), name, { name = it }) }
+	) { TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED) }
 }
 
 @Composable
@@ -93,7 +93,7 @@ fun QuickRoleDialog(onDone: (Long) -> Unit, onDismiss: () -> Unit) {
 		error = error,
 		onDismiss = { vm.clearError(); onDismiss() },
 		onConfirm = { vm.addRole(name, onDone) },
-	) { TextInput(stringResource(R.string.field_name), name, { name = it }) }
+	) { TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED) }
 }
 
 /*
@@ -116,7 +116,7 @@ fun QuickPresetDialog(text: String, companyId: Long?, onDone: (String) -> Unit, 
 		onDismiss = { vm.clearError(); onDismiss() },
 		onConfirm = { vm.addPreset(value, company, role, onDone) },
 	) {
-		TextInput(stringResource(R.string.field_activity), value, { value = it })
+		TextInput(stringResource(R.string.field_activity), value, { value = it }, importance = Importance.REQUIRED)
 		ChoiceField(
 			stringResource(R.string.field_company),
 			listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) + companies.filter { !it.archived }.map { it.id to it.name },
@@ -145,7 +145,10 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long) -> Unit, onDismiss:
 		onDismiss = { vm.clearError(); onDismiss() },
 		onConfirm = { vm.addClient(chosen, name, onDone) },
 	) {
-		TextInput(stringResource(R.string.field_name), name, { name = it })
-		ChoiceField(stringResource(R.string.field_company), companies.filter { !it.archived }.map { it.id to it.name }, chosen) { company = it }
+		TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
+		ChoiceField(
+			stringResource(R.string.field_company), companies.filter { !it.archived }.map { it.id to it.name }, chosen,
+			importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
+		) { company = it }
 	}
 }

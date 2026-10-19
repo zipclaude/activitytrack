@@ -18,6 +18,7 @@ import it.infraconsulting.activitytrack.ui.ActionViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -58,6 +59,8 @@ class StartViewModel(
 	val companies = master.companies.state(emptyList())
 	val roles = master.roles.state(emptyList())
 	val presets = master.presets.state(emptyList())
+	/* colour dots in the client list (backlog 14) */
+	val clientColors = master.clients.map { list -> list.mapNotNull { c -> c.color?.let { c.id to it } }.toMap() }.state(emptyMap())
 
 	private val allChoices = combine(master.clients, entries.clientLastUse) { clients, uses ->
 		val last = uses.associate { it.clientId to it.lastMs }

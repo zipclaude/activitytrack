@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.draw.alpha
 import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
@@ -109,6 +110,18 @@ class HomeViewModel(
 
 	val settings = settings.settings.state(null)
 
+	/* the last completed entries, most recent first (owner, 2026-10-19) */
+	val closed = combine(
+		entries.recentClosed, entries.recentClosedSegments, master.clients, master.companies,
+	) { list, segs, clients, companies ->
+		val cl = clients.associateBy { it.id }
+		val co = companies.associateBy { it.id }
+		val bySeg = segs.groupBy { it.entryId }
+		list.map { e ->
+			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), e.companyId?.let { co[it]?.color })
+		}
+	}.state(emptyList())
+
 	/* the entry shown in the big card; null = the most recent one */
 	private val _selected = MutableStateFlow<Long?>(null)
 	val selected = _selected.asStateFlow()
@@ -158,6 +171,13 @@ fun HomeScreen(
 	}
 	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
 	val small = cards.filter { it !== big }
+	/*
+	 * the last completed entries stay in view: 2 (normal) or 3 (compact)
+	 * small cards, open background entries take their places first
+	 */
+	val closed by vm.closed.collectAsState()
+	val slots = if (LocalCompact.current) 3 else 2
+	val recent = closed.take(maxOf(0, slots - small.size))
 
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
@@ -203,6 +223,11 @@ fun HomeScreen(
 						modifier = Modifier.padding(horizontal = 16.dp),
 					) {
 						SmallEntryCard(c, now, onSelect = { vm.select(c.entry.id) }, onCommand = { run(c.entry, it) }, onOpen = { onOpenEntry(c.entry.id) })
+					}
+				}
+				items(recent, key = { "closed-${it.entry.id}" }) { c ->
+					Box(Modifier.padding(horizontal = 16.dp).alpha(0.75f)) {
+						SmallEntryCard(c, now, onSelect = { onOpenEntry(c.entry.id) }, onCommand = {}, onOpen = { onOpenEntry(c.entry.id) })
 					}
 				}
 				item(key = "todos") { TodoTodaySection(onStartTodo) }

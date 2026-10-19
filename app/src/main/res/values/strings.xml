@@ -315,7 +315,7 @@ Tap the green play button below to start one.</string>
   <string name="connector_not_set">Not set</string>
   <string name="connector_generic_hint">Exchange through JSON / XML files from Import / export.</string>
   <string name="todo_title">To-dos</string>
-  <string name="todo_due_today">To do today</string>
+  <string name="todo_due_today">To do · next 24 h</string>
   <string name="todo_today">today</string>
   <string name="todo_start">Start activity</string>
   <string name="todo_mark_done">Mark as done</string>
@@ -439,10 +439,11 @@ Tap the green play button below to start one.</string>
   <string name="short_text">Probably started by mistake. Discard it?</string>
   <string name="short_discard">Discard</string>
   <string name="short_keep">Keep and stop</string>
-  <string name="todo_filter_today">Today</string>
   <string name="sec_notifications">Notifications</string>
   <string name="notif_settings_hint">Banner, sound and vibration of each kind of notification are set in Android: tap one to change it.</string>
   <string name="notif_all">All notifications of the app</string>
   <string name="agenda_fit">Fit</string>
   <string name="agenda_scroll">Scroll</string>
+  <string name="todo_filter_next24h">Next 24 h</string>
+  <string name="todo_filter_ignored">Ignored</string>
 </resources>

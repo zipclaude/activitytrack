@@ -69,8 +69,9 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M7 UI polish | first pass (PR #7 → #10, on `main`), owner review pending |
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
-| M13 backlog | **implemented** (branch `m13-backlog`, on top of M12): backlog items 2, 4, 5, 6, 7, 8, 9, 10, 12; device test pending |
-| M12 colours | **implemented** (branch `m12-colors`): company/client colours, card bands, to-do company filter, agenda colours (schema v6); device test pending |
+| M14 fields | **implemented** (branch `m14-fields`): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home; device test pending |
+| M13 backlog | **done** (PR #15, on `main`, v0.4.2): backlog items 2, 4, 5, 6, 7, 8, 9, 10, 12; device-tested 2026-10-18 |
+| M12 colours | **done** (PR #14, on `main`, v0.4.1): company/client colours, card bands, to-do company filter, agenda colours (schema v6); device-tested 2026-10-18 |
 | M11 UI | **done** (PR #13, on `main`, release v0.4.0): start/travel on the empty card and the bar, compact display, quick add; device-tested 2026-10-18 |
 | M10 UI | **done** (PR #12, on `main`, release v0.3.0): pickers, Home cards, swipes, Gestures screen, ignored to-dos (schema v5); smoke-tested on the debug app 2026-10-18 |
 | Future (to do) | OCR receipts, free offline STT (SPEC §10) |
@@ -145,7 +146,10 @@ Done in M13: 2, 4, 5, 6, 7, 8, 9, 10, 12. Open: 1, 3, 11, 13 (answers 2026-10-18
 11 yes, an edited tracked segment becomes "corrected by hand" and keeps its
 original times; 13 yes as proposed, filters by tag in agenda and reports
 later; 1 yes as proposed, manual order by dragging; 3 mockup first).
-14. Show the company and client colour in the drop-down lists too.
+14. Show the company and client colour in the drop-down lists too (done in M14).
+Owner notes 2026-10-19 (done in M14): to-dos in the next 24 hours, not the
+current day; Home keeps the last 2/3 completed entries; field borders by
+importance; filter to show or hide ignored to-dos.
 Colours: done in M12 (see the decisions log).
 1. Company, client, role, preset lists sortable: per list alphabetical, by last
    use / creation, or manual.
@@ -281,6 +285,8 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-18 | To-do "ignored" state instead of delete: struck through, at the bottom of the lists, restored with another swipe; imports never re-create or un-ignore it |
 | 2026-10-18 | M11: no bottom start button; empty card: Start + Travel buttons and swipes (left = start screen, right = travel at once, no destination); with entries open, Start / Travel icons in the top bar (Travel opens the start screen in travel mode); compact display setting (text 88 %, tighter cards); "+" quick add of company and client (start screen, to-do editor; client quick add did not exist before) |
 | 2026-10-18 | M12 colours (mockup row 3 approved): 12-colour palette per company and client; band at the card start = company colour, client colour when a to-do list shows one company; the to-do company filter applies to to-dos only (Home section, To-dos screen) and stays until removed; the agenda uses the chosen company colours, automatic ones otherwise |
+| 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
+| 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
 | 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11); debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |

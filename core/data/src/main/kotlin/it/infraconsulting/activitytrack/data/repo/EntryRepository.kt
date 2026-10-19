@@ -76,6 +76,8 @@ class EntryRepository(
 
 	val openEntries = dao.observeOpenEntries()
 	val openEntrySegments = dao.observeOpenEntrySegments()
+	val recentClosed = dao.observeRecentClosed(RECENT_CLOSED)
+	val recentClosedSegments = dao.observeRecentClosedSegments(RECENT_CLOSED)
 	val clientLastUse = dao.observeClientLastUse()
 
 	fun entry(id: Long) = dao.observeEntry(id)
@@ -434,6 +436,8 @@ class EntryRepository(
 	companion object {
 		private val DEFAULTS_WINDOW: Duration = Duration.ofDays(30)
 		const val MIN_LENGTH_MS = 60_000L
+		/* the most Home shows (compact display) */
+		const val RECENT_CLOSED = 3
 	}
 
 	private suspend fun load(entryId: Long): TimeEntryEntity =

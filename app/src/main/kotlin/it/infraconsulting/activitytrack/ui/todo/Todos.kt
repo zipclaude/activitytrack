@@ -40,6 +40,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.domain.todo.withinHours
+import it.infraconsulting.activitytrack.domain.todo.todoMoment
+import it.infraconsulting.activitytrack.ui.common.Importance
 import it.infraconsulting.activitytrack.ui.common.rgb
 import it.infraconsulting.activitytrack.ui.common.Banded
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
@@ -110,8 +113,11 @@ class TodosViewModel(
 	/* to-dos of one company only (M12, owner: kept until removed); null = all */
 	fun setCompanyFilter(companyId: Long?) = run { settingsRepo.update { it.copy(todoCompanyFilter = companyId) } }
 
-	/* To-dos screen: today's (and overdue) only, or all (backlog 9) */
-	fun setTodayOnly(on: Boolean) = run { settingsRepo.update { it.copy(todoTodayOnly = on) } }
+	/* next 24 hours (and overdue) only, or all (backlog 9, owner 2026-10-19) */
+	fun setNext24h(on: Boolean) = run { settingsRepo.update { it.copy(todoNext24h = on) } }
+
+	/* ignored to-dos listed or hidden (owner, 2026-10-19) */
+	fun setShowIgnored(on: Boolean) = run { settingsRepo.update { it.copy(todoShowIgnored = on) } }
 
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
 	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
@@ -136,6 +142,10 @@ internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = TodoEntity
  * Still open past its planned duration or first hour (M9), or past its due
  * date and time (owner, 2026-10-18): "overdue" on Home and in the lists.
  */
+/* planned start, else due time: what "the next 24 hours" looks at */
+internal fun moment(t: TodoEntity, zone: ZoneId): Instant? =
+	todoMoment(t.plan(), t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, zone)
+
 internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean {
 	if (t.done || t.ignoredUtcMs != null)
 		return false
@@ -345,12 +355,15 @@ fun TodoTodaySection(onStart: (Long) -> Unit) {
 	val ignored by vm.ignored.collectAsState()
 	val clients by vm.clients.collectAsState()
 	val companies by vm.companies.collectAsState()
-	val filter = vm.settings.collectAsState().value?.todoCompanyFilter
+	val settings by vm.settings.collectAsState()
+	val filter = settings?.todoCompanyFilter
 	val today = LocalDate.now()
-	val due = open.filter { t -> (filter == null || t.companyId == filter) && listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today.toEpochDay() } }
-		.sortedWith(compareBy({ it.planEpochDay ?: it.dueEpochDay }, { it.planStartMin ?: it.dueTimeMin ?: 1440 }))
 	val zone = ZoneId.systemDefault()
-	val ignoredToday = ignored.filter { t ->
+	val now = Instant.now()
+	/* the next 24 hours, overdue included (owner, 2026-10-19: not only the current day) */
+	val due = open.filter { t -> (filter == null || t.companyId == filter) && withinHours(moment(t, zone), now) }
+		.sortedBy { moment(it, zone) }
+	val ignoredToday = if (settings?.todoShowIgnored == false) emptyList() else ignored.filter { t ->
 		(filter == null || t.companyId == filter) && t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == today
 	}
 	/* with a filter the header stays, so the filter can be removed */
@@ -430,11 +443,14 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 	val companies by vm.companies.collectAsState()
 	val settings by vm.settings.collectAsState()
 	val filter = settings?.todoCompanyFilter
-	val todayOnly = settings?.todoTodayOnly == true
-	val today = LocalDate.now().toEpochDay()
+	val next24h = settings?.todoNext24h == true
+	val showIgnored = settings?.todoShowIgnored != false
+	val zone = ZoneId.systemDefault()
+	val now = Instant.now()
 	val list = (if (showDone) all else open + ignored).filter { t ->
 		(filter == null || t.companyId == filter) &&
-			(!todayOnly || t.ignoredUtcMs == null && listOfNotNull(t.dueEpochDay, t.planEpochDay).any { it <= today })
+			(showIgnored || t.ignoredUtcMs == null) &&
+			(!next24h || withinHours(moment(t, zone), now))
 	}
 	val band = bands(list, companies, clients)
 
@@ -460,7 +476,8 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 				Column(Modifier.padding(horizontal = 16.dp)) {
 					SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it }
 					Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-						FilterChip(selected = todayOnly, onClick = { vm.setTodayOnly(!todayOnly) }, label = { Text(stringResource(R.string.todo_filter_today)) })
+						FilterChip(selected = next24h, onClick = { vm.setNext24h(!next24h) }, label = { Text(stringResource(R.string.todo_filter_next24h)) })
+						FilterChip(selected = showIgnored, onClick = { vm.setShowIgnored(!showIgnored) }, label = { Text(stringResource(R.string.todo_filter_ignored)) })
 						CompanyFilter(vm)
 					}
 				}
@@ -557,33 +574,38 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			)
 		},
 	) {
-		TextInput(stringResource(R.string.todo_field_title), title, { title = it })
+		TextInput(stringResource(R.string.todo_field_title), title, { title = it }, importance = Importance.REQUIRED)
 		WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
 			SearchableChoiceField(
 				stringResource(R.string.field_client),
 				listOf<Pair<Long?, String>>(null to stringResource(R.string.field_none)) +
 					clients.filter { !it.archived }.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
 				clientId,
+				importance = Importance.IMPORTANT,
+				colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
 			) { clientId = it }
 		}
 		if (clientId == null)
 			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
-				ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { picked = it }
+				ChoiceField(
+					stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId,
+					importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
+				) { picked = it }
 			}
 		DateField(
 			stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true,
-			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing },
+			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing }, importance = Importance.IMPORTANT,
 		)
 		TimeField(
 			stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true,
-			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing },
+			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = Importance.IMPORTANT,
 		)
-		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number)
-		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true)
-		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true)
-		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it })
-		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false)
-		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false)
+		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number, importance = Importance.OPTIONAL)
+		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true, importance = Importance.OPTIONAL)
+		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true, importance = Importance.OPTIONAL)
+		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it }, importance = Importance.OPTIONAL)
+		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
+		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false, importance = Importance.OPTIONAL)
 	}
 	if (addCompany)
 		QuickCompanyDialog(onDone = { addCompany = false; picked = it; clientId = null }, onDismiss = { addCompany = false })
