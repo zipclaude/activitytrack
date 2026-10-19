@@ -157,7 +157,7 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						}
 						/* M17: start in the past; empty = now */
 						if (editableTimes) {
-							TimeField(stringResource(R.string.field_start), f.startTime, vm::setStartTime, clearable = true, importance = Importance.OPTIONAL)
+							TimeField(stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() }, clearable = true, importance = Importance.OPTIONAL)
 							Text(stringResource(R.string.time_now_hint), style = MaterialTheme.typography.bodySmall)
 						}
 						if (error != null)
