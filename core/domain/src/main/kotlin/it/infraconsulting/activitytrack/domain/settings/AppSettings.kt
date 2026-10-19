@@ -50,8 +50,11 @@ data class AppSettings(
 	val compactDisplay: Boolean = false,
 	/* Home and To-dos show the to-dos of this company only (M12); kept until removed */
 	val todoCompanyFilter: Long? = null,
-	/* to-dos due or planned in the next 24 hours (or overdue) only (backlog 9, owner 2026-10-19) */
-	val todoNext24h: Boolean = false,
+	/*
+	 * To-dos screen window (owner, 2026-10-19: 24 h / 7 d / 30 d / all):
+	 * hours ahead of now, overdue always included; 0 = all. Home keeps 24 h.
+	 */
+	val todoWindowHours: Int = 0,
 	/* ignored to-dos listed (struck through) or hidden */
 	val todoShowIgnored: Boolean = true,
 	/* order of the master-data lists and drop-downs (M16) */
@@ -75,6 +78,7 @@ data class AppSettings(
 		dayStartDelayMin = dayStartDelayMin.coerceIn(0, 240),
 		planLeadMin = planLeadMin.coerceIn(0, 240),
 		planSnoozeMin = planSnoozeMin.coerceIn(10, 240),
+		todoWindowHours = todoWindowHours.takeIf { it in TODO_WINDOWS } ?: 0,
 		movementThresholdM = movementThresholdM.coerceIn(50, 5_000),
 		stationaryRadiusM = stationaryRadiusM.coerceIn(25, 1_000),
 		stationaryMin = stationaryMin.coerceIn(5, 120),
@@ -101,3 +105,6 @@ data class AppSettings(
 		}
 	}
 }
+
+/* the to-do windows offered (hours; 0 = all) */
+val TODO_WINDOWS = setOf(0, 24, 168, 720)

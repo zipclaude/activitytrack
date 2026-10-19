@@ -140,8 +140,9 @@ ne hanno uno automatico).
 Accanto a "Da fare · prossime 24 h" (e nella schermata "Da fare") il pulsante **"Tutte
 le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
 lo togli con la ✕. Le attività in corso non vengono filtrate. Nella schermata
-"Da fare" il filtro **"Prossime 24 h"** mostra solo le voci delle prossime 24
-ore (o in ritardo), **"Ignorate"** mostra o nasconde le voci ignorate.
+"Da fare" il filtro del periodo (**24 h**, **7 gg**, **30 gg**, **Tutti**)
+mostra le voci pianificate o in scadenza entro quel tempo (quelle in ritardo
+sempre), **"Ignorate"** mostra o nasconde le voci ignorate.
 
 ### Visualizzazione compatta
 Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,

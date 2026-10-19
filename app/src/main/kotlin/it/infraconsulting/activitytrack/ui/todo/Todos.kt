@@ -115,7 +115,7 @@ class TodosViewModel(
 	fun setCompanyFilter(companyId: Long?) = run { settingsRepo.update { it.copy(todoCompanyFilter = companyId) } }
 
 	/* next 24 hours (and overdue) only, or all (backlog 9, owner 2026-10-19) */
-	fun setNext24h(on: Boolean) = run { settingsRepo.update { it.copy(todoNext24h = on) } }
+	fun setWindow(hours: Int) = run { settingsRepo.update { it.copy(todoWindowHours = hours) } }
 
 	/* ignored to-dos listed or hidden (owner, 2026-10-19) */
 	fun setShowIgnored(on: Boolean) = run { settingsRepo.update { it.copy(todoShowIgnored = on) } }
@@ -299,6 +299,23 @@ private fun TodoHeader(count: Int, vm: TodosViewModel) {
 	}
 }
 
+/* To-dos screen window: 24 h, 7 days, 30 days or all (owner, 2026-10-19); overdue always shown. */
+@Composable
+private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
+	var open by remember { mutableStateOf(false) }
+	val labels = mapOf(
+		24 to stringResource(R.string.todo_window_24h), 168 to stringResource(R.string.todo_window_7d),
+		720 to stringResource(R.string.todo_window_30d), 0 to stringResource(R.string.todo_window_all),
+	)
+	Box {
+		FilterChip(selected = hours != 0, onClick = { open = true }, label = { Text(labels[hours].orEmpty() + " ▾") })
+		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+			for ((h, label) in labels)
+				DropdownMenuItem(text = { Text(label) }, onClick = { open = false; onPick(h) })
+		}
+	}
+}
+
 /*
  * The to-do company filter (M12): "All companies" or one, with its colour;
  * the ✕ removes it. Shared by Home and the To-dos screen.
@@ -444,14 +461,14 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 	val companies by vm.companies.collectAsState()
 	val settings by vm.settings.collectAsState()
 	val filter = settings?.todoCompanyFilter
-	val next24h = settings?.todoNext24h == true
+	val window = settings?.todoWindowHours ?: 0
 	val showIgnored = settings?.todoShowIgnored != false
 	val zone = ZoneId.systemDefault()
 	val now = Instant.now()
 	val list = (if (showDone) all else open + ignored).filter { t ->
 		(filter == null || t.companyId == filter) &&
 			(showIgnored || t.ignoredUtcMs == null) &&
-			(!next24h || withinHours(moment(t, zone), now))
+			(window == 0 || withinHours(moment(t, zone), now, window.toLong()))
 	}
 	val band = bands(list, companies, clients)
 
@@ -477,7 +494,7 @@ fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Uni
 				Column(Modifier.padding(horizontal = 16.dp)) {
 					SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it }
 					Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-						FilterChip(selected = next24h, onClick = { vm.setNext24h(!next24h) }, label = { Text(stringResource(R.string.todo_filter_next24h)) })
+						WindowFilter(window, vm::setWindow)
 						FilterChip(selected = showIgnored, onClick = { vm.setShowIgnored(!showIgnored) }, label = { Text(stringResource(R.string.todo_filter_ignored)) })
 						CompanyFilter(vm)
 					}
