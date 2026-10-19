@@ -72,6 +72,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
 | 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
+| Issue #28 calls | **implemented** (PR #32, on `main`): contacts, call recognition, call pauses, client calls (schema v10); device test pending |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **done** (PR #18, on `main`, v0.5.0): backlog 1 (schema v8); device-tested 2026-10-19 |
@@ -160,19 +161,15 @@ Released v0.6.0 (2026-10-19). On `main` after it: #27 no automatic colours
   register a public client (owner asks); customer list endpoint unknown
   (clients matched by externalCode = CustomerId). Saidea's API doc is NOT
   to be committed (public repo). Instrumented tests for v10 not run yet.
-- Issue #28 "Riconoscimento chiamate": start after midnight (owner, credits).
-  Answers: 1 READ_PHONE_STATE + READ_CALL_LOG ok; 2 contacts = app master
-  data (name, numbers, one client; a client has many) with "import from
-  phone contacts"; 3 only within working hours, not on days off; 4 start
-  floor / end ceil to 5 min; 5 call during another client's entry → pause it
-  and resume at the end, a pause under a minute is not saved (the call is);
-  the "create activity from the call" prompt is an optional setting; 6
-  unknown numbers: nothing; 7 pause description editable also with editable
-  times off; 8 incoming and outgoing tracked, two separate settings; plus
-  recognition on/off and auto-pause on/off settings; pause segments get an
-  optional description ("Telefonata CLIENTE" when from a call); a view of all
-  calls with a client and their duration. Future: contacts may receive
-  activity reports.
+- Issue #28 calls: **implemented** (PR #32, merged 2026-10-19, schema v10;
+  closed). CallReceiver (PHONE_STATE, OFFHOOK → IDLE) + CallMonitor reads
+  the latest call-log row; Contacts master data (import via ACTION_PICK,
+  no READ_CONTACTS); client screen "Calls"; Settings → Calls (incoming /
+  outgoing off by default, auto pause and proposal on); pause notes
+  editable also with editable times off. Not yet on the phone: instrumented
+  tests (contacts/calls, call pause, migration 9→10), device test, manual
+  screenshots. Future: contacts may receive activity reports.
+- PR #29 must move its schema to **v11** (AutoMigration 10→11) before merging.
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.
