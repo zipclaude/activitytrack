@@ -56,6 +56,10 @@ sealed interface Screen {
 	data class StartFromTodo(val todoId: Long) : Screen
 	/* to-dos with one open for editing (re-plan from the reminder) */
 	data class Todo(val id: Long) : Screen
+	/* start flow pre-filled from a recognised call (issue #28): client, rounded times, contact */
+	data class StartFromCall(val clientId: Long, val startMs: Long, val endMs: Long, val contact: String) : Screen
+	/* contacts of the clients (issue #28) */
+	data object Contacts : Screen
 	/* late entry for a day, from the day-start prompt */
 	data class LateEntry(val epochDay: Long) : Screen
 
@@ -69,13 +73,14 @@ sealed interface Screen {
 		is StartFromTodo -> "start-todo/$todoId"
 		is Todo -> "todo/$id"
 		is SettingsPage -> "settings/$name"
+		is StartFromCall -> "start-call/" + listOf(clientId, startMs, endMs, java.util.Base64.getUrlEncoder().encodeToString(contact.toByteArray())).joinToString(",")
 		else -> this::class.simpleName!!
 	}
 
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Agenda, More, Start, StartTravel, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures)
+			listOf(Home, Agenda, More, Start, StartTravel, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures, Contacts)
 				.associateBy { it.key() }
 		}
 
@@ -84,6 +89,10 @@ sealed interface Screen {
 			val (kind, id) = key.split('/').takeIf { it.size == 2 } ?: return null
 		if (kind == "settings")
 			return SettingsPage(id)
+			if (kind == "start-call")
+				return id.split(',').takeIf { it.size == 4 }?.let { p ->
+					runCatching { StartFromCall(p[0].toLong(), p[1].toLong(), p[2].toLong(), String(java.util.Base64.getUrlDecoder().decode(p[3]))) }.getOrNull()
+				}
 			val n = id.toLongOrNull() ?: return null
 			return when (kind) {
 				"entry" -> Entry(n)

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import it.infraconsulting.activitytrack.ui.start.CallPrefill
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -204,6 +205,8 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		Screen.StartTravel -> StartScreen(back, travel = true)
 		is Screen.StartFor -> StartScreen(back, top.clientId)
 		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
+		is Screen.StartFromCall -> StartScreen(back, top.clientId, call = CallPrefill(top.startMs, top.endMs, top.contact))
+		Screen.Contacts -> it.infraconsulting.activitytrack.ui.masterdata.ContactsScreen(back)
 		Screen.Todos -> TodosScreen(back) { open(Screen.StartFromTodo(it)) }
 		is Screen.Todo -> TodosScreen(back, editId = top.id) { open(Screen.StartFromTodo(it)) }
 		is Screen.Entry -> EntryScreen(top.id, back)

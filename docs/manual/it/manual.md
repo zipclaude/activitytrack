@@ -211,6 +211,8 @@ Nella schermata "Nuova attività":
 - **Descrizione** e **ruolo** vengono proposti dall'ultima attività sullo
   stesso cliente negli ultimi 30 giorni. Il microfono nel campo detta il testo.
 - **Inizio** (con "Orari modificabili", attivo all'inizio): vuoto = adesso;
+  toccandolo quando è vuoto si apre la griglia a intervallo, che imposta inizio
+  e fine insieme; se è già compilato si apre il selettore dell'orario;
   un orario già passato fa partire l'attività da lì (un orario che oggi non è
   ancora arrivato vale per ieri).
 - **Fine (facoltativa)**: toccandola, la griglia sceglie inizio e fine insieme.
@@ -299,6 +301,27 @@ tocchi "Ferma e salva"), "File" (qualsiasi documento). Toccando un allegato:
 "Apri" o "Elimina". I file stanno nella cartella dati, in
 `attachments/<anno>/<attività>/`.
 
+### Chiamate con i clienti
+Se attivi il riconoscimento (Impostazioni → **Chiamate**, entranti e uscenti
+separatamente), alla fine di ogni chiamata con un numero presente in
+Anagrafiche → **Contatti** l'app guarda il registro chiamate e:
+- registra la chiamata (si vede nella scheda del cliente, sezione
+  **"Chiamate"**, con la durata);
+- se stai lavorando per **lo stesso cliente**, non fa altro: la chiamata fa
+  parte dell'attività;
+- se stai lavorando per **un altro cliente**, mette quell'attività **in
+  pausa** per la durata della chiamata, con la descrizione "Telefonata
+  CLIENTE", e la riprende alla fine (opzione "Metti in pausa…"); una chiamata
+  sotto il minuto non crea la pausa;
+- salvo il caso dello stesso cliente, propone con una notifica di
+  **registrare la chiamata come attività** (opzione "Proponi…"): "Crea
+  attività" apre "Nuova attività" con il cliente, la descrizione
+  "Chiamata telefonica con NOME" e gli orari arrotondati a 5 minuti (inizio
+  per difetto, fine per eccesso).
+
+Vale solo in orario di lavoro (non nei festivi e nei giorni liberi); le
+chiamate con numeri sconosciuti vengono ignorate.
+
 ---
 
 ## 6. Fermare e completare
@@ -318,6 +341,10 @@ Nella schermata dell'attività:
   acceso, toccando un tratto concluso si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
   **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). I
   valori inseriti sostituiscono quelli registrati;
+- le **pause** hanno una **descrizione** facoltativa (es. "Telefonata
+  CLIENTE" per quelle create da una chiamata; vuota per quelle manuali):
+  toccando una pausa la modifichi o la cancelli, anche con "Orari
+  modificabili" spento;
 - **Tag**: etichette libere (es. `#remoto`, `#urgente`); scrivine uno o più
   nel campo e tocca "+", oppure tocca un suggerimento tra quelli già usati;
   la ✕ su un tag lo toglie. Si aggiungono anche dopo la chiusura;
@@ -435,7 +462,8 @@ cambia la scadenza del gestionale.
   connettore; per ora il generico, a file) e **"Calendario di questa azienda"**;
   sotto, le **sedi** dell'azienda.
 - **Clienti** — appartengono a un'azienda (non si può cambiare dopo la prima
-  attività); hanno le loro sedi.
+  attività); hanno le loro sedi e, in fondo alla scheda, le **chiamate**
+  registrate con i loro contatti.
 - **Sedi** — etichetta, coordinate, raggio, indirizzo. Coordinate da
   "Posizione attuale" o da "Mappa" (sposta la mappa sotto il mirino e "Usa
   questo punto").
@@ -451,6 +479,11 @@ cambia la scadenza del gestionale.
 
 ![Ordine manuale: la maniglia ≡ trascina la riga](img/order.png)
 
+- **Contatti** — persone dei clienti: nome, cliente e uno o più numeri (uno
+  per riga). **"Importa dalla rubrica"** sceglie un numero dalla rubrica del
+  telefono e lo propone come nuovo contatto. Servono al riconoscimento delle
+  chiamate (§5); i numeri si confrontano con o senza prefisso
+  internazionale.
 - **Luoghi** — casa e altri luoghi (casa serve per l'arrivo a fine viaggio).
 - **Orario di lavoro e pausa pranzo** — per giorno della settimana.
 - **Giorni liberi**.
@@ -559,6 +592,8 @@ spiegato nella Parte II, §17.
 |---|---|---|
 | Visualizzazione | Normale / Compatta | Normale |
 | Orari | Orari modificabili liberamente: inizio e fine scelti all'avvio e allo stop, tratti modificabili ed eliminabili (spento: orari come registrati; "+ Viaggio" e "+ Pausa" restano) | acceso |
+| Chiamate | Riconosci le chiamate in entrata / in uscita | spenti |
+| | Metti in pausa l'attività di un altro cliente / Proponi un'attività | accesi |
 | Promemoria | Intervallo di conferma | 30 min |
 | | Numero massimo di conferme | 0 (illimitato) |
 | | Intervallo promemoria pausa | 15 min |
@@ -590,6 +625,9 @@ I valori fuori intervallo vengono corretti al salvataggio.
 - I servizi online (indirizzi, distanze, mappe) ricevono solo coordinate di
   singoli punti; si possono disattivare o puntare a server propri.
 - Le credenziali dei gestionali sono cifrate con il keystore del telefono.
+- Con il riconoscimento delle chiamate l'app legge il registro chiamate sul
+  telefono e conserva solo le chiamate con i tuoi contatti; non legge la
+  rubrica (l'importazione usa il numero che scegli tu).
 
 ---
 
@@ -623,6 +661,15 @@ riportati al limite più vicino.
 | Voce | Effetto | Predefinito |
 |---|---|---|
 | Orari modificabili liberamente | Acceso: campi **Inizio** e **Fine** all'avvio, campo **Fine** nella domanda di Stop, tratti modificabili ed eliminabili (i nuovi valori sostituiscono quelli registrati). Spento: gli orari restano quelli registrati, i tratti non si toccano; "+ Viaggio" e "+ Pausa" restano disponibili. In futuro potrà essere imposta da una policy. | acceso |
+
+### Chiamate
+
+| Voce | Effetto | Predefinito |
+|---|---|---|
+| Riconosci le chiamate in entrata | le chiamate ricevute dai contatti vengono registrate e gestite (§5); all'attivazione chiede l'accesso allo stato del telefono e al registro chiamate | spento |
+| Riconosci le chiamate in uscita | lo stesso per le chiamate fatte | spento |
+| Metti in pausa l'attività di un altro cliente | durante la chiamata, l'attività in corso di un altro cliente va in pausa (almeno un minuto) | acceso |
+| Proponi un'attività dopo la chiamata | notifica "Crea attività" con cliente, descrizione e orari arrotondati | acceso |
 
 ### Promemoria
 
@@ -715,11 +762,13 @@ schermate stesse e restano finché non li cambi.
 | Ruolo | nome | proposto dalle attività predefinite, scelto sull'attività |
 | Attività predefinita | testo, ruolo proposto, azienda (facoltativa) | riempie la descrizione |
 | Attività | cliente, azienda, ruolo, descrizione, località, dove, note, stato, fine prevista | ha tratti, spese, allegati, riferimenti, tag; può nascere da un *Da fare* |
-| Tratto | tipo (lavoro, viaggio, pausa), inizio, fine, km, origine (registrato o a mano) | di un'attività; i punti di posizione appartengono ai tratti |
+| Tratto | tipo (lavoro, viaggio, pausa), inizio, fine, km, origine (registrato o a mano), descrizione (pause) | di un'attività; i punti di posizione appartengono ai tratti |
 | Spesa | importo, descrizione, scontrino | di un'attività |
 | Allegato | foto, nota vocale, file | di un'attività, nella cartella dati |
 | Riferimento esterno | ticket, URL, codice | di un'attività |
 | Tag | parola libera | di un'attività |
+| Contatto | nome, numeri | di un cliente; riconosce le chiamate |
+| Chiamata | contatto, direzione, inizio, fine | di un contatto e del suo cliente |
 | *Da fare* | titolo, cliente, pianificazione, durata, scadenza, priorità, note, riferimenti, stato | di un'azienda (e di un cliente); genera attività |
 | Luogo | casa o altro, coordinate | casa chiude i viaggi di rientro |
 | Orario di lavoro, pausa pranzo, giorni liberi, assenze | per giorno | regolano promemoria e riepiloghi |
