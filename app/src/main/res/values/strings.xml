@@ -508,7 +508,8 @@ Tap the green play button below to start one.</string>
   <string name="set_calls_outgoing">Recognise outgoing calls</string>
   <string name="set_call_pause">Pause the running activity of another client during a call</string>
   <string name="set_call_propose">Propose an activity after a call</string>
-  <string name="set_calls_hint">Only calls with a number in Master data → Contacts, within working hours. Needs access to the phone state and the call log.</string>
+  <string name="set_calls_hint">Only calls with a number in Master data → Contacts; within working hours unless \"Also outside working hours\" is on. Needs access to the phone state and the call log.</string>
+  <string name="set_calls_always">Also outside working hours (on call)</string>
   <string name="call_entry_activity">Phone call with %1$s</string>
   <string name="call_pause_note">Phone call %1$s</string>
   <string name="call_propose_title">Call with %1$s (%2$s)</string>
