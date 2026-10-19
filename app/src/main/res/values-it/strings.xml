@@ -463,4 +463,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <!-- M19 tag filters -->
   <string name="tag_filter_all">Tutti i tag</string>
   <string name="more_details">Altri dettagli</string>
+  <string name="todo_window_24h">24 h</string>
+  <string name="todo_window_7d">7 gg</string>
+  <string name="todo_window_30d">30 gg</string>
+  <string name="todo_window_all">Tutti</string>
 </resources>
