@@ -18,3 +18,15 @@ fun LocalDate.atMinute(minuteOfDay: Int, zone: ZoneId): Instant {
 		return plusDays(1).atStartOfDay(zone).toInstant()
 	return atTime(LocalTime.of(minuteOfDay / 60, minuteOfDay % 60)).atZone(zone).toInstant()
 }
+
+/*
+ * The latest moment, not after [now], at the wall-clock time [minuteOfDay]
+ * (0..1439): today if already passed, else yesterday. A start or end time
+ * typed without a date (M17) means the most recent one.
+ */
+fun latestAt(minuteOfDay: Int, now: Instant, zone: ZoneId): Instant {
+	require(minuteOfDay in 0 until 1440) { "minute of day out of range: $minuteOfDay" }
+	val today = now.atZone(zone).toLocalDate()
+	val t = today.atMinute(minuteOfDay, zone)
+	return if (t.isAfter(now)) today.minusDays(1).atMinute(minuteOfDay, zone) else t
+}

@@ -42,6 +42,8 @@ data class StartRequest(
 	val clientId: Long?,
 	val companyId: Long? = null,
 	val roleId: Long? = null,
+	/* chosen start (M17 editable times); null = now */
+	val startUtcMs: Long? = null,
 	val activity: String? = null,
 	val locality: String? = null,
 	val locationKind: LocationKind? = null,
@@ -124,6 +126,9 @@ class EntryRepository(
 		val companyId = companyFor(req.companyId, req.clientId)
 		val t = EntryStateMachine.start(req.mode)
 		val now = clock.millis()
+		if (req.startUtcMs != null && req.startUtcMs > now)
+			throw ValidationException(Reason.FUTURE_TIME)
+		val start = req.startUtcMs ?: now
 		val zone = clock.zone.id
 		val id = dao.startEntry(
 			TimeEntryEntity(
@@ -142,7 +147,7 @@ class EntryRepository(
 				createdUtcMs = now,
 				updatedUtcMs = now,
 			),
-			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = now, zoneId = zone),
+			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = start, zoneId = zone),
 		)
 		/* the to-do's tickets become the entry's external references */
 		req.todoId?.let { db.todoDao().byId(it) }?.refs?.lines()?.filter(String::isNotBlank)?.forEach {
@@ -183,6 +188,20 @@ class EntryRepository(
 			)
 			verify(entryId)
 		}
+	}
+
+	/*
+	 * A command at a time the user chose (M17 editable times, e.g. "stopped
+	 * at 17:30"): not in the future and not before the running segment
+	 * started. Unlike [apply], a wrong time is an error, never clamped.
+	 */
+	suspend fun applyAt(entryId: Long, cmd: EntryCommand, atUtcMs: Long) = db.withTransaction {
+		if (atUtcMs > clock.millis())
+			throw ValidationException(Reason.FUTURE_TIME)
+		val latest = dao.segments(entryId).maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: it.startUtcMs) }
+		if (latest != null && atUtcMs < latest)
+			throw ValidationException(Reason.BEFORE_SEGMENT)
+		apply(entryId, cmd, atUtcMs)
 	}
 
 	val absences = dao.observeAbsences()

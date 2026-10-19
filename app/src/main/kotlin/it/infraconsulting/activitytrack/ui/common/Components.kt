@@ -339,6 +339,8 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.INVALID_AMOUNT -> R.string.err_invalid_amount
 		Reason.TOO_SHORT -> R.string.err_too_short
 		Reason.LAST_SEGMENT -> R.string.err_last_segment
+		Reason.FUTURE_TIME -> R.string.err_future_time
+		Reason.BEFORE_SEGMENT -> R.string.err_before_segment
 		else -> R.string.err_generic
 	},
 )

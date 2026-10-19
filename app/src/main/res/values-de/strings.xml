@@ -444,4 +444,11 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="order_last_use">Zuletzt verwendet</string>
   <string name="order_manual">Manuell</string>
   <string name="order_drag">Zum Sortieren ziehen</string>
+  <!-- M17 editable times -->
+  <string name="sec_times">Zeiten</string>
+  <string name="set_editable_times">Zeiten frei änderbar</string>
+  <string name="set_editable_times_hint">An: Beginn beim Starten und Ende beim Stoppen wählbar; Abschnitte lassen sich ändern oder löschen, die neuen Werte ersetzen die erfassten. Aus: die Zeiten bleiben wie erfasst; vergessene Fahrten und Pausen lassen sich weiterhin hinzufügen.</string>
+  <string name="time_now_hint">Leer = jetzt</string>
+  <string name="err_future_time">Die Uhrzeit liegt in der Zukunft.</string>
+  <string name="err_before_segment">Die Uhrzeit liegt vor dem Beginn des laufenden Abschnitts.</string>
 </resources>
