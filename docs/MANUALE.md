@@ -151,8 +151,18 @@ attività" l'azienda è solo un filtro dei clienti: con "Tutte le aziende" il
 bordo è neutro, diventa verde quando un'azienda è scelta o viene dal cliente.
 
 ### Date e orari
-Tutti i campi data e ora si compilano con il calendario e l'orologio di
-Android: tocca il campo. Quelli facoltativi hanno la ✕ per svuotarli.
+Le date si scelgono con il calendario di Android. Gli orari con una
+**griglia a 5 minuti**: una riga per ora, 12 caselle per riga, 12 ore alla
+volta (**▲ Prima** / **Dopo ▼** spostano la finestra di 3 ore).
+- orario singolo: tocca una casella; **"Orario esatto"** apre l'orologio di
+  Android per i minuti fuori dalla griglia (es. 09:37); OK senza toccare nulla
+  lascia l'orario com'era;
+- tratti (Modifica tratto, + Viaggio, + Pausa): toccando Inizio o Fine la
+  griglia sceglie tutti e due: tocca la prima casella e trascina fino
+  all'ultima, oppure tocca la prima e poi l'ultima (anche dopo aver spostato
+  la finestra). In alto l'intervallo e la durata; le caselle **tratteggiate**
+  sono occupate da altri tratti di quel giorno.
+I campi facoltativi hanno la ✕ per svuotarli.
 
 ---
 
