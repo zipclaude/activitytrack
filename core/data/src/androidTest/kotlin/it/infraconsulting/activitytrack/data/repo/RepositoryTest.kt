@@ -14,6 +14,7 @@ import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
 import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.domain.model.SegmentSource
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -302,9 +303,10 @@ class RepositoryTest {
 		clock.advance(60)
 		val manual = entries.addManualSegment(id, SegmentKind.TRAVEL, start - 3_600_000, start)
 		val tracked = db.entryDao().segments(id).first { it.id != manual }
-		assertEquals(Reason.NOT_MANUAL, reason { entries.deleteManualSegment(tracked.id) })
-		entries.deleteManualSegment(manual)
+		entries.deleteSegment(manual)
 		assertEquals(listOf(tracked.id), db.entryDao().segments(id).map { it.id })
+		/* the last segment stays */
+		assertEquals(Reason.LAST_SEGMENT, reason { entries.deleteSegment(tracked.id) })
 	}
 
 	@Test
@@ -506,5 +508,33 @@ class RepositoryTest {
 		entries.addExpense(kept, 1250, "parking")
 		assertEquals(false, entries.isDiscardable(kept))
 		assertEquals(Reason.TOO_SHORT, reason { entries.discard(kept) })
+	}
+
+	@Test
+	fun aCorrectedSegmentKeepsItsTrackedTimes() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		val t0 = clock.millis()
+		clock.advance(120)
+		entries.apply(id, EntryCommand.STOP)
+		val s = db.entryDao().segments(id).single()
+		entries.updateSegment(s.id, t0 + 300_000, t0 + 7_000_000)
+		val c = db.entryDao().segment(s.id)!!
+		assertEquals(SegmentSource.CORRECTED, c.source)
+		assertEquals(t0, c.origStartUtcMs)
+		assertEquals(t0 + 7_200_000, c.origEndUtcMs)
+		/* a second edit keeps the first originals */
+		entries.updateSegment(s.id, t0 + 600_000, t0 + 7_000_000)
+		assertEquals(t0, db.entryDao().segment(s.id)!!.origStartUtcMs)
+		assertEquals(Reason.TOO_SHORT, reason { entries.updateSegment(s.id, t0, t0 + 30_000) })
+	}
+
+	@Test
+	fun tagsAreNormalizedAndReplaced() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		entries.setTags(id, listOf("#Urgente", "lavoro remoto", "urgente"))
+		assertEquals(listOf("lavoro-remoto", "urgente"), entries.tags(id).first())
+		entries.setTags(id, listOf("remoto"))
+		assertEquals(listOf("remoto"), entries.tags(id).first())
+		assertEquals(mapOf(id to listOf("remoto")), entries.tagsOf(listOf(id)))
 	}
 }

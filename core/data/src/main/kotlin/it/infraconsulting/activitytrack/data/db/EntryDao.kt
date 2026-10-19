@@ -156,6 +156,25 @@ interface EntryDao {
 	@Query("DELETE FROM expense WHERE id = :id")
 	suspend fun deleteExpense(id: Long)
 
+	@Query("SELECT tag FROM entry_tag WHERE entry_id = :entryId ORDER BY tag")
+	fun observeTags(entryId: Long): Flow<List<String>>
+
+	/* every tag in use, most used first (suggestions) */
+	@Query("SELECT tag FROM entry_tag GROUP BY tag ORDER BY COUNT(*) DESC, tag")
+	fun observeAllTags(): Flow<List<String>>
+
+	@Query("SELECT * FROM entry_tag WHERE entry_id IN (:entryIds)")
+	suspend fun tagsOf(entryIds: List<Long>): List<EntryTagEntity>
+
+	@Query("DELETE FROM entry_tag WHERE entry_id = :entryId")
+	suspend fun clearTags(entryId: Long)
+
+	@androidx.room.Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
+	suspend fun insertTags(tags: List<EntryTagEntity>)
+
+	@androidx.room.Update
+	suspend fun updateSegment(s: SegmentEntity)
+
 	@Query("SELECT COUNT(*) FROM expense WHERE entry_id = :entryId")
 	suspend fun expenseCount(entryId: Long): Int
 

@@ -29,6 +29,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		LunchBreakEntity::class,
 		DayOffEntity::class,
 		TodoEntity::class,
+		EntryTagEntity::class,
 	],
 	version = ActivityTrackDatabase.VERSION,
 	exportSchema = true,
@@ -38,6 +39,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		AutoMigration(from = 3, to = 4),	/* M9 planned to-dos */
 		AutoMigration(from = 4, to = 5),	/* M10 ignored to-dos */
 		AutoMigration(from = 5, to = 6),	/* M12 company and client colours */
+		AutoMigration(from = 6, to = 7),	/* M15 entry tags, corrected segments */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
@@ -51,7 +53,7 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 6
+		const val VERSION = 7
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =

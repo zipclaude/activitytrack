@@ -293,6 +293,9 @@ data class SegmentEntity(
 	val source: SegmentSource = SegmentSource.TRACKED,
 	@ColumnInfo(name = "km_estimated") val kmEstimated: Double? = null,
 	@ColumnInfo(name = "km_declared") val kmDeclared: Double? = null,
+	/* a CORRECTED segment's times as tracked (backlog 11) */
+	@ColumnInfo(name = "orig_start_utc_ms") val origStartUtcMs: Long? = null,
+	@ColumnInfo(name = "orig_end_utc_ms") val origEndUtcMs: Long? = null,
 )
 
 /* Coordinates are displayed only; they are never exported. */
@@ -399,6 +402,25 @@ data class ExternalRefEntity(
 	@ColumnInfo(name = "entry_id") val entryId: Long,
 	val kind: ExternalRefKind,
 	val value: String,
+)
+
+/* A tag of an entry (backlog 13): lower case, without '#', no spaces. */
+@Entity(
+	tableName = "entry_tag",
+	primaryKeys = ["entry_id", "tag"],
+	foreignKeys = [
+		ForeignKey(
+			entity = TimeEntryEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["entry_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index("tag")],
+)
+data class EntryTagEntity(
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	val tag: String,
 )
 
 @Entity(tableName = "absence", indices = [Index("date_epoch_day")])

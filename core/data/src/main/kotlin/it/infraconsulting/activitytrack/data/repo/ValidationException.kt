@@ -27,5 +27,6 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		NO_VIEWER,			/* no app can open the file */
 		INVALID_AMOUNT,			/* expense amount missing or not positive */
 		TOO_SHORT,			/* a segment or entry under one minute (backlog 10) */
+		LAST_SEGMENT,			/* an entry keeps at least one segment; the running one stays (backlog 11) */
 	}
 }
