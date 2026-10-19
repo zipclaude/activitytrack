@@ -86,6 +86,18 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # tags and history: the manual check compares with the previous tag
+
+      # Owner, 2026-10-19: before every release check that the manual was
+      # updated; the PDFs (quick start and manual, it/en) go with the APK.
+      - name: Manual check
+        env:
+          TAG: ${{ github.ref_name }}
+        run: scripts/check-manual.sh "$TAG"
+
+      - name: Manual tools
+        run: sudo apt-get update -q && sudo apt-get install -y -q pandoc graphviz
 
       - uses: actions/setup-java@v6
         with:
@@ -110,8 +122,13 @@ jobs:
           rm -f "$RELEASE_STORE_FILE"
           cp app/build/outputs/apk/release/app-release.apk "ActivityTrack-${TAG#v}.apk"
 
+      - name: Manual PDF
+        env:
+          TAG: ${{ github.ref_name }}
+        run: scripts/build-manual.sh "${TAG#v}"
+
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" "ActivityTrack-${TAG#v}.apk" --title "ActivityTrack ${TAG#v}" --generate-notes
+        run: gh release create "$TAG" "ActivityTrack-${TAG#v}.apk" build/manual/*.pdf --title "ActivityTrack ${TAG#v}" --generate-notes
