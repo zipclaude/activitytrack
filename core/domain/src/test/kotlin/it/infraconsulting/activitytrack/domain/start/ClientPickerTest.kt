@@ -24,6 +24,11 @@ class ClientPickerTest {
 	}
 
 	@Test
+	fun inputOrderKept() {
+		assertEquals(listOf(1L, 2L, 3L), ClientPicker.order(clients, 10, byLastUse = false).map { it.id })
+	}
+
+	@Test
 	fun archivedOnlyWhenKept() {
 		assertEquals(listOf(5L, 3L, 2L, 1L), ClientPicker.order(clients, 10, keep = 5).map { it.id })
 	}

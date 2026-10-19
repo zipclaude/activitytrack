@@ -440,4 +440,9 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="segment_edit">Abschnitt bearbeiten</string>
   <string name="segment_corrected">korrigiert, erfasst %1$s</string>
   <string name="err_last_segment">Der laufende und der letzte Abschnitt einer Tätigkeit können nicht gelöscht werden.</string>
+  <!-- M16 list order -->
+  <string name="order_alpha">A–Z</string>
+  <string name="order_last_use">Zuletzt verwendet</string>
+  <string name="order_manual">Manuell</string>
+  <string name="order_drag">Zum Sortieren ziehen</string>
 </resources>

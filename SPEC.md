@@ -284,6 +284,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M16 | list order per master-data list: alphabetical, last use or manual by dragging; drop-downs follow it (schema v8) |
 | M15 | entry tags, editable and deletable segments (schema v7) |
 | M14 | field importance borders, drop-down colours, 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M13 | owner backlog 2, 4, 5, 6, 7, 9, 10, 12 (settings sub-screens, notifications, quick add, agenda fit, Today filter, one-minute rule, coloured add buttons) |

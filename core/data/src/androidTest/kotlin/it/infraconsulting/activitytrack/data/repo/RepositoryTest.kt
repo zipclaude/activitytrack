@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.repo
 
+import it.infraconsulting.activitytrack.data.db.ActivityPresetEntity
+import it.infraconsulting.activitytrack.domain.settings.OrderedList
+import it.infraconsulting.activitytrack.domain.settings.ListOrder
+import it.infraconsulting.activitytrack.domain.settings.ListOrders
+import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -355,6 +360,38 @@ class RepositoryTest {
 	fun clientLastUse() = runBlocking<Unit> {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(listOf(client to clock.millis()), entries.clientLastUse.first().map { it.clientId to it.lastMs })
+	}
+
+	@Test
+	fun listOrders() = runBlocking<Unit> {
+		val orders = MutableStateFlow(ListOrders())
+		val m = MasterDataRepository(db, orders, clock)
+		val zed = m.saveCompany(CompanyEntity(name = "zed"))
+		/* alphabetical, ignoring case */
+		assertEquals(listOf(acme, other, zed), m.companies.first().map { it.id })
+		/* last use: the company of the newest entry first */
+		entries.start(StartRequest(SegmentKind.TRAVEL, null, companyId = other))
+		orders.value = ListOrders(companies = ListOrder.LAST_USE)
+		assertEquals(listOf(other, acme, zed), m.companies.first().map { it.id })
+		/* manual: the dragged order, a new company after it */
+		m.reorder(OrderedList.COMPANIES, listOf(zed, acme, other))
+		orders.value = ListOrders(companies = ListOrder.MANUAL)
+		val added = m.saveCompany(CompanyEntity(name = "Beta"))
+		assertEquals(listOf(zed, acme, other, added), m.companies.first().map { it.id })
+		/* editing keeps the place */
+		m.saveCompany(db.masterDataDao().company(acme)!!.copy(name = "Acme2"))
+		assertEquals(listOf(zed, acme, other, added), m.companies.first().map { it.id })
+	}
+
+	@Test
+	fun presetLastUse() = runBlocking<Unit> {
+		val orders = MutableStateFlow(ListOrders(presets = ListOrder.LAST_USE))
+		val m = MasterDataRepository(db, orders, clock)
+		val a = m.savePreset(ActivityPresetEntity(text = "Alpha"))
+		val b = m.savePreset(ActivityPresetEntity(text = "Bravo"))
+		assertEquals(listOf(a, b), m.presets.first().map { it.id })
+		m.touchPreset(b)
+		assertEquals(listOf(b, a), m.presets.first().map { it.id })
 	}
 
 	@Test
