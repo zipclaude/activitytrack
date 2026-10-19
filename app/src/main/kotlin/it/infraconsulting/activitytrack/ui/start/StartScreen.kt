@@ -165,7 +165,12 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						}
 						/* M17: start in the past; empty = now */
 						if (editableTimes) {
-							TimeField(stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() }, clearable = true, importance = Importance.OPTIONAL)
+							/* empty Start: the range grid sets start and end; a set Start: the usual picker (issue #30) */
+							TimeField(
+								stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() },
+								clearable = true, importance = Importance.OPTIONAL,
+								onOpen = if (f.startTime.isBlank()) ({ rangeGrid = true }) else null,
+							)
 							Text(stringResource(R.string.time_now_hint), style = MaterialTheme.typography.bodySmall)
 							/* M22: the end too, picked as a range on the grid (start and end together) */
 							TimeField(
