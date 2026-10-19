@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import kotlinx.coroutines.flow.map
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -77,7 +78,7 @@ import java.time.ZoneId
 
 @Composable
 fun EntryScreen(entryId: Long, onBack: () -> Unit) {
-	val vm = appViewModel { EntryViewModel(entryId, it.entries, it.masterData, it.todos) }
+	val vm = appViewModel { EntryViewModel(entryId, it.entries, it.masterData, it.todos, it.settings.settings.map { s -> s.editableTimes }) }
 	val entry by vm.entry.collectAsState()
 	ScreenScaffold(title = stringResource(R.string.entry_title), onBack = onBack) { padding ->
 		/* the form starts from the first loaded state; later emissions refresh only status and lists */
@@ -89,6 +90,8 @@ fun EntryScreen(entryId: Long, onBack: () -> Unit) {
 private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -> Unit, modifier: Modifier) {
 	val e = vm.entry.collectAsState().value ?: initial
 	val segments by vm.segments.collectAsState()
+	/* collected here: a WhileSubscribed flow nobody collects stays at its initial value */
+	val editableTimes by vm.editableTimes.collectAsState()
 	val refs by vm.refs.collectAsState()
 	val clients by vm.clients.collectAsState()
 	val companies by vm.companies.collectAsState()
@@ -184,8 +187,13 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					(s.kmDeclared ?: s.kmEstimated)?.let { "%.1f km".format(it) },
 					if (s.source == SegmentSource.MANUAL) stringResource(R.string.segment_manual) else null,
 				).joinToString(" · ")
-				/* every closed segment can be edited or deleted (backlog 11); the running one cannot */
-				ClickableRow("${kindLabel(s.kind)}  $range", extra) { if (end != null) { vm.clearError(); editingSegment = s } }
+				/* closed segments can be edited or deleted with editable times on (backlog 11, M17) */
+				ClickableRow("${kindLabel(s.kind)}  $range", extra) {
+					if (end != null && editableTimes) {
+						vm.clearError()
+						editingSegment = s
+					}
+				}
 			}
 
 			item { TagsSection(vm) }

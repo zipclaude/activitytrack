@@ -146,7 +146,9 @@ vuoto, **verde** quando è compilato (azienda, cliente, attività o
 predefinita, titolo della voce da fare, importo e descrizione della spesa);
 **giallo** se importante ma non obbligatorio (ruolo, data e ora pianificate);
 **blu** se accessorio (note, riferimenti, località, durata, scadenza,
-priorità). Nei menu di aziende e clienti compare il loro colore.
+priorità). Nei menu di aziende e clienti compare il loro colore. In "Nuova
+attività" l'azienda è solo un filtro dei clienti: con "Tutte le aziende" il
+bordo è neutro, diventa verde quando un'azienda è scelta o viene dal cliente.
 
 ### Date e orari
 Tutti i campi data e ora si compilano con il calendario e l'orologio di
@@ -167,6 +169,9 @@ Nella schermata "Nuova attività":
   altrimenti l'app propone l'azienda dell'ultima attività di oggi.
 - **Descrizione** e **ruolo** vengono proposti dall'ultima attività sullo
   stesso cliente negli ultimi 30 giorni. Il microfono nel campo detta il testo.
+- **Inizio** (con "Orari modificabili", attivo all'inizio): vuoto = adesso;
+  un orario già passato fa partire l'attività da lì (un orario che oggi non è
+  ancora arrivato vale per ieri).
 - Il pulsante verde in basso avvia (blu con l'auto se è un viaggio).
 
 **Se un'altra attività è già in corso**, l'app chiede cosa farne:
@@ -197,6 +202,11 @@ Nella card della Home e nella notifica:
 La card mostra il tempo del tratto in corso in grande e lo stato in
 un'etichetta colorata. "Stop" mentre lavori chiede **"Ferma ora"** oppure
 **"Avvia rientro"** (il viaggio di ritorno fa parte della stessa attività).
+Con **"Orari modificabili"** la domanda compare sempre, anche in viaggio, con
+il campo **Fine**: vuoto = adesso, altrimenti l'attività si ferma (o il
+rientro parte) a quell'ora; non può essere nel futuro né prima dell'inizio del
+tratto in corso. Lo Stop dalla notifica, dal widget o dal riquadro ferma
+sempre subito.
 
 ### Notifica fissa
 Una notifica per attività in corso, con cronometro e comandi. Mentre la
@@ -250,8 +260,8 @@ Dopo lo Stop l'attività è **da completare** (notifica persistente e card rossa
 Nella schermata dell'attività:
 - controlla cliente, descrizione (dettabile), ruolo, località, luogo, note;
 - "Tempi": i pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
-  dimenticati (anche con i km; almeno un minuto). Toccando un tratto concluso
-  si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
+  dimenticati (anche con i km; almeno un minuto). Con "Orari modificabili"
+  acceso, toccando un tratto concluso si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
   **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). I
   valori inseriti sostituiscono quelli registrati;
 - **Tag**: etichette libere (es. `#remoto`, `#urgente`); scrivine uno o più
@@ -443,6 +453,7 @@ Le impostazioni sono divise in sezioni, ognuna con la sua pagina e il suo
 | Sezione | Voce | Predefinito |
 |---|---|---|
 | Visualizzazione | Normale / Compatta | Normale |
+| Orari | Orari modificabili liberamente: inizio e fine scelti all'avvio e allo stop, tratti modificabili ed eliminabili (spento: orari come registrati; "+ Viaggio" e "+ Pausa" restano) | acceso |
 | Promemoria | Intervallo di conferma | 30 min |
 | | Numero massimo di conferme | 0 (illimitato) |
 | | Intervallo promemoria pausa | 15 min |

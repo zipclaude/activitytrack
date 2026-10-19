@@ -56,6 +56,14 @@ data class AppSettings(
 	val todoShowIgnored: Boolean = true,
 	/* order of the master-data lists and drop-downs (M16) */
 	val listOrders: ListOrders = ListOrders(),
+	/*
+	 * Times freely editable (M17, owner 2026-10-19: the app is for
+	 * freelancers, not employees): start and end times chosen when starting
+	 * and stopping, segments editable and deletable. Off = times as
+	 * recorded; adding forgotten travels and pauses stays allowed. To be
+	 * settable by policy later.
+	 */
+	val editableTimes: Boolean = true,
 ) {
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId

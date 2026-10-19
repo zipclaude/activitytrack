@@ -82,6 +82,7 @@ private enum class F {
 /* Settings grouped in sub-screens (backlog 2, 2026-10-18). */
 enum class SettingsSection(val label: Int, val form: Boolean = true) {
 	DISPLAY(R.string.sec_display),
+	TIMES(R.string.sec_times),
 	REMINDERS(R.string.sec_reminders),
 	NOTIFICATIONS(R.string.sec_notifications, form = false),
 	LOCATION(R.string.sec_location),
@@ -138,6 +139,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var tilesOn by remember { mutableStateOf(initial.tiles.enabled) }
 	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
 	var compact by remember { mutableStateOf(initial.compactDisplay) }
+	var editableTimes by remember { mutableStateOf(initial.editableTimes) }
 	var work by remember { mutableStateOf(initial.rounding.work) }
 	var travel by remember { mutableStateOf(initial.rounding.travel) }
 	var pause by remember { mutableStateOf(initial.rounding.pause) }
@@ -168,6 +170,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		tiles = OnlineService(tilesOn, text[F.TILES].orEmpty()),
 		dictationLanguage = dictation,
 		compactDisplay = compact,
+		editableTimes = editableTimes,
 		rounding = ReportRounding(
 			work.copy(minimum = minutes(F.WORK_MIN, work.minimum)),
 			travel.copy(minimum = minutes(F.TRAVEL_MIN, travel.minimum)),
@@ -190,6 +193,10 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
 					compact,
 				) { compact = it }
+				SettingsSection.TIMES -> {
+					SwitchRow(stringResource(R.string.set_editable_times), editableTimes) { editableTimes = it }
+					Text(stringResource(R.string.set_editable_times_hint), style = MaterialTheme.typography.bodySmall)
+				}
 				SettingsSection.REMINDERS -> {
 					field(F.CONFIRM, R.string.set_confirm_interval)
 					field(F.MAX_CONFIRM, R.string.set_max_confirmations)

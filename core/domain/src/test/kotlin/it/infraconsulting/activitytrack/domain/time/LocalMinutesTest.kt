@@ -11,6 +11,14 @@ class LocalMinutesTest {
 	private val rome = ZoneId.of("Europe/Rome")
 
 	@Test
+	fun latestOccurrence() {
+		val now = LocalDate.of(2026, 10, 19).atMinute(9 * 60 + 30, rome)
+		assertEquals(LocalDate.of(2026, 10, 19).atMinute(8 * 60, rome), latestAt(8 * 60, now, rome))
+		assertEquals(now, latestAt(9 * 60 + 30, now, rome))
+		assertEquals(LocalDate.of(2026, 10, 18).atMinute(23 * 60, rome), latestAt(23 * 60, now, rome))
+	}
+
+	@Test
 	fun wallClockOnDstDays() {
 		/* fall back 2026-10-25: 25 h day; 04:00 local is 5 h after midnight */
 		val fall = LocalDate.of(2026, 10, 25)

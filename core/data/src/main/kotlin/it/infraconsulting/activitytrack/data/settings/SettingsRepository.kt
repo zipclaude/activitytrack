@@ -77,6 +77,7 @@ class SettingsRepository(context: Context) {
 		val todoNext24h = booleanPreferencesKey("todo_today_only")
 		val todoShowIgnored = booleanPreferencesKey("todo_show_ignored")
 		fun order(list: OrderedList) = stringPreferencesKey("order_${list.name.lowercase()}")
+		val editableTimes = booleanPreferencesKey("editable_times")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -118,6 +119,7 @@ class SettingsRepository(context: Context) {
 			todoNext24h = p[K.todoNext24h] ?: d.todoNext24h,
 			todoShowIgnored = p[K.todoShowIgnored] ?: d.todoShowIgnored,
 			listOrders = OrderedList.entries.fold(d.listOrders) { o, l -> o.with(l, enumOr(p[K.order(l)], d.listOrders.of(l))) },
+			editableTimes = p[K.editableTimes] ?: d.editableTimes,
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
 			tiles = readService(p, "tiles", d.tiles),
@@ -156,6 +158,7 @@ class SettingsRepository(context: Context) {
 		p[K.todoNext24h] = s.todoNext24h
 		p[K.todoShowIgnored] = s.todoShowIgnored
 		OrderedList.entries.forEach { p[K.order(it)] = s.listOrders.of(it).name }
+		p[K.editableTimes] = s.editableTimes
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
 		writeService(p, "tiles", s.tiles)
