@@ -69,12 +69,12 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M7 UI polish | first pass (PR #7 → #10, on `main`), owner review pending |
 | M8 hardening | review fixes, backup restore, manual (PR #8 → #10, on `main`), restore device-tested 2026-10-18; manual read pending |
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
-| M14 fields | **implemented** (branch `m14-fields`): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home; device test pending |
-| M19 tag filters | **implemented** (branch `m19-tag-filters`, on top of M18): agenda, day report, export; instrumented 47/47; device UI test pending |
-| M18 time grid | **implemented** (branch `m18-time-grid`, on top of M17): backlog 3, grid mockup B; device-tested 2026-10-19 |
-| M17 editable times | **implemented** (PR #20, on top of M16 PR #18): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
-| M16 list order | **implemented** (PR #18, branch `m16-list-order`, on top of M15 PR #17): backlog 1 (schema v8); device test pending |
-| M15 tags, segments | **implemented** (PR #17, branch `m15-tags-segments`, on top of M14 PR #16): backlog 11 and 13 (schema v7); device test pending |
+| M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
+| M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
+| M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
+| M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
+| M16 list order | **done** (PR #18, on `main`, v0.5.0): backlog 1 (schema v8); device-tested 2026-10-19 |
+| M15 tags, segments | **done** (PR #17, on `main`, v0.5.0): backlog 11 and 13 (schema v7); device-tested 2026-10-19 |
 | M13 backlog | **done** (PR #15, on `main`, v0.4.2): backlog items 2, 4, 5, 6, 7, 8, 9, 10, 12; device-tested 2026-10-18 |
 | M12 colours | **done** (PR #14, on `main`, v0.4.1): company/client colours, card bands, to-do company filter, agenda colours (schema v6); device-tested 2026-10-18 |
 | M11 UI | **done** (PR #13, on `main`, release v0.4.0): start/travel on the empty card and the bar, compact display, quick add; device-tested 2026-10-18 |
@@ -134,13 +134,11 @@ app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTe
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (review with the owner, 2026-10-18)
+## 5. Next steps (review with the owner, 2026-10-19)
 
-Open PRs (2026-10-19), all with base `main`, merge in this order: #16 (M14) →
-#17 (M15, schema v7) → #18 (M16, schema v8) → #20 (M17) → #21 (M18) → #22 (M19); #19 (private
-calendar events) is independent. After each merge the next one shows only
-its own commits. Instrumented tests 46/46 on the OnePlus (2026-10-19);
-M15, M16 and M17 device-tested on the debug app (2026-10-19).
+Released v0.5.0 (2026-10-19): M14–M19 and private calendar events (#16–#22)
+are on `main`; no open PRs. Instrumented tests 47/47 on the OnePlus. Backlog
+empty; next: owner feedback on 0.5.0 (time grid comfort, field borders).
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.
