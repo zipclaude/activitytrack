@@ -183,14 +183,14 @@ class CalendarSync(private val context: Context, private val container: AppConta
 
 	private data class Existing(
 		val id: Long, val calendarId: Long, val key: String, val start: Long, val end: Long,
-		val title: String?, val description: String?, val location: String?,
+		val title: String?, val description: String?, val location: String?, val accessLevel: Int,
 	)
 
 	private fun existing(fromMs: Long, toMs: Long): Map<String, Existing> {
 		val out = HashMap<String, Existing>()
 		resolver.query(
 			Events.CONTENT_URI,
-			arrayOf(Events._ID, Events.CALENDAR_ID, Events.CUSTOM_APP_URI, Events.DTSTART, Events.DTEND, Events.TITLE, Events.DESCRIPTION, Events.EVENT_LOCATION),
+			arrayOf(Events._ID, Events.CALENDAR_ID, Events.CUSTOM_APP_URI, Events.DTSTART, Events.DTEND, Events.TITLE, Events.DESCRIPTION, Events.EVENT_LOCATION, Events.ACCESS_LEVEL),
 			"${Events.CUSTOM_APP_PACKAGE} = ? AND ${Events.DELETED} = 0 AND ${Events.DTSTART} >= ? AND ${Events.DTSTART} < ?",
 			arrayOf(context.packageName, fromMs.toString(), toMs.toString()),
 			null,
@@ -202,7 +202,7 @@ class CalendarSync(private val context: Context, private val container: AppConta
 					uri.startsWith(URI_PREFIX) -> uri.removePrefix(URI_PREFIX)
 					else -> continue
 				}
-				out[key] = Existing(c.getLong(0), c.getLong(1), key, c.getLong(3), c.getLong(4), c.getString(5), c.getString(6), c.getString(7))
+				out[key] = Existing(c.getLong(0), c.getLong(1), key, c.getLong(3), c.getLong(4), c.getString(5), c.getString(6), c.getString(7), c.getInt(8))
 			}
 		}
 		return out
@@ -228,7 +228,9 @@ class CalendarSync(private val context: Context, private val container: AppConta
 					changes++
 				}
 				e.start != p.start.toEpochMilli() || e.end != p.end.toEpochMilli() ||
-					e.title != p.title || e.description.orEmpty() != p.description || e.location != p.location -> {
+					e.title != p.title || e.description.orEmpty() != p.description || e.location != p.location ||
+					/* events written before they were private get fixed on the next sync */
+					e.accessLevel != Events.ACCESS_PRIVATE -> {
 					resolver.update(eventUri(e.id), values, null, null)
 					changes++
 				}
@@ -251,6 +253,8 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		put(Events.DESCRIPTION, p.description)
 		put(Events.EVENT_LOCATION, p.location)
 		put(Events.AVAILABILITY, Events.AVAILABILITY_BUSY)
+		/* clients, activities and notes are confidential: others sharing the calendar see only "busy" */
+		put(Events.ACCESS_LEVEL, Events.ACCESS_PRIVATE)
 		put(Events.STATUS, if (p.tentative) Events.STATUS_TENTATIVE else Events.STATUS_CONFIRMED)
 		put(Events.HAS_ALARM, 0)
 		put(Events.CUSTOM_APP_PACKAGE, context.packageName)
