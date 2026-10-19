@@ -452,4 +452,12 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="time_now_hint">Vacío = ahora</string>
   <string name="err_future_time">La hora está en el futuro.</string>
   <string name="err_before_segment">La hora es anterior al inicio del tramo en curso.</string>
+  <!-- M18 time grid -->
+  <string name="grid_hint_range">Toca la primera casilla y arrastra hasta la última, o toca la primera y luego la última.</string>
+  <string name="grid_hint_single">Toca una casilla.</string>
+  <string name="grid_earlier">Antes</string>
+  <string name="grid_later">Después</string>
+  <string name="grid_this">este tramo</string>
+  <string name="grid_others">otras actividades</string>
+  <string name="grid_exact">Hora exacta</string>
 </resources>

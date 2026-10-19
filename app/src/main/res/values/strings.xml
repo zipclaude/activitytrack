@@ -463,4 +463,12 @@ Tap the green play button below to start one.</string>
   <string name="time_now_hint">Empty = now</string>
   <string name="err_future_time">The time is in the future.</string>
   <string name="err_before_segment">The time is before the start of the current segment.</string>
+  <!-- M18 time grid -->
+  <string name="grid_hint_range">Touch the first cell and drag to the last, or tap the first and then the last.</string>
+  <string name="grid_hint_single">Tap a cell.</string>
+  <string name="grid_earlier">Earlier</string>
+  <string name="grid_later">Later</string>
+  <string name="grid_this">this segment</string>
+  <string name="grid_others">other activities</string>
+  <string name="grid_exact">Exact time</string>
 </resources>

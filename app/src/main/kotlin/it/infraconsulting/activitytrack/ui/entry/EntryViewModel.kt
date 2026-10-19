@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import java.time.ZoneId
+import java.time.LocalDate
+import java.time.Instant
+import it.infraconsulting.activitytrack.domain.time.TimeGrid
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.Flow
 import androidx.lifecycle.viewModelScope
@@ -106,6 +110,17 @@ class EntryViewModel(
 	fun deleteSegment(segmentId: Long, done: () -> Unit = {}) = run(done) { entries.deleteSegment(segmentId) }
 
 	fun setTags(tags: List<String>) = run { entries.setTags(entryId, tags) }
+
+	/* Minutes of [day] taken by other segments (all entries, [except] left out): hatched in the grid. */
+	suspend fun busyOn(day: LocalDate, except: Long?, zone: ZoneId): List<IntRange> {
+		val from = day.atStartOfDay(zone).toInstant()
+		val to = day.plusDays(1).atStartOfDay(zone).toInstant()
+		val segs = entries.segmentsTouching(from.toEpochMilli(), to.toEpochMilli()).filter { it.id != except }
+		return TimeGrid.busyMinutes(
+			segs.map { Instant.ofEpochMilli(it.startUtcMs) to it.endUtcMs?.let(Instant::ofEpochMilli) },
+			day, zone, Instant.now(),
+		)
+	}
 
 	fun addRef(value: String, done: () -> Unit) = run(done) { entries.addExternalRef(entryId, value) }
 	fun removeRef(refId: Long) = run { entries.removeExternalRef(entryId, refId) }
