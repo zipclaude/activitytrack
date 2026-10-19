@@ -485,4 +485,23 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_state_planned">Planificada</string>
   <string name="todo_state_overdue">Atrasada</string>
   <string name="todo_filters_reset">Borrar</string>
+  <!-- issue #28 calls -->
+  <string name="md_contacts">Contactos</string>
+  <string name="contacts_import">Importar de la agenda</string>
+  <string name="contact_edit">Contacto</string>
+  <string name="contact_numbers">Números (uno por línea)</string>
+  <string name="contact_numbers_missing">Hace falta al menos un número.</string>
+  <string name="client_calls">Llamadas</string>
+  <string name="sec_calls">Llamadas</string>
+  <string name="set_calls_incoming">Reconocer llamadas entrantes</string>
+  <string name="set_calls_outgoing">Reconocer llamadas salientes</string>
+  <string name="set_call_pause">Pausar la actividad de otro cliente durante la llamada</string>
+  <string name="set_call_propose">Proponer una actividad tras la llamada</string>
+  <string name="set_calls_hint">Solo llamadas con un número en Datos maestros → Contactos, en horario laboral. Necesita acceso al estado del teléfono y al registro de llamadas.</string>
+  <string name="call_entry_activity">Llamada telefónica con %1$s</string>
+  <string name="call_pause_note">Llamada %1$s</string>
+  <string name="call_propose_title">Llamada con %1$s (%2$s)</string>
+  <string name="call_propose_text">%1$s–%2$s: ¿registrarla como actividad?</string>
+  <string name="call_propose_action">Crear actividad</string>
+  <string name="segment_note">Descripción</string>
 </resources>

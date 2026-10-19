@@ -10,6 +10,9 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
+import it.infraconsulting.activitytrack.data.db.CallDirection
+import it.infraconsulting.activitytrack.data.db.CallLogEntity
+import it.infraconsulting.activitytrack.data.db.ContactEntity
 import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.db.WorkScheduleEntity
@@ -606,5 +609,42 @@ class RepositoryTest {
 		entries.setTags(id, listOf("remoto"))
 		assertEquals(listOf("remoto"), entries.tags(id).first())
 		assertEquals(mapOf(id to listOf("remoto")), entries.tagsOf(listOf(id)))
+	}
+
+	/* issue #28: contacts, the call log, the pause a call makes */
+	@Test
+	fun contactsAndCalls() = runBlocking<Unit> {
+		val calls = CallRepository(db)
+		assertEquals(Reason.BLANK_NAME, reason { calls.saveContact(ContactEntity(clientId = client, name = " "), listOf("333 1234567")) })
+		assertEquals(Reason.BLANK_VALUE, reason { calls.saveContact(ContactEntity(clientId = client, name = "Rossi"), listOf("", "12")) })
+		val id = calls.saveContact(ContactEntity(clientId = client, name = " Rossi "), listOf("+39 333 123 4567", "0461 123456"))
+		assertEquals(id, calls.contactOf("3331234567")?.contact?.id)
+		assertEquals("Rossi", calls.contactOf("+390461123456")?.contact?.name)
+		assertNull(calls.contactOf("3339999999"))
+		val call = CallLogEntity(contactId = id, clientId = client, direction = CallDirection.INCOMING, startUtcMs = 1_000, endUtcMs = 61_000)
+		assertEquals(true, calls.record(call))
+		assertEquals(false, calls.record(call))
+		assertEquals(listOf("Rossi"), calls.callsOf(client).first().map { it.contactName })
+		calls.deleteContact(calls.contactOf("3331234567")!!.contact)
+		assertNull(calls.contactOf("3331234567"))
+	}
+
+	@Test
+	fun callPauseSplitsTheOpenWork() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		val t0 = clock.now.toEpochMilli()
+		clock.advance(30)
+		val from = t0 + 10 * 60_000
+		val to = t0 + 15 * 60_000
+		assertEquals(false, entries.insertCallPause(id, from, clock.now.toEpochMilli() + 60_000, "Telefonata Bank"))
+		assertEquals(true, entries.insertCallPause(id, from, to, "Telefonata Bank"))
+		val segs = entries.segments(id).first()
+		assertEquals(listOf(SegmentKind.WORK, SegmentKind.PAUSE, SegmentKind.WORK), segs.map { it.kind })
+		assertEquals(listOf(t0 to from, from to to, to to null), segs.map { it.startUtcMs to it.endUtcMs })
+		assertEquals("Telefonata Bank", segs[1].note)
+		entries.setSegmentNote(segs[1].id, "  ")
+		assertNull(entries.segments(id).first()[1].note)
+		/* the open work began after the call: nothing */
+		assertEquals(false, entries.insertCallPause(id, from, to, "x"))
 	}
 }

@@ -78,6 +78,10 @@ class SettingsRepository(context: Context) {
 		val todoNext24h = booleanPreferencesKey("todo_today_only")
 		val todoWindow = intPreferencesKey("todo_window_hours")
 		val todoShowIgnored = booleanPreferencesKey("todo_show_ignored")
+		val callsIncoming = booleanPreferencesKey("calls_incoming")
+		val callsOutgoing = booleanPreferencesKey("calls_outgoing")
+		val callAutoPause = booleanPreferencesKey("call_auto_pause")
+		val callProposeEntry = booleanPreferencesKey("call_propose_entry")
 		fun order(list: OrderedList) = stringPreferencesKey("order_${list.name.lowercase()}")
 		val editableTimes = booleanPreferencesKey("editable_times")
 
@@ -122,6 +126,10 @@ class SettingsRepository(context: Context) {
 			todoShowIgnored = p[K.todoShowIgnored] ?: d.todoShowIgnored,
 			listOrders = OrderedList.entries.fold(d.listOrders) { o, l -> o.with(l, enumOr(p[K.order(l)], d.listOrders.of(l))) },
 			editableTimes = p[K.editableTimes] ?: d.editableTimes,
+			callsIncoming = p[K.callsIncoming] ?: d.callsIncoming,
+			callsOutgoing = p[K.callsOutgoing] ?: d.callsOutgoing,
+			callAutoPause = p[K.callAutoPause] ?: d.callAutoPause,
+			callProposeEntry = p[K.callProposeEntry] ?: d.callProposeEntry,
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
 			tiles = readService(p, "tiles", d.tiles),
@@ -162,6 +170,10 @@ class SettingsRepository(context: Context) {
 		p[K.todoShowIgnored] = s.todoShowIgnored
 		OrderedList.entries.forEach { p[K.order(it)] = s.listOrders.of(it).name }
 		p[K.editableTimes] = s.editableTimes
+		p[K.callsIncoming] = s.callsIncoming
+		p[K.callsOutgoing] = s.callsOutgoing
+		p[K.callAutoPause] = s.callAutoPause
+		p[K.callProposeEntry] = s.callProposeEntry
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
 		writeService(p, "tiles", s.tiles)

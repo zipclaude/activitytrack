@@ -116,6 +116,7 @@ fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
 				Screen.Places to R.string.md_places,
 				Screen.Schedule to R.string.md_schedule,
 				Screen.DaysOff to R.string.md_days_off,
+				Screen.Contacts to R.string.md_contacts,
 			)
 			items(sections) { (screen, label) -> ClickableRow(stringResource(label)) { onOpen(screen) } }
 		}
@@ -335,6 +336,8 @@ fun ClientScreen(id: Long, onBack: () -> Unit) {
 			items(sites, key = { it.id }) { s ->
 				ClickableRow(s.label, s.address ?: "${s.radiusM} m") { vm.clearError(); site = s }
 			}
+			/* issue #28: the calls with this client */
+			item { ClientCalls(id) }
 		}
 	}
 

@@ -104,8 +104,14 @@ class EntryViewModel(
 	fun addSegment(kind: SegmentKind, startMs: Long, endMs: Long, km: Double?, done: () -> Unit) =
 		run(done) { entries.addManualSegment(entryId, kind, startMs, endMs, km) }
 
-	fun updateSegment(segmentId: Long, startMs: Long, endMs: Long, km: Double?, done: () -> Unit) =
-		run(done) { entries.updateSegment(segmentId, startMs, endMs, km) }
+	/* [note] = the description of a pause (issue #28), null = unchanged */
+	fun updateSegment(segmentId: Long, startMs: Long, endMs: Long, km: Double?, note: String? = null, done: () -> Unit) =
+		run(done) {
+			entries.updateSegment(segmentId, startMs, endMs, km)
+			note?.let { entries.setSegmentNote(segmentId, it) }
+		}
+
+	fun setSegmentNote(segmentId: Long, note: String, done: () -> Unit) = run(done) { entries.setSegmentNote(segmentId, note) }
 
 	fun deleteSegment(segmentId: Long, done: () -> Unit = {}) = run(done) { entries.deleteSegment(segmentId) }
 

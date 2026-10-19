@@ -234,6 +234,33 @@ class EntryRepository(
 			dao.updateEntry(e.copy(plannedEndUtcMs = null))
 	}
 
+	/*
+	 * A call during a running entry of another client (issue #28): the open
+	 * work segment ends at [startUtcMs], a pause with [note] covers the call,
+	 * work goes on from [endUtcMs]. Nothing if the entry changed in the
+	 * meantime (not working, or a segment began after the call started).
+	 */
+	suspend fun insertCallPause(entryId: Long, startUtcMs: Long, endUtcMs: Long, note: String): Boolean = db.withTransaction {
+		val e = load(entryId)
+		val open = dao.segments(entryId).firstOrNull { it.endUtcMs == null }
+		if (e.status != EntryStatus.ACTIVE || open == null || open.kind != SegmentKind.WORK ||
+			open.startUtcMs >= startUtcMs || endUtcMs <= startUtcMs || endUtcMs > clock.millis())
+			return@withTransaction false
+		dao.updateSegment(open.copy(endUtcMs = startUtcMs))
+		dao.insertSegment(SegmentEntity(entryId = entryId, kind = SegmentKind.PAUSE, startUtcMs = startUtcMs, endUtcMs = endUtcMs, zoneId = open.zoneId, note = note))
+		dao.insertSegment(SegmentEntity(entryId = entryId, kind = SegmentKind.WORK, startUtcMs = endUtcMs, zoneId = open.zoneId))
+		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
+		verify(entryId)
+		true
+	}
+
+	/* The description of a pause (issue #28), editable whatever the editable-times setting. */
+	suspend fun setSegmentNote(segmentId: Long, note: String?) = db.withTransaction {
+		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
+		dao.updateSegment(s.copy(note = note?.trim()?.ifEmpty { null }))
+		dao.updateEntry(load(s.entryId).let { it.copy(updatedUtcMs = clock.millis()) })
+	}
+
 	val absences = dao.observeAbsences()
 
 	fun expenses(entryId: Long) = dao.observeExpenses(entryId)
