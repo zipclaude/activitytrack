@@ -146,7 +146,9 @@ vuoto, **verde** quando è compilato (azienda, cliente, attività o
 predefinita, titolo della voce da fare, importo e descrizione della spesa);
 **giallo** se importante ma non obbligatorio (ruolo, data e ora pianificate);
 **blu** se accessorio (note, riferimenti, località, durata, scadenza,
-priorità). Nei menu di aziende e clienti compare il loro colore.
+priorità). Nei menu di aziende e clienti compare il loro colore. In "Nuova
+attività" l'azienda è solo un filtro dei clienti: con "Tutte le aziende" il
+bordo è neutro, diventa verde quando un'azienda è scelta o viene dal cliente.
 
 ### Date e orari
 Tutti i campi data e ora si compilano con il calendario e l'orologio di
