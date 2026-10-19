@@ -496,4 +496,12 @@ Tap the green play button below to start one.</string>
   <string name="todo_state_planned">Planned</string>
   <string name="todo_state_overdue">Overdue</string>
   <string name="todo_filters_reset">Clear</string>
+  <!-- Antares connector -->
+  <string name="antares_login">Log in</string>
+  <string name="antares_logout">Log out</string>
+  <string name="antares_connected_as">Connected as %1$s</string>
+  <string name="antares_not_connected">Not connected</string>
+  <string name="antares_logged_in">Antares: connected as %1$s</string>
+  <string name="antares_login_failed">Antares login failed: %1$s</string>
+  <string name="antares_redirect_hint">Redirect URI to register: %1$s</string>
 </resources>

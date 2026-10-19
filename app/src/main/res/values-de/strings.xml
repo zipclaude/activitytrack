@@ -484,4 +484,12 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_state_planned">Geplant</string>
   <string name="todo_state_overdue">Überfällig</string>
   <string name="todo_filters_reset">Zurücksetzen</string>
+  <!-- Antares connector -->
+  <string name="antares_login">Anmelden</string>
+  <string name="antares_logout">Abmelden</string>
+  <string name="antares_connected_as">Verbunden als %1$s</string>
+  <string name="antares_not_connected">Nicht verbunden</string>
+  <string name="antares_logged_in">Antares: verbunden als %1$s</string>
+  <string name="antares_login_failed">Antares-Anmeldung fehlgeschlagen: %1$s</string>
+  <string name="antares_redirect_hint">Zu registrierende Redirect-URI: %1$s</string>
 </resources>

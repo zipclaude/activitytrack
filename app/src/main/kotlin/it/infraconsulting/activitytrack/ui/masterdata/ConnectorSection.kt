@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import it.infraconsulting.activitytrack.connect.antares.AntaresConfig
+import it.infraconsulting.activitytrack.domain.interchange.AntaresConnector
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +39,9 @@ import org.json.JSONObject
  */
 @Composable
 fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
-	val secrets = (LocalContext.current.applicationContext as ActivityTrackApp).secrets
+	val app = LocalContext.current.applicationContext as ActivityTrackApp
+	val secrets = app.secrets
+	val scope = rememberCoroutineScope()
 	val connector = Connectors.byId(company.connectorId)
 	val config = remember(company.connectorConfig) {
 		runCatching { JSONObject(company.connectorConfig ?: "{}") }.getOrDefault(JSONObject())
@@ -57,8 +63,41 @@ fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
 				Text(stringResource(R.string.connector_generic_hint), style = MaterialTheme.typography.bodySmall)
 		}
 		for (f in connector.settingFields) {
-			val value = if (f.secret) (if (secrets.has(company.id, f.key)) "••••••" else notSet) else config.optString(f.key).ifEmpty { notSet }
+			val default = when (f.key) {
+				AntaresConnector.API_URL -> AntaresConnector.DEMO_API
+				AntaresConnector.IDENTITY_URL -> AntaresConnector.DEMO_IDENTITY
+				else -> null
+			}.takeIf { connector == AntaresConnector }
+			val value = if (f.secret) (if (secrets.has(company.id, f.key)) "••••••" else notSet)
+				else config.optString(f.key).ifEmpty { default ?: notSet }
 			ClickableRow(f.label, value) { editingField = f }
+		}
+		if (connector == AntaresConnector) {
+			/* login in the browser (public client, PKCE); the person becomes the OwnerId of the activities */
+			val user = config.optString(AntaresConnector.USERNAME)
+			val logged = app.antares.loggedIn(company.id)
+			var error by remember { mutableStateOf<String?>(null) }
+			Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+				Text(
+					if (logged) stringResource(R.string.antares_connected_as, user.ifEmpty { "?" }) else stringResource(R.string.antares_not_connected),
+					style = MaterialTheme.typography.bodyMedium,
+				)
+				androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+					androidx.compose.material3.OutlinedButton(onClick = {
+						error = null
+						scope.launch {
+							runCatching { app.antares.startLogin(company.id, AntaresConfig.of(company.connectorConfig)) }
+								.onFailure { error = it.message }
+						}
+					}) { Text(stringResource(R.string.antares_login)) }
+					if (logged)
+						androidx.compose.material3.TextButton(onClick = { app.antares.logout(company.id); vm.save(company.copy(connectorConfig = JSONObject(config.toString()).apply { remove(AntaresConnector.USERNAME); remove(AntaresConnector.PERSON_ID) }.toString())) {} }) {
+							Text(stringResource(R.string.antares_logout))
+						}
+				}
+				Text(stringResource(R.string.antares_redirect_hint, app.antares.redirectUri), style = MaterialTheme.typography.bodySmall)
+				error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+			}
 		}
 	}
 

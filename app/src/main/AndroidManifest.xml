@@ -51,6 +51,21 @@
           android:resource="@xml/shortcuts" />
     </activity>
 
+    <!-- Antares login: the browser comes back on "<applicationId>:/oauth2redirect" (RFC 8252). -->
+    <activity
+        android:name=".connect.antares.OAuthRedirectActivity"
+        android:exported="true"
+        android:noHistory="true"
+        android:excludeFromRecents="true"
+        android:theme="@android:style/Theme.Translucent.NoTitleBar">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="${applicationId}" android:path="/oauth2redirect" />
+      </intent-filter>
+    </activity>
+
     <!-- Notification actions; explicit intents only. -->
     <receiver
         android:name=".notify.ActionReceiver"

@@ -485,4 +485,12 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_state_planned">Planificada</string>
   <string name="todo_state_overdue">Atrasada</string>
   <string name="todo_filters_reset">Borrar</string>
+  <!-- Antares connector -->
+  <string name="antares_login">Acceder</string>
+  <string name="antares_logout">Salir</string>
+  <string name="antares_connected_as">Conectado como %1$s</string>
+  <string name="antares_not_connected">No conectado</string>
+  <string name="antares_logged_in">Antares: conectado como %1$s</string>
+  <string name="antares_login_failed">Error de acceso a Antares: %1$s</string>
+  <string name="antares_redirect_hint">Redirect URI a registrar: %1$s</string>
 </resources>

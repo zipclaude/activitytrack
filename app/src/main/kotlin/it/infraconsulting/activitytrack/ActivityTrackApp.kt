@@ -34,6 +34,11 @@ class ActivityTrackApp : Application() {
 	/* connector secrets, keystore-encrypted (M4) */
 	val secrets: SecretStore by lazy { SecretStore(this) }
 
+	/* Antares login and tokens (public OAuth client, PKCE) */
+	val antares: it.infraconsulting.activitytrack.connect.antares.AntaresAuth by lazy {
+		it.infraconsulting.activitytrack.connect.antares.AntaresAuth(this, secrets)
+	}
+
 	override fun onCreate() {
 		super.onCreate()
 		container = AppContainer(this)
