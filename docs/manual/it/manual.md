@@ -211,6 +211,8 @@ Nella schermata "Nuova attività":
 - **Descrizione** e **ruolo** vengono proposti dall'ultima attività sullo
   stesso cliente negli ultimi 30 giorni. Il microfono nel campo detta il testo.
 - **Inizio** (con "Orari modificabili", attivo all'inizio): vuoto = adesso;
+  toccandolo quando è vuoto si apre la griglia a intervallo, che imposta inizio
+  e fine insieme; se è già compilato si apre il selettore dell'orario;
   un orario già passato fa partire l'attività da lì (un orario che oggi non è
   ancora arrivato vale per ieri).
 - **Fine (facoltativa)**: toccandola, la griglia sceglie inizio e fine insieme.
