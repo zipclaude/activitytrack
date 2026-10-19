@@ -484,4 +484,23 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_state_planned">Geplant</string>
   <string name="todo_state_overdue">Überfällig</string>
   <string name="todo_filters_reset">Zurücksetzen</string>
+  <!-- issue #28 calls -->
+  <string name="md_contacts">Kontakte</string>
+  <string name="contacts_import">Aus dem Telefonbuch importieren</string>
+  <string name="contact_edit">Kontakt</string>
+  <string name="contact_numbers">Nummern (eine pro Zeile)</string>
+  <string name="contact_numbers_missing">Mindestens eine Nummer ist nötig.</string>
+  <string name="client_calls">Anrufe</string>
+  <string name="sec_calls">Anrufe</string>
+  <string name="set_calls_incoming">Eingehende Anrufe erkennen</string>
+  <string name="set_calls_outgoing">Ausgehende Anrufe erkennen</string>
+  <string name="set_call_pause">Laufende Tätigkeit eines anderen Kunden während des Anrufs pausieren</string>
+  <string name="set_call_propose">Nach dem Anruf eine Tätigkeit vorschlagen</string>
+  <string name="set_calls_hint">Nur Anrufe mit einer Nummer in Stammdaten → Kontakte, innerhalb der Arbeitszeit. Braucht Zugriff auf Telefonstatus und Anrufliste.</string>
+  <string name="call_entry_activity">Telefonat mit %1$s</string>
+  <string name="call_pause_note">Telefonat %1$s</string>
+  <string name="call_propose_title">Anruf mit %1$s (%2$s)</string>
+  <string name="call_propose_text">%1$s–%2$s: als Tätigkeit erfassen?</string>
+  <string name="call_propose_action">Tätigkeit anlegen</string>
+  <string name="segment_note">Beschreibung</string>
 </resources>

@@ -159,6 +159,28 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v9ToV10AddsCallsAndPauseNotes() {
+		helper.createDatabase(DB, 9).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL(
+				"INSERT INTO time_entry (id, uid, company_id, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) " +
+					"VALUES (1, 'e1', 1, 'CLOSED', 'Europe/Rome', 0, 0, 0)",
+			)
+			db.execSQL("INSERT INTO segment (id, entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source) VALUES (1, 1, 'PAUSE', 0, 60000, 'Europe/Rome', 'TRACKED')")
+		}
+		helper.runMigrationsAndValidate(DB, 10, true).use { db ->
+			db.query("SELECT note FROM segment").use { c ->
+				c.moveToFirst()
+				assertEquals(true, c.isNull(0))
+			}
+			db.query("SELECT COUNT(*) FROM contact").use { c ->
+				c.moveToFirst()
+				assertEquals(0, c.getInt(0))
+			}
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

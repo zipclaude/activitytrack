@@ -115,6 +115,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var notes by remember { mutableStateOf(initial.notes.orEmpty()) }
 	var adding by remember { mutableStateOf<SegmentKind?>(null) }
 	var editingSegment by remember { mutableStateOf<SegmentEntity?>(null) }
+	var editingNote by remember { mutableStateOf<SegmentEntity?>(null) }
 	var deletingRef by remember { mutableStateOf<ExternalRefEntity?>(null) }
 	var newRef by remember { mutableStateOf("") }
 
@@ -199,12 +200,19 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					end?.let { hmOf(it - s.startUtcMs) },
 					(s.kmDeclared ?: s.kmEstimated)?.let { "%.1f km".format(it) },
 					if (s.source == SegmentSource.MANUAL) stringResource(R.string.segment_manual) else null,
+					s.note,
 				).joinToString(" · ")
-				/* closed segments can be edited or deleted with editable times on (backlog 11, M17) */
+				/*
+				 * closed segments can be edited or deleted with editable times on
+				 * (backlog 11, M17); the description of a pause always (issue #28)
+				 */
 				ClickableRow("${kindLabel(s.kind)}  $range", extra) {
 					if (end != null && editableTimes) {
 						vm.clearError()
 						editingSegment = s
+					} else if (s.kind == SegmentKind.PAUSE) {
+						vm.clearError()
+						editingNote = s
 					}
 				}
 			}
@@ -272,6 +280,18 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 		ManualSegmentDialog(kind, firstDay, zone, vm) { adding = null }
 	}
 	editingSegment?.let { s -> SegmentDialog(s, zone, vm) { editingSegment = null } }
+	editingNote?.let { s ->
+		var note by remember(s.id) { mutableStateOf(s.note.orEmpty()) }
+		val error by vm.error.collectAsState()
+		EditDialog(
+			title = stringResource(R.string.segment_note),
+			error = error,
+			onDismiss = { vm.clearError(); editingNote = null },
+			onConfirm = { vm.setSegmentNote(s.id, note) { editingNote = null } },
+		) {
+			TextInput(stringResource(R.string.segment_note), note, { note = it }, importance = Importance.OPTIONAL)
+		}
+	}
 	deletingRef?.let { r ->
 		ConfirmDialog(stringResource(R.string.confirm_delete, r.value), { deletingRef = null }) {
 			deletingRef = null
@@ -292,6 +312,7 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 	var start by remember { mutableStateOf(clockOf(s.startUtcMs, zone)) }
 	var end by remember { mutableStateOf(s.endUtcMs?.let { clockOf(it, zone) }.orEmpty()) }
 	var km by remember { mutableStateOf(s.kmDeclared?.toString().orEmpty()) }
+	var note by remember { mutableStateOf(s.note.orEmpty()) }
 	var deleting by remember { mutableStateOf(false) }
 	var grid by remember { mutableStateOf(false) }
 	EditDialog(
@@ -304,10 +325,13 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 			val a = parseHhMm(start)
 			val b = parseHhMm(end)
 			if (d == null || a == null || b == null)
-				vm.updateSegment(s.id, 1, 0, null, onClose)
+				vm.updateSegment(s.id, 1, 0, null, done = onClose)
 			else {
 				val (from, to) = localRange(d, a, b, zone)
-				vm.updateSegment(s.id, from, to, if (s.kind == SegmentKind.TRAVEL) parseDecimal(km) else null, onClose)
+				vm.updateSegment(
+					s.id, from, to, if (s.kind == SegmentKind.TRAVEL) parseDecimal(km) else null,
+					if (s.kind == SegmentKind.PAUSE) note else null, onClose,
+				)
 			}
 		},
 	) {
@@ -316,6 +340,8 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 		TimeField(stringResource(R.string.field_end), end, { end = it }, importance = Importance.REQUIRED, onOpen = { grid = true })
 		if (s.kind == SegmentKind.TRAVEL)
 			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = Importance.OPTIONAL)
+		if (s.kind == SegmentKind.PAUSE)
+			TextInput(stringResource(R.string.segment_note), note, { note = it }, importance = Importance.OPTIONAL)
 	}
 	if (grid)
 		SegmentGrid(kindLabel(s.kind), date, start, end, s.id, zone, vm, { grid = false }) { a, b -> start = a; end = b }

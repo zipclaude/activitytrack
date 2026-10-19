@@ -67,6 +67,11 @@ data class AppSettings(
 	 * settable by policy later.
 	 */
 	val editableTimes: Boolean = true,
+	/* call recognition (issue #28): incoming and outgoing each, off until enabled; pause and proposal options */
+	val callsIncoming: Boolean = false,
+	val callsOutgoing: Boolean = false,
+	val callAutoPause: Boolean = true,
+	val callProposeEntry: Boolean = true,
 ) {
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId
