@@ -478,4 +478,22 @@ Tap the green play button below to start one.</string>
   <string name="todo_window_7d">7 days</string>
   <string name="todo_window_30d">30 days</string>
   <string name="todo_window_all">All</string>
+  <!-- M22 end at start -->
+  <string name="notif_planned_end_title">%1$s finished?</string>
+  <string name="notif_planned_end_text">Planned end %1$s</string>
+  <string name="notif_planned_end_stop">Yes, stop at %1$s</string>
+  <string name="notif_planned_end_go_on">No, go on</string>
+  <string name="field_end_optional">End (optional)</string>
+  <string name="end_hint">Empty = open; already passed = the activity is recorded as done.</string>
+  <string name="ended_title">Is the activity over?</string>
+  <string name="ended_text">The end %1$s has already passed.</string>
+  <string name="planned_end_fmt">Planned end %1$s</string>
+  <string name="todo_filters">Filters</string>
+  <string name="todo_filter_any">Any</string>
+  <string name="todo_filter_state">State</string>
+  <string name="todo_filter_planned">Planned</string>
+  <string name="todo_state_open">Open</string>
+  <string name="todo_state_planned">Planned</string>
+  <string name="todo_state_overdue">Overdue</string>
+  <string name="todo_filters_reset">Clear</string>
 </resources>

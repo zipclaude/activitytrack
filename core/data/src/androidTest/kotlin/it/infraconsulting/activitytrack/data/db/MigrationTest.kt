@@ -142,6 +142,23 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v8ToV9AddsPlannedEnd() {
+		helper.createDatabase(DB, 8).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL(
+				"INSERT INTO time_entry (id, uid, company_id, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) " +
+					"VALUES (1, 'e1', 1, 'CLOSED', 'Europe/Rome', 0, 0, 0)",
+			)
+		}
+		helper.runMigrationsAndValidate(DB, 9, true).use { db ->
+			db.query("SELECT planned_end_utc_ms FROM time_entry").use { c ->
+				c.moveToFirst()
+				assertEquals(true, c.isNull(0))
+			}
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

@@ -147,6 +147,29 @@ class RepositoryTest {
 	}
 
 	@Test
+	fun stopClosesWhenDetailsAreComplete() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Patch"))
+		clock.advance(30)
+		entries.apply(id, EntryCommand.STOP)
+		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(id)?.status)
+	}
+
+	@Test
+	fun endChosenAtStart() = runBlocking<Unit> {
+		val t0 = clock.millis()
+		clock.advance(120)
+		/* past end: recorded as stopped, closed since client and activity are there */
+		val past = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Call", startUtcMs = t0, endUtcMs = t0 + 3_600_000))
+		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(past)?.status)
+		assertEquals(t0 + 3_600_000, db.entryDao().segments(past).single().endUtcMs)
+		/* future end: running, planned end kept until asked */
+		val open = entries.start(StartRequest(SegmentKind.WORK, client, endUtcMs = clock.millis() + 1_800_000))
+		assertEquals(clock.millis() + 1_800_000, db.entryDao().entry(open)?.plannedEndUtcMs)
+		entries.clearPlannedEnd(open)
+		assertNull(db.entryDao().entry(open)?.plannedEndUtcMs)
+	}
+
+	@Test
 	fun completionRequiresActivity() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(60)

@@ -127,6 +127,7 @@ class ActionReceiver : BroadcastReceiver() {
 		/* any answer settles the reminders and prompts of the entry */
 		private val ANSWERED = listOf(
 			NotificationIds.CONFIRM, NotificationIds.PAUSE, NotificationIds.MOVEMENT, NotificationIds.ARRIVAL,
+			NotificationIds.PLANNED_END,
 		)
 
 		private fun Intent.at(): Long? = getLongExtra(EXTRA_AT, -1).takeIf { it >= 0 }
@@ -197,6 +198,19 @@ class ActionReceiver : BroadcastReceiver() {
 				Intent(context, ActionReceiver::class.java).setAction(ACTION_POSTPONE_TODO).putExtra(EXTRA_TODO, todoId),
 				PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
 			)
+
+		/*
+		 * The planned-end prompt (M22): stop at that time, or go on. Negative
+		 * request codes keep them apart from the movement prompt's.
+		 */
+		fun stopAtPlannedEnd(context: Context, entryId: Long, atMs: Long): PendingIntent =
+			intent(context, ACTION_COMMAND, entryId, -(entryId * 16 + 1).toInt()) {
+				putExtra(EXTRA_COMMAND, EntryCommand.STOP.name)
+				putExtra(EXTRA_AT, atMs)
+			}
+
+		fun goOn(context: Context, entryId: Long): PendingIntent =
+			intent(context, ACTION_DISMISS, entryId, -(entryId * 16 + 2).toInt())
 
 		fun dismissArrival(context: Context, entryId: Long): PendingIntent =
 			intent(context, ACTION_DISMISS, entryId, (entryId * 16 + 7).toInt())
