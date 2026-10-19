@@ -444,6 +444,8 @@ Titolo) fino a un anno avanti; quando sono fatte escono dal calendario.
 L'ultima riga della descrizione porta dei tag per tipo di tempo: `#lavoro`,
 `#viaggio`, `#pausa`, `#pianificata`, sempre in italiano qualunque sia la
 lingua del telefono (cercali nell'app calendario).
+Gli eventi sono **privati**: chi condivide il calendario (es. un calendario
+Google condiviso con altri) vede solo "occupato", senza titolo né dettagli.
 La sincronizzazione è solo dall'app al calendario: modifiche fatte nel
 calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 "Sincronizza 90 giorni" riallinea più indietro.
