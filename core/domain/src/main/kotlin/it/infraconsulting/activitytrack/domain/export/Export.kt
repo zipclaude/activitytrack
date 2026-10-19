@@ -27,6 +27,7 @@ data class ExportRow(
 	val notes: String,
 	val externalRefs: List<String>,
 	val locality: String,
+	val tags: List<String> = emptyList(),
 )
 
 /* Descriptive data of an entry for exports; km and expenses go on its first exported day. */
@@ -40,6 +41,8 @@ data class EntryMeta(
 	val externalRefs: List<String>,
 	val km: Double?,
 	val expensesCents: Long,
+	/* normalised, without '#' (M15) */
+	val tags: List<String> = emptyList(),
 )
 
 /* Exporters compiled into the app, no dynamic loading (A14). */
@@ -77,6 +80,7 @@ object ExportRows {
 					notes = m.notes,
 					externalRefs = m.externalRefs,
 					locality = m.locality,
+					tags = m.tags,
 				)
 			}
 	}

@@ -31,6 +31,7 @@ class CsvExporterTest {
 		externalRefs = listOf("INC1", "OPS-2"),
 		km = 42.25,
 		expensesCents = 1250,
+		tags = listOf("remoto", "urgente"),
 	)
 
 	private fun csv(rows: List<ExportRow>, locale: Locale): String {
@@ -58,7 +59,7 @@ class CsvExporterTest {
 		/* work 4:00 -> 4,00; pause 20 -> 0,33 (FLOOR 5 = 20 min); travel 40 -> 0,67 */
 		assertEquals(
 			"2026-10-14;08:00;2026-10-14;13:00;4,00;0,33;0,67;Acme;\"Bank; Ltd\";Consultant;" +
-				"\"Patch \"\"night\"\"\";42,3;12,50;\"line1\nline2\";INC1, OPS-2;Milano",
+				"\"Patch \"\"night\"\"\";42,3;12,50;\"line1\nline2\";INC1, OPS-2;Milano;#remoto #urgente",
 			lines[1],
 		)
 		/* the LF inside the quoted notes does not end the record; CRLF does */

@@ -295,7 +295,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="agenda_day">Giorno</string>
   <string name="agenda_week">Settimana</string>
   <string name="agenda_month">Mese</string>
-  <string name="agenda_search">Cerca cliente o attività</string>
+  <string name="agenda_search">Cerca cliente, attività o #tag</string>
   <string name="agenda_empty">Nessuna attività in questo periodo.</string>
   <string name="connector_title">Gestionale</string>
   <string name="connector_external_code">Codice nel gestionale</string>
@@ -435,4 +435,9 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="agenda_scroll">Scorri</string>
   <string name="todo_filter_next24h">Prossime 24 h</string>
   <string name="todo_filter_ignored">Ignorate</string>
+  <!-- M15 tags, segments -->
+  <string name="tags">Tag</string>
+  <string name="tag_new">Nuovi tag (es. #urgente remoto)</string>
+  <string name="segment_edit">Modifica tratto</string>
+  <string name="err_last_segment">Il tratto in corso e l\'ultimo tratto di un\'attività non si possono eliminare.</string>
 </resources>

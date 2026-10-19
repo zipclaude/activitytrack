@@ -401,6 +401,25 @@ data class ExternalRefEntity(
 	val value: String,
 )
 
+/* A tag of an entry (backlog 13): lower case, without '#', no spaces. */
+@Entity(
+	tableName = "entry_tag",
+	primaryKeys = ["entry_id", "tag"],
+	foreignKeys = [
+		ForeignKey(
+			entity = TimeEntryEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["entry_id"],
+			onDelete = ForeignKey.CASCADE,
+		),
+	],
+	indices = [Index("tag")],
+)
+data class EntryTagEntity(
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	val tag: String,
+)
+
 @Entity(tableName = "absence", indices = [Index("date_epoch_day")])
 data class AbsenceEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,

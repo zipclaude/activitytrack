@@ -28,6 +28,7 @@ class GenericConnectorTest {
 				),
 				expenses = listOf(XExpense("12.50", "Parking", "2026-10-17T07:01:00Z", receipt = true)),
 				refs = listOf("INC0012", "https://example.org/t/1"),
+				tags = listOf("remoto", "urgente"),
 			),
 		),
 		absences = listOf(XAbsence("2026-10-19", "LATE_ENTRY", "10:30")),
