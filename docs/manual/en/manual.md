@@ -5,7 +5,7 @@ reference (settings, entities, states, flows).
 
 **New in 0.6.0**
 - ✕ in text fields to empty them (§3).
-- Home cards: the company colour is always shown, the "Closed" state is
+- Home cards: band with the company's chosen colour, the "Closed" state is
   neutral, times read "from–to (length)" (§3).
 - Activity screen: "+ Travel" and "+ Pause" at the top; with the compact
   display the optional details fold away (§6).
@@ -137,8 +137,8 @@ They are changed in "Settings" → **"Gestures"**: what each direction offers
 In a company or client screen ("More" → "Master data") pick a **colour** out
 of twelve, or "No colour". Activity and to-do cards have a thin **vertical
 band** on the left with the company colour; when a list shows a single
-company, the band has the **client** colour. Companies without a chosen colour
-get an automatic one, the same everywhere.
+company, the band has the **client** colour. Without a chosen colour there is
+no band; in the Agenda the blocks of those companies are grey.
 
 Next to "To do · next 24 h" (and in the "To-dos" screen) the **"All
 companies"** button filters to-dos by company: the filter stays until you

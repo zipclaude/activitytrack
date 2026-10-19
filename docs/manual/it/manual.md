@@ -5,7 +5,7 @@ manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 
 **Novità della 0.6.0**
 - ✕ nei campi di testo per svuotarli (§3).
-- Riquadri della Home: colore dell'azienda sempre visibile, stato "Chiusa"
+- Riquadri della Home: banda col colore scelto per l'azienda, stato "Chiusa"
   neutro, orari nella forma "dalle–alle (durata)" (§3).
 - Scheda attività: "+ Viaggio" e "+ Pausa" in alto; in visualizzazione
   compatta i dettagli facoltativi si richiudono (§6).
@@ -139,8 +139,8 @@ Nella scheda di un'azienda o di un cliente ("Altro" → "Anagrafiche") scegli
 un **colore** fra dodici, o "Nessun colore". I riquadri delle attività e
 delle voci da fare hanno una sottile **banda verticale** a sinistra con il
 colore dell'azienda; quando la lista mostra una sola azienda, la banda ha il
-colore del **cliente**. L'Agenda usa i colori scelti (le aziende senza colore
-ne hanno uno automatico).
+colore del **cliente**. Senza un colore scelto non c'è banda; in Agenda i
+blocchi di quelle aziende sono grigi.
 
 Accanto a "Da fare · prossime 24 h" (e nella schermata "Da fare") il pulsante **"Tutte
 le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
