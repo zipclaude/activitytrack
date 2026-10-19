@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.ui.agenda
 
 import it.infraconsulting.activitytrack.ui.common.companyColor
+import it.infraconsulting.activitytrack.ui.common.NO_COLOR
 import it.infraconsulting.activitytrack.ui.common.ClearButton
 import it.infraconsulting.activitytrack.ui.common.TagFilterChip
 import androidx.compose.foundation.horizontalScroll
@@ -245,7 +246,7 @@ private val LocalCompanyColors = staticCompositionLocalOf { emptyMap<Long, Int>(
 
 @Composable
 private fun colorOf(companyId: Long?): Color =
-	rgb(companyColor(companyId ?: 0L, companyId?.let { LocalCompanyColors.current[it] })!!)
+	rgb(companyColor(companyId, companyId?.let { LocalCompanyColors.current[it] }) ?: NO_COLOR)
 
 private fun hm(d: Duration) = "%d:%02d".format(d.toHours(), d.toMinutesPart())
 
