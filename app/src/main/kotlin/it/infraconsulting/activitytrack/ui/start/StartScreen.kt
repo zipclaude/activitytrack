@@ -102,7 +102,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 								listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) +
 									companies.filter { !it.archived || it.id == f.companyId }.map { it.id to it.name },
 								f.companyId,
-								importance = Importance.REQUIRED,
+								/* a filter here (the client is what is required): neutral on "All companies", green once set */
+								importance = if (f.companyId == null) null else Importance.REQUIRED,
 								colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 							) { vm.setCompany(it) }
 						}
