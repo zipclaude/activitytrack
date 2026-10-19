@@ -52,7 +52,7 @@ interface Connector {
 
 /* Every plugin built into the app. */
 object Connectors {
-	val all: List<Connector> = listOf(GenericConnector)
+	val all: List<Connector> = listOf(GenericConnector, AntaresConnector)
 
 	fun byId(id: String?): Connector = all.firstOrNull { it.id == id } ?: GenericConnector
 }
