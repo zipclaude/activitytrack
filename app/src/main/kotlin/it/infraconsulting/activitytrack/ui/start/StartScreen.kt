@@ -58,11 +58,15 @@ import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.reasonText
 
 @Composable
-fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null, travel: Boolean = false) {
+fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null, travel: Boolean = false, call: CallPrefill? = null) {
 	val context = LocalContext.current.applicationContext
 	val vm = appViewModel {
 		StartViewModel(it.entries, it.masterData, clientId, todoId, it.todos, { CurrentPosition.get(context) }, it.settings.settings.map { s -> s.editableTimes })
 			.also { vm -> if (travel) vm.setMode(SegmentKind.TRAVEL) }
+			.also { vm ->
+				vm.callText = { n -> context.getString(R.string.call_entry_activity, n) }
+				call?.let(vm::prefillCall)
+			}
 	}
 	val f by vm.form.collectAsState()
 	val companies by vm.companies.collectAsState()

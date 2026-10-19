@@ -83,6 +83,7 @@ private enum class F {
 enum class SettingsSection(val label: Int, val form: Boolean = true) {
 	DISPLAY(R.string.sec_display),
 	TIMES(R.string.sec_times),
+	CALLS(R.string.sec_calls),
 	REMINDERS(R.string.sec_reminders),
 	NOTIFICATIONS(R.string.sec_notifications, form = false),
 	LOCATION(R.string.sec_location),
@@ -140,6 +141,17 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
 	var compact by remember { mutableStateOf(initial.compactDisplay) }
 	var editableTimes by remember { mutableStateOf(initial.editableTimes) }
+	var callsIn by remember { mutableStateOf(initial.callsIncoming) }
+	var callsOut by remember { mutableStateOf(initial.callsOutgoing) }
+	var callPause by remember { mutableStateOf(initial.callAutoPause) }
+	var callPropose by remember { mutableStateOf(initial.callProposeEntry) }
+	/* recognition needs the phone state and the call log: asked when switched on */
+	val callPermissions = androidx.activity.compose.rememberLauncherForActivityResult(
+		androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
+	) { granted -> if (granted.values.any { !it }) { callsIn = false; callsOut = false } }
+	val askCalls = {
+		callPermissions.launch(arrayOf(android.Manifest.permission.READ_PHONE_STATE, android.Manifest.permission.READ_CALL_LOG))
+	}
 	var work by remember { mutableStateOf(initial.rounding.work) }
 	var travel by remember { mutableStateOf(initial.rounding.travel) }
 	var pause by remember { mutableStateOf(initial.rounding.pause) }
@@ -171,6 +183,10 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		dictationLanguage = dictation,
 		compactDisplay = compact,
 		editableTimes = editableTimes,
+		callsIncoming = callsIn,
+		callsOutgoing = callsOut,
+		callAutoPause = callPause,
+		callProposeEntry = callPropose,
 		rounding = ReportRounding(
 			work.copy(minimum = minutes(F.WORK_MIN, work.minimum)),
 			travel.copy(minimum = minutes(F.TRAVEL_MIN, travel.minimum)),
@@ -196,6 +212,13 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				SettingsSection.TIMES -> {
 					SwitchRow(stringResource(R.string.set_editable_times), editableTimes) { editableTimes = it }
 					Text(stringResource(R.string.set_editable_times_hint), style = MaterialTheme.typography.bodySmall)
+				}
+				SettingsSection.CALLS -> {
+					SwitchRow(stringResource(R.string.set_calls_incoming), callsIn) { callsIn = it; if (it) askCalls() }
+					SwitchRow(stringResource(R.string.set_calls_outgoing), callsOut) { callsOut = it; if (it) askCalls() }
+					SwitchRow(stringResource(R.string.set_call_pause), callPause) { callPause = it }
+					SwitchRow(stringResource(R.string.set_call_propose), callPropose) { callPropose = it }
+					Text(stringResource(R.string.set_calls_hint), style = MaterialTheme.typography.bodySmall)
 				}
 				SettingsSection.REMINDERS -> {
 					field(F.CONFIRM, R.string.set_confirm_interval)

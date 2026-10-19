@@ -305,6 +305,8 @@ data class SegmentEntity(
 	val source: SegmentSource = SegmentSource.TRACKED,
 	@ColumnInfo(name = "km_estimated") val kmEstimated: Double? = null,
 	@ColumnInfo(name = "km_declared") val kmDeclared: Double? = null,
+	/* description of a pause, e.g. "Telefonata Banca" for one made by a call (issue #28) */
+	val note: String? = null,
 )
 
 /* Coordinates are displayed only; they are never exported. */
@@ -464,4 +466,55 @@ data class LunchBreakEntity(
 	@ColumnInfo(name = "day_of_week") val dayOfWeek: Int,
 	@ColumnInfo(name = "start_min") val startMin: Int,
 	@ColumnInfo(name = "end_min") val endMin: Int,
+)
+
+/*
+ * A person of a client (issue #28): calls from or to their numbers are
+ * recognised. A contact belongs to one client, a client has many.
+ */
+@Entity(
+	tableName = "contact",
+	foreignKeys = [
+		ForeignKey(entity = ClientEntity::class, parentColumns = ["id"], childColumns = ["client_id"], onDelete = ForeignKey.CASCADE),
+	],
+	indices = [Index("client_id")],
+)
+data class ContactEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "client_id") val clientId: Long,
+	val name: String,
+)
+
+/* A number of a contact, as dialled (digits and a leading +). */
+@Entity(
+	tableName = "contact_phone",
+	primaryKeys = ["contact_id", "number"],
+	foreignKeys = [
+		ForeignKey(entity = ContactEntity::class, parentColumns = ["id"], childColumns = ["contact_id"], onDelete = ForeignKey.CASCADE),
+	],
+	indices = [Index("number")],
+)
+data class ContactPhoneEntity(
+	@ColumnInfo(name = "contact_id") val contactId: Long,
+	val number: String,
+)
+
+enum class CallDirection { INCOMING, OUTGOING }
+
+/* A recognised call with a contact (issue #28): the calls of a client and their length. */
+@Entity(
+	tableName = "call_log",
+	foreignKeys = [
+		ForeignKey(entity = ContactEntity::class, parentColumns = ["id"], childColumns = ["contact_id"], onDelete = ForeignKey.CASCADE),
+		ForeignKey(entity = ClientEntity::class, parentColumns = ["id"], childColumns = ["client_id"], onDelete = ForeignKey.CASCADE),
+	],
+	indices = [Index("contact_id"), Index("client_id"), Index(value = ["start_utc_ms", "contact_id"], unique = true)],
+)
+data class CallLogEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "contact_id") val contactId: Long,
+	@ColumnInfo(name = "client_id") val clientId: Long,
+	val direction: CallDirection,
+	@ColumnInfo(name = "start_utc_ms") val startUtcMs: Long,
+	@ColumnInfo(name = "end_utc_ms") val endUtcMs: Long,
 )
