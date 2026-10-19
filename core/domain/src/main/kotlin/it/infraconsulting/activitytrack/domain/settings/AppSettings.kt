@@ -72,6 +72,8 @@ data class AppSettings(
 	val callsOutgoing: Boolean = false,
 	val callAutoPause: Boolean = true,
 	val callProposeEntry: Boolean = true,
+	/* also outside working hours, holidays and days off (on call); default working hours only */
+	val callsAlways: Boolean = false,
 ) {
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId

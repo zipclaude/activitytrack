@@ -82,6 +82,7 @@ class SettingsRepository(context: Context) {
 		val callsOutgoing = booleanPreferencesKey("calls_outgoing")
 		val callAutoPause = booleanPreferencesKey("call_auto_pause")
 		val callProposeEntry = booleanPreferencesKey("call_propose_entry")
+		val callsAlways = booleanPreferencesKey("calls_always")
 		fun order(list: OrderedList) = stringPreferencesKey("order_${list.name.lowercase()}")
 		val editableTimes = booleanPreferencesKey("editable_times")
 
@@ -130,6 +131,7 @@ class SettingsRepository(context: Context) {
 			callsOutgoing = p[K.callsOutgoing] ?: d.callsOutgoing,
 			callAutoPause = p[K.callAutoPause] ?: d.callAutoPause,
 			callProposeEntry = p[K.callProposeEntry] ?: d.callProposeEntry,
+			callsAlways = p[K.callsAlways] ?: d.callsAlways,
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
 			tiles = readService(p, "tiles", d.tiles),
@@ -174,6 +176,7 @@ class SettingsRepository(context: Context) {
 		p[K.callsOutgoing] = s.callsOutgoing
 		p[K.callAutoPause] = s.callAutoPause
 		p[K.callProposeEntry] = s.callProposeEntry
+		p[K.callsAlways] = s.callsAlways
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
 		writeService(p, "tiles", s.tiles)

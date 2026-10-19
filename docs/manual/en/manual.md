@@ -313,8 +313,9 @@ separately), at the end of every call with a number listed in Master data →
   activity" with the client, the description "Phone call with NAME" and the
   times rounded to 5 minutes (start down, end up).
 
-It works only within working hours (not on holidays and days off); calls with
-unknown numbers are ignored.
+It works only within working hours (not on holidays and days off), unless
+**"Also outside working hours (on call)"** is on: then it always works.
+Calls with unknown numbers are ignored.
 
 ---
 
@@ -564,6 +565,7 @@ Settings are split into sections, each with its own page and "Save";
 | Times | Times freely editable: start and end chosen when starting and stopping, segments editable and deletable (off: times as recorded; "+ Travel" and "+ Pause" stay) | on |
 | Calls | Recognise incoming / outgoing calls | off |
 | | Pause the activity of another client / Propose an activity | on |
+| | Also outside working hours (on call) | off |
 | Reminders | Confirm interval | 30 min |
 | | Maximum confirmations | 0 (unlimited) |
 | | Pause reminder interval | 15 min |
@@ -640,6 +642,7 @@ to the nearest limit.
 | Recognise outgoing calls | the same for calls you make | off |
 | Pause the running activity of another client | during the call, another client's running activity is paused (at least a minute) | on |
 | Propose an activity after a call | "Create activity" notification with client, description and rounded times | on |
+| Also outside working hours (on call) | off: within working hours only, not on holidays and days off; on: always | off |
 
 ### Reminders
 

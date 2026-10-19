@@ -319,8 +319,9 @@ Anagrafiche → **Contatti** l'app guarda il registro chiamate e:
   "Chiamata telefonica con NOME" e gli orari arrotondati a 5 minuti (inizio
   per difetto, fine per eccesso).
 
-Vale solo in orario di lavoro (non nei festivi e nei giorni liberi); le
-chiamate con numeri sconosciuti vengono ignorate.
+Vale solo in orario di lavoro (non nei festivi e nei giorni liberi), salvo
+con l'opzione **"Anche fuori orario (reperibilità)"**: allora vale sempre.
+Le chiamate con numeri sconosciuti vengono ignorate.
 
 ---
 
@@ -577,6 +578,7 @@ spiegato nella Parte II, §17.
 | Orari | Orari modificabili liberamente: inizio e fine scelti all'avvio e allo stop, tratti modificabili ed eliminabili (spento: orari come registrati; "+ Viaggio" e "+ Pausa" restano) | acceso |
 | Chiamate | Riconosci le chiamate in entrata / in uscita | spenti |
 | | Metti in pausa l'attività di un altro cliente / Proponi un'attività | accesi |
+| | Anche fuori orario (reperibilità) | spento |
 | Promemoria | Intervallo di conferma | 30 min |
 | | Numero massimo di conferme | 0 (illimitato) |
 | | Intervallo promemoria pausa | 15 min |
@@ -653,6 +655,7 @@ riportati al limite più vicino.
 | Riconosci le chiamate in uscita | lo stesso per le chiamate fatte | spento |
 | Metti in pausa l'attività di un altro cliente | durante la chiamata, l'attività in corso di un altro cliente va in pausa (almeno un minuto) | acceso |
 | Proponi un'attività dopo la chiamata | notifica "Crea attività" con cliente, descrizione e orari arrotondati | acceso |
+| Anche fuori orario (reperibilità) | spento: solo in orario di lavoro, non nei festivi e nei giorni liberi; acceso: sempre | spento |
 
 ### Promemoria
 

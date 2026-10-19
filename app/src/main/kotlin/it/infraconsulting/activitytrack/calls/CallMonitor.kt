@@ -36,8 +36,9 @@ import java.time.ZoneId
 /*
  * Call recognition (issue #28): when the phone goes back to idle after a
  * call, the latest call-log row tells number, direction, start and length.
- * A number of a contact, within working hours, is recorded, may pause the
- * running entry of another client and may be proposed as an entry.
+ * A number of a contact, within working hours (or always, when on call),
+ * is recorded, may pause the running entry of another client and may be
+ * proposed as an entry.
  * Needs READ_PHONE_STATE (the broadcast) and READ_CALL_LOG (the number).
  */
 class CallReceiver : BroadcastReceiver() {
@@ -96,7 +97,7 @@ object CallMonitor {
 		val outcome = CallRules.decide(
 			call.incoming, start, end, client.id, running,
 			CallSettings(s.callsIncoming, s.callsOutgoing, s.callAutoPause, s.callProposeEntry),
-			workingHours(app, start, zone), zone,
+			s.callsAlways || workingHours(app, start, zone), zone,
 		) ?: return
 		val fresh = c.calls.record(
 			CallLogEntity(
