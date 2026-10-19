@@ -81,6 +81,19 @@ class TodoPlanTest {
 	}
 
 	@Test
+	fun nextTwentyFourHours() {
+		val now = at(day, 22, 0)
+		/* tomorrow 08:00 is in, the day after at noon is out, yesterday (overdue) is in */
+		assertEquals(true, withinHours(todoMoment(TodoPlan(day.plusDays(1), 8 * 60), null, null, zone), now))
+		assertEquals(false, withinHours(todoMoment(TodoPlan(day.plusDays(2), 12 * 60), null, null, zone), now))
+		assertEquals(true, withinHours(todoMoment(null, day.minusDays(1), null, zone), now))
+		/* the plan wins over the due date; a date without time counts from its start */
+		assertEquals(at(day, 9, 0), todoMoment(TodoPlan(day, 9 * 60), day.plusDays(5), 600, zone))
+		assertEquals(at(day.plusDays(1), 0, 0), todoMoment(null, day.plusDays(1), null, zone))
+		assertEquals(false, withinHours(null, now))
+	}
+
+	@Test
 	fun dstDayKeepsTheWallClock() {
 		/* 25 October 2026: clocks go back at 03:00 in Rome */
 		val dst = LocalDate.of(2026, 10, 25)
