@@ -44,6 +44,8 @@ internal val ORANGE = Color(0xFFEF6C00)
 internal val BLUE = Color(0xFF1565C0)
 /* dark icon on yellow: white would fail contrast */
 private val ON_YELLOW = Color(0xFF212121)
+/* closed: a quiet grey on the card background, readable in both themes */
+private val NEUTRAL = Color(0xFF9EA3B0)
 
 fun commandStyle(cmd: EntryCommand): CommandStyle? = when (cmd) {
 	EntryCommand.WORK -> CommandStyle(R.drawable.ic_cmd_play, GREEN, Color.White)
@@ -66,8 +68,9 @@ fun CommandIconButton(style: CommandStyle, label: String, onClick: () -> Unit, m
 	}
 }
 
-/* Colour and icon of an entry state, matching the command that leads to it. */
-fun stateStyle(status: EntryStatus, mode: SegmentKind?): CommandStyle? = commandStyle(
+/* Colour and icon of an entry state, matching the command that leads to it; closed is neutral (owner, 2026-10-19). */
+fun stateStyle(status: EntryStatus, mode: SegmentKind?): CommandStyle? =
+	if (status == EntryStatus.CLOSED) CommandStyle(R.drawable.ic_cmd_stop, Color.Transparent, NEUTRAL) else commandStyle(
 	when (status) {
 		EntryStatus.ACTIVE -> when (mode) {
 			SegmentKind.TRAVEL -> EntryCommand.TRAVEL

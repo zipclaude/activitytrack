@@ -461,4 +461,9 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="grid_exact">Genaue Uhrzeit</string>
   <!-- M19 tag filters -->
   <string name="tag_filter_all">Alle Tags</string>
+  <string name="more_details">Weitere Angaben</string>
+  <string name="todo_window_24h">24 Std.</string>
+  <string name="todo_window_7d">7 Tage</string>
+  <string name="todo_window_30d">30 Tage</string>
+  <string name="todo_window_all">Alle</string>
 </resources>

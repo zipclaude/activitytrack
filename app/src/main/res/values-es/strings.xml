@@ -462,4 +462,9 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="grid_exact">Hora exacta</string>
   <!-- M19 tag filters -->
   <string name="tag_filter_all">Todas las etiquetas</string>
+  <string name="more_details">Más detalles</string>
+  <string name="todo_window_24h">24 h</string>
+  <string name="todo_window_7d">7 días</string>
+  <string name="todo_window_30d">30 días</string>
+  <string name="todo_window_all">Todos</string>
 </resources>
