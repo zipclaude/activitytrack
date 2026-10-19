@@ -345,6 +345,8 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
   it with sqlite3 checkpoints and deletes the WAL. When restoring, delete the
   device's `-wal`/`-shm` first, or Room finds a stale WAL and recreates an
   empty DB.
+- ViewModel `state()` flows are `WhileSubscribed`: reading `.value` of one no
+  composable collects returns the initial value forever; collect it in the screen.
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 

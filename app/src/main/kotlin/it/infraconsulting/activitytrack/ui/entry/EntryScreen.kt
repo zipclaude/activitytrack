@@ -95,6 +95,8 @@ fun EntryScreen(entryId: Long, onBack: () -> Unit) {
 private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -> Unit, modifier: Modifier) {
 	val e = vm.entry.collectAsState().value ?: initial
 	val segments by vm.segments.collectAsState()
+	/* collected here: a WhileSubscribed flow nobody collects stays at its initial value */
+	val editableTimes by vm.editableTimes.collectAsState()
 	val refs by vm.refs.collectAsState()
 	val clients by vm.clients.collectAsState()
 	val companies by vm.companies.collectAsState()
@@ -192,7 +194,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				).joinToString(" · ")
 				/* closed segments can be edited or deleted with editable times on (backlog 11, M17) */
 				ClickableRow("${kindLabel(s.kind)}  $range", extra) {
-					if (end != null && vm.editableTimes.value) {
+					if (end != null && editableTimes) {
 						vm.clearError()
 						editingSegment = s
 					}
