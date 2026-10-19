@@ -528,4 +528,27 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="call_propose_text">%1$s–%2$s: registrarla come attività?</string>
   <string name="call_propose_action">Crea attività</string>
   <string name="segment_note">Descrizione</string>
+  <!-- issue #34 Antares sync on closing, periodic download -->
+  <string name="ch_remote">Gestionali</string>
+  <string name="antares_send_question">Inviare subito l\'attività ad Antares?</string>
+  <string name="antares_send_now">Invia ora</string>
+  <string name="antares_new_ticket">Nuovo ticket Antares · %1$s</string>
+  <string name="antares_not_sent_title">Attività non inviata ad Antares</string>
+  <string name="antares_send_failed">Antares: invio non riuscito · %1$s</string>
+  <string name="antares_close_mode">Alla chiusura di un\'attività</string>
+  <string name="antares_close_ask">Chiedi se inviarla</string>
+  <string name="antares_close_always">Inviala senza chiedere</string>
+  <string name="antares_close_off">Non fare nulla</string>
+  <string name="antares_close_scope">Per</string>
+  <string name="antares_scope_tickets">Attività da ticket Antares</string>
+  <string name="antares_scope_all">Tutte le attività</string>
+  <string name="antares_close_sync">Invio</string>
+  <string name="antares_sync_full">Sync completo</string>
+  <string name="antares_sync_entry">Solo quell\'attività</string>
+  <string name="antares_fetch">Scarica gli aggiornamenti</string>
+  <string name="antares_fetch_every">ogni %1$s</string>
+  <plurals name="antares_new_tickets">
+    <item quantity="one">%d nuovo ticket</item>
+    <item quantity="other">%d nuovi ticket</item>
+  </plurals>
 </resources>

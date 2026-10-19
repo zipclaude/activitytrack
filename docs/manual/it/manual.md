@@ -583,7 +583,7 @@ spiegato nella Parte II, §17.
 | | Numero massimo di conferme | 0 (illimitato) |
 | | Intervallo promemoria pausa | 15 min |
 | | Ritardo avviso inizio giornata | 15 min |
-| Notifiche | per ogni tipo (conferma, pausa, pianificate, spostamento, arrivo, inizio giornata, riepilogo, da completare, in corso) apre la pagina di Android per banner, suono e vibrazione | — |
+| Notifiche | per ogni tipo (conferma, pausa, pianificate, spostamento, arrivo, inizio giornata, riepilogo, da completare, in corso, gestionali) apre la pagina di Android per banner, suono e vibrazione | — |
 | Posizione | accesso, batteria, riquadro rapido | — |
 | | Soglia avviso spostamento | 100 m |
 | | Raggio / tempo di arrivo | 100 m / 15 min |
@@ -668,7 +668,7 @@ riportati al limite più vicino.
 
 ### Notifiche
 Per ogni tipo di notifica (conferma, pausa, pianificate, spostamento, arrivo,
-inizio giornata, riepilogo, da completare, in corso) apre la pagina di Android
+inizio giornata, riepilogo, da completare, in corso, gestionali) apre la pagina di Android
 dove scegliere banner, suono e vibrazione.
 
 ### Posizione

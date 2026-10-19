@@ -539,4 +539,27 @@ Tap the green play button below to start one.</string>
   <string name="call_propose_text">%1$s–%2$s: record it as an activity?</string>
   <string name="call_propose_action">Create activity</string>
   <string name="segment_note">Description</string>
+  <!-- issue #34 Antares sync on closing, periodic download -->
+  <string name="ch_remote">Management systems</string>
+  <string name="antares_send_question">Send the activity to Antares now?</string>
+  <string name="antares_send_now">Send now</string>
+  <string name="antares_new_ticket">New Antares ticket · %1$s</string>
+  <string name="antares_not_sent_title">Activity not sent to Antares</string>
+  <string name="antares_send_failed">Antares: sending failed · %1$s</string>
+  <string name="antares_close_mode">When an activity closes</string>
+  <string name="antares_close_ask">Ask whether to send it</string>
+  <string name="antares_close_always">Send it without asking</string>
+  <string name="antares_close_off">Do nothing</string>
+  <string name="antares_close_scope">For</string>
+  <string name="antares_scope_tickets">Activities from an Antares ticket</string>
+  <string name="antares_scope_all">All activities</string>
+  <string name="antares_close_sync">Send</string>
+  <string name="antares_sync_full">Full Sync</string>
+  <string name="antares_sync_entry">Only that activity</string>
+  <string name="antares_fetch">Download updates</string>
+  <string name="antares_fetch_every">every %1$s</string>
+  <plurals name="antares_new_tickets">
+    <item quantity="one">%d new ticket</item>
+    <item quantity="other">%d new tickets</item>
+  </plurals>
 </resources>

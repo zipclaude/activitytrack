@@ -27,4 +27,16 @@ class AntaresTest {
 			url,
 		)
 	}
+
+	@Test
+	fun closeAndFetchOptions() {
+		assertEquals(60, AntaresConnector.fetchMinutes(null))
+		assertEquals(60, AntaresConnector.fetchMinutes("x"))
+		assertEquals(15, AntaresConnector.fetchMinutes("5"))
+		assertEquals(1440, AntaresConnector.fetchMinutes("9999"))
+		assertEquals(true, AntaresConnector.offersSendOnClose(null, null, fromTicket = true))
+		assertEquals(false, AntaresConnector.offersSendOnClose(null, null, fromTicket = false))
+		assertEquals(true, AntaresConnector.offersSendOnClose("always", "all", fromTicket = false))
+		assertEquals(false, AntaresConnector.offersSendOnClose("off", "all", fromTicket = true))
+	}
 }

@@ -570,7 +570,7 @@ Settings are split into sections, each with its own page and "Save";
 | | Maximum confirmations | 0 (unlimited) |
 | | Pause reminder interval | 15 min |
 | | Day-start prompt delay | 15 min |
-| Notifications | for every kind (confirm, pause, planned, movement, arrival, day start, summary, to complete, running) opens the Android page for banner, sound and vibration | — |
+| Notifications | for every kind (confirm, pause, planned, movement, arrival, day start, summary, to complete, running, management systems) opens the Android page for banner, sound and vibration | — |
 | Location | access, battery, quick tile | — |
 | | Movement alert threshold | 100 m |
 | | Arrival radius / time | 100 m / 15 min |
@@ -655,7 +655,7 @@ to the nearest limit.
 
 ### Notifications
 For every kind of notification (confirm, pause, planned, movement, arrival,
-day start, summary, to complete, running) it opens the Android page where you
+day start, summary, to complete, running, management systems) it opens the Android page where you
 choose banner, sound and vibration.
 
 ### Location

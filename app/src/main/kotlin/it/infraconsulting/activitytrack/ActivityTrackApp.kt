@@ -39,6 +39,10 @@ class ActivityTrackApp : Application() {
 		it.infraconsulting.activitytrack.connect.antares.AntaresAuth(this, secrets)
 	}
 
+	/* Antares: send on closing, periodic download (issue #34) */
+	lateinit var antaresWatcher: it.infraconsulting.activitytrack.connect.antares.AntaresWatcher
+		private set
+
 	override fun onCreate() {
 		super.onCreate()
 		container = AppContainer(this)
@@ -49,5 +53,6 @@ class ActivityTrackApp : Application() {
 		ClientShortcuts(this, container).start(appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
 		BackupWorker.schedule(this)
+		antaresWatcher = it.infraconsulting.activitytrack.connect.antares.AntaresWatcher(this).also { it.start(appScope) }
 	}
 }
