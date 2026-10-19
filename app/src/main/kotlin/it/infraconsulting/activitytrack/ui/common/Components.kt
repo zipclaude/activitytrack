@@ -35,6 +35,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -123,6 +131,34 @@ fun EditDialog(
 	)
 }
 
+/*
+ * How much a field matters (owner, 2026-10-19), told by its border: a
+ * required one is red until filled, then green; an important one yellow;
+ * an accessory one blue. null = the plain border.
+ */
+enum class Importance { REQUIRED, IMPORTANT, OPTIONAL }
+
+private val FIELD_GREEN = Color(0xFF43A047)
+private val FIELD_YELLOW = Color(0xFFF9A825)
+private val FIELD_BLUE = Color(0xFF42A5F5)
+
+@Composable
+fun importanceColors(importance: Importance?, filled: Boolean): TextFieldColors {
+	val c = when (importance) {
+		null -> return OutlinedTextFieldDefaults.colors()
+		Importance.REQUIRED -> if (filled) FIELD_GREEN else MaterialTheme.colorScheme.error
+		Importance.IMPORTANT -> FIELD_YELLOW
+		Importance.OPTIONAL -> FIELD_BLUE
+	}
+	return OutlinedTextFieldDefaults.colors(focusedBorderColor = c, unfocusedBorderColor = c, focusedLabelColor = c)
+}
+
+/* The colour dot of a company or client (M12) in a field or a menu row. */
+@Composable
+private fun ColorDot(color: Int) {
+	Box(Modifier.size(12.dp).clip(CircleShape).background(rgb(color)))
+}
+
 @Composable
 fun TextInput(
 	label: String,
@@ -132,6 +168,7 @@ fun TextInput(
 	isError: Boolean = false,
 	singleLine: Boolean = true,
 	trailing: (@Composable () -> Unit)? = null,
+	importance: Importance? = null,
 ) {
 	OutlinedTextField(
 		value = value,
@@ -140,6 +177,7 @@ fun TextInput(
 		trailingIcon = trailing,
 		singleLine = singleLine,
 		isError = isError,
+		colors = importanceColors(importance, value.isNotBlank()),
 		keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
 		modifier = Modifier.fillMaxWidth(),
 	)
@@ -152,7 +190,14 @@ fun TextInput(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> SearchableChoiceField(label: String, options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
+fun <T> SearchableChoiceField(
+	label: String,
+	options: List<Pair<T, String>>,
+	selected: T,
+	importance: Importance? = null,
+	colorOf: (T) -> Int? = { null },
+	onSelect: (T) -> Unit,
+) {
 	val selectedText = options.firstOrNull { it.first == selected }?.second.orEmpty()
 	var text by remember(selectedText) { mutableStateOf(selectedText) }
 	var expanded by remember { mutableStateOf(false) }
@@ -165,7 +210,9 @@ fun <T> SearchableChoiceField(label: String, options: List<Pair<T, String>>, sel
 			onValueChange = { text = it; expanded = true },
 			singleLine = true,
 			label = { Text(label) },
+			leadingIcon = colorOf(selected)?.let { c -> { ColorDot(c) } },
 			trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+			colors = importanceColors(importance, selected != null),
 			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
 				.onFocusChanged { if (!it.isFocused) text = selectedText },
 		)
@@ -173,6 +220,7 @@ fun <T> SearchableChoiceField(label: String, options: List<Pair<T, String>>, sel
 			shown.forEach { (value, optionText) ->
 				DropdownMenuItem(
 					text = { Text(optionText) },
+					leadingIcon = colorOf(value)?.let { c -> { ColorDot(c) } },
 					onClick = {
 						onSelect(value)
 						text = optionText
@@ -191,7 +239,14 @@ fun fold(s: String): String =
 /* Read-only dropdown; [options] pairs a value with its label. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> ChoiceField(label: String, options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
+fun <T> ChoiceField(
+	label: String,
+	options: List<Pair<T, String>>,
+	selected: T,
+	importance: Importance? = null,
+	colorOf: (T) -> Int? = { null },
+	onSelect: (T) -> Unit,
+) {
 	var expanded by remember { mutableStateOf(false) }
 	ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
 		OutlinedTextField(
@@ -199,12 +254,18 @@ fun <T> ChoiceField(label: String, options: List<Pair<T, String>>, selected: T, 
 			onValueChange = {},
 			readOnly = true,
 			label = { Text(label) },
+			leadingIcon = colorOf(selected)?.let { c -> { ColorDot(c) } },
 			trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+			colors = importanceColors(importance, selected != null),
 			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
 		)
 		ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
 			options.forEach { (value, text) ->
-				DropdownMenuItem(text = { Text(text) }, onClick = { onSelect(value); expanded = false })
+				DropdownMenuItem(
+					text = { Text(text) },
+					leadingIcon = colorOf(value)?.let { c -> { ColorDot(c) } },
+					onClick = { onSelect(value); expanded = false },
+				)
 			}
 		}
 	}

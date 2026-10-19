@@ -28,6 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.ui.common.Importance
 import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
 import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
@@ -61,6 +62,7 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	val clients by vm.clients.collectAsState()
 	val roles by vm.roles.collectAsState()
 	val presets by vm.presets.collectAsState()
+	val clientColors by vm.clientColors.collectAsState()
 	val pending by vm.pending.collectAsState()
 	val error by vm.error.collectAsState()
 	val none = stringResource(R.string.field_none)
@@ -97,6 +99,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 								listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) +
 									companies.filter { !it.archived || it.id == f.companyId }.map { it.id to it.name },
 								f.companyId,
+								importance = Importance.REQUIRED,
+								colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 							) { vm.setCompany(it) }
 						}
 					}
@@ -114,6 +118,9 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 									(if (f.mode == SegmentKind.TRAVEL) listOf<Pair<Long?, String>>(null to unknown) else emptyList()) +
 										clients.map { it.id to it.name },
 									f.clientId,
+									/* a travel may start without a destination */
+									importance = if (f.mode == SegmentKind.TRAVEL) Importance.IMPORTANT else Importance.REQUIRED,
+									colorOf = { id -> id?.let { clientColors[it] } },
 								) { vm.setClient(it) }
 						}
 					}
@@ -131,15 +138,18 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 								stringResource(R.string.field_preset),
 								listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
 								null,
+								importance = Importance.OPTIONAL,
 							) { id -> id?.let(vm::applyPreset) }
 						}
-						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity)
+						/* required: typed or from a preset (owner, 2026-10-19) */
+						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity, Importance.REQUIRED)
 						WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
 							ChoiceField(
 								stringResource(R.string.field_role),
 								listOf<Pair<Long?, String>>(null to none) +
 									roles.filter { !it.archived || it.id == f.roleId }.map { it.id to it.name },
 								f.roleId,
+								importance = Importance.IMPORTANT,
 							) { vm.setRole(it) }
 						}
 						if (error != null)

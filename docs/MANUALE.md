@@ -95,8 +95,12 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   sospesa, da completare): stato, ora e tempo, e un pulsante per riprenderla
   (o metterla in pausa, o completarla). Toccandolo, l'attività passa nel
   riquadro grande.
-- Sotto il separatore **"Da fare oggi"** un riquadro per ogni voce in
-  scadenza o pianificata oggi o prima; in fondo, barrate, quelle ignorate oggi.
+- Restano visibili anche le **ultime attività completate** (2, o 3 in
+  visualizzazione compatta), più tenui: toccandole si apre la scheda. Le
+  attività aperte in background prendono il loro posto.
+- Sotto il separatore **"Da fare · prossime 24 h"** un riquadro per ogni voce
+  pianificata o in scadenza nelle prossime 24 ore (comprese quelle in
+  ritardo); in fondo, barrate, quelle ignorate oggi.
 
 ### Gesti (trascinare i riquadri)
 Ogni riquadro si trascina a sinistra o a destra (Home, lista dell'Agenda,
@@ -123,7 +127,8 @@ ne hanno uno automatico).
 Accanto a "Da fare oggi" (e nella schermata "Da fare") il pulsante **"Tutte
 le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
 lo togli con la ✕. Le attività in corso non vengono filtrate. Nella schermata
-"Da fare" il filtro **"Oggi"** mostra solo le voci di oggi o in ritardo.
+"Da fare" il filtro **"Prossime 24 h"** mostra solo le voci delle prossime 24
+ore (o in ritardo), **"Ignorate"** mostra o nasconde le voci ignorate.
 
 ### Visualizzazione compatta
 Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
@@ -134,6 +139,14 @@ In "Nuova attività" il **+** accanto ad Azienda, Cliente, Predefinita e
 Ruolo crea il nuovo elemento senza uscire (nell'editor delle voci da fare,
 Azienda e Cliente); il nuovo elemento risulta già scelto (la predefinita
 riempie la descrizione).
+
+### Campi obbligatori e facoltativi
+Il bordo dei campi dice quanto contano: **rosso** se obbligatorio e ancora
+vuoto, **verde** quando è compilato (azienda, cliente, attività o
+predefinita, titolo della voce da fare, importo e descrizione della spesa);
+**giallo** se importante ma non obbligatorio (ruolo, data e ora pianificate);
+**blu** se accessorio (note, riferimenti, località, durata, scadenza,
+priorità). Nei menu di aziende e clienti compare il loro colore.
 
 ### Date e orari
 Tutti i campi data e ora si compilano con il calendario e l'orologio di

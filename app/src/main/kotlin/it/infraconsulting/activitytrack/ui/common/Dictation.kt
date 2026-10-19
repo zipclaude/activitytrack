@@ -41,7 +41,7 @@ import java.util.Locale
  * the default service otherwise. Free offline STT (Vosk / whisper.cpp) is M4.
  */
 @Composable
-fun DictationInput(label: String, value: String, onChange: (String) -> Unit) {
+fun DictationInput(label: String, value: String, onChange: (String) -> Unit, importance: Importance? = null) {
 	val context = LocalContext.current
 	val available = remember {
 		SpeechRecognizer.isOnDeviceRecognitionAvailable(context) || SpeechRecognizer.isRecognitionAvailable(context)
@@ -56,6 +56,7 @@ fun DictationInput(label: String, value: String, onChange: (String) -> Unit) {
 		value = value,
 		onChange = onChange,
 		singleLine = false,
+		importance = importance,
 		trailing = if (!available) null else {
 			{
 				IconButton(onClick = {

@@ -91,6 +91,17 @@ interface EntryDao {
 	)
 	fun observeOpenEntrySegments(): Flow<List<SegmentEntity>>
 
+	/* The last [n] completed entries (Home keeps a few in view, owner 2026-10-19). */
+	@Query("SELECT * FROM time_entry WHERE status = 'CLOSED' ORDER BY updated_utc_ms DESC LIMIT :n")
+	fun observeRecentClosed(n: Int): Flow<List<TimeEntryEntity>>
+
+	@Query(
+		"SELECT * FROM segment WHERE entry_id IN " +
+			"(SELECT id FROM time_entry WHERE status = 'CLOSED' ORDER BY updated_utc_ms DESC LIMIT :n) " +
+			"ORDER BY entry_id, start_utc_ms",
+	)
+	fun observeRecentClosedSegments(n: Int): Flow<List<SegmentEntity>>
+
 	@Query(
 		"SELECT * FROM time_entry WHERE status = 'SUSPENDED' AND id != :excludeId " +
 			"ORDER BY updated_utc_ms DESC LIMIT 1",
