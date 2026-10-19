@@ -1,27 +1,27 @@
-# ActivityTrack — manuale d'uso
+Versione 0.6.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
+manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
+(impostazioni, entità, stati, flussi).
 
-Versione 0.5.0 (19 ottobre 2026). Segnalare ogni differenza tra questo
-manuale e l'app.
-
-**Novità della 0.5.0**
-- Bordi dei campi per importanza (rosso → verde, giallo, blu) e colori di
-  aziende e clienti nei menu (§3).
-- *Da fare* delle prossime 24 ore invece che del solo giorno, filtro per le
-  ignorate, ultime attività completate in Home (§3, §8).
-- Tag sulle attività, con ricerca e filtri in Agenda, Report ed esportazione
-  (§6, §7, §11).
-- Tratti modificabili ed eliminabili; opzione **"Orari modificabili"**
-  (attiva all'inizio) con orario di inizio all'avvio e di fine allo Stop
-  (§4, §5, §6, §14).
-- Ordine degli elenchi delle anagrafiche: A–Z, ultimo uso o manuale con
-  trascinamento (§10).
-- Orari scelti su una **griglia a 5 minuti** (§3).
-- Eventi del calendario **privati** (§12).
+**Novità della 0.6.0**
+- ✕ nei campi di testo per svuotarli (§3).
+- Riquadri della Home: colore dell'azienda sempre visibile, stato "Chiusa"
+  neutro, orari nella forma "dalle–alle (durata)" (§3).
+- Scheda attività: "+ Viaggio" e "+ Pausa" in alto; in visualizzazione
+  compatta i dettagli facoltativi si richiudono (§6).
+- Avvio con **Fine**: per registrare un'attività passata o indicare la fine
+  prevista (§4).
+- Allo Stop l'attività con cliente e descrizione è subito **chiusa** (§6).
+- *Da fare*: filtri rapidi azienda, ignorate, periodo (24 h, 7 gg, 30 gg,
+  tutti) e filtri avanzati (§8).
+- Manuale e guida rapida anche in PDF, in italiano e in inglese.
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
 telefono in un'altra lingua l'app usa inglese, tedesco o spagnolo.
 
 ---
+
+# Parte I — Uso
 
 ## 1. Concetti
 
@@ -35,6 +35,7 @@ note, riferimenti esterni (ticket, URL, codici), spese e allegati.
   si applicano solo nei report e nelle esportazioni.
 
 **Stati di un'attività**
+
 | Stato | Significato |
 |---|---|
 | In corso (lavoro / trasferta / pausa) | il tempo scorre |
@@ -105,15 +106,19 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
 - Con attività aperte, ▶ e 🚗 sono nella barra in alto (🚗 apre "Nuova
   attività" con Viaggio già scelto, perché chiede cosa fare delle altre).
 - Sotto, un **riquadro piccolo** per ogni altra attività aperta (in pausa,
-  sospesa, da completare): stato, ora e tempo, e un pulsante per riprenderla
-  (o metterla in pausa, o completarla). Toccandolo, l'attività passa nel
+  sospesa, da completare): stato e orari nella forma "dalle–alle (durata)"
+  (es. "11:00–11:45 (0:45)"), e un pulsante per riprenderla (o metterla in
+  pausa, o completarla). Toccandolo, l'attività passa nel
   riquadro grande.
 - Restano visibili anche le **ultime attività completate** (2, o 3 in
-  visualizzazione compatta), più tenui: toccandole si apre la scheda. Le
+  visualizzazione compatta), più tenui e con lo stato "Chiusa" in grigio:
+  toccandole si apre la scheda. Le
   attività aperte in background prendono il loro posto.
 - Sotto il separatore **"Da fare · prossime 24 h"** un riquadro per ogni voce
   pianificata o in scadenza nelle prossime 24 ore (comprese quelle in
   ritardo); in fondo, barrate, quelle ignorate oggi.
+
+![Home: un'attività in corso, le altre sotto, le ultime completate e i Da fare](img/home.png)
 
 ### Gesti (trascinare i riquadri)
 Ogni riquadro si trascina a sinistra o a destra (Home, lista dell'Agenda,
@@ -180,6 +185,8 @@ volta (**▲ Prima** / **Dopo ▼** spostano la finestra di 3 ore).
   sono occupate da altri tratti di quel giorno.
 I campi facoltativi hanno la ✕ per svuotarli.
 
+![La griglia a 5 minuti: intervallo 09:15–10:40, gli altri tratti tratteggiati](img/time-grid.png)
+
 ### Svuotare un campo
 Nei campi in cui si scrive (descrizione, note, nomi, tag, riferimenti,
 ricerca dell'Agenda…) compare una **✕** appena contengono del testo: la
@@ -215,6 +222,8 @@ Nella schermata "Nuova attività":
     "No, continua" (o nessuna risposta) la lascia andare.
 - Il pulsante verde in basso avvia (blu con l'auto se è un viaggio).
 
+![Nuova attività con inizio e fine](img/start.png)
+
 **Se un'altra attività è già in corso**, l'app chiede cosa farne:
 - in lavoro: chiudere, sospendere o lasciarla andare;
 - in viaggio: "il viaggio è finito?" (sì = ferma, no = lascia, oppure sospendi);
@@ -232,6 +241,7 @@ Nella schermata "Nuova attività":
 
 ### Comandi
 Nella card della Home e nella notifica:
+
 | Icona | Comando |
 |---|---|
 | ▶ verde | Lavoro / Riprendi |
@@ -316,6 +326,8 @@ Nella schermata dell'attività:
 - "Riferimenti esterni": ticket, URL o codici (riconosciuti automaticamente);
 - **"Completa"** (verde).
 
+![Scheda di un'attività](img/entry.png)
+
 Se manca la descrizione l'app chiede: **"Lascia vuoto"**, **"Copia l'ultima: …"**
 (l'ultima descrizione sullo stesso cliente) o **"Torna a modificare"**.
 Se l'attività era partita da una voce *Da fare*, chiede **"L'attività da fare è
@@ -343,6 +355,8 @@ oggi; a destra il totale rendicontato del periodo).
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
+![Agenda: vista Giorno](img/agenda-day.png)
+
 **Filtro per tag**: il chip "Tutti i tag ▾" accanto alle modalità (compare
 quando nel periodo ci sono attività con tag) mostra solo le attività con quel
 tag; le *Da fare* si nascondono e i totali contano solo ciò che si vede.
@@ -357,6 +371,8 @@ mezz'ora). "Aggiungi" in alto fa lo stesso per il giorno mostrato (oggi: la
 prossima mezz'ora; altri giorni: le 09:00).
 
 ### Report
+![Report del giorno](img/report.png)
+
 Il report di un giorno: totale solare e rendicontato, una riga per attività
 con lavoro, viaggio e pausa reali → arrotondati; da qui anche l'esportazione.
 Con il filtro per tag restano le attività con quel tag: il rendicontato è la
@@ -372,6 +388,8 @@ Attività da fare, importate da un gestionale o create a mano ("Altro" →
 "Da fare" → "Aggiungi", oppure dall'Agenda): titolo, cliente (o azienda),
 **data e ora pianificate**, **durata**, scadenza e ora, priorità
 (1 = massima), note, riferimenti (uno per riga).
+
+![Da fare con i filtri rapidi](img/todos.png)
 
 Stati: **aperta** (senza pianificazione) → **pianificata** (data e ora) →
 **fatta**. La pianificazione è separata dalla scadenza: ripianificare non
@@ -430,6 +448,9 @@ cambia la scadenza del gestionale.
   Le nuove voci vanno in fondo. L'ordine scelto vale anche nei menu a tendina
   (es. "Nuova attività"); gli archiviati restano sempre in fondo.
   All'inizio: clienti per ultimo uso, il resto in ordine alfabetico.
+
+![Ordine manuale: la maniglia ≡ trascina la riga](img/order.png)
+
 - **Luoghi** — casa e altri luoghi (casa serve per l'arrivo a fine viaggio).
 - **Orario di lavoro e pausa pranzo** — per giorno della settimana.
 - **Giorni liberi**.
@@ -479,7 +500,8 @@ Le *Da fare* pianificate e aperte diventano eventi "provvisori" (Cliente –
 Titolo) fino a un anno avanti; quando sono fatte escono dal calendario.
 L'ultima riga della descrizione porta dei tag per tipo di tempo: `#lavoro`,
 `#viaggio`, `#pausa`, `#pianificata`, sempre in italiano qualunque sia la
-lingua del telefono (cercali nell'app calendario).
+lingua del telefono (cercali nell'app calendario), seguiti dai tag
+dell'attività.
 Gli eventi sono **privati**: chi condivide il calendario (es. un calendario
 Google condiviso con altri) vede solo "occupato", senza titolo né dettagli.
 La sincronizzazione è solo dall'app al calendario: modifiche fatte nel
@@ -504,7 +526,10 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 ## 14. Impostazioni
 
 Le impostazioni sono divise in sezioni, ognuna con la sua pagina e il suo
-"Salva"; in fondo all'elenco c'è **"Gesti"**.
+"Salva"; in fondo all'elenco c'è **"Gesti"**. Il significato di ogni voce è
+spiegato nella Parte II, §17.
+
+![Impostazioni](img/settings.png)
 
 | Sezione | Voce | Predefinito |
 |---|---|---|
@@ -555,3 +580,230 @@ I valori fuori intervallo vengono corretti al salvataggio.
 | Il riquadro rapido non è nell'elenco | Impostazioni → "Riquadro Impostazioni rapide" → "Aggiungi" |
 | Un'azione della notifica non fa nulla | tocca il pulsante, non il testo; espandi la notifica se i pulsanti non si vedono |
 | Importazione: "Non importati" | il rapporto indica il motivo (es. azienda sconosciuta, attività in corso su un altro telefono) |
+
+# Parte II — Riferimento
+
+## 17. Impostazioni in dettaglio
+
+Ogni sezione ha il suo "Salva". I valori fuori dall'intervallo ammesso vengono
+riportati al limite più vicino.
+
+### Visualizzazione
+
+| Voce | Effetto | Predefinito |
+|---|---|---|
+| Normale / Compatta | Compatta: testo all'88 %, riquadri e pulsanti più stretti; nella scheda attività i dettagli facoltativi vuoti (località, dove, note) si richiudono in "Altri dettagli ▾". | Normale |
+
+### Orari
+
+| Voce | Effetto | Predefinito |
+|---|---|---|
+| Orari modificabili liberamente | Acceso: campi **Inizio** e **Fine** all'avvio, campo **Fine** nella domanda di Stop, tratti modificabili ed eliminabili (i nuovi valori sostituiscono quelli registrati). Spento: gli orari restano quelli registrati, i tratti non si toccano; "+ Viaggio" e "+ Pausa" restano disponibili. In futuro potrà essere imposta da una policy. | acceso |
+
+### Promemoria
+
+| Voce | Effetto | Intervallo | Predefinito |
+|---|---|---|---|
+| Intervallo di conferma | ogni quanti minuti di lavoro o viaggio arriva "Ancora su …?" | 10–240 min | 30 |
+| Numero massimo di conferme | dopo quante conferme senza risposta l'app smette di chiedere (0 = mai) | 0–100 | 0 |
+| Intervallo promemoria pausa | ogni quanti minuti di pausa arriva "Ancora in pausa?"; muto nella pausa pranzo | 10–120 min | 15 |
+| Ritardo avviso inizio giornata | quanti minuti dopo l'inizio dell'orario arriva "Nessuna attività oggi" | 0–240 min | 15 |
+
+### Notifiche
+Per ogni tipo di notifica (conferma, pausa, pianificate, spostamento, arrivo,
+inizio giornata, riepilogo, da completare, in corso) apre la pagina di Android
+dove scegliere banner, suono e vibrazione.
+
+### Posizione
+
+| Voce | Effetto | Intervallo | Predefinito |
+|---|---|---|---|
+| Accesso alla posizione | serve "Consenti sempre" perché il tracciamento riparta da solo | — | — |
+| Ottimizzazione batteria | "Senza restrizioni" evita che OxygenOS fermi il servizio | — | — |
+| Riquadro Impostazioni rapide | aggiunge il riquadro Pausa / riprendi | — | — |
+| Soglia avviso spostamento | distanza oltre la quale, in lavoro, arriva "Lontano da …?" | 50–5000 m | 100 |
+| Raggio di arrivo | entro quanti metri si considera fermo | 25–1000 m | 100 |
+| Tempo di arrivo | dopo quanti minuti fermo, in viaggio, arriva "Arrivo?" | 5–120 min | 15 |
+| Fattore distanza stradale | km stradali = linea d'aria × fattore, quando OSRM non è disponibile | 1,0–3,0 | 1,25 |
+
+### Calendario
+Accesso al calendario, calendario delle attività (Google o CalDAV tramite
+DAVx5, oppure "Nuovo calendario ActivityTrack sul telefono") e
+"Sincronizza 90 giorni". Il calendario di un'azienda si sceglie nella sua
+scheda e prevale su quello generico.
+
+### Dettatura
+Lingua del riconoscimento vocale (italiano, inglese, tedesco, spagnolo),
+indipendente dalla lingua del telefono. Predefinito: italiano.
+
+### Rendicontazione
+
+| Voce | Effetto | Predefinito |
+|---|---|---|
+| Attività notturne fino alle | un'attività che finisce entro quest'ora del giorno dopo resta sul giorno di inizio (0:00–12:00) | 06:00 |
+| Arrotondamento lavoro | modo, quanto (1, 5, 15, 30 o 60 min) e minimo | per eccesso con tolleranza, 15 min |
+| Arrotondamento viaggio | idem | per eccesso, 5 min |
+| Arrotondamento pausa | idem | per difetto, 5 min, minimo 5 |
+
+Modi di arrotondamento:
+- **per eccesso con tolleranza**: si arrotonda per eccesso solo oltre un terzo
+  del quanto (15 min: fino a 5 minuti oltre il quarto d'ora si scende);
+- **per eccesso**: al quanto successivo;
+- **per difetto**: al quanto precedente.
+
+### Servizi online
+Nominatim (località dagli indirizzi), OSRM (km su strada) e mappe
+OpenStreetMap: ognuno si accende o spegne e può puntare a un server proprio.
+Predefinito: attivi, server pubblici.
+
+### Archiviazione
+Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14),
+"Esegui backup ora".
+
+### Avanzate
+
+| Voce | Intervallo | Predefinito |
+|---|---|---|
+| Promemoria attività pianificate (minuti prima) | 0–240 | 15 |
+| Posticipo (minuti) | 10–240 | 30 |
+
+### Gesti
+Per le attività e per i *Da fare*, cosa offre il trascinamento a sinistra e a
+destra (anche nessuna azione) e se il trascinamento lungo esegue subito la
+prima azione. Predefiniti: attività a sinistra Pausa / Riprendi, a destra Stop
+o Sospendi; *Da fare* a sinistra Avvia, a destra Posticipa o Ignora;
+trascinamento lungo attivo.
+
+### Impostazioni ricordate dalle schermate
+Il filtro azienda dei *Da fare*, il periodo (24 h, 7 gg, 30 gg, tutti),
+"Ignorate" e l'ordine di ogni elenco delle anagrafiche si impostano nelle
+schermate stesse e restano finché non li cambi.
+
+## 18. Entità e relazioni
+
+![Entità e relazioni](diagrams/entities.svg)
+
+| Entità | Contenuto | Relazioni |
+|---|---|---|
+| Azienda | nome, colore, codice nel gestionale, connettore, calendario | ha clienti, sedi, *Da fare*, attività predefinite |
+| Cliente | nome, colore, codice | appartiene a un'azienda (fissa dopo la prima attività); ha sedi |
+| Sede | etichetta, coordinate, raggio, indirizzo | di un'azienda o di un cliente; serve a proporre cliente e azienda e a riconoscere l'arrivo |
+| Ruolo | nome | proposto dalle attività predefinite, scelto sull'attività |
+| Attività predefinita | testo, ruolo proposto, azienda (facoltativa) | riempie la descrizione |
+| Attività | cliente, azienda, ruolo, descrizione, località, dove, note, stato, fine prevista | ha tratti, spese, allegati, riferimenti, tag; può nascere da un *Da fare* |
+| Tratto | tipo (lavoro, viaggio, pausa), inizio, fine, km, origine (registrato o a mano) | di un'attività; i punti di posizione appartengono ai tratti |
+| Spesa | importo, descrizione, scontrino | di un'attività |
+| Allegato | foto, nota vocale, file | di un'attività, nella cartella dati |
+| Riferimento esterno | ticket, URL, codice | di un'attività |
+| Tag | parola libera | di un'attività |
+| *Da fare* | titolo, cliente, pianificazione, durata, scadenza, priorità, note, riferimenti, stato | di un'azienda (e di un cliente); genera attività |
+| Luogo | casa o altro, coordinate | casa chiude i viaggi di rientro |
+| Orario di lavoro, pausa pranzo, giorni liberi, assenze | per giorno | regolano promemoria e riepiloghi |
+
+## 19. Stati dell'attività
+
+![Stati dell'attività](diagrams/entry-states.svg)
+
+| Stato | Si entra con | Si esce con |
+|---|---|---|
+| In corso | avvio; Lavoro o Viaggio da sospesa | Sospendi, Stop, cambio di modalità |
+| Sospesa | Sospendi (non dalla pausa); Riapri | Lavoro / Viaggio (riprende), Stop |
+| Da completare | Stop (dettagli mancanti, o partita da un *Da fare*) | Completa, Riapri |
+| Chiusa | Completa; Stop con cliente e descrizione | Riapri |
+
+Mentre è in corso l'attività ha una **modalità**: ogni cambio chiude il tratto
+aperto e ne apre uno nuovo.
+
+![Modalità di un'attività in corso](diagrams/modes.svg)
+
+Regole:
+- un'attività non parte in pausa; dalla pausa non si sospende;
+- più attività possono essere in corso insieme, ognuna con le sue pause;
+- un'attività sotto il minuto, fermata dall'app, può essere scartata;
+- un tratto aggiunto o modificato dura almeno un minuto, sta nel passato e non
+  si sovrappone agli altri tratti della stessa attività.
+
+## 20. Stati dei *Da fare*
+
+![Stati dei Da fare](diagrams/todo-states.svg)
+
+Una voce è **in ritardo** quando il blocco pianificato è passato oppure quando
+la scadenza è passata (dopo l'ora di scadenza, o dal giorno dopo se la
+scadenza non ha ora). Una voce ignorata non riceve promemoria, non va nel
+calendario e un import non la ripristina.
+
+## 21. Flussi
+
+### Avvio
+1. Azienda e cliente proposti: dalla sede in cui ti trovi (entro il raggio),
+   altrimenti l'azienda dell'ultima attività di oggi; un cliente scelto dal
+   widget, da una scorciatoia o da un *Da fare* prevale.
+2. Descrizione e ruolo: dall'ultima attività sullo stesso cliente negli ultimi
+   30 giorni, finché non li modifichi.
+3. Con "Orari modificabili": Inizio (vuoto = adesso) e Fine facoltativa. Fine
+   già passata → "L'attività è conclusa?"; fine futura → fine prevista con
+   notifica "… finita?" a quell'ora.
+4. Le attività già in corso: per ognuna l'app chiede cosa farne (chiudi,
+   sospendi, lascia; in viaggio "il viaggio è finito?"). Una attività passata
+   registrata con Fine non chiede nulla.
+
+### Stop e completamento
+
+![Stop e completamento](diagrams/stop-flow.svg)
+
+Lo Stop dalla notifica, dal widget o dal riquadro rapido ferma subito, senza
+domande; gli stessi controlli (chiusa o da completare) valgono anche lì.
+
+### Promemoria
+Un solo allarme alla volta, puntato sul promemoria più vicino; i promemoria
+"conferma" e "pausa" non scendono sotto i 10 minuti (Android limita gli
+allarmi in Doze).
+
+| Promemoria | Quando | Risposte |
+|---|---|---|
+| Conferma | ogni *intervallo di conferma* di lavoro o viaggio, anche fuori orario | Sì, Pausa, Stop alle (ultima conferma) |
+| Pausa | ogni *intervallo pausa* in pausa; muto nella pausa pranzo | Riprendi, Stop |
+| Fine prevista | all'ora di fine scelta all'avvio, una volta | Sì, stop alle HH:MM; No, continua |
+| Inizio giornata | *ritardo* dopo l'inizio dell'orario, nei giorni lavorativi non liberi, se non hai fatto nulla | Assente oggi, Entrata in ritardo, Avvia |
+| Riepilogo | a fine orario di lavoro | — |
+| *Da fare* pianificata | *minuti prima* della pianificazione, anche fuori orario | Avvia, Posticipa, Ripianifica |
+
+### Posizione
+- Un punto ogni 5 minuti, più uno quando il telefono si muove, solo mentre
+  un'attività è in corso (anche in pausa).
+- In lavoro, oltre la *soglia di spostamento*: "Lontano da …?" con "Viaggio
+  dalle HH:MM" (dal primo punto oltre la soglia).
+- In viaggio, fermo entro il *raggio* per il *tempo di arrivo*: "Arrivo?";
+  presso la sede di un cliente propone il lavoro per quel cliente, a casa lo
+  stop.
+- Km: OSRM se attivo, altrimenti linea d'aria × fattore; località da
+  Nominatim. Le coordinate non escono mai dal telefono.
+
+### Report ed esportazione
+- *Solare*: il tempo coperto da lavoro o viaggio di qualsiasi attività
+  (sovrapposizioni contate una volta); *rendicontato*: somma di lavoro e
+  viaggio arrotondati.
+- Un'attività che passa la mezzanotte va sul giorno di inizio se finisce
+  entro le *attività notturne fino alle*, altrimenti si divide a mezzanotte.
+- CSV: una riga per attività e giorno, con inizio, fine, ore di lavoro, pausa
+  e viaggio arrotondate, azienda, cliente, ruolo, descrizione, km, spese,
+  note, riferimenti, località, tag; km e spese sul primo giorno.
+
+### Calendario
+Un evento per attività e giorno, dall'avvio (un'attività in corso finisce
+"adesso"). Ogni modifica risincronizza gli ultimi 14 giorni; "Sincronizza 90
+giorni" va più indietro. Le *Da fare* pianificate aperte sono eventi
+provvisori fino a un anno avanti. Tutti gli eventi sono privati. La
+sincronizzazione va solo dall'app al calendario.
+
+### Importazione ed esportazione
+Il formato generico (JSON o XML) contiene anagrafiche, *Da fare*, attività
+con tratti, spese, riferimenti e tag, assenze e giorni liberi. L'importazione
+riconosce ciò che ha già (codici e identificativi), non crea doppioni e in
+caso di conflitto tiene i dati dell'app, elencando il conflitto nel rapporto.
+Le attività in corso su un altro telefono non vengono importate.
+
+### Backup e ripristino
+Ogni giorno una copia del database va nella cartella `backup` (zip). Il
+ripristino salva prima i dati attuali come `…-before-restore.zip`, poi
+sostituisce il database e riavvia l'app.

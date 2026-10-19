@@ -71,6 +71,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M9 planned to-dos | **implemented** (PR #9 → #10, on `main`), device-tested 2026-10-18 (reminder tested by the owner) |
 | M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
+| 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **done** (PR #18, on `main`, v0.5.0): backlog 1 (schema v8); device-tested 2026-10-19 |
@@ -91,7 +92,11 @@ mirrored in the claude.ai Project: `claude/SPEC.md`, `claude/INSTRUCTIONS.md`,
 SPEC.md                         functional specification (v0.7)
 docs/INSTRUCTIONS.md            owner requirements + architectural decisions A1–A16
 docs/INTERCHANGE.md             generic import/export format (M4)
-docs/MANUALE.md                 user manual in Italian (owner request; keep it in step with each version)
+docs/manual/{it,en}/           quickstart.md + manual.md (owner: it/en, PDF with screenshots and diagrams);
+                                diagrams/diagrams.py (Graphviz), img/ screenshots, style.css
+scripts/build-manual.sh         PDFs into build/manual (pandoc + dot + headless Chromium)
+scripts/check-manual.sh         release step: version line, docs changed since the last tag, images present
+scripts/sample-db.py            invented sample DB for the screenshots
 docs/samples/                   interchange samples for device tests (TEST data)
 docs/DESIGN.md                  technical design, toolchain, risks
 gradle/libs.versions.toml       verified versions (2026-10-15; androidx.test 2026-10-16)
@@ -136,9 +141,12 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
-Released v0.5.0 (2026-10-19): M14–M19 and private calendar events (#16–#22)
-are on `main`; no open PRs. Instrumented tests 47/47 on the OnePlus. Backlog
-empty; next: owner feedback on 0.5.0 (time grid comfort, field borders).
+Released v0.6.0 (2026-10-19): clear buttons, Home colours / neutral closed /
+from-to, entry top buttons and compact folding, to-do window and filters, end
+time at start + planned-end reminder, close on stop when complete (schema v9),
+user docs it/en with PDF (#23-#26). Instrumented tests 50/50 on the OnePlus.
+Work queue: GitHub issues (owner, 2026-10-19). Future: OCR receipts, free
+offline STT, policy lock for editable times, tags on to-dos if wanted.
 
 M4–M9 are on `main` (2026-10-18): #4 merged, then #10 brought M5–M9 (#5–#9 had
 been merged into their stacked bases, not retargeted to `main`). CI green.
@@ -206,7 +214,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
    migration on the installed app keeps the data.
 6. **Restore**: Import / export → "Restore backup" with a daily backup zip
    (confirm dialog, "-before-restore" zip written, app restarts with the old data).
-7. Read `docs/MANUALE.md` against the app.
+7. Read `docs/manual/it/manual.md` against the app.
 8. Cleanup: restore the clean DB, delete TEST files in the data folder,
    remove TEST events from the calendar (or the local calendar).
 
@@ -286,6 +294,8 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-17 | M6/M7: bottom navigation bar (Home · Agenda · Reports · More) |
 | 2026-10-17 | Owner away: M4–M7 implemented autonomously as stacked PRs #4–#7; provisional choices listed in §5 for review |
 | 2026-10-17 | User manual in Italian (docs/MANUALE.md): it addresses the owner as user; technical docs stay in English |
+| 2026-10-19 | User docs: quick start + full manual (usage, every setting, entities, state diagrams, flows) in Italian and English, PDF with screenshots in the matching UI language; the release job fails unless the manual carries the tag version, changed since the previous tag and has its images; PDFs attached to the GitHub Release |
+| 2026-10-19 | The assistant may merge its PRs once green (owner); GitHub issues as the work queue (see §5) |
 | 2026-10-18 | Branch `beta` mirrors the top of the PR stack; CI builds it on push and publishes the `app-debug` APK |
 | 2026-10-18 | M9 Postpone moves the plan by the step from max(planned start, now) (owner: option 2, late answers count from now) |
 | 2026-10-18 | M10 UI (mockup https://claude.ai/artifact/5fmq8LyttMzhbbLbMiYm5j approved): Material date and time pickers for every date/time field; Home: the running-entry card always shown (empty state message when none), most recent entry in the big card, every other open entry (paused, suspended) in its own small card (1/3 height) below, tapping one brings it to the big card; to-do area under a separator, one card per to-do; UI language Italian (phone stays English: per-app language) |
