@@ -107,6 +107,8 @@ data class XEntry(
 	val refs: List<String> = emptyList(),
 	/* M15: free tags, without '#' */
 	val tags: List<String> = emptyList(),
+	/* issue #41: consumables left */
+	val materials: List<XMaterial> = emptyList(),
 )
 
 @Serializable
@@ -118,6 +120,10 @@ data class XSegment(
 	val kmEstimated: Double? = null,
 	val kmDeclared: Double? = null,
 )
+
+/* A consumable left (issue #41): quantity and unit cost (EUR) optional. */
+@Serializable
+data class XMaterial(val description: String, val quantity: String? = null, val unit: String? = null, val unitCost: String? = null)
 
 /* EUR; the receipt file does not travel, only the fact that there is one. */
 @Serializable

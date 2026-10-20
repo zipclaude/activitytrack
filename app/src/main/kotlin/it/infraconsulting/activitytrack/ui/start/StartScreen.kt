@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import java.time.ZoneId
 import it.infraconsulting.activitytrack.ui.common.clockOf
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
@@ -86,7 +88,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	var addPreset by remember { mutableStateOf(false) }
 
 	ScreenScaffold(title = stringResource(R.string.start_title), onBack = onBack) { padding ->
-		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+		/* the keyboard shrinks the form, so the field being typed in scrolls into view (issue #47) */
+		Column(modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
 			LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
 				item {
 					Row(

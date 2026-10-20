@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import it.infraconsulting.activitytrack.ui.masterdata.ContactsViewModel
 import it.infraconsulting.activitytrack.ui.common.INDIGO
 import it.infraconsulting.activitytrack.ui.common.TEAL
@@ -103,7 +105,7 @@ fun EntryScreen(entryId: Long, onBack: () -> Unit) {
 		actions = { TextButton(onClick = vm::askDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) } },
 	) { padding ->
 		/* the form starts from the first loaded state; later emissions refresh only status and lists */
-		entry?.let { EntryForm(it, vm, onBack, Modifier.padding(padding)) }
+		entry?.let { EntryForm(it, vm, onBack, Modifier.padding(padding).consumeWindowInsets(padding).imePadding()) }
 	}
 }
 

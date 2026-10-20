@@ -41,6 +41,7 @@ class CsvExporter(
 					if (r.expensesCents == 0L) "" else number(BigDecimal.valueOf(r.expensesCents, 2), 2),
 					r.notes, r.externalRefs.joinToString(", "), r.locality,
 					r.tags.joinToString(" ") { "#$it" },
+					if (r.materialsCents == 0L) "" else number(BigDecimal.valueOf(r.materialsCents, 2), 2),
 				),
 			)
 		w.flush()
@@ -73,6 +74,8 @@ class CsvExporter(
 			"km", "expenses_eur", "notes", "external_refs", "locality",
 			/* M15: added at the end, the earlier columns keep their positions */
 			"tags",
+			/* issue #41: consumables, kept apart from the expenses */
+			"materials_eur",
 		)
 		private val DATE = DateTimeFormatter.ISO_LOCAL_DATE
 		private val TIME = DateTimeFormatter.ofPattern("HH:mm")
