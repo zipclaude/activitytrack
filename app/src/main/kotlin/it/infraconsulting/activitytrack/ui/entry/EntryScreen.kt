@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.common.INDIGO
+import it.infraconsulting.activitytrack.ui.common.TEAL
+import it.infraconsulting.activitytrack.ui.common.PURPLE
+import it.infraconsulting.activitytrack.ui.common.MAGENTA
+import it.infraconsulting.activitytrack.ui.common.MiniActionButton
 import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
 import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
@@ -124,6 +129,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var adding by remember { mutableStateOf<SegmentKind?>(null) }
 	var editingSegment by remember { mutableStateOf<SegmentEntity?>(null) }
 	var editingNote by remember { mutableStateOf<SegmentEntity?>(null) }
+	/* the "add" row at the top asks the sections below (issue #37) */
+	var addRequest by remember { mutableStateOf<AddRequest?>(null) }
 	var deletingRef by remember { mutableStateOf<ExternalRefEntity?>(null) }
 	var newRef by remember { mutableStateOf("") }
 
@@ -144,6 +151,16 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 						val pause = commandStyle(EntryCommand.PAUSE)!!
 						ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
 						ColoredActionButton(stringResource(R.string.add_pause), pause.icon, pause.container, { vm.clearError(); adding = SegmentKind.PAUSE }, pause.content)
+					}
+					/* expense, photo, voice note, file on one row, before the client (owner, issue #37) */
+					Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+						for ((req, label, icon, color) in listOf(
+							AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_shortcut_expense, MAGENTA),
+							AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE),
+							AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL),
+							AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO),
+						))
+							MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
 					}
 					val coNames = companies.associate { it.id to it.name }
 					/* by company in the company order, then in the client order (M16; stable sort) */
@@ -243,8 +260,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					AddButton { vm.addRef(newRef) { newRef = "" } }
 				}
 			}
-			item { ExpensesSection(initial.id) }
-			item { AttachmentsSection(initial.id, zone) }
+			item { ExpensesSection(initial.id, addRequest) { addRequest = null } }
+			item { AttachmentsSection(initial.id, zone, addRequest) { addRequest = null } }
 		}
 
 		/* outside the list: a validation error must stay visible above the buttons */
@@ -549,3 +566,8 @@ fun locationLabel(k: LocationKind) = stringResource(
 		LocationKind.OTHER -> R.string.loc_other
 	},
 )
+
+/* What the "add" row asks the expense and attachment sections for. */
+enum class AddRequest { EXPENSE, PHOTO, VOICE, FILE }
+
+private data class AddChoice(val request: AddRequest, val label: Int, val icon: Int, val color: androidx.compose.ui.graphics.Color)

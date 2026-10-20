@@ -52,9 +52,11 @@ data class AppSettings(
 	val todoCompanyFilter: Long? = null,
 	/*
 	 * To-dos screen window (owner, 2026-10-19: 24 h / 7 d / 30 d / all):
-	 * hours ahead of now, overdue always included; 0 = all. Home keeps 24 h.
+	 * hours ahead of now, overdue always included; 0 = all.
 	 */
 	val todoWindowHours: Int = 0,
+	/* the Home's own window, chosen on its header (issue #37); 24 h by default */
+	val homeTodoWindowHours: Int = 24,
 	/* ignored to-dos listed (struck through) or hidden */
 	val todoShowIgnored: Boolean = true,
 	/* order of the master-data lists and drop-downs (M16) */
@@ -86,6 +88,7 @@ data class AppSettings(
 		planLeadMin = planLeadMin.coerceIn(0, 240),
 		planSnoozeMin = planSnoozeMin.coerceIn(10, 240),
 		todoWindowHours = todoWindowHours.takeIf { it in TODO_WINDOWS } ?: 0,
+		homeTodoWindowHours = homeTodoWindowHours.takeIf { it in TODO_WINDOWS } ?: 24,
 		movementThresholdM = movementThresholdM.coerceIn(50, 5_000),
 		stationaryRadiusM = stationaryRadiusM.coerceIn(25, 1_000),
 		stationaryMin = stationaryMin.coerceIn(5, 120),

@@ -117,6 +117,7 @@ class TodosViewModel(
 
 	/* next 24 hours (and overdue) only, or all (backlog 9, owner 2026-10-19) */
 	fun setWindow(hours: Int) = run { settingsRepo.update { it.copy(todoWindowHours = hours) } }
+	fun setHomeWindow(hours: Int) = run { settingsRepo.update { it.copy(homeTodoWindowHours = hours) } }
 
 	/* ignored to-dos listed or hidden (owner, 2026-10-19) */
 	fun setShowIgnored(on: Boolean) = run { settingsRepo.update { it.copy(todoShowIgnored = on) } }
@@ -289,11 +290,26 @@ fun TodoSwipeCard(
 	) { TodoCard(t, clientName, band, onClick) }
 }
 
-/* "To do today —— n [company filter]" (M10 separator, M12 filter). */
+/* "To do · 24 h ▾ —— n [company filter]" (M10 separator, M12 filter, issue #37 window). */
 @Composable
-private fun TodoHeader(count: Int, vm: TodosViewModel) {
+private fun TodoHeader(count: Int, window: Int, vm: TodosViewModel) {
+	var open by remember { mutableStateOf(false) }
+	val labels = mapOf(
+		24 to stringResource(R.string.todo_window_24h), 168 to stringResource(R.string.todo_window_7d),
+		720 to stringResource(R.string.todo_window_30d), 0 to stringResource(R.string.todo_window_all),
+	)
 	Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-		Text(stringResource(R.string.todo_due_today), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+		Box {
+			Text(
+				stringResource(R.string.todo_home_title, labels[window].orEmpty()),
+				style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
+				modifier = Modifier.clickable { open = true }.padding(vertical = 6.dp),
+			)
+			DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+				for ((h, label) in labels)
+					DropdownMenuItem(text = { Text(label) }, onClick = { open = false; vm.setHomeWindow(h) })
+			}
+		}
 		HorizontalDivider(Modifier.weight(1f))
 		Text(count.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 		CompanyFilter(vm)
@@ -379,8 +395,11 @@ fun TodoTodaySection(onStart: (Long) -> Unit) {
 	val today = LocalDate.now()
 	val zone = ZoneId.systemDefault()
 	val now = Instant.now()
-	/* the next 24 hours, overdue included (owner, 2026-10-19: not only the current day) */
-	val due = open.filter { t -> (filter == null || t.companyId == filter) && withinHours(moment(t, zone), now) }
+	/* the next 24 hours by default, overdue included (owner, 2026-10-19); other windows from the header (issue #37) */
+	val window = settings?.homeTodoWindowHours ?: 24
+	val due = open.filter { t ->
+		(filter == null || t.companyId == filter) && (window == 0 || withinHours(moment(t, zone), now, window.toLong()))
+	}
 		.sortedBy { moment(it, zone) }
 	val ignoredToday = if (settings?.todoShowIgnored == false) emptyList() else ignored.filter { t ->
 		(filter == null || t.companyId == filter) && t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == today
@@ -392,7 +411,7 @@ fun TodoTodaySection(onStart: (Long) -> Unit) {
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 10.dp)) {
-		TodoHeader(due.size, vm)
+		TodoHeader(due.size, window, vm)
 		for (t in due + ignoredToday)
 			TodoSwipeCard(
 				t, clients.firstOrNull { it.id == t.clientId }?.name, vm, onStart,

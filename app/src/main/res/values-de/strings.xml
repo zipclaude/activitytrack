@@ -505,4 +505,16 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="call_propose_action">Tätigkeit anlegen</string>
   <string name="segment_note">Beschreibung</string>
   <string name="start_end_hint">Leerer Beginn = jetzt; leeres Ende = offen; ein vergangenes Ende erfasst die Tätigkeit als abgeschlossen.</string>
+  <!-- issue #37 add row -->
+  <string name="short_expense">Ausgabe</string>
+  <string name="short_photo">Foto</string>
+  <string name="short_voice">Sprachn.</string>
+  <string name="short_file">Datei</string>
+  <!-- issue #37 start in the future -->
+  <string name="future_title">Beginn um %1$s</string>
+  <string name="future_text">Die Uhrzeit liegt heute noch in der Zukunft.</string>
+  <string name="future_plan">Heute um %1$s planen</string>
+  <string name="future_now">Jetzt starten</string>
+  <string name="future_yesterday">Gestern um %1$s begonnen</string>
+  <string name="todo_home_title">Zu tun · %1$s ▾</string>
 </resources>

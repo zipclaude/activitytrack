@@ -106,25 +106,31 @@ fun formatEur(cents: Long): String =
 
 /* Entry screen section: list, add, delete. */
 @Composable
-fun ExpensesSection(entryId: Long) {
+fun ExpensesSection(entryId: Long, request: AddRequest? = null, onHandled: () -> Unit = {}) {
 	val vm = appViewModel(key = "expenses/$entryId") {
 		ExpenseViewModel(it.entries, it.attachments, it.settings)
 	}
 	val items by remember(entryId) { vm.expenses(entryId) }.collectAsState()
 	var adding by remember { mutableStateOf(false) }
 	var deleting by remember { mutableStateOf<ExpenseEntity?>(null) }
-
-	Column(modifier = Modifier.padding(bottom = 8.dp)) {
-		SectionHeader(stringResource(R.string.expenses))
-		for (e in items)
-			ClickableRow(
-				"${formatEur(e.amountCents)} · ${e.description}",
-				if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
-			) { deleting = e }
-		Box(Modifier.padding(horizontal = 16.dp)) {
-			ColoredActionButton(stringResource(R.string.expense_add), R.drawable.ic_shortcut_expense, MAGENTA, { vm.clearError(); adding = true })
+	/* "Expense" in the add row at the top of the screen (issue #37) */
+	androidx.compose.runtime.LaunchedEffect(request) {
+		if (request == AddRequest.EXPENSE) {
+			vm.clearError()
+			adding = true
+			onHandled()
 		}
 	}
+
+	if (items.isNotEmpty())
+		Column(modifier = Modifier.padding(bottom = 8.dp)) {
+			SectionHeader(stringResource(R.string.expenses))
+			for (e in items)
+				ClickableRow(
+					"${formatEur(e.amountCents)} · ${e.description}",
+					if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
+				) { deleting = e }
+		}
 	if (adding) {
 		val error by vm.error.collectAsState()
 		ExpenseFormDialog(error, onDismiss = { adding = false }) { amount, text, receipt ->
