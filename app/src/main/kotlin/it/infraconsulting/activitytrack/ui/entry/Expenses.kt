@@ -104,16 +104,18 @@ fun formatEur(cents: Long): String =
 	NumberFormat.getCurrencyInstance().apply { currency = Currency.getInstance("EUR") }
 		.format(BigDecimal.valueOf(cents, 2))
 
-/* Entry screen section: list, add, delete. */
 @Composable
-fun ExpensesSection(entryId: Long, request: AddRequest? = null, onHandled: () -> Unit = {}) {
-	val vm = appViewModel(key = "expenses/$entryId") {
-		ExpenseViewModel(it.entries, it.attachments, it.settings)
-	}
-	val items by remember(entryId) { vm.expenses(entryId) }.collectAsState()
+private fun expenseViewModel(entryId: Long) =
+	appViewModel(key = "expenses/$entryId") { ExpenseViewModel(it.entries, it.attachments, it.settings) }
+
+/*
+ * "Expense" from the add row at the top of the entry screen (issue #37),
+ * composed outside the lazy list like AttachmentAdder.
+ */
+@Composable
+fun ExpenseAdder(entryId: Long, request: AddRequest?, onHandled: () -> Unit) {
+	val vm = expenseViewModel(entryId)
 	var adding by remember { mutableStateOf(false) }
-	var deleting by remember { mutableStateOf<ExpenseEntity?>(null) }
-	/* "Expense" in the add row at the top of the screen (issue #37) */
 	androidx.compose.runtime.LaunchedEffect(request) {
 		if (request == AddRequest.EXPENSE) {
 			vm.clearError()
@@ -121,6 +123,20 @@ fun ExpensesSection(entryId: Long, request: AddRequest? = null, onHandled: () ->
 			onHandled()
 		}
 	}
+	if (adding) {
+		val error by vm.error.collectAsState()
+		ExpenseFormDialog(error, onDismiss = { adding = false }) { amount, text, receipt ->
+			vm.save(entryId, amount, text, receipt) { adding = false }
+		}
+	}
+}
+
+/* Entry screen section: the expenses, delete. */
+@Composable
+fun ExpensesSection(entryId: Long) {
+	val vm = expenseViewModel(entryId)
+	val items by remember(entryId) { vm.expenses(entryId) }.collectAsState()
+	var deleting by remember { mutableStateOf<ExpenseEntity?>(null) }
 
 	if (items.isNotEmpty())
 		Column(modifier = Modifier.padding(bottom = 8.dp)) {
@@ -131,12 +147,6 @@ fun ExpensesSection(entryId: Long, request: AddRequest? = null, onHandled: () ->
 					if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
 				) { deleting = e }
 		}
-	if (adding) {
-		val error by vm.error.collectAsState()
-		ExpenseFormDialog(error, onDismiss = { adding = false }) { amount, text, receipt ->
-			vm.save(entryId, amount, text, receipt) { adding = false }
-		}
-	}
 	deleting?.let { e ->
 		AlertDialog(
 			onDismissRequest = { deleting = null },

@@ -26,10 +26,10 @@ MAIN = PKG + "/it.infraconsulting.activitytrack.MainActivity"
 DBS = ["activitytrack.db", "activitytrack.db-wal", "activitytrack.db-shm"]
 
 LABELS = {
-	"it": dict(new="Nuova attività", end="Fine \\(facoltativa\\)", agenda="Agenda", day="Giorno", report="Report", more="Altro",
+	"it": dict(new="Nuova attività", end="^Fine$", agenda="Agenda", day="Giorno", report="Report", more="Altro",
 		todos="Da fare", md="Anagrafiche", clients="Clienti", manual="Manuale", settings="Impostazioni", running="Farmacia Centrale",
 		contacts="Contatti", calls="Chiamate"),
-	"en": dict(new="New activity", end="End \\(optional\\)", agenda="Agenda", day="Day", report="Report", more="More",
+	"en": dict(new="New activity", end="^End$", agenda="Agenda", day="Day", report="Report", more="More",
 		todos="To-dos", md="Master data", clients="Clients", manual="Manual", settings="Settings", running="Farmacia Centrale",
 		contacts="Contacts", calls="Calls"),
 }

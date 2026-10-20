@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Euro sign for the "Expense" buttons (issue #37); tinted by the button. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#00000000"
+      android:strokeColor="#FF000000"
+      android:strokeWidth="2.2"
+      android:strokeLineCap="round"
+      android:pathData="M18,6.2A7,7 0 1,0 18,17.8M4.5,10.2H13.5M4.5,13.8H12.8" />
+</vector>

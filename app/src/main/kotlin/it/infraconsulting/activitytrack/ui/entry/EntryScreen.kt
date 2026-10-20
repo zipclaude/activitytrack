@@ -155,7 +155,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					/* expense, photo, voice note, file on one row, before the client (owner, issue #37) */
 					Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
 						for ((req, label, icon, color) in listOf(
-							AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_shortcut_expense, MAGENTA),
+							AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_euro, MAGENTA),
 							AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE),
 							AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL),
 							AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO),
@@ -260,8 +260,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					AddButton { vm.addRef(newRef) { newRef = "" } }
 				}
 			}
-			item { ExpensesSection(initial.id, addRequest) { addRequest = null } }
-			item { AttachmentsSection(initial.id, zone, addRequest) { addRequest = null } }
+			item { ExpensesSection(initial.id) }
+			item { AttachmentsSection(initial.id, zone) }
 		}
 
 		/* outside the list: a validation error must stay visible above the buttons */
@@ -310,6 +310,9 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 		ManualSegmentDialog(kind, firstDay, zone, vm) { adding = null }
 	}
 	editingSegment?.let { s -> SegmentDialog(s, zone, vm) { editingSegment = null } }
+	/* outside the lazy list: always composed, whatever is scrolled into view */
+	ExpenseAdder(initial.id, addRequest) { addRequest = null }
+	AttachmentAdder(initial.id, addRequest) { addRequest = null }
 	if (addClient)
 		QuickClientDialog(companyId, onDone = { client, _ -> addClient = false; clientId = client }, onDismiss = { addClient = false })
 	if (addPreset)
