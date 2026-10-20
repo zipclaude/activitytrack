@@ -10,6 +10,8 @@ import it.infraconsulting.activitytrack.domain.interchange.AntaresConnector
 import it.infraconsulting.activitytrack.domain.interchange.Pkce
 import it.infraconsulting.activitytrack.domain.interchange.authorizeUrl
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.IOException
@@ -42,7 +44,12 @@ class AntaresAuthException(message: String) : IOException(message)
  */
 class AntaresAuth(private val context: Context, private val secrets: SecretStore) {
 	private val pending = context.getSharedPreferences("oauth_pending", Context.MODE_PRIVATE)
-	private val tokens = HashMap<Long, Pair<String, Long>>()
+	private val tokens = java.util.concurrent.ConcurrentHashMap<Long, Pair<String, Long>>()
+	/*
+	 * One refresh at a time: with rotation (one-time refresh tokens) a second
+	 * concurrent refresh would spend the same token and force a new login.
+	 */
+	private val refreshing = Mutex()
 
 	val redirectUri: String get() = context.packageName + ":/oauth2redirect"
 
@@ -95,11 +102,15 @@ class AntaresAuth(private val context: Context, private val secrets: SecretStore
 	/* A valid access token, refreshed a minute before it expires. */
 	suspend fun accessToken(companyId: Long, config: AntaresConfig): String {
 		tokens[companyId]?.let { (t, until) -> if (System.currentTimeMillis() < until) return t }
-		val refresh = secrets.get(companyId, AntaresConnector.REFRESH_TOKEN) ?: throw AntaresAuthException("not logged in")
-		val e = discover(config.identityUrl)
-		return store(companyId, tokenRequest(e.token, mapOf(
-			"grant_type" to "refresh_token", "client_id" to config.clientId, "refresh_token" to refresh,
-		)))
+		return refreshing.withLock {
+			/* another caller may have refreshed it while this one waited */
+			tokens[companyId]?.let { (t, until) -> if (System.currentTimeMillis() < until) return@withLock t }
+			val refresh = secrets.get(companyId, AntaresConnector.REFRESH_TOKEN) ?: throw AntaresAuthException("not logged in")
+			val e = discover(config.identityUrl)
+			store(companyId, tokenRequest(e.token, mapOf(
+				"grant_type" to "refresh_token", "client_id" to config.clientId, "refresh_token" to refresh,
+			)))
+		}
 	}
 
 	private fun store(companyId: Long, o: JSONObject): String {
