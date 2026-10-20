@@ -1,4 +1,4 @@
-Version 0.6.4 (October 2026). Please report any difference between this
+Version 0.6.5 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).

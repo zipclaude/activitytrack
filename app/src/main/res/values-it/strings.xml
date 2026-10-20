@@ -52,7 +52,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="md_companies">Aziende</string>
   <string name="md_clients">Clienti</string>
   <string name="md_roles">Ruoli</string>
-  <string name="md_presets">Attività predefinite</string>
+  <string name="md_presets">Scelte rapide</string>
   <string name="md_places">Luoghi</string>
   <string name="md_schedule">Orario di lavoro e pausa pranzo</string>
   <string name="md_days_off">Giorni liberi</string>
@@ -71,7 +71,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="company_edit">Azienda</string>
   <string name="client_edit">Cliente</string>
   <string name="role_edit">Ruolo</string>
-  <string name="preset_edit">Attività predefinita</string>
+  <string name="preset_edit">Scelta rapida</string>
   <string name="site_edit">Sede</string>
   <string name="place_edit">Luogo</string>
   <string name="interval_edit">Intervallo di lavoro</string>
@@ -195,8 +195,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="field_client">Cliente</string>
   <string name="client_unknown">Non ancora noto</string>
   <string name="start_no_clients">Nessun cliente per questa azienda.</string>
-  <string name="field_preset">Predefinita</string>
-  <string name="field_activity">Attività</string>
+  <string name="field_preset">Scelta rapida</string>
+  <string name="field_activity">Descrizione</string>
   <string name="field_role">Ruolo</string>
   <string name="field_notes">Note</string>
   <string name="start_action">Avvia</string>
@@ -310,7 +310,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_reopen">Segna come da fare</string>
   <string name="todo_edit">Modifica</string>
   <string name="todo_show_done">Mostra anche le fatte</string>
-  <string name="todo_field_title">Titolo</string>
+  <string name="todo_field_title">Descrizione</string>
   <string name="todo_field_due">Scadenza</string>
   <string name="todo_field_time">Ora scadenza</string>
   <string name="todo_field_priority">Priorità (1 = massima)</string>
@@ -422,7 +422,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_plan_time_missing">Indica anche l\'ora pianificata</string>
   <string name="todo_plan_date_missing">Indica anche la data pianificata</string>
   <string name="quick_role">Nuovo ruolo</string>
-  <string name="quick_preset">Nuova predefinita</string>
+  <string name="quick_preset">Nuova scelta rapida</string>
   <string name="err_too_short">Meno di un minuto: controlla gli orari.</string>
   <string name="short_title">\"%1$s\" è durata meno di un minuto</string>
   <string name="short_text">Probabilmente avviata per errore. La scarto?</string>
@@ -546,4 +546,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="contact_email">E-mail</string>
   <string name="err_invalid_value">Valore non valido.</string>
   <string name="field_description">Descrizione</string>
+  <!-- issue #47 -->
+  <string name="field_start_end">Inizio – Fine</string>
+  <string name="todo_more_details">Note e riferimenti</string>
 </resources>
