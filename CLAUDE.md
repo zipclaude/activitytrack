@@ -142,7 +142,9 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
-Released v0.6.1 (2026-10-20): calls with clients (#28, #33), no automatic
+Released v0.6.2 (2026-10-20): #37 start/end row, future start → plan,
+add row in the entry screen, to-do start/end, Home to-do window, quick add
+everywhere, smaller manual screenshots. Before it, v0.6.1 (2026-10-20): calls with clients (#28, #33), no automatic
 colours (#27), empty Start opens the range grid (#30). Next: v0.7.0 with
 Antares (PR #29, #34) once Saidea gives a public client and a demo user. To
 check on the release app: READ_CALL_LOG may be a restricted setting for an
@@ -335,7 +337,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-19 | Calendar events are private (ACCESS_PRIVATE), PR #19 |
 | 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
 | 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
-| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
+| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.6.2 (#37 display and usability fixes; 2026-10-20); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
@@ -390,6 +392,8 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
   check `git status` before committing after switching branches.
 - `scripts/sample-db.py` builds the schema of `ActivityTrackDatabase.VERSION`;
   today's sample times are relative to now (the Home's big card = latest).
+- LazyColumn composes only visible items: effects or launchers that must run
+  on request (e.g. the entry screen's add row) live outside the lazy list.
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 
