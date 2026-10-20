@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
+import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import android.content.Intent
 import android.provider.ContactsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -102,17 +104,23 @@ fun ContactsScreen(onBack: () -> Unit) {
 		var name by remember(c) { mutableStateOf(c.name) }
 		var phones by remember(c) { mutableStateOf(numbers.joinToString("\n")) }
 		var clientId by remember(c) { mutableStateOf(c.clientId) }
+		var addClient by remember(c) { mutableStateOf(false) }
 		val delete = if (c.id != 0L) confirmDelete(c.name) { vm.delete(c) { editing = null } } else null
 		EditDialog(
 			stringResource(R.string.contact_edit), error.takeIf { it != Reason.BLANK_VALUE }, { editing = null },
 			{ vm.save(c.copy(name = name, clientId = clientId), phones.lines()) { editing = null } }, delete,
 		) {
 			TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
-			SearchableChoiceField(stringResource(R.string.field_client), clients.map { it.id to it.name }, clientId, importance = Importance.REQUIRED) { clientId = it }
+			/* the client may not exist yet, e.g. a number imported from the phone book (issue #37) */
+			WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
+				SearchableChoiceField(stringResource(R.string.field_client), clients.map { it.id to it.name }, clientId, importance = Importance.REQUIRED) { clientId = it }
+			}
 			TextInput(stringResource(R.string.contact_numbers), phones, { phones = it }, singleLine = false, importance = Importance.REQUIRED)
 			if (error == Reason.BLANK_VALUE)
 				Text(stringResource(R.string.contact_numbers_missing), color = MaterialTheme.colorScheme.error)
 		}
+		if (addClient)
+			QuickClientDialog(null, onDone = { client, _ -> addClient = false; clientId = client }, onDismiss = { addClient = false })
 	}
 }
 

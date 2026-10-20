@@ -516,4 +516,17 @@ Tap the green play button below to start one.</string>
   <string name="call_propose_text">%1$s–%2$s: record it as an activity?</string>
   <string name="call_propose_action">Create activity</string>
   <string name="segment_note">Description</string>
+  <string name="start_end_hint">Empty Start = now; empty End = open; an End already passed records the activity as done.</string>
+  <!-- issue #37 add row -->
+  <string name="short_expense">Expense</string>
+  <string name="short_photo">Photo</string>
+  <string name="short_voice">Voice</string>
+  <string name="short_file">File</string>
+  <!-- issue #37 start in the future -->
+  <string name="future_title">Start at %1$s</string>
+  <string name="future_text">That time is still to come today.</string>
+  <string name="future_plan">Plan it today at %1$s</string>
+  <string name="future_now">Start now</string>
+  <string name="future_yesterday">Started yesterday at %1$s</string>
+  <string name="todo_home_title">To do · %1$s ▾</string>
 </resources>

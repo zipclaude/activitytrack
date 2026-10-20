@@ -91,7 +91,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre, ultime completate, "Da fare · prossime 24 h" |
+| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre, ultime completate, "Da fare · 24 h ▾" |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
 | **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Impostazioni" (con "Gesti") |
@@ -115,9 +115,11 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   visualizzazione compatta), più tenui e con lo stato "Chiusa" in grigio:
   toccandole si apre la scheda. Le
   attività aperte in background prendono il loro posto.
-- Sotto il separatore **"Da fare · prossime 24 h"** un riquadro per ogni voce
+- Sotto il separatore **"Da fare · 24 h ▾"** un riquadro per ogni voce
   pianificata o in scadenza nelle prossime 24 ore (comprese quelle in
-  ritardo); in fondo, barrate, quelle ignorate oggi.
+  ritardo); in fondo, barrate, quelle ignorate oggi. Toccando il titolo scegli
+  il periodo della Home: 24 h, 7 giorni, 30 giorni o tutte (separato da
+  quello della schermata "Da fare").
 
 ![Home: un'attività in corso, le altre sotto, le ultime completate e i Da fare](img/home.png)
 
@@ -143,7 +145,7 @@ colore dell'azienda; quando la lista mostra una sola azienda, la banda ha il
 colore del **cliente**. Senza un colore scelto non c'è banda; in Agenda i
 blocchi di quelle aziende sono grigi.
 
-Accanto a "Da fare · prossime 24 h" (e nella schermata "Da fare") il pulsante **"Tutte
+Accanto a "Da fare · 24 h ▾" (e nella schermata "Da fare") il pulsante **"Tutte
 le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
 lo togli con la ✕. Le attività in corso non vengono filtrate. Nella schermata
 "Da fare" il filtro del periodo (**24 h**, **7 gg**, **30 gg**, **Tutti**)
@@ -157,10 +159,12 @@ Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
 riquadri e pulsanti più stretti, per vedere più attività e voci insieme.
 
 ### Nuova azienda o cliente al volo
-In "Nuova attività" il **+** accanto ad Azienda, Cliente, Predefinita e
-Ruolo crea il nuovo elemento senza uscire (nell'editor delle voci da fare,
-Azienda e Cliente); il nuovo elemento risulta già scelto (la predefinita
-riempie la descrizione).
+Il **+** accanto a un campo di anagrafica crea il nuovo elemento senza
+uscire, che risulta già scelto (la predefinita riempie la descrizione):
+Azienda, Cliente, Predefinita e Ruolo in "Nuova attività" e nella scheda
+attività; Azienda e Cliente nell'editor delle voci da fare; il cliente nel
+contatto (anche importato dalla rubrica); l'azienda nel cliente e nella
+predefinita, con il ruolo proposto.
 
 ### Campi obbligatori e facoltativi
 Il bordo dei campi dice quanto contano: **rosso** se obbligatorio e ancora
@@ -214,9 +218,13 @@ Nella schermata "Nuova attività":
 - **Inizio** (con "Orari modificabili", attivo all'inizio): vuoto = adesso;
   toccandolo quando è vuoto si apre la griglia a intervallo, che imposta inizio
   e fine insieme; se è già compilato si apre il selettore dell'orario;
-  un orario già passato fa partire l'attività da lì (un orario che oggi non è
-  ancora arrivato vale per ieri).
-- **Fine (facoltativa)**: toccandola, la griglia sceglie inizio e fine insieme.
+  un orario già passato fa partire l'attività da lì. Un orario che oggi deve
+  ancora arrivare fa chiedere **"Inizio alle HH:MM"**: **"Pianifica oggi alle
+  HH:MM"** crea una voce *Da fare* pianificata (cliente, titolo = descrizione,
+  da inizio a fine), **"Avvia adesso"** parte subito, **"Avviata ieri alle
+  HH:MM"** la registra da ieri.
+- **Fine**, sulla stessa riga dell'Inizio: toccandola, la griglia sceglie
+  inizio e fine insieme.
   - Fine già passata (per registrare un'attività passata): l'app chiede
     **"L'attività è conclusa?"**. "Sì" la registra ferma a quell'ora, come con
     Stop, senza chiedere delle attività in corso; "No" la avvia aperta.
@@ -290,15 +298,19 @@ Tocca i **pulsanti** delle notifiche, non il testo: il testo apre l'app e
 chiude la notifica senza eseguire l'azione. Se i pulsanti non si vedono,
 trascina la notifica verso il basso per espanderla.
 
+In cima alla schermata dell'attività, sotto lo stato, una riga di pulsanti
+aggiunge **Spesa**, **Foto**, **Nota voc.** e **File**; le sezioni "Spese" e
+"Allegati" più in basso li elencano (compaiono quando ce n'è almeno uno).
+
 ### Spese
-Nella schermata dell'attività, sezione "Spese" → "Aggiungi spesa": importo in
+Nella schermata dell'attività, pulsante **Spesa**: importo in
 euro, descrizione, "Foto dello scontrino" facoltativa. Spesa veloce: pulsante
 **€** del widget o scorciatoia **"Spesa"** dell'icona (va all'attività in corso
 più recente).
 
 ### Allegati
-Sezione "Allegati": "Foto" (fotocamera), "Nota vocale" (registra finché non
-tocchi "Ferma e salva"), "File" (qualsiasi documento). Toccando un allegato:
+Pulsanti **Foto** (fotocamera), **Nota voc.** (registra finché non tocchi
+"Ferma e salva"), **File** (qualsiasi documento). Toccando un allegato:
 "Apri" o "Elimina". I file stanno nella cartella dati, in
 `attachments/<anno>/<attività>/`.
 
@@ -417,7 +429,7 @@ sezioni dell'interscambio non sono filtrate).
 
 Attività da fare, importate da un gestionale o create a mano ("Altro" →
 "Da fare" → "Aggiungi", oppure dall'Agenda): titolo, cliente (o azienda),
-**data e ora pianificate**, **durata**, scadenza e ora, priorità
+**data pianificata** con **inizio** e **fine**, scadenza e ora, priorità
 (1 = massima), note, riferimenti (uno per riga).
 
 ![Da fare con i filtri rapidi](img/todos.png)
@@ -425,9 +437,10 @@ Attività da fare, importate da un gestionale o create a mano ("Altro" →
 Stati: **aperta** (senza pianificazione) → **pianificata** (data e ora) →
 **fatta**. La pianificazione è separata dalla scadenza: ripianificare non
 cambia la scadenza del gestionale.
-- **Durata**: se la indichi, il blocco dura quella; se la lasci vuota dura
-  un'ora e, finché la voce resta aperta, si allunga di ora in ora (fino a fine
-  giornata).
+- **Inizio e fine**: toccandoli si apre la griglia a intervallo, che li
+  imposta insieme; con la fine il blocco dura fino a lì, senza fine dura
+  un'ora e, finché la voce resta aperta, si allunga di ora in ora (fino a
+  fine giornata).
 - **Promemoria**: 15 minuti prima dell'ora pianificata arriva la notifica
   "Titolo alle HH:MM" con "Avvia attività", "Posticipa 30 min" (sposta la
   pianificazione di 30 minuti dall'ora pianificata o, se è già passata, da
@@ -435,8 +448,9 @@ cambia la scadenza del gestionale.
   (apre la voce). Arriva anche fuori orario e nei giorni liberi; sparisce se
   la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
   passato.
-- In Home, **"Da fare · prossime 24 h"** mostra quelle in scadenza o
-  pianificate nelle prossime 24 ore, comprese quelle in ritardo; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
+- In Home, **"Da fare · 24 h ▾"** mostra quelle in scadenza o pianificate
+  nelle prossime 24 ore (o nel periodo scelto toccando il titolo: 7 giorni,
+  30 giorni, tutte), comprese quelle in ritardo; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
   pianificato o dopo la scadenza (dopo l'ora di scadenza, o dal giorno dopo
   se la scadenza non ha ora).
 - **Ignorare** una voce (gesto o azione "Ignora") invece di cancellarla: resta

@@ -77,6 +77,7 @@ class SettingsRepository(context: Context) {
 		/* until 0.5.0: a 24-hour switch; read once as 24 h or all */
 		val todoNext24h = booleanPreferencesKey("todo_today_only")
 		val todoWindow = intPreferencesKey("todo_window_hours")
+		val homeTodoWindow = intPreferencesKey("home_todo_window_hours")
 		val todoShowIgnored = booleanPreferencesKey("todo_show_ignored")
 		val callsIncoming = booleanPreferencesKey("calls_incoming")
 		val callsOutgoing = booleanPreferencesKey("calls_outgoing")
@@ -124,6 +125,7 @@ class SettingsRepository(context: Context) {
 			compactDisplay = p[K.compact] ?: d.compactDisplay,
 			todoCompanyFilter = p[K.todoCompany],
 			todoWindowHours = p[K.todoWindow] ?: if (p[K.todoNext24h] == true) 24 else d.todoWindowHours,
+			homeTodoWindowHours = p[K.homeTodoWindow] ?: d.homeTodoWindowHours,
 			todoShowIgnored = p[K.todoShowIgnored] ?: d.todoShowIgnored,
 			listOrders = OrderedList.entries.fold(d.listOrders) { o, l -> o.with(l, enumOr(p[K.order(l)], d.listOrders.of(l))) },
 			editableTimes = p[K.editableTimes] ?: d.editableTimes,
@@ -168,6 +170,7 @@ class SettingsRepository(context: Context) {
 		p[K.compact] = s.compactDisplay
 		s.todoCompanyFilter?.let { p[K.todoCompany] = it } ?: p.remove(K.todoCompany)
 		p[K.todoWindow] = s.todoWindowHours
+		p[K.homeTodoWindow] = s.homeTodoWindowHours
 		p.remove(K.todoNext24h)
 		p[K.todoShowIgnored] = s.todoShowIgnored
 		OrderedList.entries.forEach { p[K.order(it)] = s.listOrders.of(it).name }

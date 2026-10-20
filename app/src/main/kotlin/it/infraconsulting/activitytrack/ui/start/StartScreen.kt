@@ -169,19 +169,25 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						}
 						/* M17: start in the past; empty = now */
 						if (editableTimes) {
-							/* empty Start: the range grid sets start and end; a set Start: the usual picker (issue #30) */
-							TimeField(
-								stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() },
-								clearable = true, importance = Importance.OPTIONAL,
-								onOpen = if (f.startTime.isBlank()) ({ rangeGrid = true }) else null,
-							)
-							Text(stringResource(R.string.time_now_hint), style = MaterialTheme.typography.bodySmall)
-							/* M22: the end too, picked as a range on the grid (start and end together) */
-							TimeField(
-								stringResource(R.string.field_end_optional), f.endTime, { vm.setEndTime(it); vm.clearError() },
-								clearable = true, importance = Importance.OPTIONAL, onOpen = { rangeGrid = true },
-							)
-							Text(stringResource(R.string.end_hint), style = MaterialTheme.typography.bodySmall)
+							/* start and end on one row (issue #37) */
+							androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+								Column(Modifier.weight(1f)) {
+									/* empty Start: the range grid sets start and end; a set Start: the usual picker (issue #30) */
+									TimeField(
+										stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() },
+										clearable = true, importance = Importance.OPTIONAL,
+										onOpen = if (f.startTime.isBlank()) ({ rangeGrid = true }) else null,
+									)
+								}
+								Column(Modifier.weight(1f)) {
+									/* M22: the end too, picked as a range on the grid (start and end together) */
+									TimeField(
+										stringResource(R.string.field_end), f.endTime, { vm.setEndTime(it); vm.clearError() },
+										clearable = true, importance = Importance.OPTIONAL, onOpen = { rangeGrid = true },
+									)
+								}
+							}
+							Text(stringResource(R.string.start_end_hint), style = MaterialTheme.typography.bodySmall)
 						}
 						if (error != null)
 							Text(reasonText(error!!), color = MaterialTheme.colorScheme.error)
@@ -201,6 +207,24 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	}
 
 	pending.firstOrNull()?.let { r -> RunningDialog(r, vm) }
+	val askFuture by vm.askFuture.collectAsState()
+	askFuture?.let { min ->
+		val at = formatMin(min)
+		AlertDialog(
+			onDismissRequest = vm::cancelFuture,
+			title = { Text(stringResource(R.string.future_title, at)) },
+			text = {
+				Column {
+					Text(stringResource(R.string.future_text))
+					TextButton(onClick = { vm.answerFuture(StartViewModel.FutureChoice.PLAN) }) { Text(stringResource(R.string.future_plan, at)) }
+					TextButton(onClick = { vm.answerFuture(StartViewModel.FutureChoice.NOW) }) { Text(stringResource(R.string.future_now)) }
+					TextButton(onClick = { vm.answerFuture(StartViewModel.FutureChoice.YESTERDAY) }) { Text(stringResource(R.string.future_yesterday, at)) }
+				}
+			},
+			confirmButton = {},
+			dismissButton = { TextButton(onClick = vm::cancelFuture) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
 	askEnded?.let { end ->
 		AlertDialog(
 			onDismissRequest = vm::cancelEnded,
