@@ -1,20 +1,21 @@
-Versione 0.6.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.6.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.6.0**
-- ✕ nei campi di testo per svuotarli (§3).
-- Riquadri della Home: banda col colore scelto per l'azienda, stato "Chiusa"
-  neutro, orari nella forma "dalle–alle (durata)" (§3).
-- Scheda attività: "+ Viaggio" e "+ Pausa" in alto; in visualizzazione
-  compatta i dettagli facoltativi si richiudono (§6).
-- Avvio con **Fine**: per registrare un'attività passata o indicare la fine
-  prevista (§4).
-- Allo Stop l'attività con cliente e descrizione è subito **chiusa** (§6).
-- *Da fare*: filtri rapidi azienda, ignorate, periodo (24 h, 7 gg, 30 gg,
-  tutti) e filtri avanzati (§8).
-- Manuale e guida rapida anche in PDF, in italiano e in inglese.
+**Novità della 0.6.1**
+- **Chiamate con i clienti**: riconoscimento delle chiamate entranti e
+  uscenti con i contatti, pausa automatica dell'attività di un altro cliente,
+  proposta di registrare la chiamata come attività, anche fuori orario per la
+  reperibilità (§5, Impostazioni → Chiamate).
+- **Contatti** dei clienti in Anagrafiche, con importazione dalla rubrica;
+  nella scheda del cliente l'elenco delle chiamate con la durata (§10).
+- **Descrizione delle pause**, modificabile anche con "Orari modificabili"
+  spento (§6).
+- Nessun colore automatico: la banda compare solo con un colore scelto per
+  l'azienda o il cliente; in Agenda i blocchi senza colore sono grigi (§3).
+- "Nuova attività": toccando **Inizio** vuoto si apre la griglia per scegliere
+  inizio e fine insieme (§4).
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
 telefono in un'altra lingua l'app usa inglese, tedesco o spagnolo.
