@@ -107,12 +107,51 @@ class AttachmentsViewModel(
 }
 
 @Composable
-fun AttachmentsSection(entryId: Long, zone: ZoneId, request: AddRequest? = null, onHandled: () -> Unit = {}) {
-	val vm = appViewModel(key = "attachments/$entryId") { AttachmentsViewModel(entryId, it.attachments, it.settings) }
+fun AttachmentsSection(entryId: Long, zone: ZoneId) {
+	val vm = attachmentsViewModel(entryId)
 	val items by vm.items.collectAsState()
 	val error by vm.error.collectAsState()
 	val context = LocalContext.current
 	var selected by remember { mutableStateOf<AttachmentEntity?>(null) }
+
+	if (items.isNotEmpty() || error != null)
+		Column(modifier = Modifier.padding(bottom = 8.dp)) {
+			SectionHeader(stringResource(R.string.attachments))
+			for (a in items)
+				ClickableRow(kindLabel(a.kind), clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)) {
+					vm.clearError()
+					selected = a
+				}
+			error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+		}
+
+	selected?.let { a ->
+		AlertDialog(
+			onDismissRequest = { selected = null },
+			title = { Text(kindLabel(a.kind)) },
+			confirmButton = { TextButton(onClick = { vm.open(context, a); selected = null }) { Text(stringResource(R.string.action_open)) } },
+			dismissButton = {
+				TextButton(onClick = { vm.delete(a); selected = null }) {
+					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+				}
+			},
+		)
+	}
+}
+
+@Composable
+private fun attachmentsViewModel(entryId: Long) =
+	appViewModel(key = "attachments/$entryId") { AttachmentsViewModel(entryId, it.attachments, it.settings) }
+
+/*
+ * Photo, voice note, file asked from the add row at the top of the entry
+ * screen (issue #37). Composed outside the lazy list, which leaves out the
+ * sections scrolled away.
+ */
+@Composable
+fun AttachmentAdder(entryId: Long, request: AddRequest?, onHandled: () -> Unit) {
+	val vm = attachmentsViewModel(entryId)
+	val context = LocalContext.current
 	var recording by remember { mutableStateOf(false) }
 
 	/* camera writes into the app cache through FileProvider, then the file is copied */
@@ -159,30 +198,6 @@ fun AttachmentsSection(entryId: Long, zone: ZoneId, request: AddRequest? = null,
 			else -> return@LaunchedEffect
 		}
 		onHandled()
-	}
-
-	if (items.isNotEmpty() || error != null)
-		Column(modifier = Modifier.padding(bottom = 8.dp)) {
-			SectionHeader(stringResource(R.string.attachments))
-			for (a in items)
-				ClickableRow(kindLabel(a.kind), clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)) {
-					vm.clearError()
-					selected = a
-				}
-			error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
-		}
-
-	selected?.let { a ->
-		AlertDialog(
-			onDismissRequest = { selected = null },
-			title = { Text(kindLabel(a.kind)) },
-			confirmButton = { TextButton(onClick = { vm.open(context, a); selected = null }) { Text(stringResource(R.string.action_open)) } },
-			dismissButton = {
-				TextButton(onClick = { vm.delete(a); selected = null }) {
-					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-				}
-			},
-		)
 	}
 	if (recording)
 		VoiceRecorderDialog(
