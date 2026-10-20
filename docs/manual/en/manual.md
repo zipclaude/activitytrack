@@ -871,7 +871,8 @@ never go below 10 minutes (Android limits alarms in Doze).
   *night activities until* time, otherwise it is split at midnight.
 - CSV: one line per activity and day, with start, end, rounded work, pause and
   travel hours, company, client, role, description, km, expenses, notes,
-  references, locality, tags; km and expenses on the first day.
+  references, locality, tags, materials (total in €, apart from the
+  expenses); km, expenses and materials on the first day.
 
 ### Calendar
 One event per activity and day, from its start (a running activity ends

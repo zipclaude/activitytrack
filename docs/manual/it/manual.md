@@ -893,7 +893,8 @@ allarmi in Doze).
   entro le *attività notturne fino alle*, altrimenti si divide a mezzanotte.
 - CSV: una riga per attività e giorno, con inizio, fine, ore di lavoro, pausa
   e viaggio arrotondate, azienda, cliente, ruolo, descrizione, km, spese,
-  note, riferimenti, località, tag; km e spese sul primo giorno.
+  note, riferimenti, località, tag, materiali (totale in €, separato dalle
+  spese); km, spese e materiali sul primo giorno.
 
 ### Calendario
 Un evento per attività e giorno, dall'avvio (un'attività in corso finisce

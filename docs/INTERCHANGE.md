@@ -36,7 +36,8 @@ Management-system plugins map their own APIs or files to this model
                  "activity": "Patched 3 servers", "status": "CLOSED", "zone": "Europe/Rome",
                  "segments": [ { "kind": "WORK", "startUtc": "2026-10-17T07:00:00Z", "endUtc": "2026-10-17T11:00:00Z" } ],
                  "expenses": [ { "amount": "12.50", "description": "Parking", "createdUtc": "2026-10-17T07:01:00Z", "receipt": true } ],
-                 "refs": [ "INC0012" ], "tags": [ "remoto" ] } ],
+                 "refs": [ "INC0012" ], "tags": [ "remoto" ],
+                 "materials": [ { "description": "Cavo di rete", "quantity": "2.5", "unit": "m", "unitCost": "1.50" } ] } ],
   "absences": [ { "date": "2026-10-19", "kind": "LATE_ENTRY", "time": "10:30" } ],
   "daysOff": [ { "date": "2026-12-07", "note": "Sant'Ambrogio" } ]
 }
@@ -69,7 +70,9 @@ are text. Root element `<activitytrack>`; DTDs are refused.
 
 List containers and items: companies/company, clients/client, sites/site,
 roles/role, presets/preset, todos/todo, entries/entry, segments/segment,
-expenses/expense, refs/ref, absences/absence, daysOff/dayOff, tags/tag.
+expenses/expense, refs/ref, absences/absence, daysOff/dayOff, tags/tag,
+materials/material (issue #41: consumables left with an entry; description
+required, quantity, unit and unitCost in EUR optional).
 
 ## Values
 
