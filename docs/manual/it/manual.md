@@ -323,6 +323,8 @@ Vale solo in orario di lavoro (non nei festivi e nei giorni liberi), salvo
 con l'opzione **"Anche fuori orario (reperibilità)"**: allora vale sempre.
 Le chiamate con numeri sconosciuti vengono ignorate.
 
+![Le chiamate nella scheda del cliente, con la durata](img/client-calls.png)
+
 ---
 
 ## 6. Fermare e completare
@@ -485,6 +487,9 @@ cambia la scadenza del gestionale.
   telefono e lo propone come nuovo contatto. Servono al riconoscimento delle
   chiamate (§5); i numeri si confrontano con o senza prefisso
   internazionale.
+
+![Contatti dei clienti](img/contacts.png)
+
 - **Luoghi** — casa e altri luoghi (casa serve per l'arrivo a fine viaggio).
 - **Orario di lavoro e pausa pranzo** — per giorno della settimana.
 - **Giorni liberi**.
@@ -615,6 +620,7 @@ I valori fuori intervallo vengono corretti al salvataggio.
 |---|---|
 | Il tracciamento si ferma | Impostazioni → Posizione: "Consenti sempre" e batteria "Senza restrizioni" |
 | La notifica dell'attività è sparita | riapri l'app: ricompare |
+| Una chiamata di un contatto non viene riconosciuta | il centralino può presentare un numero diverso da quello pubblicato: guarda nel registro chiamate del telefono il numero arrivato e aggiungilo al contatto |
 | "L'accesso alla cartella dati è stato perso" | la cartella è stata spostata o rinominata: sceglila di nuovo |
 | Dettatura: "lingua non disponibile" | Impostazioni → Dettatura: scegli la lingua; per l'uso offline scarica il pacchetto della lingua nelle impostazioni vocali del telefono |
 | Il riquadro rapido non è nell'elenco | Impostazioni → "Riquadro Impostazioni rapide" → "Aggiungi" |
