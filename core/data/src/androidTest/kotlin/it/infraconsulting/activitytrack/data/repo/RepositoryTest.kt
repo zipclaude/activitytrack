@@ -699,4 +699,38 @@ class RepositoryTest {
 		todos.delete(own)
 		assertNull(db.todoDao().byId(own))
 	}
+
+	/* issue #41: consumables; #44: contacts without numbers, e-mail, the entry's contact */
+	@Test
+	fun materialsAndEntryContact() = runBlocking<Unit> {
+		val materials = MaterialRepository(db, clock)
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		assertEquals(Reason.BLANK_NAME, reason { materials.saveMaterial(it.infraconsulting.activitytrack.data.db.MaterialEntity(name = " ")) })
+		val cable = materials.saveMaterial(it.infraconsulting.activitytrack.data.db.MaterialEntity(name = "Cavo", unit = "m", unitCostCents = 150))
+		val line = { d: String, q: Double?, c: Long? ->
+			it.infraconsulting.activitytrack.data.db.EntryMaterialEntity(entryId = id, materialId = cable, description = d, quantity = q, unitCostCents = c, createdUtcMs = 0)
+		}
+		assertEquals(Reason.BLANK_VALUE, reason { materials.saveLine(line("", 1.0, 150)) })
+		assertEquals(Reason.INVALID_AMOUNT, reason { materials.saveLine(line("Cavo", 0.0, 150)) })
+		materials.saveLine(line("Cavo", 2.5, 150))
+		materials.saveLine(line("Fascette", null, null))
+		val lines = materials.lines(id).first()
+		assertEquals(listOf(375L, null), lines.map { it.totalCents })
+		/* deleting the master data keeps the recorded lines */
+		materials.deleteMaterial(cable)
+		assertEquals(2, materials.lines(id).first().size)
+
+		val calls = CallRepository(db)
+		assertEquals(Reason.INVALID_VALUE, reason { calls.saveContact(ContactEntity(clientId = client, name = "Rossi", email = "nope"), emptyList()) })
+		val rossi = calls.saveContact(ContactEntity(clientId = client, name = "Rossi", email = "rossi@example.com"), emptyList())
+		entries.updateDetails(id, EntryDetails(acme, client, null, "Lavoro", null, null, null, rossi))
+		assertEquals(rossi, entries.find(id)?.contactId)
+		/* a contact of another client does not stick */
+		val bank2 = master.saveClient(ClientEntity(companyId = acme, name = "Other bank"))
+		entries.updateDetails(id, EntryDetails(acme, bank2, null, "Lavoro", null, null, null, rossi))
+		assertNull(entries.find(id)?.contactId)
+		/* deleting the entry deletes its lines */
+		entries.deleteEntry(id)
+		assertEquals(0, materials.lines(id).first().size)
+	}
 }

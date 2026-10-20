@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import java.time.ZoneId
 import it.infraconsulting.activitytrack.ui.common.clockOf
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
@@ -86,7 +88,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	var addPreset by remember { mutableStateOf(false) }
 
 	ScreenScaffold(title = stringResource(R.string.start_title), onBack = onBack) { padding ->
-		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+		/* the keyboard shrinks the form, so the field being typed in scrolls into view (issue #47) */
+		Column(modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
 			LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
 				item {
 					Row(
@@ -145,19 +148,7 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						modifier = Modifier.padding(16.dp),
 						verticalArrangement = Arrangement.spacedBy(8.dp),
 					) {
-						val companyId = clients.firstOrNull { it.id == f.clientId }?.companyId ?: f.companyId
-						val usable = presets.filter { it.companyId == null || it.companyId == companyId }
-						/* "+" also for presets and roles (backlog 4, 2026-10-18) */
-						WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) {
-							ChoiceField(
-								stringResource(R.string.field_preset),
-								listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
-								null,
-								importance = Importance.OPTIONAL,
-							) { id -> id?.let(vm::applyPreset) }
-						}
-						/* required: typed or from a preset (owner, 2026-10-19) */
-						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity, Importance.REQUIRED)
+						/* order (owner, issue #47): role, start-end, quick pick, description */
 						WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
 							ChoiceField(
 								stringResource(R.string.field_role),
@@ -189,6 +180,19 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 							}
 							Text(stringResource(R.string.start_end_hint), style = MaterialTheme.typography.bodySmall)
 						}
+						val companyId = clients.firstOrNull { it.id == f.clientId }?.companyId ?: f.companyId
+						val usable = presets.filter { it.companyId == null || it.companyId == companyId }
+						/* "+" also for presets and roles (backlog 4, 2026-10-18) */
+						WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) {
+							ChoiceField(
+								stringResource(R.string.field_preset),
+								listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
+								null,
+								importance = Importance.OPTIONAL,
+							) { id -> id?.let(vm::applyPreset) }
+						}
+						/* required: typed or from a preset (owner, 2026-10-19) */
+						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity, Importance.REQUIRED)
 						if (error != null)
 							Text(reasonText(error!!), color = MaterialTheme.colorScheme.error)
 					}

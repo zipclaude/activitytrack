@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.todo
 
+import it.infraconsulting.activitytrack.ui.common.DateTimeField
+import it.infraconsulting.activitytrack.ui.common.RangeField
 import it.infraconsulting.activitytrack.ui.common.companyColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -711,46 +713,48 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			)
 		},
 	) {
-		TextInput(stringResource(R.string.todo_field_title), title, { title = it }, importance = Importance.REQUIRED)
+		/* order and fields of the approved mockup (owner, issue #47) */
+		val shownCompany = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
+		WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+			ChoiceField(
+				stringResource(R.string.field_company), companies.map { it.id to it.name }, shownCompany,
+				importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
+			) { co ->
+				picked = co
+				/* a client of another company goes */
+				if (clients.firstOrNull { it.id == clientId }?.companyId != co)
+					clientId = null
+			}
+		}
 		WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
 			SearchableChoiceField(
 				stringResource(R.string.field_client),
 				listOf<Pair<Long?, String>>(null to stringResource(R.string.field_none)) +
-					clients.filter { !it.archived }.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
+					clients.filter { !it.archived && (shownCompany == null || it.companyId == shownCompany) }.map { it.id to it.name },
 				clientId,
 				importance = Importance.IMPORTANT,
 				colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
 			) { clientId = it }
 		}
-		if (clientId == null)
-			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
-				ChoiceField(
-					stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId,
-					importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
-				) { picked = it }
-			}
 		DateField(
-			stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true,
+			stringResource(R.string.field_date), planDay, { planDay = it }, clearable = true,
 			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing }, importance = Importance.IMPORTANT,
 		)
-		androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-			Column(Modifier.weight(1f)) {
-				TimeField(
-					stringResource(R.string.field_start), planTime, { planTime = it }, clearable = true,
-					error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = Importance.IMPORTANT,
-					onOpen = { planGrid = true },
-				)
-			}
-			Column(Modifier.weight(1f)) {
-				TimeField(stringResource(R.string.field_end), planEnd, { planEnd = it }, clearable = true, endOfDay = true,
-					importance = Importance.OPTIONAL, onOpen = { planGrid = true })
-			}
-		}
-		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true, importance = Importance.OPTIONAL)
-		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true, importance = Importance.OPTIONAL)
+		/* one full-width field: the times stay readable (issue #47) */
+		RangeField(
+			stringResource(R.string.field_start_end), planTime, planEnd, { planGrid = true }, { planTime = ""; planEnd = "" },
+			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = Importance.IMPORTANT,
+		)
+		TextInput(stringResource(R.string.todo_field_title), title, { title = it }, singleLine = false, minLines = 3, importance = Importance.REQUIRED)
+		DateTimeField(stringResource(R.string.todo_field_due), due, time, { d, t -> due = d; time = t }, importance = Importance.OPTIONAL)
 		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it }, importance = Importance.OPTIONAL)
-		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
-		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false, importance = Importance.OPTIONAL)
+		var details by remember { mutableStateOf(notes.isNotBlank() || refs.isNotBlank()) }
+		if (!details)
+			TextButton(onClick = { details = true }) { Text(stringResource(R.string.todo_more_details) + " ▾") }
+		else {
+			TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
+			TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false, importance = Importance.OPTIONAL)
+		}
 	}
 	if (planGrid) {
 		val a = parseHhMm(planTime)
