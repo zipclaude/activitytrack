@@ -1,4 +1,4 @@
-Versione 0.6.0 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
+Versione 0.6.1 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
 resto.
 
 ## 1. Prima volta
@@ -28,6 +28,8 @@ iniziata o per registrarne una passata.
 - Trascina il riquadro: a sinistra pausa / riprendi, a destra stop / sospendi.
 - Ogni 30 minuti l'app chiede "Ancora su …?": rispondi dalla notifica.
 - Se ti sposti, l'app propone il **viaggio**; quando arrivi, il **lavoro**.
+- Con Impostazioni → **Chiamate** attivo, una telefonata con un contatto di
+  un altro cliente mette in pausa l'attività e propone di registrarla.
 
 ## 4. Fermare
 **⏹ Stop**: se cliente e descrizione ci sono, l'attività è **chiusa**;

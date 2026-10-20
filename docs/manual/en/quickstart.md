@@ -1,4 +1,4 @@
-Version 0.6.0 · for everyday use; the *User manual* explains everything else.
+Version 0.6.1 · for everyday use; the *User manual* explains everything else.
 
 ## 1. First time
 1. Install `ActivityTrack-<version>.apk` from the GitHub *Releases*.
@@ -28,6 +28,8 @@ record a past one.
 - Every 30 minutes the app asks "Still on …?": answer from the notification.
 - When you move, the app proposes the **travel**; when you arrive, the
   **work**.
+- With Settings → **Calls** on, a phone call with a contact of another
+  client pauses the activity and proposes to record the call.
 
 ## 4. Stopping
 **⏹ Stop**: with client and description filled in, the activity is
