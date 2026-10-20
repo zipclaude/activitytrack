@@ -170,6 +170,13 @@ Released v0.6.0 (2026-10-19). On `main` after it: #27 no automatic colours
   editable also with editable times off. Not yet on the phone: instrumented
   tests (contacts/calls, call pause, migration 9→10), device test, manual
   screenshots. Future: contacts may receive activity reports.
+- Saidea answers (2026-10-20): public client after a product update (no DB
+  edits); token lifetimes left to us (proposed: access 1 h, refresh sliding
+  30 d / absolute 180 d, rotation one-time); a demo user will come; a
+  `Customers` endpoint exists (Swagger at demo .../public/api/api-docs, needs
+  the user or basic auth); TravelTimeMinutes/TravelKm accepted with any
+  TimeFormat; no rate limit nor default page size, full OData ($expand too).
+  Token refresh serialised per process (rotation-safe).
 - PR #29 moved to schema v11 (AutoMigration 10→11, main merged in, 2026-10-19).
 - PR #33 merged: calls also outside working hours (setting `calls_always`, default off; owner: on-call duty).
 - Issue #34 (Antares: offer Sync when an entry closes + scheduled fetch, 5 min–1 day, default 1 h): answered 2026-10-19, implemented on PR #29.
