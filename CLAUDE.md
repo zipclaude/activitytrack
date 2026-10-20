@@ -142,8 +142,11 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
-Released v0.6.0 (2026-10-19). On `main` after it: #27 no automatic colours
-(bands only for chosen colours, agenda grey). Work queue = GitHub issues
+Released v0.6.1 (2026-10-20): calls with clients (#28, #33), no automatic
+colours (#27), empty Start opens the range grid (#30). Next: v0.7.0 with
+Antares (PR #29, #34) once Saidea gives a public client and a demo user. To
+check on the release app: READ_CALL_LOG may be a restricted setting for an
+APK installed from a file (App info → ⋮ → Allow restricted settings). Work queue = GitHub issues
 (owner answers questions in issue comments, numbered).
 
 **Open (2026-10-19 evening):**
@@ -332,7 +335,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-19 | Calendar events are private (ACCESS_PRIVATE), PR #19 |
 | 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
 | 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
-| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19); debug icon orange |
+| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
