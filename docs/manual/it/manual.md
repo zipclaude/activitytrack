@@ -1,20 +1,19 @@
-Versione 0.6.3 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.6.4 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.6.3**
-- **Tratti sovrapposti**: un tratto salvato o aggiunto sopra altri della
-  stessa attività li mostra e, confermando, li accorcia (o li divide); una
-  Pausa aggiunta dentro un tratto di lavoro lo divide in due (§6).
-- **Elimina** l'intera attività dalla sua scheda; se viene da un ticket, la
-  voce *Da fare* torna aperta (§6). Le voci *Da fare* create a mano si
-  possono eliminare (§8).
-- Icone accanto alle voci di Altro, Anagrafiche e Impostazioni.
+**Novità della 0.6.4** (versione non provata sul telefono)
+- **Agenda**: si riapre sull'ultima vista; in Giorno e Settimana l'orario di
+  lavoro riempie lo schermo e la scala si regola con **due dita** (§7).
+- **Griglia degli orari** centrata sull'orario di lavoro (§3).
+- *Da fare*: **"Modifica"** al posto di "Ripianifica" (§8).
+- **Pallino colorato** negli elenchi di aziende, clienti e contatti (§10).
+- **"Esegui backup ora"** in Importa / esporta, accanto al ripristino (§11).
+- PDF del manuale: le schermate non escono più a pagina intera.
 
-**Nella 0.6.2**: Inizio e Fine sulla stessa riga, inizio nel futuro da
-pianificare, riga Spesa · Foto · Nota voc. · File, periodo dei *Da fare* nella
-Home, "+" in tutti i dialoghi delle anagrafiche.
+**Nella 0.6.3**: tratti sovrapposti risolti con una conferma, eliminazione di
+un'attività e delle voci *Da fare* create a mano, icone nei menu.
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
 telefono in un'altra lingua l'app usa inglese, tedesco o spagnolo.
@@ -410,7 +409,7 @@ oggi; a destra il totale rendicontato del periodo).
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
-![Agenda: vista Giorno](img/agenda-day.png)
+![Agenda: vista Giorno (immagine vecchia: ora la scala si regola con due dita)](img/agenda-day.png)
 
 **Filtro per tag**: il chip "Tutti i tag ▾" accanto alle modalità (compare
 quando nel periodo ci sono attività con tag) mostra solo le attività con quel
