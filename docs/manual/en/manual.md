@@ -1,20 +1,20 @@
-Version 0.6.0 (October 2026). Please report any difference between this
+Version 0.6.1 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**New in 0.6.0**
-- ✕ in text fields to empty them (§3).
-- Home cards: band with the company's chosen colour, the "Closed" state is
-  neutral, times read "from–to (length)" (§3).
-- Activity screen: "+ Travel" and "+ Pause" at the top; with the compact
-  display the optional details fold away (§6).
-- Start with an **End**: to record a past activity or to set the planned end
-  (§4).
-- On Stop, an activity with client and description is **closed** at once (§6).
-- To-dos: quick filters company, ignored, period (24 h, 7 days, 30 days, all)
-  and advanced filters (§8).
-- Manual and quick start also as PDF, in Italian and English.
+**New in 0.6.1**
+- **Calls with clients**: incoming and outgoing calls with contacts are
+  recognised, another client's running activity is paused automatically, the
+  call is proposed as an activity, also outside working hours for on-call
+  duty (§5, Settings → Calls).
+- Clients' **contacts** in Master data, imported from the phone book; the
+  client screen lists the calls with their length (§10).
+- **Pause descriptions**, editable also with "Times freely editable" off (§6).
+- No automatic colours: the band appears only with a colour chosen for the
+  company or client; in the Agenda blocks without a colour are grey (§3).
+- "New activity": tapping an empty **Start** opens the grid to pick start and
+  end together (§4).
 
 Names in quotes are the labels of the English interface; the app also speaks
 Italian, German and Spanish.
