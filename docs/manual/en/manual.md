@@ -317,6 +317,8 @@ It works only within working hours (not on holidays and days off), unless
 **"Also outside working hours (on call)"** is on: then it always works.
 Calls with unknown numbers are ignored.
 
+![The calls in the client screen, with their length](img/client-calls.png)
+
 ---
 
 ## 6. Stopping and completing
@@ -474,6 +476,9 @@ system's due date.
   (one per line). **"Import from the phone book"** picks a number from the
   phone's contacts and proposes it as a new contact. They drive call
   recognition (§5); numbers match with or without the international prefix.
+
+![The clients' contacts](img/contacts.png)
+
 - **Places** — home and other places (home ends a return travel).
 - **Working hours and lunch break** — per weekday.
 - **Days off**.
@@ -602,6 +607,7 @@ Out-of-range values are adjusted when saving.
 |---|---|
 | Tracking stops | Settings → Location: "Allow all the time" and battery "Unrestricted" |
 | The activity notification is gone | reopen the app: it comes back |
+| A contact's call is not recognised | a switchboard may present a number different from the published one: look up the number received in the phone's call log and add it to the contact |
 | "Access to the data folder was lost" | the folder was moved or renamed: pick it again |
 | Dictation: "language not available" | Settings → Dictation: pick the language; for offline use download the language pack in the phone's voice settings |
 | The quick tile is not in the list | Settings → "Quick Settings tile" → "Add" |

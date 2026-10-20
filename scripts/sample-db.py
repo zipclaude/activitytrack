@@ -12,6 +12,7 @@
 import glob
 import json
 import os
+import re
 import sqlite3
 import sys
 import uuid
@@ -23,9 +24,11 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 
 def schema():
-	files = glob.glob(os.path.join(ROOT, "core/data/schemas/*/*.json"))
-	latest = max(files, key=lambda f: int(os.path.basename(f).split(".")[0]))
-	return json.load(open(latest))["database"]
+	# the version the app declares, not the newest file (another branch may have left one)
+	src = open(os.path.join(ROOT, "core/data/src/main/kotlin/it/infraconsulting/activitytrack/data/db/ActivityTrackDatabase.kt")).read()
+	version = re.search(r"const val VERSION = (\d+)", src).group(1)
+	files = glob.glob(os.path.join(ROOT, f"core/data/schemas/*/{version}.json"))
+	return json.load(open(files[0]))["database"]
 
 
 def ms(d: date, hh: int, mm: int) -> int:
@@ -83,7 +86,9 @@ def main(out):
 			"INSERT INTO time_entry (id, uid, todo_id, company_id, client_id, role_id, activity, status, mode, location_kind, notes, "
 			"zone_id, last_confirmed_utc_ms, unanswered_reminders, created_utc_ms, updated_utc_ms) "
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'CLIENT', ?, 'Europe/Rome', ?, 0, ?, ?)",
-			(eid, uuid.uuid4().hex, todo, company, client, role, activity, status, mode, notes, nowms, created, nowms),
+			# only the running one is updated now: the Home shows it in the big card
+			(eid, uuid.uuid4().hex, todo, company, client, role, activity, status, mode, notes, nowms, created,
+				nowms if status == "ACTIVE" else created),
 		)
 		for kind, start, end, km in segs:
 			db.execute(
@@ -113,14 +118,23 @@ def main(out):
 		entry(day, d2[0], d2[1], "Assistenza telefonica", 2, "CLOSED", None, [("WORK", (17, 0), (17, 40), None)])
 
 	# today: a closed morning call, a suspended job, a running activity
-	entry(today, 4, 2, "Configurazione rete", 1, "CLOSED", None, [("WORK", (8, 15), (9, 0), None)], tags=("remoto",))
-	entry(today, 6, 3, "Installazione stampanti", 1, "SUSPENDED", None, [("WORK", (9, 10), (9, 55), None)])
-	start = max(now - timedelta(minutes=95), datetime.combine(today, time(0, 5), ROME))
+	# relative to now (5-minute steps), all before the running one, whatever the time of the shots
+	start = max(now - timedelta(minutes=95), datetime.combine(today, time(2, 0), ROME))
+	start = start.replace(minute=start.minute - start.minute % 5, second=0, microsecond=0)
+	hm = lambda t: (t.hour, t.minute)
+	entry(today, 4, 2, "Configurazione rete", 1, "CLOSED", None,
+		[("WORK", hm(start - timedelta(minutes=110)), hm(start - timedelta(minutes=65)), None)], tags=("remoto",))
+	entry(today, 6, 3, "Installazione stampanti", 1, "SUSPENDED", None,
+		[("WORK", hm(start - timedelta(minutes=55)), hm(start - timedelta(minutes=10)), None)])
 	travel_end = start + timedelta(minutes=25)
+	# a call of another client paused it for a few minutes (issue #28)
+	call_start = travel_end + timedelta(minutes=30)
+	call_end = call_start + timedelta(minutes=6)
 	running = entry(today, 1, 1, "Aggiornamento server", 1, "ACTIVE", "WORK",
-		[("TRAVEL", (start.hour, start.minute), (travel_end.hour, travel_end.minute), 12.7),
-			("WORK", (travel_end.hour, travel_end.minute), None, None)],
+		[("TRAVEL", hm(start), hm(travel_end), 12.7), ("WORK", hm(travel_end), hm(call_start), None),
+			("PAUSE", hm(call_start), hm(call_end), None), ("WORK", hm(call_end), None, None)],
 		tags=("manutenzione",))
+	db.execute("UPDATE segment SET note = 'Telefonata Hotel Belvedere' WHERE entry_id = ? AND kind = 'PAUSE'", (running,))
 	db.execute("UPDATE time_entry SET last_confirmed_utc_ms = ? WHERE id = ?", (ms(today, travel_end.hour, travel_end.minute), running))
 	db.execute("INSERT INTO external_ref (entry_id, kind, value) VALUES (?, 'TICKET', 'INC-2041')", (running,))
 	db.execute("INSERT INTO expense (entry_id, amount_cents, description, created_utc_ms) VALUES (?, 450, 'Parcheggio', ?)", (running, nowms))
@@ -140,6 +154,21 @@ def main(out):
 	todo(3, 3, 5, "Report trimestrale", due_day=today - timedelta(days=1), priority=1)
 	todo(4, 2, 4, "Inventario hardware", today + timedelta(days=3), 600, dur=120)
 	todo(5, 1, 1, "Verifica UPS", ignored=True)
+	# contacts of the clients and the calls recognised with them (issue #28)
+	contacts = [(1, 1, "Marco Bianchi", ["+393331234567"]), (2, 2, "Laura Conti", ["0461234567", "+393477654321"]),
+		(3, 1, "Ufficio acquisti", ["0461987654"]), (4, 5, "Giulia Ferri", ["+393409876543"])]
+	for cid, client, name, numbers in contacts:
+		db.execute("INSERT INTO contact (id, client_id, name) VALUES (?, ?, ?)", (cid, client, name))
+		db.executemany("INSERT INTO contact_phone (contact_id, number) VALUES (?, ?)", [(cid, n) for n in numbers])
+	calls = [(1, 1, "INCOMING", 1, (10, 12), 254), (3, 1, "OUTGOING", 2, (15, 40), 95), (1, 1, "OUTGOING", 4, (11, 5), 612),
+		(2, 2, "INCOMING", 0, None, 360)]
+	for contact, client, direction, ago, at, seconds in calls:
+		t = call_start if at is None else datetime.combine(today - timedelta(days=ago), time(*at), ROME)
+		begin = int(t.timestamp() * 1000)
+		db.execute(
+			"INSERT INTO call_log (contact_id, client_id, direction, start_utc_ms, end_utc_ms) VALUES (?, ?, ?, ?, ?)",
+			(contact, client, direction, begin, begin + seconds * 1000),
+		)
 	db.commit()
 	db.close()
 	print(out)
