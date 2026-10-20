@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import java.time.ZoneId
 import java.time.LocalDate
 import java.time.Instant
@@ -101,15 +102,58 @@ class EntryViewModel(
 	}
 	fun reopen() = run { entries.apply(entryId, EntryCommand.REOPEN) }
 
+	/*
+	 * A segment saved over others of this entry (issue #40): the overlapped
+	 * ones are shown first; confirming shortens, splits or drops them.
+	 */
+	class OverlapPrompt(val conflicts: List<SegmentEntity>, val apply: suspend () -> Unit, val done: () -> Unit)
+
+	private val _overlap = MutableStateFlow<OverlapPrompt?>(null)
+	val overlap = _overlap.asStateFlow()
+
+	private fun saveOrAsk(except: Long?, startMs: Long, endMs: Long, done: () -> Unit, save: suspend (Boolean) -> Unit) = run {
+		val conflicts = entries.segmentConflicts(entryId, except, startMs, endMs)
+		if (conflicts.isEmpty()) {
+			save(false)
+			done()
+		} else
+			_overlap.value = OverlapPrompt(conflicts, { save(true) }, done)
+	}
+
+	fun confirmOverlap() {
+		val p = _overlap.value ?: return
+		_overlap.value = null
+		run(p.done) { p.apply() }
+	}
+
+	fun cancelOverlap() {
+		_overlap.value = null
+	}
+
 	fun addSegment(kind: SegmentKind, startMs: Long, endMs: Long, km: Double?, done: () -> Unit) =
-		run(done) { entries.addManualSegment(entryId, kind, startMs, endMs, km) }
+		saveOrAsk(null, startMs, endMs, done) { resolve -> entries.addManualSegment(entryId, kind, startMs, endMs, km, resolve) }
 
 	/* [note] = the description of a pause (issue #28), null = unchanged */
 	fun updateSegment(segmentId: Long, startMs: Long, endMs: Long, km: Double?, note: String? = null, done: () -> Unit) =
-		run(done) {
-			entries.updateSegment(segmentId, startMs, endMs, km)
+		saveOrAsk(segmentId, startMs, endMs, done) { resolve ->
+			entries.updateSegment(segmentId, startMs, endMs, km, resolve)
 			note?.let { entries.setSegmentNote(segmentId, it) }
 		}
+
+	/* Deleting the whole entry (issue #40): what it involves, asked first. */
+	private val _deletion = MutableStateFlow<EntryRepository.Deletion?>(null)
+	val deletion = _deletion.asStateFlow()
+
+	fun askDelete() = viewModelScope.launch { _deletion.value = entries.deletion(entryId) }
+
+	fun cancelDelete() {
+		_deletion.value = null
+	}
+
+	fun deleteEntry(done: () -> Unit) {
+		_deletion.value = null
+		run(done) { entries.deleteEntry(entryId) }
+	}
 
 	fun setSegmentNote(segmentId: Long, note: String, done: () -> Unit) = run(done) { entries.setSegmentNote(segmentId, note) }
 
