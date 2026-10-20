@@ -1,6 +1,15 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
+import androidx.compose.runtime.rememberUpdatedState
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import it.infraconsulting.activitytrack.ui.common.companyColor
 import it.infraconsulting.activitytrack.ui.common.NO_COLOR
 import it.infraconsulting.activitytrack.ui.common.ClearButton
@@ -168,6 +177,14 @@ class AgendaViewModel(
 	val mode = MutableStateFlow(AgendaMode.LIST)
 	val anchor = MutableStateFlow(LocalDate.now())
 
+	/* the last view picked comes back (issue #44) and every change is kept */
+	init {
+		viewModelScope.launch {
+			runCatching { AgendaMode.valueOf(settings.current().agendaView) }.getOrNull()?.let { mode.value = it }
+			mode.drop(1).collect { m -> settings.update { it.copy(agendaView = m.name) } }
+		}
+	}
+
 	val data = combine(mode, anchor, reports.changes, todos.open) { m, a, _, open -> Triple(m, a, open) }
 		.mapLatest { (m, a, open) -> load(m, a, open) }
 		.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -255,8 +272,8 @@ private fun clock(i: Instant, zone: ZoneId): String = i.atZone(zone).toLocalTime
 @Composable
 fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val vm = appViewModel { AgendaViewModel(it.reports, it.settings, it.todos, it.masterData) }
-	/* fit the working day to the screen (backlog 6) */
-	var fit by rememberSaveable { mutableStateOf(false) }
+	/* vertical scale of the day and week views, by pinch (issue #44); 1 = the working hours fill the screen */
+	var zoom by rememberSaveable { mutableStateOf(1f) }
 	val todosVm = todosViewModel()
 	val mode by vm.mode.collectAsState()
 	val anchor by vm.anchor.collectAsState()
@@ -285,9 +302,7 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 			title = stringResource(R.string.nav_agenda),
 			onBack = null,
 			actions = {
-				if (mode == AgendaMode.DAY || mode == AgendaMode.WEEK)
-				TextButton(onClick = { fit = !fit }) { Text(stringResource(if (fit) R.string.agenda_scroll else R.string.agenda_fit)) }
-			AddButton { plan(anchor, defaultSlot(anchor)) }
+				AddButton { plan(anchor, defaultSlot(anchor)) }
 				TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.agenda_today)) }
 			},
 		) { padding ->
@@ -314,8 +329,8 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 				val d = data ?: return@Column
 				when (mode) {
 					AgendaMode.LIST -> ListView(d, locale, onOpenEntry, onTodo, swipes)
-					AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, 1.2.dp, fit, onOpenEntry, onTodo, plan)
-					AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, 0.8.dp, fit, onOpenEntry, onTodo, plan) {
+					AgendaMode.DAY -> Timeline(listOf(anchor), d, locale, zoom, { zoom = it }, onOpenEntry, onTodo, plan)
+					AgendaMode.WEEK -> Timeline((0L..6L).map { d.from.plusDays(it) }, d, locale, zoom, { zoom = it }, onOpenEntry, onTodo, plan) {
 						vm.open(it, AgendaMode.DAY)
 					}
 					AgendaMode.MONTH -> MonthView(anchor, d, locale) { vm.open(it, AgendaMode.DAY) }
@@ -461,8 +476,8 @@ private fun Timeline(
 	days: List<LocalDate>,
 	d: AgendaData,
 	locale: Locale,
-	scrollMinuteHeight: Dp,
-	fit: Boolean,
+	zoom: Float,
+	onZoom: (Float) -> Unit,
 	onOpenEntry: (Long) -> Unit,
 	onTodo: (TodoEntity) -> Unit,
 	onPlan: (LocalDate, Int) -> Unit,
@@ -480,15 +495,15 @@ private fun Timeline(
 	}
 	val all = byDay.flatMap { (day, blocks) -> blocks.map { minuteOf(it.start, day) to minuteOf(it.end, day) } }
 	/*
-	 * Hours shown: the working hours and every block; scrolling adds 07-20
-	 * around them, fitting (backlog 6) shows just that span on one screen.
+	 * The whole day scrolls; at zoom 1 the working hours (and the blocks
+	 * inside them) fill the screen (owner, issue #44), pinch changes the scale.
 	 */
 	val workFrom = d.workFrom ?: 420
 	val workTo = d.workTo ?: 1200
-	val from = minOf(workFrom, all.minOfOrNull { it.first } ?: workFrom)
-	val to = maxOf(workTo, all.maxOfOrNull { it.second } ?: workTo)
-	val firstHour = (if (fit) from / 60 else minOf(7, from / 60)).coerceAtLeast(0)
-	val lastHour = (if (fit) (to + 59) / 60 else maxOf(20, (to + 59) / 60)).coerceIn(firstHour + 1, 30)
+	val from = workFrom.coerceAtLeast(0)
+	val to = workTo.coerceAtMost(1440).coerceAtLeast(from + 60)
+	val firstHour = 0
+	val lastHour = maxOf(24, ((all.maxOfOrNull { it.second } ?: 0) + 59) / 60).coerceAtMost(30)
 	val minutes = (lastHour - firstHour) * 60
 	val today = LocalDate.now()
 
@@ -516,18 +531,44 @@ private fun Timeline(
 				style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
 			)
 		BoxWithConstraints(Modifier.fillMaxSize()) {
-			val minuteHeight = if (fit) maxHeight / minutes else scrollMinuteHeight
+			val minuteHeight = maxHeight / (to - from) * zoom
 			val scroll = rememberScrollState()
+			val scope = rememberCoroutineScope()
+			val zoomNow by rememberUpdatedState(zoom)
 			/* opens on the running entry, else now (today), else the start of work (backlog 6) */
 			val density = LocalDensity.current
 			val focus = byDay.entries.firstNotNullOfOrNull { (day, blocks) -> blocks.firstOrNull { it.item?.running == true }?.let { minuteOf(it.start, day) } }
 				?: days.firstOrNull { it == today }?.let { LocalTime.now().let { t -> t.hour * 60 + t.minute } }
 				?: workFrom
-			LaunchedEffect(days.first(), fit, minutes) {
-				if (!fit)
-					scroll.scrollTo(with(density) { (minuteHeight * maxOf(0, focus - firstHour * 60 - 60)).roundToPx() })
+			/* the working hours at the top, unless the focus (running entry, now) lies outside them */
+			LaunchedEffect(days.first(), minutes) {
+				val top = if (focus in from..to) from else focus - 60
+				scroll.scrollTo(with(density) { (minuteHeight * maxOf(0, top - firstHour * 60)).roundToPx() })
 			}
-			Row(Modifier.fillMaxSize().verticalScroll(scroll)) {
+			Row(
+				Modifier.fillMaxSize()
+					/* two fingers: zoom the time axis around the fingers, before the scroll sees them */
+					.pointerInput(Unit) {
+						awaitEachGesture {
+							awaitFirstDown(requireUnconsumed = false)
+							do {
+								val event = awaitPointerEvent(PointerEventPass.Initial)
+								if (event.changes.count { it.pressed } >= 2) {
+									val factor = event.calculateZoom()
+									if (factor != 1f) {
+										val old = zoomNow
+										val new = (old * factor).coerceIn(MIN_ZOOM, MAX_ZOOM)
+										val y = event.calculateCentroid().y
+										onZoom(new)
+										scope.launch { scroll.scrollTo(((scroll.value + y) * new / old - y).toInt().coerceAtLeast(0)) }
+									}
+									event.changes.forEach { it.consume() }
+								}
+							} while (event.changes.any { it.pressed })
+						}
+					}
+					.verticalScroll(scroll),
+			) {
 				Box(Modifier.width(40.dp).height(minuteHeight * minutes)) {
 					for (h in firstHour until lastHour)
 						Text(
@@ -656,3 +697,7 @@ private fun MonthView(anchor: LocalDate, d: AgendaData, locale: Locale, onDay: (
 			}
 	}
 }
+
+/* pinch limits of the time axis: from the whole day on a screen to 4× the working hours */
+private const val MIN_ZOOM = 0.3f
+private const val MAX_ZOOM = 4f

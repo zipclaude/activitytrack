@@ -47,4 +47,12 @@ class TimeGridTest {
 		assertEquals(false, TimeGrid.busyCell(120, busy))	/* 10:00 */
 		assertEquals(true, TimeGrid.busyCell(TimeGrid.cellOf(599), busy))
 	}
+
+	@Test
+	fun windowOnWorkingHours() {
+		assertEquals(7, TimeGrid.windowForWork(8 * 60 + 30, 18 * 60))
+		assertEquals(0, TimeGrid.windowForWork(0, 120))
+		assertEquals(12, TimeGrid.windowForWork(20 * 60, 23 * 60))
+		assertEquals(6, TimeGrid.windowForWork(6 * 60, 22 * 60))
+	}
 }
