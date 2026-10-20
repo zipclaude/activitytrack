@@ -1,21 +1,22 @@
-Versione 0.6.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.6.2 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.6.1**
-- **Chiamate con i clienti**: riconoscimento delle chiamate entranti e
-  uscenti con i contatti, pausa automatica dell'attività di un altro cliente,
-  proposta di registrare la chiamata come attività, anche fuori orario per la
-  reperibilità (§5, Impostazioni → Chiamate).
-- **Contatti** dei clienti in Anagrafiche, con importazione dalla rubrica;
-  nella scheda del cliente l'elenco delle chiamate con la durata (§10).
-- **Descrizione delle pause**, modificabile anche con "Orari modificabili"
-  spento (§6).
-- Nessun colore automatico: la banda compare solo con un colore scelto per
-  l'azienda o il cliente; in Agenda i blocchi senza colore sono grigi (§3).
-- "Nuova attività": toccando **Inizio** vuoto si apre la griglia per scegliere
-  inizio e fine insieme (§4).
+**Novità della 0.6.2**
+- "Nuova attività": **Inizio e Fine** sulla stessa riga; un Inizio che oggi
+  deve ancora arrivare chiede se **pianificarla**, avviarla adesso o
+  registrarla da ieri (§4).
+- Scheda attività: in alto una riga **Spesa · Foto · Nota voc. · File** (§5).
+- *Da fare*: ripianificazione con **inizio e fine** sulla griglia al posto
+  della durata; nella Home il titolo **"Da fare · 24 h ▾"** sceglie il periodo
+  (§3, §8).
+- **"+"** per aggiungere al volo aziende, clienti, ruoli e predefinite in tutti
+  i dialoghi delle anagrafiche, anche nell'importazione dei contatti (§3).
+- Manuale: schermate più piccole, affiancate.
+
+**Nella 0.6.1**: chiamate con i clienti e reperibilità (§5), contatti e
+chiamate nella scheda del cliente (§10), descrizione delle pause (§6).
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
 telefono in un'altra lingua l'app usa inglese, tedesco o spagnolo.

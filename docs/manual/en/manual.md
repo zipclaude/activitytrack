@@ -1,20 +1,20 @@
-Version 0.6.1 (October 2026). Please report any difference between this
+Version 0.6.2 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**New in 0.6.1**
-- **Calls with clients**: incoming and outgoing calls with contacts are
-  recognised, another client's running activity is paused automatically, the
-  call is proposed as an activity, also outside working hours for on-call
-  duty (§5, Settings → Calls).
-- Clients' **contacts** in Master data, imported from the phone book; the
-  client screen lists the calls with their length (§10).
-- **Pause descriptions**, editable also with "Times freely editable" off (§6).
-- No automatic colours: the band appears only with a colour chosen for the
-  company or client; in the Agenda blocks without a colour are grey (§3).
-- "New activity": tapping an empty **Start** opens the grid to pick start and
-  end together (§4).
+**New in 0.6.2**
+- "New activity": **Start and End** on one row; a Start still to come today
+  asks whether to **plan** it, start now or record it from yesterday (§4).
+- Activity screen: a row **Expense · Photo · Voice · File** at the top (§5).
+- To-dos: re-planning with **start and end** on the grid instead of the
+  duration; on Home the **"To do · 24 h ▾"** title picks the period (§3, §8).
+- **"+"** to add companies, clients, roles and presets on the fly in every
+  master-data dialog, also when importing contacts (§3).
+- Manual: smaller screenshots, side by side.
+
+**In 0.6.1**: calls with clients and on-call duty (§5), contacts and calls in
+the client screen (§10), pause descriptions (§6).
 
 Names in quotes are the labels of the English interface; the app also speaks
 Italian, German and Spanish.
