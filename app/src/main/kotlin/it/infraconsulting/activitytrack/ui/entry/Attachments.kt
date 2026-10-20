@@ -108,11 +108,50 @@ class AttachmentsViewModel(
 
 @Composable
 fun AttachmentsSection(entryId: Long, zone: ZoneId) {
-	val vm = appViewModel(key = "attachments/$entryId") { AttachmentsViewModel(entryId, it.attachments, it.settings) }
+	val vm = attachmentsViewModel(entryId)
 	val items by vm.items.collectAsState()
 	val error by vm.error.collectAsState()
 	val context = LocalContext.current
 	var selected by remember { mutableStateOf<AttachmentEntity?>(null) }
+
+	if (items.isNotEmpty() || error != null)
+		Column(modifier = Modifier.padding(bottom = 8.dp)) {
+			SectionHeader(stringResource(R.string.attachments))
+			for (a in items)
+				ClickableRow(kindLabel(a.kind), clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)) {
+					vm.clearError()
+					selected = a
+				}
+			error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+		}
+
+	selected?.let { a ->
+		AlertDialog(
+			onDismissRequest = { selected = null },
+			title = { Text(kindLabel(a.kind)) },
+			confirmButton = { TextButton(onClick = { vm.open(context, a); selected = null }) { Text(stringResource(R.string.action_open)) } },
+			dismissButton = {
+				TextButton(onClick = { vm.delete(a); selected = null }) {
+					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+				}
+			},
+		)
+	}
+}
+
+@Composable
+private fun attachmentsViewModel(entryId: Long) =
+	appViewModel(key = "attachments/$entryId") { AttachmentsViewModel(entryId, it.attachments, it.settings) }
+
+/*
+ * Photo, voice note, file asked from the add row at the top of the entry
+ * screen (issue #37). Composed outside the lazy list, which leaves out the
+ * sections scrolled away.
+ */
+@Composable
+fun AttachmentAdder(entryId: Long, request: AddRequest?, onHandled: () -> Unit) {
+	val vm = attachmentsViewModel(entryId)
+	val context = LocalContext.current
 	var recording by remember { mutableStateOf(false) }
 
 	/* camera writes into the app cache through FileProvider, then the file is copied */
@@ -136,46 +175,29 @@ fun AttachmentsSection(entryId: Long, zone: ZoneId) {
 			recording = true
 	}
 
-	Column(modifier = Modifier.padding(bottom = 8.dp)) {
-		SectionHeader(stringResource(R.string.attachments))
-		for (a in items)
-			ClickableRow(kindLabel(a.kind), clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)) {
-				vm.clearError()
-				selected = a
-			}
-		FlowRow(
-			modifier = Modifier.padding(horizontal = 16.dp),
-			horizontalArrangement = Arrangement.spacedBy(8.dp),
-		) {
-			ColoredActionButton(stringResource(R.string.att_add_photo), R.drawable.ic_camera, PURPLE, {
+	/* photo, voice note, file from the add row at the top of the screen (issue #37) */
+	androidx.compose.runtime.LaunchedEffect(request) {
+		when (request) {
+			AddRequest.PHOTO -> {
 				vm.clearError()
 				val f = captureFile(context, "jpg")
 				pendingPhoto = f.path
 				takePicture.launch(FileProvider.getUriForFile(context, "${context.packageName}.files", f))
-			})
-			ColoredActionButton(stringResource(R.string.att_add_voice), R.drawable.ic_mic, TEAL, {
+			}
+			AddRequest.VOICE -> {
 				vm.clearError()
 				if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
 					recording = true
 				else
 					askMic.launch(Manifest.permission.RECORD_AUDIO)
-			})
-			ColoredActionButton(stringResource(R.string.att_add_file), R.drawable.ic_attach, INDIGO, { vm.clearError(); pickFile.launch(arrayOf("*/*")) })
+			}
+			AddRequest.FILE -> {
+				vm.clearError()
+				pickFile.launch(arrayOf("*/*"))
+			}
+			else -> return@LaunchedEffect
 		}
-		error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
-	}
-
-	selected?.let { a ->
-		AlertDialog(
-			onDismissRequest = { selected = null },
-			title = { Text(kindLabel(a.kind)) },
-			confirmButton = { TextButton(onClick = { vm.open(context, a); selected = null }) { Text(stringResource(R.string.action_open)) } },
-			dismissButton = {
-				TextButton(onClick = { vm.delete(a); selected = null }) {
-					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-				}
-			},
-		)
+		onHandled()
 	}
 	if (recording)
 		VoiceRecorderDialog(

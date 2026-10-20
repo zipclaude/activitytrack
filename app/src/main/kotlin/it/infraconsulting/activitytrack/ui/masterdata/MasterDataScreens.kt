@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
+import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
+import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import it.infraconsulting.activitytrack.ui.common.rememberReorder
 import it.infraconsulting.activitytrack.ui.common.ReorderRow
 import it.infraconsulting.activitytrack.ui.common.Reorder
@@ -243,14 +246,19 @@ private fun ClientDialog(
 	var name by remember { mutableStateOf(initial.name) }
 	var companyId by remember { mutableStateOf(initial.companyId) }
 	var archived by remember { mutableStateOf(initial.archived) }
+	var addCompany by remember { mutableStateOf(false) }
 	EditDialog(
 		stringResource(R.string.client_edit), error, onDismiss,
 		{ onSave(initial.copy(name = name, companyId = companyId, archived = archived)) }, onDelete,
 	) {
 		TextInput(stringResource(R.string.field_name), name, { name = it })
-		ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { companyId = it }
+		WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+			ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { companyId = it }
+		}
 		SwitchRow(stringResource(R.string.field_archived), archived) { archived = it }
 	}
+	if (addCompany)
+		QuickCompanyDialog(onDone = { addCompany = false; companyId = it }, onDismiss = { addCompany = false })
 }
 
 @Composable
@@ -426,6 +434,8 @@ fun PresetsScreen(onBack: () -> Unit) {
 		var text by remember(p) { mutableStateOf(p.text) }
 		var roleId by remember(p) { mutableStateOf(p.defaultRoleId) }
 		var companyId by remember(p) { mutableStateOf(p.companyId) }
+		var addRole by remember(p) { mutableStateOf(false) }
+		var addCompany by remember(p) { mutableStateOf(false) }
 		val delete = if (p.id != 0L) confirmDelete(p.text) { vm.delete(p) { editing = null } } else null
 		EditDialog(
 			stringResource(R.string.preset_edit), error, { editing = null },
@@ -433,18 +443,26 @@ fun PresetsScreen(onBack: () -> Unit) {
 			delete,
 		) {
 			TextInput(stringResource(R.string.field_text), text, { text = it }, singleLine = false)
-			ChoiceField(
-				stringResource(R.string.field_default_role),
-				listOf<Pair<Long?, String>>(null to none) + roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
-				roleId,
-			) { roleId = it }
-			ChoiceField(
-				stringResource(R.string.field_company),
-				listOf<Pair<Long?, String>>(null to none) +
-					companies.filter { !it.archived || it.id == companyId }.map { it.id to it.name },
-				companyId,
-			) { companyId = it }
+			WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
+				ChoiceField(
+					stringResource(R.string.field_default_role),
+					listOf<Pair<Long?, String>>(null to none) + roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
+					roleId,
+				) { roleId = it }
+			}
+			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+				ChoiceField(
+					stringResource(R.string.field_company),
+					listOf<Pair<Long?, String>>(null to none) +
+						companies.filter { !it.archived || it.id == companyId }.map { it.id to it.name },
+					companyId,
+				) { companyId = it }
+			}
 		}
+		if (addRole)
+			QuickRoleDialog(onDone = { addRole = false; roleId = it }, onDismiss = { addRole = false })
+		if (addCompany)
+			QuickCompanyDialog(onDone = { addCompany = false; companyId = it }, onDismiss = { addCompany = false })
 	}
 }
 

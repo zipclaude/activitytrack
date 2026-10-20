@@ -109,6 +109,8 @@ fun QuickPresetDialog(text: String, companyId: Long?, onDone: (String) -> Unit, 
 	var value by remember { mutableStateOf(text) }
 	var company by remember { mutableStateOf(companyId) }
 	var role by remember { mutableStateOf<Long?>(null) }
+	var addRole by remember { mutableStateOf(false) }
+	var addCompany by remember { mutableStateOf(false) }
 	val none = stringResource(R.string.field_none)
 	EditDialog(
 		title = stringResource(R.string.quick_preset),
@@ -117,17 +119,25 @@ fun QuickPresetDialog(text: String, companyId: Long?, onDone: (String) -> Unit, 
 		onConfirm = { vm.addPreset(value, company, role, onDone) },
 	) {
 		TextInput(stringResource(R.string.field_activity), value, { value = it }, importance = Importance.REQUIRED)
-		ChoiceField(
-			stringResource(R.string.field_company),
-			listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) + companies.filter { !it.archived }.map { it.id to it.name },
-			company,
-		) { company = it }
-		ChoiceField(
-			stringResource(R.string.field_role),
-			listOf<Pair<Long?, String>>(null to none) + roles.filter { !it.archived }.map { it.id to it.name },
-			role,
-		) { role = it }
+		WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+			ChoiceField(
+				stringResource(R.string.field_company),
+				listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) + companies.filter { !it.archived }.map { it.id to it.name },
+				company,
+			) { company = it }
+		}
+		WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
+			ChoiceField(
+				stringResource(R.string.field_role),
+				listOf<Pair<Long?, String>>(null to none) + roles.filter { !it.archived }.map { it.id to it.name },
+				role,
+			) { role = it }
+		}
 	}
+	if (addCompany)
+		QuickCompanyDialog(onDone = { addCompany = false; company = it }, onDismiss = { addCompany = false })
+	if (addRole)
+		QuickRoleDialog(onDone = { addRole = false; role = it }, onDismiss = { addRole = false })
 }
 
 /* [companyId]: proposed company (the current filter); done gets the client and its company. */
@@ -138,6 +148,7 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long) -> Unit, onDismiss:
 	val companies by vm.companies.collectAsState()
 	var name by remember { mutableStateOf("") }
 	var company by remember { mutableStateOf(companyId) }
+	var addCompany by remember { mutableStateOf(false) }
 	val chosen = company ?: companies.singleOrNull()?.id
 	EditDialog(
 		title = stringResource(R.string.quick_client),
@@ -146,9 +157,13 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long) -> Unit, onDismiss:
 		onConfirm = { vm.addClient(chosen, name, onDone) },
 	) {
 		TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
-		ChoiceField(
-			stringResource(R.string.field_company), companies.filter { !it.archived }.map { it.id to it.name }, chosen,
-			importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
-		) { company = it }
+		WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+			ChoiceField(
+				stringResource(R.string.field_company), companies.filter { !it.archived }.map { it.id to it.name }, chosen,
+				importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
+			) { company = it }
+		}
 	}
+	if (addCompany)
+		QuickCompanyDialog(onDone = { addCompany = false; company = it }, onDismiss = { addCompany = false })
 }

@@ -104,25 +104,23 @@ fun formatEur(cents: Long): String =
 	NumberFormat.getCurrencyInstance().apply { currency = Currency.getInstance("EUR") }
 		.format(BigDecimal.valueOf(cents, 2))
 
-/* Entry screen section: list, add, delete. */
 @Composable
-fun ExpensesSection(entryId: Long) {
-	val vm = appViewModel(key = "expenses/$entryId") {
-		ExpenseViewModel(it.entries, it.attachments, it.settings)
-	}
-	val items by remember(entryId) { vm.expenses(entryId) }.collectAsState()
-	var adding by remember { mutableStateOf(false) }
-	var deleting by remember { mutableStateOf<ExpenseEntity?>(null) }
+private fun expenseViewModel(entryId: Long) =
+	appViewModel(key = "expenses/$entryId") { ExpenseViewModel(it.entries, it.attachments, it.settings) }
 
-	Column(modifier = Modifier.padding(bottom = 8.dp)) {
-		SectionHeader(stringResource(R.string.expenses))
-		for (e in items)
-			ClickableRow(
-				"${formatEur(e.amountCents)} · ${e.description}",
-				if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
-			) { deleting = e }
-		Box(Modifier.padding(horizontal = 16.dp)) {
-			ColoredActionButton(stringResource(R.string.expense_add), R.drawable.ic_shortcut_expense, MAGENTA, { vm.clearError(); adding = true })
+/*
+ * "Expense" from the add row at the top of the entry screen (issue #37),
+ * composed outside the lazy list like AttachmentAdder.
+ */
+@Composable
+fun ExpenseAdder(entryId: Long, request: AddRequest?, onHandled: () -> Unit) {
+	val vm = expenseViewModel(entryId)
+	var adding by remember { mutableStateOf(false) }
+	androidx.compose.runtime.LaunchedEffect(request) {
+		if (request == AddRequest.EXPENSE) {
+			vm.clearError()
+			adding = true
+			onHandled()
 		}
 	}
 	if (adding) {
@@ -131,6 +129,24 @@ fun ExpensesSection(entryId: Long) {
 			vm.save(entryId, amount, text, receipt) { adding = false }
 		}
 	}
+}
+
+/* Entry screen section: the expenses, delete. */
+@Composable
+fun ExpensesSection(entryId: Long) {
+	val vm = expenseViewModel(entryId)
+	val items by remember(entryId) { vm.expenses(entryId) }.collectAsState()
+	var deleting by remember { mutableStateOf<ExpenseEntity?>(null) }
+
+	if (items.isNotEmpty())
+		Column(modifier = Modifier.padding(bottom = 8.dp)) {
+			SectionHeader(stringResource(R.string.expenses))
+			for (e in items)
+				ClickableRow(
+					"${formatEur(e.amountCents)} · ${e.description}",
+					if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
+				) { deleting = e }
+		}
 	deleting?.let { e ->
 		AlertDialog(
 			onDismissRequest = { deleting = null },

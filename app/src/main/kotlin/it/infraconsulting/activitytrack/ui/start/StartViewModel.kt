@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.domain.time.atMinute
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.Flow
@@ -156,6 +157,55 @@ class StartViewModel(
 	private var endMs: Long? = null
 
 	/*
+	 * A Start later than now (issue #37): plan it as a to-do today, start
+	 * now, or take it as yesterday's (the latest occurrence, M17).
+	 */
+	private val _askFuture = MutableStateFlow<Int?>(null)
+	val askFuture = _askFuture.asStateFlow()
+	private var futureAnswered = false
+
+	enum class FutureChoice { PLAN, NOW, YESTERDAY }
+
+	fun answerFuture(choice: FutureChoice) {
+		val min = _askFuture.value ?: return
+		_askFuture.value = null
+		when (choice) {
+			FutureChoice.PLAN -> plan(min)
+			FutureChoice.NOW -> {
+				_form.update { it.copy(startTime = "") }
+				requestStart(onStarted)
+			}
+			FutureChoice.YESTERDAY -> {
+				futureAnswered = true
+				requestStart(onStarted)
+			}
+		}
+	}
+
+	fun cancelFuture() {
+		_askFuture.value = null
+	}
+
+	/* A planned to-do today from the form: client, title = description (or client), start, end. */
+	private fun plan(startMin: Int) {
+		val f = _form.value
+		val end = parseHhMm(f.endTime)?.takeIf { it > startMin }
+		run(onStarted) {
+			val client = f.clientId?.let { master.client(it) }
+			val company = client?.companyId ?: f.companyId ?: throw ValidationException(ValidationException.Reason.CLIENT_REQUIRED)
+			val now = System.currentTimeMillis()
+			todos.save(
+				TodoEntity(
+					uid = java.util.UUID.randomUUID().toString(), companyId = company, clientId = client?.id,
+					title = f.activity.trim().ifEmpty { client?.name.orEmpty() },
+					planEpochDay = java.time.LocalDate.now().toEpochDay(), planStartMin = startMin,
+					durationMin = end?.let { it - startMin }, createdUtcMs = now, updatedUtcMs = now,
+				),
+			)
+		}
+	}
+
+	/*
 	 * Start and end of the form: a time without date is the latest one (today,
 	 * or yesterday if still to come); the end follows the start, across
 	 * midnight if earlier. null start = now.
@@ -254,6 +304,14 @@ class StartViewModel(
 			return fail(ValidationException.Reason.INVALID_TIME)
 		onStarted = onDone
 		decisions.clear()
+		/* a Start still to come today: ask first (issue #37) */
+		val startMin = parseHhMm(t)
+		val nowMin = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+		if (editableTimes.value && startMin != null && startMin > nowMin && !futureAnswered) {
+			_askFuture.value = startMin
+			return
+		}
+		futureAnswered = false
 		val end = times(_form.value).second
 		endMs = end
 		if (end != null && end <= System.currentTimeMillis()) {
