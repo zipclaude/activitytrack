@@ -1,20 +1,19 @@
-Version 0.6.2 (October 2026). Please report any difference between this
+Version 0.6.3 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**New in 0.6.2**
-- "New activity": **Start and End** on one row; a Start still to come today
-  asks whether to **plan** it, start now or record it from yesterday (§4).
-- Activity screen: a row **Expense · Photo · Voice · File** at the top (§5).
-- To-dos: re-planning with **start and end** on the grid instead of the
-  duration; on Home the **"To do · 24 h ▾"** title picks the period (§3, §8).
-- **"+"** to add companies, clients, roles and presets on the fly in every
-  master-data dialog, also when importing contacts (§3).
-- Manual: smaller screenshots, side by side.
+**New in 0.6.3**
+- **Overlapping segments**: a segment saved or added over others of the same
+  activity shows them and, once confirmed, shortens (or splits) them; a Pause
+  added inside a work segment splits it in two (§6).
+- **Delete** the whole activity from its screen; one from a ticket gives its
+  to-do back, open again (§6). To-dos created by hand can be deleted (§8).
+- Icons beside the items of More, Master data and Settings.
 
-**In 0.6.1**: calls with clients and on-call duty (§5), contacts and calls in
-the client screen (§10), pause descriptions (§6).
+**In 0.6.2**: Start and End on one row, a future start to plan, the Expense ·
+Photo · Voice · File row, the Home to-do period, "+" in every master-data
+dialog.
 
 Names in quotes are the labels of the English interface; the app also speaks
 Italian, German and Spanish.
