@@ -52,7 +52,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="md_companies">Firmen</string>
   <string name="md_clients">Kunden</string>
   <string name="md_roles">Rollen</string>
-  <string name="md_presets">Tätigkeitsvorlagen</string>
+  <string name="md_presets">Schnellauswahl</string>
   <string name="md_places">Orte</string>
   <string name="md_schedule">Arbeitszeiten und Mittagspause</string>
   <string name="md_days_off">Freie Tage</string>
@@ -71,7 +71,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="company_edit">Firma</string>
   <string name="client_edit">Kunde</string>
   <string name="role_edit">Rolle</string>
-  <string name="preset_edit">Tätigkeitsvorlage</string>
+  <string name="preset_edit">Schnellauswahl</string>
   <string name="site_edit">Standort</string>
   <string name="place_edit">Ort</string>
   <string name="interval_edit">Arbeitsintervall</string>
@@ -195,8 +195,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="field_client">Kunde</string>
   <string name="client_unknown">Noch unbekannt</string>
   <string name="start_no_clients">Keine Kunden für diese Firma.</string>
-  <string name="field_preset">Vorlage</string>
-  <string name="field_activity">Tätigkeit</string>
+  <string name="field_preset">Schnellauswahl</string>
+  <string name="field_activity">Beschreibung</string>
   <string name="field_role">Rolle</string>
   <string name="field_notes">Notizen</string>
   <string name="start_action">Starten</string>
@@ -310,7 +310,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_reopen">Als offen markieren</string>
   <string name="todo_edit">Aufgabe bearbeiten</string>
   <string name="todo_show_done">Erledigte anzeigen</string>
-  <string name="todo_field_title">Titel</string>
+  <string name="todo_field_title">Beschreibung</string>
   <string name="todo_field_due">Fällig am</string>
   <string name="todo_field_time">Fällig um</string>
   <string name="todo_field_priority">Priorität (1 = höchste)</string>
@@ -421,7 +421,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_plan_time_missing">Auch die geplante Uhrzeit angeben</string>
   <string name="todo_plan_date_missing">Auch das geplante Datum angeben</string>
   <string name="quick_role">Neue Rolle</string>
-  <string name="quick_preset">Neue Vorlage</string>
+  <string name="quick_preset">Neue Schnellauswahl</string>
   <string name="err_too_short">Kürzer als eine Minute: Zeiten prüfen.</string>
   <string name="short_title">„%1$s“ dauerte weniger als eine Minute</string>
   <string name="short_text">Wahrscheinlich versehentlich gestartet. Verwerfen?</string>
@@ -530,4 +530,22 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="backup_section">Sicherung</string>
   <string name="backup_hint">Täglich kommt eine Kopie der Daten in den Ordner „backup“ des Datenordners; dies erstellt jetzt eine.</string>
   <string name="backup_moved_hint">„Jetzt sichern“ und die Wiederherstellung sind unter Mehr → Import / Export.</string>
+  <!-- issue #41 materials, #44 contacts -->
+  <string name="materials">Material</string>
+  <string name="md_materials">Verbrauchsmaterial</string>
+  <string name="material_line">Material</string>
+  <string name="material_edit">Verbrauchsmaterial</string>
+  <string name="material_from_list">Aus dem Verbrauchsmaterial</string>
+  <string name="material_quantity">Menge</string>
+  <string name="material_unit">Maßeinheit</string>
+  <string name="material_unit_cost">Stückpreis (€)</string>
+  <string name="material_hint">Nur die Beschreibung ist Pflicht.</string>
+  <string name="short_material">Material</string>
+  <string name="field_contact">Kontakt</string>
+  <string name="contact_email">E-Mail</string>
+  <string name="err_invalid_value">Ungültiger Wert.</string>
+  <string name="field_description">Beschreibung</string>
+  <!-- issue #47 -->
+  <string name="field_start_end">Beginn – Ende</string>
+  <string name="todo_more_details">Notizen und Verweise</string>
 </resources>

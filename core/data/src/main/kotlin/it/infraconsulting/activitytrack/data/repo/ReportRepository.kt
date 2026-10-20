@@ -41,6 +41,7 @@ class ReportRepository(
 ) {
 	private val dao = db.entryDao()
 	private val master = db.masterDataDao()
+	private val materialDao = db.materialDao()
 
 	/* Emits on every entry change; screens reload their report on it. */
 	val changes = dao.observeLastChange()
@@ -78,6 +79,8 @@ class ReportRepository(
 			return Report(days, emptyMap())
 		val refs = dao.externalRefs(ids).groupBy({ it.entryId }, { it.value })
 		val expenses = dao.expenseTotals(ids).associate { it.entryId to it.cents }
+		val materials = if (ids.isEmpty()) emptyMap() else materialDao.linesOf(ids).groupBy { it.entryId }
+			.mapValues { (_, lines) -> lines.sumOf { it.totalCents ?: 0 } }
 		val tags = dao.tagsOf(ids).groupBy({ it.entryId }, { it.tag }).mapValues { it.value.sorted() }
 		val companies = master.allCompanies().associate { it.id to it.name }
 		val clients = master.allClients().associate { it.id to it.name }
@@ -95,6 +98,7 @@ class ReportRepository(
 				km = if (km.isEmpty()) null else km.sum(),
 				expensesCents = expenses[e.id] ?: 0,
 				tags = tags[e.id].orEmpty(),
+				materialsCents = materials[e.id] ?: 0,
 			)
 		}
 		return Report(days, meta)

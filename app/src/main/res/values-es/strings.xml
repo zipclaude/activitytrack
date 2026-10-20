@@ -52,7 +52,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="md_companies">Empresas</string>
   <string name="md_clients">Clientes</string>
   <string name="md_roles">Roles</string>
-  <string name="md_presets">Actividades predefinidas</string>
+  <string name="md_presets">Selecciones rápidas</string>
   <string name="md_places">Lugares</string>
   <string name="md_schedule">Horario laboral y pausa de comida</string>
   <string name="md_days_off">Días libres</string>
@@ -71,7 +71,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="company_edit">Empresa</string>
   <string name="client_edit">Cliente</string>
   <string name="role_edit">Rol</string>
-  <string name="preset_edit">Actividad predefinida</string>
+  <string name="preset_edit">Selección rápida</string>
   <string name="site_edit">Sede</string>
   <string name="place_edit">Lugar</string>
   <string name="interval_edit">Intervalo de trabajo</string>
@@ -195,8 +195,8 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="field_client">Cliente</string>
   <string name="client_unknown">Aún no se sabe</string>
   <string name="start_no_clients">No hay clientes para esta empresa.</string>
-  <string name="field_preset">Predefinida</string>
-  <string name="field_activity">Actividad</string>
+  <string name="field_preset">Selección rápida</string>
+  <string name="field_activity">Descripción</string>
   <string name="field_role">Rol</string>
   <string name="field_notes">Notas</string>
   <string name="start_action">Iniciar</string>
@@ -310,7 +310,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_reopen">Marcar como pendiente</string>
   <string name="todo_edit">Editar pendiente</string>
   <string name="todo_show_done">Mostrar las hechas</string>
-  <string name="todo_field_title">Título</string>
+  <string name="todo_field_title">Descripción</string>
   <string name="todo_field_due">Fecha límite</string>
   <string name="todo_field_time">Hora límite</string>
   <string name="todo_field_priority">Prioridad (1 = máxima)</string>
@@ -422,7 +422,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_plan_time_missing">Indica también la hora planificada</string>
   <string name="todo_plan_date_missing">Indica también la fecha planificada</string>
   <string name="quick_role">Nuevo rol</string>
-  <string name="quick_preset">Nueva predefinida</string>
+  <string name="quick_preset">Nueva selección rápida</string>
   <string name="err_too_short">Menos de un minuto: revisa las horas.</string>
   <string name="short_title">«%1$s» duró menos de un minuto</string>
   <string name="short_text">Probablemente iniciada por error. ¿Descartarla?</string>
@@ -531,4 +531,22 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="backup_section">Copia de seguridad</string>
   <string name="backup_hint">Cada día una copia de los datos va a la carpeta «backup» de la carpeta de datos; esto hace una ahora.</string>
   <string name="backup_moved_hint">«Hacer copia ahora» y la restauración están en Más → Importar / exportar.</string>
+  <!-- issue #41 materials, #44 contacts -->
+  <string name="materials">Materiales</string>
+  <string name="md_materials">Consumibles</string>
+  <string name="material_line">Material</string>
+  <string name="material_edit">Consumible</string>
+  <string name="material_from_list">De los consumibles</string>
+  <string name="material_quantity">Cantidad</string>
+  <string name="material_unit">Unidad de medida</string>
+  <string name="material_unit_cost">Coste unitario (€)</string>
+  <string name="material_hint">Solo la descripción es obligatoria.</string>
+  <string name="short_material">Material</string>
+  <string name="field_contact">Contacto</string>
+  <string name="contact_email">Correo electrónico</string>
+  <string name="err_invalid_value">Valor no válido.</string>
+  <string name="field_description">Descripción</string>
+  <!-- issue #47 -->
+  <string name="field_start_end">Inicio – Fin</string>
+  <string name="todo_more_details">Notas y referencias</string>
 </resources>

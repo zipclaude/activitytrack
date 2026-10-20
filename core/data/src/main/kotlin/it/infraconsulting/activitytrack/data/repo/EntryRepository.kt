@@ -71,6 +71,8 @@ data class EntryDetails(
 	val locality: String?,
 	val locationKind: LocationKind?,
 	val notes: String?,
+	/* a contact of the entry's client (issue #44) */
+	val contactId: Long? = null,
 )
 
 /*
@@ -406,6 +408,8 @@ class EntryRepository(
 				locality = d.locality?.trim()?.ifEmpty { null },
 				locationKind = d.locationKind,
 				notes = d.notes?.trim()?.ifEmpty { null },
+				/* only a contact of that client stays */
+				contactId = d.contactId?.takeIf { id -> db.callDao().contact(id)?.clientId == d.clientId },
 				updatedUtcMs = clock.millis(),
 			),
 		)

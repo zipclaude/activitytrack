@@ -1,4 +1,4 @@
-Version 0.6.4 (October 2026). Please report any difference between this
+Version 0.6.5 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
@@ -293,15 +293,23 @@ closes the notification without running the action. If the buttons are not
 visible, drag the notification down to expand it.
 
 At the top of the activity screen, below the state, a row of buttons adds an
-**Expense**, a **Photo**, a **Voice** note and a **File**; the "Expenses" and
-"Attachments" sections further down list them (they appear once there is
-one).
+**Expense**, a **Photo**, a **Voice** note, a **File** and a **Material**; the
+"Expenses", "Materials" and "Attachments" sections further down list them
+(they appear once there is one).
 
 ### Expenses
 In the activity screen, the **Expense** button: amount in euro,
 description, optional "Receipt photo". Quick expense: the **€** button of the
 widget or the **"Expense"** icon shortcut (goes to the most recent running
 activity).
+
+### Consumables
+The **Material** button: the consumables left at the client. **Description**
+required; **quantity**, **unit of measure** and **unit cost** optional.
+Picking one from Master data → **Consumables** copies description, unit and
+cost, still editable (a later price change leaves the recorded lines as
+they are). The "Materials" section shows the total; tap a line to edit or
+delete it.
 
 ### Attachments
 Buttons **Photo** (camera), **Voice** (records until "Stop and save"),
@@ -346,6 +354,8 @@ complete", for the question about the to-do. In the activity screen:
 - "+ Travel" and "+ Pause" at the top add forgotten segments (also with km;
   at least one minute);
 - check client, description (can be dictated), role, locality, place, notes;
+  the **Contact** field (optional, when the client has contacts) ties the
+  activity to the person you worked for;
   with the compact display locality, place and notes fold under "More details
   ▾" while empty;
 - "Times": with "Times freely editable" on, tapping a closed segment opens
@@ -499,13 +509,16 @@ system's due date.
 
 ![Manual order: the ≡ handle drags the row](img/order.png)
 
-- **Contacts** — the clients' people: name, client and one or more numbers
-  (one per line). **"Import from the phone book"** picks a number from the
+- **Contacts** — the clients' people: name, client, numbers (optional, one per
+  line) and **e-mail** (optional). **"Import from the phone book"** picks a number from the
   phone's contacts and proposes it as a new contact. They drive call
   recognition (§5); numbers match with or without the international prefix.
 
 ![The clients' contacts](img/contacts.png)
 
+- **Consumables** — description, unit of measure, unit cost, company
+  (optional, for different price lists); proposed in the activities'
+  material lines.
 - **Places** — home and other places (home ends a return travel).
 - **Working hours and lunch break** — per weekday.
 - **Days off**.
@@ -764,7 +777,9 @@ stay until you change them.
 | Attachment | photo, voice note, file | of an activity, in the data folder |
 | External reference | ticket, URL, code | of an activity |
 | Tag | free word | of an activity |
-| Contact | name, numbers | of a client; recognises calls |
+| Contact | name, numbers, e-mail | of a client; recognises calls; optional on an activity |
+| Consumable | description, unit, unit cost, company | proposed in the material lines |
+| Material line | description, quantity, unit, unit cost | of an activity |
 | Call | contact, direction, start, end | of a contact and its client |
 | To-do | title, client, plan, duration, due date, priority, notes, references, state | of a company (and a client); gives activities |
 | Place | home or other, coordinates | home ends return travels |
@@ -856,7 +871,8 @@ never go below 10 minutes (Android limits alarms in Doze).
   *night activities until* time, otherwise it is split at midnight.
 - CSV: one line per activity and day, with start, end, rounded work, pause and
   travel hours, company, client, role, description, km, expenses, notes,
-  references, locality, tags; km and expenses on the first day.
+  references, locality, tags, materials (total in €, apart from the
+  expenses); km, expenses and materials on the first day.
 
 ### Calendar
 One event per activity and day, from its start (a running activity ends

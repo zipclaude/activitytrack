@@ -60,7 +60,7 @@ Tap the green play button below to start one.</string>
   <string name="md_companies">Companies</string>
   <string name="md_clients">Clients</string>
   <string name="md_roles">Roles</string>
-  <string name="md_presets">Activity presets</string>
+  <string name="md_presets">Quick picks</string>
   <string name="md_places">Places</string>
   <string name="md_schedule">Working hours and lunch break</string>
   <string name="md_days_off">Days off</string>
@@ -79,7 +79,7 @@ Tap the green play button below to start one.</string>
   <string name="company_edit">Company</string>
   <string name="client_edit">Client</string>
   <string name="role_edit">Role</string>
-  <string name="preset_edit">Activity preset</string>
+  <string name="preset_edit">Quick pick</string>
   <string name="site_edit">Site</string>
   <string name="place_edit">Place</string>
   <string name="interval_edit">Working interval</string>
@@ -207,8 +207,8 @@ Tap the green play button below to start one.</string>
   <string name="field_client">Client</string>
   <string name="client_unknown">Not known yet</string>
   <string name="start_no_clients">No clients for this company.</string>
-  <string name="field_preset">Preset</string>
-  <string name="field_activity">Activity</string>
+  <string name="field_preset">Quick pick</string>
+  <string name="field_activity">Description</string>
   <string name="field_role">Role</string>
   <string name="field_notes">Notes</string>
   <string name="start_action">Start</string>
@@ -322,7 +322,7 @@ Tap the green play button below to start one.</string>
   <string name="todo_reopen">Mark as not done</string>
   <string name="todo_edit">Edit to-do</string>
   <string name="todo_show_done">Show done ones</string>
-  <string name="todo_field_title">Title</string>
+  <string name="todo_field_title">Description</string>
   <string name="todo_field_due">Due date</string>
   <string name="todo_field_time">Due time</string>
   <string name="todo_field_priority">Priority (1 = highest)</string>
@@ -433,7 +433,7 @@ Tap the green play button below to start one.</string>
   <string name="todo_plan_time_missing">Set the planned time too</string>
   <string name="todo_plan_date_missing">Set the planned date too</string>
   <string name="quick_role">New role</string>
-  <string name="quick_preset">New preset</string>
+  <string name="quick_preset">New quick pick</string>
   <string name="err_too_short">Shorter than one minute: check the times.</string>
   <string name="short_title">\"%1$s\" lasted less than a minute</string>
   <string name="short_text">Probably started by mistake. Discard it?</string>
@@ -542,4 +542,22 @@ Tap the green play button below to start one.</string>
   <string name="backup_section">Backup</string>
   <string name="backup_hint">A copy of the data goes into the \"backup\" folder of the data folder every day; this makes one now.</string>
   <string name="backup_moved_hint">\"Back up now\" and the restore are in More → Import / export.</string>
+  <!-- issue #41 materials, #44 contacts -->
+  <string name="materials">Materials</string>
+  <string name="md_materials">Consumables</string>
+  <string name="material_line">Material</string>
+  <string name="material_edit">Consumable</string>
+  <string name="material_from_list">From the consumables</string>
+  <string name="material_quantity">Quantity</string>
+  <string name="material_unit">Unit of measure</string>
+  <string name="material_unit_cost">Unit cost (€)</string>
+  <string name="material_hint">Only the description is required.</string>
+  <string name="short_material">Material</string>
+  <string name="field_contact">Contact</string>
+  <string name="contact_email">E-mail</string>
+  <string name="err_invalid_value">Invalid value.</string>
+  <string name="field_description">Description</string>
+  <!-- issue #47 -->
+  <string name="field_start_end">Start – End</string>
+  <string name="todo_more_details">Notes and references</string>
 </resources>

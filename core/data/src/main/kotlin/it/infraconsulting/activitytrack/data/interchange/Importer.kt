@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.interchange
 
+import it.infraconsulting.activitytrack.data.db.EntryMaterialEntity
 import it.infraconsulting.activitytrack.data.db.EntryTagEntity
 import it.infraconsulting.activitytrack.domain.tag.Tags
 import androidx.room.withTransaction
@@ -332,6 +333,19 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 					ExpenseEntity(entryId = id, amountCents = cents, description = e.description,
 						createdUtcMs = runCatching { Instant.parse(e.createdUtc).toEpochMilli() }.getOrDefault(now)),
 				)
+		}
+		/* issue #41: description required; a malformed number is left out, the line kept */
+		x.materials.filter { it.description.isNotBlank() }.forEach { m ->
+			db.materialDao().insertLine(
+				EntryMaterialEntity(
+					entryId = id, description = m.description.trim(),
+					quantity = m.quantity?.let { runCatching { BigDecimal(it).toDouble() }.getOrNull() }?.takeIf { it > 0 },
+					unit = m.unit?.trim()?.ifEmpty { null },
+					unitCostCents = m.unitCost?.let { runCatching { BigDecimal(it).movePointRight(2).setScale(0, java.math.RoundingMode.HALF_UP).longValueExact() }.getOrNull() }
+						?.takeIf { it >= 0 },
+					createdUtcMs = now,
+				),
+			)
 		}
 		x.refs.map(String::trim).filter(String::isNotEmpty).forEach {
 			entries.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(it), value = it))

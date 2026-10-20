@@ -132,6 +132,81 @@ fun TimeField(
 	}
 }
 
+/*
+ * Start and end in one full-width field, "21:00 – 22:30 (1:30)", so the
+ * times stay readable in a dialog (owner, issue #47); a tap calls [onOpen]
+ * (the range grid).
+ */
+@Composable
+fun RangeField(label: String, start: String, end: String, onOpen: () -> Unit, onClear: (() -> Unit)?, error: String? = null, importance: Importance? = null) {
+	val a = parseHhMm(start)
+	val b = parseHhMm(end)
+	val shown = when {
+		a == null -> ""
+		b == null || b <= a -> formatMin(a)
+		else -> formatMin(a) + " – " + formatMin(b) + " (%d:%02d)".format((b - a) / 60, (b - a) % 60)
+	}
+	PickerTextField(label, shown, R.drawable.ic_clock, onOpen, onClear?.takeIf { shown.isNotEmpty() }, error, importance)
+}
+
+/*
+ * A date and a time in one field (the due date, issue #47): the calendar
+ * first, then the standard clock, [defaultTime] proposed for a new value.
+ * Values "yyyy-mm-dd" and "hh:mm"; clearing empties both.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateTimeField(
+	label: String,
+	date: String,
+	time: String,
+	onChange: (String, String) -> Unit,
+	defaultTime: Int = 23 * 60 + 59,
+	importance: Importance? = null,
+) {
+	var pickDate by remember { mutableStateOf(false) }
+	var pickTime by remember { mutableStateOf<String?>(null) }
+	val locale = LocalConfiguration.current.locales[0]
+	val d = parseDate(date)
+	val t = parseHhMm(time)
+	PickerTextField(
+		label = label,
+		shown = d?.let { dateText(it, locale) + (t?.let { m -> " " + formatMin(m) } ?: "") }.orEmpty(),
+		icon = R.drawable.ic_calendar,
+		onOpen = { pickDate = true },
+		onClear = if (date.isNotBlank()) ({ onChange("", "") }) else null,
+		error = null,
+		importance = importance,
+	)
+	if (pickDate) {
+		val state = rememberDatePickerState(
+			initialSelectedDateMillis = (d ?: LocalDate.now()).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+		)
+		DatePickerDialog(
+			onDismissRequest = { pickDate = false },
+			confirmButton = {
+				TextButton(onClick = {
+					pickDate = false
+					pickTime = state.selectedDateMillis?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate().toString() }
+				}) { Text(stringResource(R.string.action_ok)) }
+			},
+			dismissButton = { TextButton(onClick = { pickDate = false }) { Text(stringResource(R.string.action_cancel)) } },
+		) { DatePicker(state = state) }
+	}
+	pickTime?.let { day ->
+		val start = t ?: defaultTime
+		val state = rememberTimePickerState(initialHour = start / 60, initialMinute = start % 60, is24Hour = true)
+		AlertDialog(
+			/* without a time the date stays, with the proposed time */
+			onDismissRequest = { onChange(day, formatMin(start)); pickTime = null },
+			confirmButton = {
+				TextButton(onClick = { onChange(day, formatMin(state.hour * 60 + state.minute)); pickTime = null }) { Text(stringResource(R.string.action_ok)) }
+			},
+			text = { TimePicker(state = state) },
+		)
+	}
+}
+
 /* "lun 19/10/2026" in the app language. */
 fun dateText(d: LocalDate, locale: Locale): String =
 	d.format(DateTimeFormatter.ofPattern("EEE dd/MM/yyyy", locale))
@@ -143,7 +218,7 @@ private fun PickerTextField(label: String, shown: String, icon: Int, onOpen: () 
 	LaunchedEffect(source) {
 		source.interactions.collect { if (it is PressInteraction.Release) onOpen() }
 	}
-	OutlinedTextField(
+	CompactTextField(
 		value = shown,
 		onValueChange = {},
 		readOnly = true,

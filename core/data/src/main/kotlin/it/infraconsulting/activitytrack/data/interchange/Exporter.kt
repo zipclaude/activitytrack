@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.interchange
 
+import it.infraconsulting.activitytrack.domain.interchange.XMaterial
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
@@ -109,6 +110,7 @@ class Exporter(private val db: ActivityTrackDatabase) {
 			val ids = candidates.map { it.id }
 			val segments = if (ids.isEmpty()) emptyMap() else bulk.segmentsOf(ids).groupBy { it.entryId }
 			val expenses = if (ids.isEmpty()) emptyMap() else bulk.expensesOf(ids).groupBy { it.entryId }
+			val materials = if (ids.isEmpty()) emptyMap() else db.materialDao().linesOf(ids).groupBy { it.entryId }
 			val refs = if (ids.isEmpty()) emptyMap() else entries.externalRefs(ids).groupBy { it.entryId }
 			val tags = if (ids.isEmpty()) emptyMap() else entries.tagsOf(ids).groupBy({ it.entryId }, { it.tag })
 			out = out.copy(
@@ -141,6 +143,12 @@ class Exporter(private val db: ActivityTrackDatabase) {
 						},
 						refs = refs[e.id].orEmpty().map { it.value },
 						tags = tags[e.id].orEmpty().sorted(),
+						materials = materials[e.id].orEmpty().map { m ->
+							XMaterial(
+								m.description, m.quantity?.let { BigDecimal.valueOf(it).stripTrailingZeros().toPlainString() }, m.unit,
+								m.unitCostCents?.let { BigDecimal.valueOf(it, 2).toPlainString() },
+							)
+						},
 					)
 				},
 			)

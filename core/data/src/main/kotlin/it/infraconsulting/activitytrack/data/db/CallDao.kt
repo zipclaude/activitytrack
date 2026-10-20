@@ -57,4 +57,7 @@ interface CallDao {
 			"WHERE call_log.client_id = :clientId ORDER BY start_utc_ms DESC",
 	)
 	fun observeCallsOf(clientId: Long): Flow<List<CallRow>>
+
+	@Query("SELECT * FROM contact WHERE id = :id")
+	suspend fun contact(id: Long): ContactEntity?
 }
