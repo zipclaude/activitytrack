@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.common
 
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
@@ -171,8 +172,10 @@ fun TextInput(
 	singleLine: Boolean = true,
 	trailing: (@Composable () -> Unit)? = null,
 	importance: Importance? = null,
+	/* a taller field for long text, e.g. the description (issue #47) */
+	minLines: Int = 1,
 ) {
-	OutlinedTextField(
+	CompactTextField(
 		value = value,
 		onValueChange = onChange,
 		label = { Text(label) },
@@ -185,6 +188,7 @@ fun TextInput(
 			}
 		}),
 		singleLine = singleLine,
+		minLines = minLines,
 		isError = isError,
 		colors = importanceColors(importance, value.isNotBlank()),
 		keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
@@ -214,7 +218,7 @@ fun <T> SearchableChoiceField(
 	/* the full list while the field shows the current choice, matches once the user types */
 	val shown = if (text == selectedText) options else options.filter { fold(it.second).contains(query) }
 	ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-		OutlinedTextField(
+		CompactTextField(
 			value = text,
 			onValueChange = { text = it; expanded = true },
 			singleLine = true,
@@ -273,7 +277,7 @@ fun <T> ChoiceField(
 ) {
 	var expanded by remember { mutableStateOf(false) }
 	ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-		OutlinedTextField(
+		CompactTextField(
 			value = options.firstOrNull { it.first == selected }?.second.orEmpty(),
 			onValueChange = {},
 			readOnly = true,
@@ -390,3 +394,61 @@ fun parseHhMm(s: String): Int? {
 
 /* Decimal number accepting both '.' and ',' as separator. */
 fun parseDecimal(s: String): Double? = s.trim().replace(',', '.').toDoubleOrNull()
+
+/*
+ * Outlined field with less vertical padding (owner, issue #47: compact
+ * forms, about 48 dp instead of 56), shared by every form field.
+ */
+@Composable
+fun CompactTextField(
+	value: String,
+	onValueChange: (String) -> Unit,
+	modifier: Modifier = Modifier,
+	readOnly: Boolean = false,
+	singleLine: Boolean = true,
+	minLines: Int = 1,
+	label: (@Composable () -> Unit)? = null,
+	leadingIcon: (@Composable () -> Unit)? = null,
+	trailingIcon: (@Composable () -> Unit)? = null,
+	isError: Boolean = false,
+	supportingText: (@Composable () -> Unit)? = null,
+	colors: androidx.compose.material3.TextFieldColors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(),
+	keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+	interactionSource: androidx.compose.foundation.interaction.MutableInteractionSource? = null,
+) {
+	val source = interactionSource ?: remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+	androidx.compose.foundation.text.BasicTextField(
+		value = value,
+		onValueChange = onValueChange,
+		modifier = modifier.defaultMinSize(minHeight = 48.dp),
+		readOnly = readOnly,
+		textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+		keyboardOptions = keyboardOptions,
+		singleLine = singleLine,
+		minLines = if (singleLine) 1 else minLines,
+		maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+		interactionSource = source,
+		cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+	) { inner ->
+		androidx.compose.material3.OutlinedTextFieldDefaults.DecorationBox(
+			value = value,
+			innerTextField = inner,
+			enabled = true,
+			singleLine = singleLine,
+			visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
+			interactionSource = source,
+			isError = isError,
+			label = label,
+			leadingIcon = leadingIcon,
+			trailingIcon = trailingIcon,
+			supportingText = supportingText,
+			colors = colors,
+			contentPadding = androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding(top = 12.dp, bottom = 12.dp),
+			container = {
+				androidx.compose.material3.OutlinedTextFieldDefaults.Container(
+					enabled = true, isError = isError, interactionSource = source, colors = colors,
+				)
+			},
+		)
+	}
+}
