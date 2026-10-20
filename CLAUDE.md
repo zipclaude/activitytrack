@@ -72,7 +72,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
 | 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
-| Issue #28 calls | **implemented** (PR #32, on `main`): contacts, call recognition, call pauses, client calls (schema v10); device test pending |
+| Issue #28 calls | **done** (PR #32, #33, on `main`): contacts, call recognition, call pauses, client calls, on-call option (schema v10); instrumented 53/53 and device-tested 2026-10-20 (real incoming call: pause, proposal, client calls, pause note with editable times off) |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
 | M16 list order | **done** (PR #18, on `main`, v0.5.0): backlog 1 (schema v8); device-tested 2026-10-19 |
@@ -166,9 +166,8 @@ Released v0.6.0 (2026-10-19). On `main` after it: #27 no automatic colours
   the latest call-log row; Contacts master data (import via ACTION_PICK,
   no READ_CONTACTS); client screen "Calls"; Settings → Calls (incoming /
   outgoing off by default, auto pause and proposal on); pause notes
-  editable also with editable times off. Not yet on the phone: instrumented
-  tests (contacts/calls, call pause, migration 9→10), device test, manual
-  screenshots. Future: contacts may receive activity reports.
+  editable also with editable times off. Device-tested 2026-10-20; the
+  owner's PBX presents +39 0461 042222, not the published 0461042200. Future: contacts may receive activity reports.
 - PR #29 must move its schema to **v11** (AutoMigration 10→11) before merging.
 - PR #33 merged: calls also outside working hours (setting `calls_always`, default off; owner: on-call duty).
 - Issue #34 (Antares: offer Sync when an entry closes + scheduled fetch, 5 min–1 day, default 1 h): questions asked, waiting for answers; WorkManager periodic minimum is 15 min.
@@ -383,6 +382,11 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
   empty DB.
 - ViewModel `state()` flows are `WhileSubscribed`: reading `.value` of one no
   composable collects returns the initial value forever; collect it in the screen.
+- `git add core` on a branch also stages files another branch left untracked
+  (a Room schema JSON of a newer version reached `main` this way, 2026-10-20):
+  check `git status` before committing after switching branches.
+- `scripts/sample-db.py` builds the schema of `ActivityTrackDatabase.VERSION`;
+  today's sample times are relative to now (the Home's big card = latest).
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 
