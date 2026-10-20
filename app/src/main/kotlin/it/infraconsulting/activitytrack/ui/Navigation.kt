@@ -60,6 +60,8 @@ sealed interface Screen {
 	data class StartFromCall(val clientId: Long, val startMs: Long, val endMs: Long, val contact: String) : Screen
 	/* contacts of the clients (issue #28) */
 	data object Contacts : Screen
+	/* consumables (issue #41) */
+	data object Materials : Screen
 	/* late entry for a day, from the day-start prompt */
 	data class LateEntry(val epochDay: Long) : Screen
 
@@ -80,7 +82,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Agenda, More, Start, StartTravel, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures, Contacts)
+			listOf(Home, Agenda, More, Start, StartTravel, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures, Contacts, Materials)
 				.associateBy { it.key() }
 		}
 

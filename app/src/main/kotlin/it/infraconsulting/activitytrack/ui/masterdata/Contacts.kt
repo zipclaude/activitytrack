@@ -105,21 +105,21 @@ fun ContactsScreen(onBack: () -> Unit) {
 	editing?.let { (c, numbers) ->
 		var name by remember(c) { mutableStateOf(c.name) }
 		var phones by remember(c) { mutableStateOf(numbers.joinToString("\n")) }
+		var email by remember(c) { mutableStateOf(c.email.orEmpty()) }
 		var clientId by remember(c) { mutableStateOf(c.clientId) }
 		var addClient by remember(c) { mutableStateOf(false) }
 		val delete = if (c.id != 0L) confirmDelete(c.name) { vm.delete(c) { editing = null } } else null
 		EditDialog(
-			stringResource(R.string.contact_edit), error.takeIf { it != Reason.BLANK_VALUE }, { editing = null },
-			{ vm.save(c.copy(name = name, clientId = clientId), phones.lines()) { editing = null } }, delete,
+			stringResource(R.string.contact_edit), error, { editing = null },
+			{ vm.save(c.copy(name = name, clientId = clientId, email = email), phones.lines()) { editing = null } }, delete,
 		) {
 			TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
 			/* the client may not exist yet, e.g. a number imported from the phone book (issue #37) */
 			WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
 				SearchableChoiceField(stringResource(R.string.field_client), clients.map { it.id to it.name }, clientId, importance = Importance.REQUIRED) { clientId = it }
 			}
-			TextInput(stringResource(R.string.contact_numbers), phones, { phones = it }, singleLine = false, importance = Importance.REQUIRED)
-			if (error == Reason.BLANK_VALUE)
-				Text(stringResource(R.string.contact_numbers_missing), color = MaterialTheme.colorScheme.error)
+			TextInput(stringResource(R.string.contact_numbers), phones, { phones = it }, singleLine = false, importance = Importance.OPTIONAL)
+			TextInput(stringResource(R.string.contact_email), email, { email = it }, androidx.compose.ui.text.input.KeyboardType.Email, importance = Importance.OPTIONAL)
 		}
 		if (addClient)
 			QuickClientDialog(null, onDone = { client, _ -> addClient = false; clientId = client }, onDismiss = { addClient = false })

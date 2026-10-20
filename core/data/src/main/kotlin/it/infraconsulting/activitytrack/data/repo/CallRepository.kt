@@ -17,13 +17,15 @@ class CallRepository(private val db: ActivityTrackDatabase) {
 	val contacts = dao.observeContacts()
 	fun callsOf(clientId: Long) = dao.observeCallsOf(clientId)
 
-	/* name required, at least one number; numbers stored normalised */
+	/* name required; numbers optional (issue #44), stored normalised; e-mail optional */
 	suspend fun saveContact(c: ContactEntity, numbers: List<String>): Long = db.withTransaction {
 		val name = c.name.trim().ifEmpty { throw ValidationException(Reason.BLANK_NAME) }
 		val phones = numbers.map(PhoneNumbers::normalize).filter { it.trimStart('+').length >= 3 }.distinct()
-		if (phones.isEmpty())
-			throw ValidationException(Reason.BLANK_VALUE)
-		val id = if (c.id == 0L) dao.insertContact(c.copy(name = name)) else c.id.also { dao.updateContact(c.copy(name = name)) }
+		val email = c.email?.trim()?.ifEmpty { null }
+		if (email != null && !EMAIL.matches(email))
+			throw ValidationException(Reason.INVALID_VALUE)
+		val clean = c.copy(name = name, email = email)
+		val id = if (c.id == 0L) dao.insertContact(clean) else c.id.also { dao.updateContact(clean) }
 		dao.clearPhones(id)
 		dao.insertPhones(phones.map { ContactPhoneEntity(id, it) })
 		id
@@ -34,6 +36,10 @@ class CallRepository(private val db: ActivityTrackDatabase) {
 	/* The contact a number belongs to, matching with or without the international prefix. */
 	suspend fun contactOf(number: String): ContactWithPhones? =
 		dao.allContacts().firstOrNull { c -> c.phones.any { PhoneNumbers.same(it.number, number) } }
+
+	private companion object {
+		val EMAIL = Regex("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")
+	}
 
 	/* true when new (the same call is recorded once) */
 	suspend fun record(call: CallLogEntity): Boolean = dao.insertCall(call) != -1L

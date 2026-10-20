@@ -531,4 +531,19 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="backup_section">Backup</string>
   <string name="backup_hint">Ogni giorno una copia dei dati va nella cartella \"backup\" della cartella dati; questo pulsante ne fa una adesso.</string>
   <string name="backup_moved_hint">\"Esegui backup ora\" e il ripristino sono in Altro → Importa / esporta.</string>
+  <!-- issue #41 materials, #44 contacts -->
+  <string name="materials">Materiali</string>
+  <string name="md_materials">Materiali di consumo</string>
+  <string name="material_line">Materiale</string>
+  <string name="material_edit">Materiale di consumo</string>
+  <string name="material_from_list">Dai materiali di consumo</string>
+  <string name="material_quantity">Quantità</string>
+  <string name="material_unit">Unità di misura</string>
+  <string name="material_unit_cost">Costo unitario (€)</string>
+  <string name="material_hint">Solo la descrizione è obbligatoria.</string>
+  <string name="short_material">Materiale</string>
+  <string name="field_contact">Contatto</string>
+  <string name="contact_email">E-mail</string>
+  <string name="err_invalid_value">Valore non valido.</string>
+  <string name="field_description">Descrizione</string>
 </resources>

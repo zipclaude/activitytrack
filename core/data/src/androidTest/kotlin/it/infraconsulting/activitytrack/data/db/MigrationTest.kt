@@ -181,6 +181,28 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v10ToV11AddsMaterialsAndContactFields() {
+		helper.createDatabase(DB, 10).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO client (id, company_id, name, archived) VALUES (1, 1, 'Bank', 0)")
+			db.execSQL("INSERT INTO contact (id, client_id, name) VALUES (1, 1, 'Rossi')")
+			db.execSQL(
+				"INSERT INTO time_entry (id, uid, company_id, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) " +
+					"VALUES (1, 'e1', 1, 'CLOSED', 'Europe/Rome', 0, 0, 0)",
+			)
+		}
+		helper.runMigrationsAndValidate(DB, 11, true).use { db ->
+			db.query("SELECT contact.email, time_entry.contact_id FROM contact, time_entry").use { c ->
+				c.moveToFirst()
+				assertEquals(true, c.isNull(0))
+				assertEquals(true, c.isNull(1))
+			}
+			db.execSQL("INSERT INTO material (id, name, archived) VALUES (1, 'Cavo', 0)")
+			db.execSQL("INSERT INTO entry_material (entry_id, material_id, description, created_utc_ms) VALUES (1, 1, 'Cavo', 0)")
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

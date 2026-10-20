@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.masterdata.ContactsViewModel
 import it.infraconsulting.activitytrack.ui.common.INDIGO
 import it.infraconsulting.activitytrack.ui.common.TEAL
 import it.infraconsulting.activitytrack.ui.common.PURPLE
@@ -124,6 +125,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var clientId by remember { mutableStateOf(initial.clientId) }
 	var roleId by remember { mutableStateOf(initial.roleId) }
 	var activity by remember { mutableStateOf(initial.activity.orEmpty()) }
+	/* the client's person the work was for (issue #44) */
+	var contactId by remember { mutableStateOf(initial.contactId) }
 	/* quick add of master data (issue #37) */
 	var addClient by remember { mutableStateOf(false) }
 	var addPreset by remember { mutableStateOf(false) }
@@ -140,7 +143,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var newRef by remember { mutableStateOf("") }
 
 	val companyId = clients.firstOrNull { it.id == clientId }?.companyId ?: initial.companyId
-	fun details() = EntryDetails(companyId, clientId, roleId, activity, locality, locationKind, notes)
+	fun details() = EntryDetails(companyId, clientId, roleId, activity, locality, locationKind, notes, contactId)
 
 	/* compact display (M11): tighter spacing; locality, place and notes folded while empty */
 	val compact = LocalCompact.current
@@ -164,6 +167,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 							AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE),
 							AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL),
 							AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO),
+							AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK),
 						))
 							MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
 					}
@@ -198,6 +202,15 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 						}
 					}
 					DictationInput(stringResource(R.string.field_activity), activity, { activity = it }, Importance.REQUIRED)
+					val people by appViewModel(key = "contacts") { c -> ContactsViewModel(c.calls) }.contacts.collectAsState()
+					val ofClient = people.filter { it.contact.clientId == clientId }
+					if (ofClient.isNotEmpty() || contactId != null)
+						ChoiceField(
+							stringResource(R.string.field_contact),
+							listOf<Pair<Long?, String>>(null to none) + ofClient.map { it.contact.id to it.contact.name },
+							contactId.takeIf { id -> ofClient.any { it.contact.id == id } },
+							importance = Importance.OPTIONAL,
+						) { contactId = it }
 					WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
 						ChoiceField(
 							stringResource(R.string.field_role),
@@ -266,6 +279,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				}
 			}
 			item { ExpensesSection(initial.id) }
+			item { MaterialsSection(initial.id) }
 			item { AttachmentsSection(initial.id, zone) }
 		}
 
@@ -361,6 +375,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	}
 	/* outside the lazy list: always composed, whatever is scrolled into view */
 	ExpenseAdder(initial.id, addRequest) { addRequest = null }
+	MaterialAdder(initial.id, addRequest) { addRequest = null }
 	AttachmentAdder(initial.id, addRequest) { addRequest = null }
 	if (addClient)
 		QuickClientDialog(companyId, onDone = { client, _ -> addClient = false; clientId = client }, onDismiss = { addClient = false })
@@ -621,6 +636,9 @@ fun locationLabel(k: LocationKind) = stringResource(
 )
 
 /* What the "add" row asks the expense and attachment sections for. */
-enum class AddRequest { EXPENSE, PHOTO, VOICE, FILE }
+enum class AddRequest { EXPENSE, PHOTO, VOICE, FILE, MATERIAL }
+
+/* the material button: none of the command or other add colours */
+private val TEAL_DARK = androidx.compose.ui.graphics.Color(0xFF5D4037)
 
 private data class AddChoice(val request: AddRequest, val label: Int, val icon: Int, val color: androidx.compose.ui.graphics.Color)

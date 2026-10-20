@@ -207,6 +207,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
 		is Screen.StartFromCall -> StartScreen(back, top.clientId, call = CallPrefill(top.startMs, top.endMs, top.contact))
 		Screen.Contacts -> it.infraconsulting.activitytrack.ui.masterdata.ContactsScreen(back)
+		Screen.Materials -> it.infraconsulting.activitytrack.ui.masterdata.MaterialsScreen(back)
 		Screen.Todos -> TodosScreen(back) { open(Screen.StartFromTodo(it)) }
 		is Screen.Todo -> TodosScreen(back, editId = top.id) { open(Screen.StartFromTodo(it)) }
 		is Screen.Entry -> EntryScreen(top.id, back)

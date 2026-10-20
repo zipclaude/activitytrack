@@ -531,4 +531,19 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="backup_section">Copia de seguridad</string>
   <string name="backup_hint">Cada día una copia de los datos va a la carpeta «backup» de la carpeta de datos; esto hace una ahora.</string>
   <string name="backup_moved_hint">«Hacer copia ahora» y la restauración están en Más → Importar / exportar.</string>
+  <!-- issue #41 materials, #44 contacts -->
+  <string name="materials">Materiales</string>
+  <string name="md_materials">Consumibles</string>
+  <string name="material_line">Material</string>
+  <string name="material_edit">Consumible</string>
+  <string name="material_from_list">De los consumibles</string>
+  <string name="material_quantity">Cantidad</string>
+  <string name="material_unit">Unidad de medida</string>
+  <string name="material_unit_cost">Coste unitario (€)</string>
+  <string name="material_hint">Solo la descripción es obligatoria.</string>
+  <string name="short_material">Material</string>
+  <string name="field_contact">Contacto</string>
+  <string name="contact_email">Correo electrónico</string>
+  <string name="err_invalid_value">Valor no válido.</string>
+  <string name="field_description">Descripción</string>
 </resources>
