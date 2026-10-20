@@ -127,6 +127,12 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: scripts/build-manual.sh "${TAG#v}"
 
+      - name: Manual PDF check
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pdf"
+          "$RUNNER_TEMP/pdf/bin/pip" install -q pymupdf
+          "$RUNNER_TEMP/pdf/bin/python" scripts/check-pdf.py build/manual/*.pdf
+
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

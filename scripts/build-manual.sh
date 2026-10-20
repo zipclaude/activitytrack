@@ -21,6 +21,8 @@ CHROME=$(command -v chromium || command -v chromium-browser || command -v google
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
+# the style goes inside every page: no relative path that the PDF browser may not follow
+{ echo "<style>"; cat docs/manual/style.css; echo "</style>"; } > "$OUT/style.html"
 for lang in it en; do
 	src=docs/manual/$lang
 	python3 -I docs/manual/diagrams/diagrams.py "$lang" "$OUT/dot-$lang"
@@ -41,7 +43,7 @@ for lang in it en; do
 		toc=""
 		[ "$doc" = manual ] && toc="--toc --toc-depth=2"
 		# shellcheck disable=SC2086
-		pandoc -f gfm+implicit_figures "$work/$doc.md" -s $toc --css=../../../docs/manual/style.css \
+		pandoc -f gfm+implicit_figures "$work/$doc.md" -s $toc -H "$OUT/style.html" \
 			--metadata title="$title" --metadata subtitle="$VERSION" --metadata lang="$lang" \
 			-o "$work/$doc.html"
 		"$CHROME" --headless --disable-gpu --no-sandbox --no-pdf-header-footer \
