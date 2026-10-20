@@ -91,7 +91,7 @@ test build installed from the PC: a separate app with its own data and folder
 
 | Tab | Content |
 |---|---|
-| **Home** | the running activity's card (or ▶ Start / 🚗 Travel), small cards of the others, latest completed, "To do · next 24 h" |
+| **Home** | the running activity's card (or ▶ Start / 🚗 Travel), small cards of the others, latest completed, "To do · 24 h ▾" |
 | **Agenda** | consultation: list, day, week, month |
 | **Report** | one day's report: solar, reported, one line per activity, export |
 | **More** | "To-dos", "Import / export", "Master data", "Settings" (with "Gestures") |
@@ -113,9 +113,10 @@ From a tab other than Home, Back returns to Home.
 - The **latest completed activities** stay in view (2, or 3 with the compact
   display), dimmed, with the "Closed" state in grey: tapping one opens it.
   Open background activities take their places first.
-- Under the **"To do · next 24 h"** separator, one card for every to-do
-  planned or due in the next 24 hours (overdue ones included); at the bottom,
-  struck through, those ignored today.
+- Under the **"To do · 24 h ▾"** separator, one card for every to-do planned
+  or due in the next 24 hours (overdue ones included); at the bottom, struck
+  through, those ignored today. Tapping the title picks the Home's period: 24
+  h, 7 days, 30 days or all (separate from the "To-dos" screen's).
 
 ![Home: a running activity, the others below, the latest completed and the to-dos](img/home.png)
 
@@ -140,7 +141,7 @@ band** on the left with the company colour; when a list shows a single
 company, the band has the **client** colour. Without a chosen colour there is
 no band; in the Agenda the blocks of those companies are grey.
 
-Next to "To do · next 24 h" (and in the "To-dos" screen) the **"All
+Next to "To do · 24 h ▾" (and in the "To-dos" screen) the **"All
 companies"** button filters to-dos by company: the filter stays until you
 remove it with ✕. Running activities are not filtered. In the "To-dos" screen
 the period filter (**24 h**, **7 days**, **30 days**, **All**) shows the
@@ -211,9 +212,13 @@ In the "New activity" screen:
 - **Start** (with "Times freely editable", on by default): tapped while empty
   it opens the range grid, which sets start and end together; when already set,
   the time picker; empty = now; a
-  time already passed starts the activity from there (a time that has not
-  come yet today means yesterday).
-- **End (optional)**: tapping it, the grid picks start and end together.
+  time already passed starts the activity from there. A time still to come
+  today asks **"Start at HH:MM"**: **"Plan it today at HH:MM"** creates a
+  planned to-do (client, title = description, from start to end), **"Start
+  now"** starts at once, **"Started yesterday at HH:MM"** records it from
+  yesterday.
+- **End**, on the same row as Start: tapping it, the grid picks start and end
+  together.
   - End already passed (to record a past activity): the app asks **"Is the
     activity over?"**. "Yes" records it stopped at that time, as Stop does,
     without asking about the running activities; "No" starts it open.
@@ -287,15 +292,20 @@ Tap the notification **buttons**, not the text: the text opens the app and
 closes the notification without running the action. If the buttons are not
 visible, drag the notification down to expand it.
 
+At the top of the activity screen, below the state, a row of buttons adds an
+**Expense**, a **Photo**, a **Voice** note and a **File**; the "Expenses" and
+"Attachments" sections further down list them (they appear once there is
+one).
+
 ### Expenses
-In the activity screen, "Expenses" → "Add expense": amount in euro,
+In the activity screen, the **Expense** button: amount in euro,
 description, optional "Receipt photo". Quick expense: the **€** button of the
 widget or the **"Expense"** icon shortcut (goes to the most recent running
 activity).
 
 ### Attachments
-"Attachments": "Photo" (camera), "Voice note" (records until "Stop and
-save"), "File" (any document). Tapping an attachment: "Open" or "Delete".
+Buttons **Photo** (camera), **Voice** (records until "Stop and save"),
+**File** (any document). Tapping an attachment: "Open" or "Delete".
 Files live in the data folder, under `attachments/<year>/<activity>/`.
 
 ### Calls with clients
@@ -428,8 +438,9 @@ system's due date.
   reminder comes again before the new time) and "Re-plan" (opens the to-do).
   It also comes outside working hours and on days off; it goes away when the
   to-do is started, done, re-planned or its block is over.
-- On Home, **"To do · next 24 h"** shows those due or planned in the next 24
-  hours, overdue ones included; "overdue" marks those still open after their
+- On Home, **"To do · 24 h ▾"** shows those due or planned in the next 24
+  hours (or in the period picked by tapping the title: 7 days, 30 days, all),
+  overdue ones included; "overdue" marks those still open after their
   planned block or after the due date (after the due time, or from the next
   day when the due date has no time).
 - **Ignore** a to-do (gesture or "Ignore") instead of deleting it: it stays at

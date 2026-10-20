@@ -506,4 +506,16 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="call_propose_action">Crea attività</string>
   <string name="segment_note">Descrizione</string>
   <string name="start_end_hint">Inizio vuoto = adesso; Fine vuota = aperta; una Fine già passata registra l\'attività come conclusa.</string>
+  <!-- issue #37 add row -->
+  <string name="short_expense">Spesa</string>
+  <string name="short_photo">Foto</string>
+  <string name="short_voice">Nota voc.</string>
+  <string name="short_file">File</string>
+  <!-- issue #37 start in the future -->
+  <string name="future_title">Inizio alle %1$s</string>
+  <string name="future_text">L\'orario deve ancora arrivare.</string>
+  <string name="future_plan">Pianifica oggi alle %1$s</string>
+  <string name="future_now">Avvia adesso</string>
+  <string name="future_yesterday">Avviata ieri alle %1$s</string>
+  <string name="todo_home_title">Da fare · %1$s ▾</string>
 </resources>

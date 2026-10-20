@@ -107,7 +107,7 @@ class AttachmentsViewModel(
 }
 
 @Composable
-fun AttachmentsSection(entryId: Long, zone: ZoneId) {
+fun AttachmentsSection(entryId: Long, zone: ZoneId, request: AddRequest? = null, onHandled: () -> Unit = {}) {
 	val vm = appViewModel(key = "attachments/$entryId") { AttachmentsViewModel(entryId, it.attachments, it.settings) }
 	val items by vm.items.collectAsState()
 	val error by vm.error.collectAsState()
@@ -136,34 +136,41 @@ fun AttachmentsSection(entryId: Long, zone: ZoneId) {
 			recording = true
 	}
 
-	Column(modifier = Modifier.padding(bottom = 8.dp)) {
-		SectionHeader(stringResource(R.string.attachments))
-		for (a in items)
-			ClickableRow(kindLabel(a.kind), clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)) {
-				vm.clearError()
-				selected = a
-			}
-		FlowRow(
-			modifier = Modifier.padding(horizontal = 16.dp),
-			horizontalArrangement = Arrangement.spacedBy(8.dp),
-		) {
-			ColoredActionButton(stringResource(R.string.att_add_photo), R.drawable.ic_camera, PURPLE, {
+	/* photo, voice note, file from the add row at the top of the screen (issue #37) */
+	androidx.compose.runtime.LaunchedEffect(request) {
+		when (request) {
+			AddRequest.PHOTO -> {
 				vm.clearError()
 				val f = captureFile(context, "jpg")
 				pendingPhoto = f.path
 				takePicture.launch(FileProvider.getUriForFile(context, "${context.packageName}.files", f))
-			})
-			ColoredActionButton(stringResource(R.string.att_add_voice), R.drawable.ic_mic, TEAL, {
+			}
+			AddRequest.VOICE -> {
 				vm.clearError()
 				if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
 					recording = true
 				else
 					askMic.launch(Manifest.permission.RECORD_AUDIO)
-			})
-			ColoredActionButton(stringResource(R.string.att_add_file), R.drawable.ic_attach, INDIGO, { vm.clearError(); pickFile.launch(arrayOf("*/*")) })
+			}
+			AddRequest.FILE -> {
+				vm.clearError()
+				pickFile.launch(arrayOf("*/*"))
+			}
+			else -> return@LaunchedEffect
 		}
-		error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+		onHandled()
 	}
+
+	if (items.isNotEmpty() || error != null)
+		Column(modifier = Modifier.padding(bottom = 8.dp)) {
+			SectionHeader(stringResource(R.string.attachments))
+			for (a in items)
+				ClickableRow(kindLabel(a.kind), clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)) {
+					vm.clearError()
+					selected = a
+				}
+			error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+		}
 
 	selected?.let { a ->
 		AlertDialog(

@@ -207,6 +207,24 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	}
 
 	pending.firstOrNull()?.let { r -> RunningDialog(r, vm) }
+	val askFuture by vm.askFuture.collectAsState()
+	askFuture?.let { min ->
+		val at = formatMin(min)
+		AlertDialog(
+			onDismissRequest = vm::cancelFuture,
+			title = { Text(stringResource(R.string.future_title, at)) },
+			text = {
+				Column {
+					Text(stringResource(R.string.future_text))
+					TextButton(onClick = { vm.answerFuture(StartViewModel.FutureChoice.PLAN) }) { Text(stringResource(R.string.future_plan, at)) }
+					TextButton(onClick = { vm.answerFuture(StartViewModel.FutureChoice.NOW) }) { Text(stringResource(R.string.future_now)) }
+					TextButton(onClick = { vm.answerFuture(StartViewModel.FutureChoice.YESTERDAY) }) { Text(stringResource(R.string.future_yesterday, at)) }
+				}
+			},
+			confirmButton = {},
+			dismissButton = { TextButton(onClick = vm::cancelFuture) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
 	askEnded?.let { end ->
 		AlertDialog(
 			onDismissRequest = vm::cancelEnded,

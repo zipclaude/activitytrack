@@ -113,6 +113,23 @@ fun ColoredActionButton(label: String, @DrawableRes icon: Int, container: Color,
 	}
 }
 
+/* A small icon-over-label button, several to a row (entry screen "add" row, issue #37). */
+@Composable
+fun MiniActionButton(label: String, @DrawableRes icon: Int, container: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
+	Button(
+		onClick = onClick,
+		modifier = modifier,
+		colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = Color.White),
+		contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+		shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+	) {
+		androidx.compose.foundation.layout.Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+			Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(20.dp))
+			Text(label, style = androidx.compose.material3.MaterialTheme.typography.labelMedium, maxLines = 1)
+		}
+	}
+}
+
 /* the "add" colours: none of them is a command colour (green, red, yellow, orange, blue) */
 internal val PURPLE = Color(0xFF6A1B9A)
 internal val TEAL = Color(0xFF00838F)
