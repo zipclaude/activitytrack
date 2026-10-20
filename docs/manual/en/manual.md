@@ -351,7 +351,16 @@ complete", for the question about the to-do. In the activity screen:
 - "Times": with "Times freely editable" on, tapping a closed segment opens
   **"Edit segment"**: date, start, end and, for travels, km; **"Delete"**
   removes it (not the running one nor the only one left). The new values
-  replace the recorded ones;
+  replace the recorded ones. When the segment (also one added with Travel or
+  Pause) overlaps other segments of the same activity, the app shows them
+  and asks to confirm: then the saved segment wins and the others are
+  shortened, split or removed where it covers them. Segments of other
+  activities are not checked: they stay concurrent activities;
+- **"Delete"** at the top deletes the **whole activity** with segments,
+  expenses, references and tags. With attachments, delete them by hand
+  first from the "Attachments" section. An activity started from a
+  management-system **ticket** loses only the recorded time: the to-do goes
+  back to the open ones (you may ignore it afterwards);
 - **pauses** have an optional **description** (e.g. "Phone call CLIENT" for
   those made by a call; empty for manual ones): tap a pause to edit or clear
   it, also with "Times freely editable" off;
@@ -448,7 +457,9 @@ system's due date.
   calendar event; on Home it shows only on the day you ignored it. Another
   drag restores it. An import never restores it.
 - Tapping a to-do: "Start activity", "Postpone", "Mark as done" / "Mark as to
-  do", "Re-plan" (or "Edit" when not planned).
+  do", "Re-plan" (or "Edit" when not planned) and, for to-dos created by
+  hand, **"Delete"** (imported ones are ignored, or the next import would
+  bring them back).
 - A to-do may have several activities (e.g. a job over several days).
 
 ---
@@ -775,8 +786,9 @@ Rules:
 - an activity never starts in pause; it cannot be suspended from pause;
 - several activities can run together, each with its own pauses;
 - an activity under a minute, stopped from the app, can be discarded;
-- a segment added or edited lasts at least a minute, lies in the past and
-  does not overlap the activity's other segments.
+- a segment added or edited lasts at least a minute and lies in the past;
+  over other segments of the same activity it is saved after a
+  confirmation, which shortens them.
 
 ## 20. To-do states
 

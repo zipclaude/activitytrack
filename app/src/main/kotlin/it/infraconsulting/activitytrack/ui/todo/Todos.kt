@@ -123,6 +123,7 @@ class TodosViewModel(
 	fun setShowIgnored(on: Boolean) = run { settingsRepo.update { it.copy(todoShowIgnored = on) } }
 
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
+	fun delete(t: TodoEntity) = run { todos.delete(t.id) }
 	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
 	fun save(t: TodoEntity, done: () -> Unit) = run(done) { todos.save(t) }
 	fun postpone(t: TodoEntity, minutes: Int) = run { todos.postpone(t.id, minutes) }
@@ -428,6 +429,20 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 	val clients by vm.clients.collectAsState()
 	val settings by vm.settings.collectAsState()
 	val ignored = t.ignoredUtcMs != null
+	var deleting by remember { mutableStateOf(false) }
+	if (deleting) {
+		AlertDialog(
+			onDismissRequest = { deleting = false },
+			text = { Text(stringResource(R.string.confirm_delete, t.title)) },
+			confirmButton = {
+				TextButton(onClick = { vm.delete(t); onDismiss() }) {
+					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+				}
+			},
+			dismissButton = { TextButton(onClick = { deleting = false }) { Text(stringResource(R.string.action_cancel)) } },
+		)
+		return
+	}
 	AlertDialog(
 		onDismissRequest = onDismiss,
 		title = { Text(t.title) },
@@ -456,6 +471,9 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 						Text(stringResource(if (t.plan() != null) R.string.action_replan else R.string.todo_edit))
 					}
 				}
+				/* only the ones created by hand (issue #40): imported ones would come back */
+				if (t.externalKey == null)
+					TextButton(onClick = { deleting = true }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
 			}
 		},
 		confirmButton = {},

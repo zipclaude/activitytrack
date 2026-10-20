@@ -307,10 +307,14 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
 }
 
 @Composable
-fun ClickableRow(headline: String, supporting: String? = null, onClick: () -> Unit) {
+fun ClickableRow(headline: String, supporting: String? = null, @androidx.annotation.DrawableRes icon: Int? = null, onClick: () -> Unit) {
 	ListItem(
 		headlineContent = { Text(headline) },
 		supportingContent = supporting?.let { { Text(it) } },
+		/* menu rows (owner, 2026-10-20): an icon beside the label */
+		leadingContent = icon?.let {
+			{ androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(it), contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+		},
 		modifier = Modifier.clickable(onClick = onClick),
 	)
 }
@@ -363,6 +367,7 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.INVALID_AMOUNT -> R.string.err_invalid_amount
 		Reason.TOO_SHORT -> R.string.err_too_short
 		Reason.LAST_SEGMENT -> R.string.err_last_segment
+		Reason.HAS_ATTACHMENTS -> R.string.err_generic
 		Reason.FUTURE_TIME -> R.string.err_future_time
 		Reason.BEFORE_SEGMENT -> R.string.err_before_segment
 		else -> R.string.err_generic

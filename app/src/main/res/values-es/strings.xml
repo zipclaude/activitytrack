@@ -439,7 +439,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="tags">Etiquetas</string>
   <string name="tag_new">Nuevas etiquetas (p. ej. #urgente remoto)</string>
   <string name="segment_edit">Editar tramo</string>
-  <string name="err_last_segment">El tramo en curso y el último tramo de una actividad no se pueden eliminar.</string>
+  <string name="err_last_segment">El tramo en curso y el único tramo restante no se pueden eliminar; para quitarlo todo, elimina la actividad.</string>
   <!-- M16 list order -->
   <string name="order_alpha">A–Z</string>
   <string name="order_last_use">Último uso</string>
@@ -518,4 +518,13 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="future_now">Empezar ahora</string>
   <string name="future_yesterday">Empezada ayer a las %1$s</string>
   <string name="todo_home_title">Por hacer · %1$s ▾</string>
+  <!-- issue #40 -->
+  <string name="overlap_title">Tramos superpuestos</string>
+  <string name="overlap_text">El tramo se superpone a:</string>
+  <string name="overlap_hint">Al confirmar se guarda: los tramos de arriba se acortan, dividen o eliminan donde los cubre.</string>
+  <string name="action_confirm">Confirmar</string>
+  <string name="entry_delete_title">Eliminar la actividad</string>
+  <string name="entry_delete_text">La actividad se elimina con sus tramos, gastos, referencias y etiquetas.</string>
+  <string name="entry_delete_ticket">El tiempo registrado se elimina; la tarea «%1$s» vuelve a estar abierta.</string>
+  <string name="entry_delete_attachments">La actividad tiene %1$d adjuntos: elimínalos antes, en la sección Adjuntos.</string>
 </resources>

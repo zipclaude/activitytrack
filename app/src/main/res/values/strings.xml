@@ -450,7 +450,7 @@ Tap the green play button below to start one.</string>
   <string name="tags">Tags</string>
   <string name="tag_new">New tags (e.g. #urgent remote)</string>
   <string name="segment_edit">Edit segment</string>
-  <string name="err_last_segment">The running segment and the only remaining one cannot be deleted.</string>
+  <string name="err_last_segment">The running segment and the only segment left cannot be deleted; to remove everything, delete the activity.</string>
   <!-- M16 list order -->
   <string name="order_alpha">A–Z</string>
   <string name="order_last_use">Last used</string>
@@ -529,4 +529,13 @@ Tap the green play button below to start one.</string>
   <string name="future_now">Start now</string>
   <string name="future_yesterday">Started yesterday at %1$s</string>
   <string name="todo_home_title">To do · %1$s ▾</string>
+  <!-- issue #40 -->
+  <string name="overlap_title">Overlapping segments</string>
+  <string name="overlap_text">This segment overlaps:</string>
+  <string name="overlap_hint">Confirming saves it: the segments above are shortened, split or removed where it covers them.</string>
+  <string name="action_confirm">Confirm</string>
+  <string name="entry_delete_title">Delete the activity</string>
+  <string name="entry_delete_text">The activity is deleted with its segments, expenses, references and tags.</string>
+  <string name="entry_delete_ticket">The recorded time is deleted; the to-do "%1$s" goes back to the open ones.</string>
+  <string name="entry_delete_attachments">The activity has %1$d attachments: delete them first, from the Attachments section.</string>
 </resources>

@@ -439,7 +439,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="tags">Tag</string>
   <string name="tag_new">Nuovi tag (es. #urgente remoto)</string>
   <string name="segment_edit">Modifica tratto</string>
-  <string name="err_last_segment">Il tratto in corso e l\'ultimo tratto di un\'attività non si possono eliminare.</string>
+  <string name="err_last_segment">Il tratto in corso e l\'unico tratto rimasto non si possono eliminare; per togliere tutto, elimina l\'attività.</string>
   <!-- M16 list order -->
   <string name="order_alpha">A–Z</string>
   <string name="order_last_use">Ultimo uso</string>
@@ -518,4 +518,13 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="future_now">Avvia adesso</string>
   <string name="future_yesterday">Avviata ieri alle %1$s</string>
   <string name="todo_home_title">Da fare · %1$s ▾</string>
+  <!-- issue #40 -->
+  <string name="overlap_title">Tratti sovrapposti</string>
+  <string name="overlap_text">Il tratto si sovrappone a:</string>
+  <string name="overlap_hint">Confermando viene salvato: i tratti qui sopra vengono accorciati, divisi o eliminati dove li copre.</string>
+  <string name="action_confirm">Conferma</string>
+  <string name="entry_delete_title">Elimina l\'attività</string>
+  <string name="entry_delete_text">L\'attività viene eliminata con tratti, spese, riferimenti e tag.</string>
+  <string name="entry_delete_ticket">Il tempo registrato viene eliminato; la voce «%1$s» torna tra le cose da fare.</string>
+  <string name="entry_delete_attachments">L\'attività ha %1$d allegati: eliminali prima, dalla sezione Allegati.</string>
 </resources>

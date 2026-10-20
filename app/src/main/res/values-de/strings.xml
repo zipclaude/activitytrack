@@ -438,7 +438,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="tags">Tags</string>
   <string name="tag_new">Neue Tags (z. B. #dringend remote)</string>
   <string name="segment_edit">Abschnitt bearbeiten</string>
-  <string name="err_last_segment">Der laufende und der letzte Abschnitt einer Tätigkeit können nicht gelöscht werden.</string>
+  <string name="err_last_segment">Der laufende und der einzige verbleibende Abschnitt können nicht gelöscht werden; um alles zu entfernen, die Tätigkeit löschen.</string>
   <!-- M16 list order -->
   <string name="order_alpha">A–Z</string>
   <string name="order_last_use">Zuletzt verwendet</string>
@@ -517,4 +517,13 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="future_now">Jetzt starten</string>
   <string name="future_yesterday">Gestern um %1$s begonnen</string>
   <string name="todo_home_title">Zu tun · %1$s ▾</string>
+  <!-- issue #40 -->
+  <string name="overlap_title">Überlappende Abschnitte</string>
+  <string name="overlap_text">Der Abschnitt überlappt:</string>
+  <string name="overlap_hint">Bestätigen speichert ihn: die Abschnitte oben werden gekürzt, geteilt oder entfernt, wo er sie überdeckt.</string>
+  <string name="action_confirm">Bestätigen</string>
+  <string name="entry_delete_title">Tätigkeit löschen</string>
+  <string name="entry_delete_text">Die Tätigkeit wird mit Abschnitten, Ausgaben, Verweisen und Tags gelöscht.</string>
+  <string name="entry_delete_ticket">Die erfasste Zeit wird gelöscht; die Aufgabe „%1$s“ ist wieder offen.</string>
+  <string name="entry_delete_attachments">Die Tätigkeit hat %1$d Anhänge: zuerst im Bereich Anhänge löschen.</string>
 </resources>

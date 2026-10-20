@@ -59,6 +59,18 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 		}
 	}
 
+	/*
+	 * A to-do created by hand can be deleted (owner, issue #40); one from a
+	 * management system is only ignored, or the next import brings it back.
+	 * Its entries stay, without the link.
+	 */
+	suspend fun delete(id: Long) = db.withTransaction {
+		val t = dao.byId(id) ?: return@withTransaction
+		if (t.externalKey != null)
+			throw ValidationException(ValidationException.Reason.IN_USE, "imported to-do $id")
+		dao.delete(id)
+	}
+
 	suspend fun setDone(id: Long, done: Boolean) = db.withTransaction {
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
 		dao.update(t.copy(done = done, updatedUtcMs = clock.millis()))
