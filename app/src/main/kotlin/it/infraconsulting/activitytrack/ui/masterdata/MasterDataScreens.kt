@@ -105,7 +105,7 @@ internal fun confirmDelete(name: String, action: () -> Unit): () -> Unit {
 }
 
 @Composable
-private fun archivedSuffix(archived: Boolean) = if (archived) stringResource(R.string.archived_suffix) else null
+internal fun archivedSuffix(archived: Boolean) = if (archived) stringResource(R.string.archived_suffix) else null
 
 @Composable
 fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
@@ -117,6 +117,7 @@ fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
 				Triple(Screen.Contacts, R.string.md_contacts, R.drawable.ic_menu_phone),
 				Triple(Screen.Roles, R.string.md_roles, R.drawable.ic_menu_work),
 				Triple(Screen.Presets, R.string.md_presets, R.drawable.ic_menu_list),
+				Triple(Screen.Materials, R.string.md_materials, R.drawable.ic_menu_inventory),
 				Triple(Screen.Places, R.string.md_places, R.drawable.ic_menu_place),
 				Triple(Screen.Schedule, R.string.md_schedule, R.drawable.ic_clock),
 				Triple(Screen.DaysOff, R.string.md_days_off, R.drawable.ic_calendar),

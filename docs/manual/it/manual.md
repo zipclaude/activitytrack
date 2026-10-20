@@ -299,14 +299,23 @@ chiude la notifica senza eseguire l'azione. Se i pulsanti non si vedono,
 trascina la notifica verso il basso per espanderla.
 
 In cima alla schermata dell'attività, sotto lo stato, una riga di pulsanti
-aggiunge **Spesa**, **Foto**, **Nota voc.** e **File**; le sezioni "Spese" e
-"Allegati" più in basso li elencano (compaiono quando ce n'è almeno uno).
+aggiunge **Spesa**, **Foto**, **Nota voc.**, **File** e **Materiale**; le
+sezioni "Spese", "Materiali" e "Allegati" più in basso li elencano (compaiono
+quando ce n'è almeno uno).
 
 ### Spese
 Nella schermata dell'attività, pulsante **Spesa**: importo in
 euro, descrizione, "Foto dello scontrino" facoltativa. Spesa veloce: pulsante
 **€** del widget o scorciatoia **"Spesa"** dell'icona (va all'attività in corso
 più recente).
+
+### Materiali di consumo
+Pulsante **Materiale**: i materiali lasciati al cliente. **Descrizione**
+obbligatoria; **quantità**, **unità di misura** e **costo unitario**
+facoltativi. Scegliendo un materiale da Anagrafiche → **Materiali di
+consumo** descrizione, unità e costo vengono copiati e restano modificabili
+(un prezzo cambiato dopo non tocca le righe già registrate). La sezione
+"Materiali" mostra il totale; toccando una riga la modifichi o la elimini.
 
 ### Allegati
 Pulsanti **Foto** (fotocamera), **Nota voc.** (registra finché non tocchi
@@ -352,6 +361,8 @@ rossa). Quelle partite da una voce *Da fare* passano sempre da "da
 completare", per la domanda sulla voce.
 Nella schermata dell'attività:
 - controlla cliente, descrizione (dettabile), ruolo, località, luogo, note;
+  il campo **Contatto** (facoltativo, se il cliente ha contatti) lega
+  l'attività alla persona per cui hai lavorato;
 - "Tempi": i pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
   dimenticati (anche con i km; almeno un minuto). Con "Orari modificabili"
   acceso, toccando un tratto concluso si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
@@ -512,14 +523,17 @@ cambia la scadenza del gestionale.
 
 ![Ordine manuale: la maniglia ≡ trascina la riga](img/order.png)
 
-- **Contatti** — persone dei clienti: nome, cliente e uno o più numeri (uno
-  per riga). **"Importa dalla rubrica"** sceglie un numero dalla rubrica del
+- **Contatti** — persone dei clienti: nome, cliente, numeri (facoltativi, uno
+  per riga) ed **e-mail** (facoltativa). **"Importa dalla rubrica"** sceglie un numero dalla rubrica del
   telefono e lo propone come nuovo contatto. Servono al riconoscimento delle
   chiamate (§5); i numeri si confrontano con o senza prefisso
   internazionale.
 
 ![Contatti dei clienti](img/contacts.png)
 
+- **Materiali di consumo** — descrizione, unità di misura, costo unitario,
+  azienda (facoltativa, per listini diversi); proposti nelle righe dei
+  materiali delle attività.
 - **Luoghi** — casa e altri luoghi (casa serve per l'arrivo a fine viaggio).
 - **Orario di lavoro e pausa pranzo** — per giorno della settimana.
 - **Giorni liberi**.
@@ -783,7 +797,9 @@ schermate stesse e restano finché non li cambi.
 | Allegato | foto, nota vocale, file | di un'attività, nella cartella dati |
 | Riferimento esterno | ticket, URL, codice | di un'attività |
 | Tag | parola libera | di un'attività |
-| Contatto | nome, numeri | di un cliente; riconosce le chiamate |
+| Contatto | nome, numeri, e-mail | di un cliente; riconosce le chiamate; facoltativo su un'attività |
+| Materiale di consumo | descrizione, unità, costo unitario, azienda | proposto nelle righe dei materiali |
+| Riga di materiale | descrizione, quantità, unità, costo unitario | di un'attività |
 | Chiamata | contatto, direzione, inizio, fine | di un contatto e del suo cliente |
 | *Da fare* | titolo, cliente, pianificazione, durata, scadenza, priorità, note, riferimenti, stato | di un'azienda (e di un cliente); genera attività |
 | Luogo | casa o altro, coordinate | casa chiude i viaggi di rientro |

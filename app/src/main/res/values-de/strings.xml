@@ -530,4 +530,19 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="backup_section">Sicherung</string>
   <string name="backup_hint">Täglich kommt eine Kopie der Daten in den Ordner „backup“ des Datenordners; dies erstellt jetzt eine.</string>
   <string name="backup_moved_hint">„Jetzt sichern“ und die Wiederherstellung sind unter Mehr → Import / Export.</string>
+  <!-- issue #41 materials, #44 contacts -->
+  <string name="materials">Material</string>
+  <string name="md_materials">Verbrauchsmaterial</string>
+  <string name="material_line">Material</string>
+  <string name="material_edit">Verbrauchsmaterial</string>
+  <string name="material_from_list">Aus dem Verbrauchsmaterial</string>
+  <string name="material_quantity">Menge</string>
+  <string name="material_unit">Maßeinheit</string>
+  <string name="material_unit_cost">Stückpreis (€)</string>
+  <string name="material_hint">Nur die Beschreibung ist Pflicht.</string>
+  <string name="short_material">Material</string>
+  <string name="field_contact">Kontakt</string>
+  <string name="contact_email">E-Mail</string>
+  <string name="err_invalid_value">Ungültiger Wert.</string>
+  <string name="field_description">Beschreibung</string>
 </resources>

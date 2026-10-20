@@ -542,4 +542,19 @@ Tap the green play button below to start one.</string>
   <string name="backup_section">Backup</string>
   <string name="backup_hint">A copy of the data goes into the \"backup\" folder of the data folder every day; this makes one now.</string>
   <string name="backup_moved_hint">\"Back up now\" and the restore are in More → Import / export.</string>
+  <!-- issue #41 materials, #44 contacts -->
+  <string name="materials">Materials</string>
+  <string name="md_materials">Consumables</string>
+  <string name="material_line">Material</string>
+  <string name="material_edit">Consumable</string>
+  <string name="material_from_list">From the consumables</string>
+  <string name="material_quantity">Quantity</string>
+  <string name="material_unit">Unit of measure</string>
+  <string name="material_unit_cost">Unit cost (€)</string>
+  <string name="material_hint">Only the description is required.</string>
+  <string name="short_material">Material</string>
+  <string name="field_contact">Contact</string>
+  <string name="contact_email">E-mail</string>
+  <string name="err_invalid_value">Invalid value.</string>
+  <string name="field_description">Description</string>
 </resources>

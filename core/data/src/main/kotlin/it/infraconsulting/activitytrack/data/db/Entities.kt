@@ -247,9 +247,15 @@ data class TodoEntity(
 			childColumns = ["todo_id"],
 			onDelete = ForeignKey.SET_NULL,
 		),
+		ForeignKey(
+			entity = ContactEntity::class,
+			parentColumns = ["id"],
+			childColumns = ["contact_id"],
+			onDelete = ForeignKey.SET_NULL,
+		),
 	],
 	indices = [
-		Index("company_id"), Index("client_id"), Index("role_id"), Index("status"), Index("todo_id"),
+		Index("company_id"), Index("client_id"), Index("role_id"), Index("status"), Index("todo_id"), Index("contact_id"),
 		Index(value = ["uid"], unique = true),
 	],
 )
@@ -258,6 +264,8 @@ data class TimeEntryEntity(
 	/* stable identity across devices and exports (M4); null only before migration 2 -> 3 filled it */
 	val uid: String? = null,
 	@ColumnInfo(name = "todo_id") val todoId: Long? = null,
+	/* the client's person the work was for (issue #44), optional */
+	@ColumnInfo(name = "contact_id") val contactId: Long? = null,
 	/*
 	 * Company may be known before the client (company site match, copy from
 	 * the previous entry). When client_id is set, company_id must equal the
@@ -483,6 +491,8 @@ data class ContactEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	@ColumnInfo(name = "client_id") val clientId: Long,
 	val name: String,
+	/* optional (issue #44: for future use) */
+	val email: String? = null,
 )
 
 /* A number of a contact, as dialled (digits and a leading +). */
@@ -518,3 +528,52 @@ data class CallLogEntity(
 	@ColumnInfo(name = "start_utc_ms") val startUtcMs: Long,
 	@ColumnInfo(name = "end_utc_ms") val endUtcMs: Long,
 )
+
+/*
+ * A consumable left at clients (issue #41), in the master data: the
+ * description, unit of measure and unit cost proposed when it is used;
+ * [companyId] null = for every company.
+ */
+@Entity(
+	tableName = "material",
+	foreignKeys = [
+		ForeignKey(entity = CompanyEntity::class, parentColumns = ["id"], childColumns = ["company_id"], onDelete = ForeignKey.SET_NULL),
+	],
+	indices = [Index("company_id")],
+)
+data class MaterialEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	val name: String,
+	val unit: String? = null,
+	/* EUR cents */
+	@ColumnInfo(name = "unit_cost_cents") val unitCostCents: Long? = null,
+	@ColumnInfo(name = "company_id") val companyId: Long? = null,
+	val archived: Boolean = false,
+)
+
+/*
+ * A consumable left with an entry (issue #41): description required,
+ * quantity, unit and unit cost optional; copied from the master data when
+ * picked there, so a later price change leaves it as recorded.
+ */
+@Entity(
+	tableName = "entry_material",
+	foreignKeys = [
+		ForeignKey(entity = TimeEntryEntity::class, parentColumns = ["id"], childColumns = ["entry_id"], onDelete = ForeignKey.CASCADE),
+		ForeignKey(entity = MaterialEntity::class, parentColumns = ["id"], childColumns = ["material_id"], onDelete = ForeignKey.SET_NULL),
+	],
+	indices = [Index("entry_id"), Index("material_id")],
+)
+data class EntryMaterialEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	@ColumnInfo(name = "material_id") val materialId: Long? = null,
+	val description: String,
+	val quantity: Double? = null,
+	val unit: String? = null,
+	@ColumnInfo(name = "unit_cost_cents") val unitCostCents: Long? = null,
+	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+) {
+	/* quantity × unit cost; without a quantity one unit; null without a cost */
+	val totalCents: Long? get() = unitCostCents?.let { Math.round(it * (quantity ?: 1.0)) }
+}
