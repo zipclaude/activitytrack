@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.common
 
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.stateIn
+import androidx.compose.runtime.collectAsState
+import it.infraconsulting.activitytrack.ui.appViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -62,11 +66,24 @@ fun TimeGridSheet(
 	range: Boolean,
 	busy: List<IntRange> = emptyList(),
 	onExact: (() -> Unit)? = null,
+	/* the day shown: without a selection the window opens on its working hours (issue #44) */
+	day: java.time.LocalDate = java.time.LocalDate.now(),
 	onDismiss: () -> Unit,
 	onPick: (Int, Int) -> Unit,
 ) {
 	var selection by remember { mutableStateOf(initial) }
+	val schedule by appViewModel(key = "grid-schedule") { ScheduleSource(it.masterData) }.schedule.collectAsState()
+	val work = schedule.filter { it.dayOfWeek == day.dayOfWeek.value }.takeIf { it.isNotEmpty() }
+		?.let { s -> s.minOf { it.startMin } to s.maxOf { it.endMin } }
 	var first by remember { mutableStateOf(TimeGrid.windowFor(initial?.first ?: java.time.LocalTime.now().let { it.hour * 60 })) }
+	/* the schedule arrives after the first frame: move once, only when nothing is selected */
+	var placed by remember { mutableStateOf(initial != null) }
+	androidx.compose.runtime.LaunchedEffect(work) {
+		if (!placed && work != null) {
+			first = TimeGrid.windowForWork(work.first, work.second)
+			placed = true
+		}
+	}
 	/* a tap without drag waits for a second tap that closes the range */
 	var pending by remember { mutableStateOf<Int?>(null) }
 	val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -203,3 +220,10 @@ private fun Modifier.hatched(color: Color): Modifier = drawBehind {
 
 /* "1:25" */
 private fun formatDuration(min: Int): String = "%d:%02d".format(min / 60, min % 60)
+
+/* The working hours, for the grid's opening window. */
+class ScheduleSource(master: it.infraconsulting.activitytrack.data.repo.MasterDataRepository) : androidx.lifecycle.ViewModel() {
+	val schedule = master.schedule.stateIn(
+		viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyList(),
+	)
+}

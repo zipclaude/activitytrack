@@ -91,8 +91,10 @@ fun ContactsScreen(onBack: () -> Unit) {
 			if (contacts.isEmpty())
 				item { EmptyText() }
 			items(contacts, key = { it.contact.id }) { c: ContactWithPhones ->
-				val client = clients.firstOrNull { it.id == c.contact.clientId }?.name.orEmpty()
-				ClickableRow(c.contact.name, (listOf(client) + c.phones.map { it.number }).joinToString(" · ")) {
+				val owner = clients.firstOrNull { it.id == c.contact.clientId }
+				val client = owner?.name.orEmpty()
+				/* the dot of the contact's client (issue #44) */
+				ClickableRow(c.contact.name, (listOf(client) + c.phones.map { it.number }).joinToString(" · "), dot = owner?.color) {
 					vm.clearError()
 					editing = c.contact to c.phones.map { it.number }
 				}

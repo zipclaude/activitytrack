@@ -123,6 +123,8 @@ fun <T> LazyItemScope.ReorderRow(
 	supporting: String?,
 	reorder: Reorder<T>?,
 	key: Any,
+	/* the chosen colour of a company or client (issue #44); none: no dot */
+	color: Int? = null,
 	onClick: () -> Unit,
 ) {
 	val dragged = reorder != null && reorder.dragging == key
@@ -133,6 +135,7 @@ fun <T> LazyItemScope.ReorderRow(
 	ListItem(
 		headlineContent = { Text(headline) },
 		supportingContent = supporting?.let { { Text(it) } },
+		leadingContent = color?.let { { ColorDot(it) } },
 		trailingContent = reorder?.let { r ->
 			{
 				Icon(

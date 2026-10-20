@@ -67,7 +67,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* data folder, calendars and gestures change through their own rows, not this form */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, todoShowIgnored = cur.todoShowIgnored, listOrders = cur.listOrders) }
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, todoShowIgnored = cur.todoShowIgnored, listOrders = cur.listOrders) }
 			onDone()
 		}
 	}
@@ -264,12 +264,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				SettingsSection.STORAGE -> {
 					DataDirRow(initial.rootUri)
 					field(F.RETENTION, R.string.set_backup_retention)
-					val context = androidx.compose.ui.platform.LocalContext.current
-					val started = stringResource(R.string.backup_started)
-					TextButton(onClick = {
-						BackupWorker.runNow(context)
-						scope.launch { snackbar.showSnackbar(started) }
-					}) { Text(stringResource(R.string.backup_now)) }
+					/* "Back up now" moved to Import / export, beside the restore (issue #44) */
+					Text(stringResource(R.string.backup_moved_hint), style = MaterialTheme.typography.bodySmall)
 				}
 				SettingsSection.ADVANCED -> {
 					field(F.PLAN_LEAD, R.string.set_plan_lead)

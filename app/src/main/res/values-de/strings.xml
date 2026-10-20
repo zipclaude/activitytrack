@@ -526,4 +526,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="entry_delete_text">Die Tätigkeit wird mit Abschnitten, Ausgaben, Verweisen und Tags gelöscht.</string>
   <string name="entry_delete_ticket">Die erfasste Zeit wird gelöscht; die Aufgabe „%1$s“ ist wieder offen.</string>
   <string name="entry_delete_attachments">Die Tätigkeit hat %1$d Anhänge: zuerst im Bereich Anhänge löschen.</string>
+  <!-- issue #44 -->
+  <string name="backup_section">Sicherung</string>
+  <string name="backup_hint">Täglich kommt eine Kopie der Daten in den Ordner „backup“ des Datenordners; dies erstellt jetzt eine.</string>
+  <string name="backup_moved_hint">„Jetzt sichern“ und die Wiederherstellung sind unter Mehr → Import / Export.</string>
 </resources>
