@@ -1,19 +1,19 @@
-Version 0.6.3 (October 2026). Please report any difference between this
+Version 0.6.4 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**New in 0.6.3**
-- **Overlapping segments**: a segment saved or added over others of the same
-  activity shows them and, once confirmed, shortens (or splits) them; a Pause
-  added inside a work segment splits it in two (§6).
-- **Delete** the whole activity from its screen; one from a ticket gives its
-  to-do back, open again (§6). To-dos created by hand can be deleted (§8).
-- Icons beside the items of More, Master data and Settings.
+**New in 0.6.4** (version not tested on the phone)
+- **Agenda**: reopens on the last view; in Day and Week the working hours fill
+  the screen and **two fingers** change the scale (§7).
+- **Time grid** centred on the working hours (§3).
+- To-dos: **"Edit"** instead of "Re-plan" (§8).
+- **Colour dot** in the company, client and contact lists (§10).
+- **"Back up now"** in Import / export, beside the restore (§11).
+- Manual PDF: screenshots no longer fill a whole page.
 
-**In 0.6.2**: Start and End on one row, a future start to plan, the Expense ·
-Photo · Voice · File row, the Home to-do period, "+" in every master-data
-dialog.
+**In 0.6.3**: overlapping segments resolved on confirm, deleting an activity
+and hand-made to-dos, menu icons.
 
 Names in quotes are the labels of the English interface; the app also speaks
 Italian, German and Spanish.
@@ -402,7 +402,7 @@ on the right the period's reported total).
 - **Month** — a grid with reported hours per day, one dot per company and one
   for to-dos; tapping a day opens the Day view.
 
-![Agenda: Day view](img/agenda-day.png)
+![Agenda: Day view (old picture: the scale now changes with two fingers)](img/agenda-day.png)
 
 **Tag filter**: the "All tags ▾" chip next to the modes (shown when the
 period has tagged activities) shows only the activities with that tag;
