@@ -504,4 +504,5 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="call_propose_text">%1$s–%2$s: als Tätigkeit erfassen?</string>
   <string name="call_propose_action">Tätigkeit anlegen</string>
   <string name="segment_note">Beschreibung</string>
+  <string name="start_end_hint">Leerer Beginn = jetzt; leeres Ende = offen; ein vergangenes Ende erfasst die Tätigkeit als abgeschlossen.</string>
 </resources>

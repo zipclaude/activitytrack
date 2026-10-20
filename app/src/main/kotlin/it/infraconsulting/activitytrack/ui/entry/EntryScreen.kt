@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
+import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
+import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
+import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.dateText
@@ -110,6 +114,10 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var clientId by remember { mutableStateOf(initial.clientId) }
 	var roleId by remember { mutableStateOf(initial.roleId) }
 	var activity by remember { mutableStateOf(initial.activity.orEmpty()) }
+	/* quick add of master data (issue #37) */
+	var addClient by remember { mutableStateOf(false) }
+	var addPreset by remember { mutableStateOf(false) }
+	var addRole by remember { mutableStateOf(false) }
 	var locality by remember { mutableStateOf(initial.locality.orEmpty()) }
 	var locationKind by remember { mutableStateOf(initial.locationKind) }
 	var notes by remember { mutableStateOf(initial.notes.orEmpty()) }
@@ -140,19 +148,21 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					val coNames = companies.associate { it.id to it.name }
 					/* by company in the company order, then in the client order (M16; stable sort) */
 					val coIndex = companies.withIndex().associate { (i, c) -> c.id to i }
-					SearchableChoiceField(
-						stringResource(R.string.field_client),
-						listOf<Pair<Long?, String>>(null to none) +
-							clients.filter { !it.archived || it.id == clientId }
-								.filter { initial.companyId == null || initial.clientId != null || it.companyId == initial.companyId }
-								.sortedBy { coIndex[it.companyId] ?: Int.MAX_VALUE }
-								.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
-						clientId,
-						importance = Importance.REQUIRED,
-						colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
-					) { clientId = it }
+					WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
+						SearchableChoiceField(
+							stringResource(R.string.field_client),
+							listOf<Pair<Long?, String>>(null to none) +
+								clients.filter { !it.archived || it.id == clientId }
+									.filter { initial.companyId == null || initial.clientId != null || it.companyId == initial.companyId }
+									.sortedBy { coIndex[it.companyId] ?: Int.MAX_VALUE }
+									.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
+							clientId,
+							importance = Importance.REQUIRED,
+							colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
+						) { clientId = it }
+					}
 					val usable = presets.filter { it.companyId == null || it.companyId == companyId }
-					if (usable.isNotEmpty())
+					WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) {
 						ChoiceField(
 							stringResource(R.string.field_preset),
 							listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
@@ -164,14 +174,17 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 								if (roleId == null) roleId = p.defaultRoleId
 							}
 						}
+					}
 					DictationInput(stringResource(R.string.field_activity), activity, { activity = it }, Importance.REQUIRED)
-					ChoiceField(
-						stringResource(R.string.field_role),
-						listOf<Pair<Long?, String>>(null to none) +
-							roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
-						roleId,
-						importance = Importance.IMPORTANT,
-					) { roleId = it }
+					WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
+						ChoiceField(
+							stringResource(R.string.field_role),
+							listOf<Pair<Long?, String>>(null to none) +
+								roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
+							roleId,
+							importance = Importance.IMPORTANT,
+						) { roleId = it }
+					}
 					val folded = compact && !more && locality.isEmpty() && locationKind == null && notes.isEmpty()
 					if (folded)
 						TextButton(onClick = { more = true }) { Text(stringResource(R.string.more_details) + " ▾") }
@@ -280,6 +293,12 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 		ManualSegmentDialog(kind, firstDay, zone, vm) { adding = null }
 	}
 	editingSegment?.let { s -> SegmentDialog(s, zone, vm) { editingSegment = null } }
+	if (addClient)
+		QuickClientDialog(companyId, onDone = { client, _ -> addClient = false; clientId = client }, onDismiss = { addClient = false })
+	if (addPreset)
+		QuickPresetDialog(activity, companyId, onDone = { addPreset = false; activity = it }, onDismiss = { addPreset = false })
+	if (addRole)
+		QuickRoleDialog(onDone = { addRole = false; roleId = it }, onDismiss = { addRole = false })
 	editingNote?.let { s ->
 		var note by remember(s.id) { mutableStateOf(s.note.orEmpty()) }
 		val error by vm.error.collectAsState()
