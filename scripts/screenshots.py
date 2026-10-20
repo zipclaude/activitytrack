@@ -27,9 +27,11 @@ DBS = ["activitytrack.db", "activitytrack.db-wal", "activitytrack.db-shm"]
 
 LABELS = {
 	"it": dict(new="Nuova attività", end="Fine \\(facoltativa\\)", agenda="Agenda", day="Giorno", report="Report", more="Altro",
-		todos="Da fare", md="Anagrafiche", clients="Clienti", manual="Manuale", settings="Impostazioni", running="Farmacia Centrale"),
+		todos="Da fare", md="Anagrafiche", clients="Clienti", manual="Manuale", settings="Impostazioni", running="Farmacia Centrale",
+		contacts="Contatti", calls="Chiamate"),
 	"en": dict(new="New activity", end="End \\(optional\\)", agenda="Agenda", day="Day", report="Report", more="More",
-		todos="To-dos", md="Master data", clients="Clients", manual="Manual", settings="Settings", running="Farmacia Centrale"),
+		todos="To-dos", md="Master data", clients="Clients", manual="Manual", settings="Settings", running="Farmacia Centrale",
+		contacts="Contacts", calls="Calls"),
 }
 
 
@@ -110,7 +112,8 @@ def capture(lang):
 	time.sleep(1)
 	shot(lang, "time-grid")
 	back(2)
-	tap(t["running"])
+	time.sleep(1.5)	# the Home must be settled, or the tap gets lost in the transition
+	tap(f"^{t['running']}$", wait=3)
 	shot(lang, "entry")
 	back()
 	tap(f"^{t['agenda']}$")
@@ -126,6 +129,15 @@ def capture(lang):
 	tap(f"^{t['clients']}$")
 	tap(f"^{t['manual']}$")
 	shot(lang, "order")
+	# the client's calls at the bottom of its screen, then the contacts (issue #28)
+	tap(f"^{t['running']}$")
+	for _ in range(3):
+		sh("input", "swipe", "600", "2200", "600", "700", "400")
+		time.sleep(0.8)
+	shot(lang, "client-calls")
+	back(2)
+	tap(f"^{t['contacts']}$")
+	shot(lang, "contacts")
 	back(2)
 	tap(f"^{t['settings']}$")
 	shot(lang, "settings")
