@@ -357,7 +357,17 @@ Nella schermata dell'attività:
   dimenticati (anche con i km; almeno un minuto). Con "Orari modificabili"
   acceso, toccando un tratto concluso si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
   **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). I
-  valori inseriti sostituiscono quelli registrati;
+  valori inseriti sostituiscono quelli registrati. Se il tratto (anche uno
+  aggiunto con Viaggio o Pausa) si sovrappone ad altri tratti della stessa
+  attività, l'app li mostra e chiede conferma: confermando, il tratto
+  salvato vince e gli altri vengono accorciati, divisi in due o eliminati
+  dove li copre. Con tratti di altre attività nessun controllo: restano
+  attività contemporanee;
+- **"Elimina"** in alto elimina l'**intera attività** con tratti, spese,
+  riferimenti e tag. Se ha allegati, prima vanno eliminati a mano dalla
+  sezione "Allegati". Un'attività nata da un **ticket** del gestionale
+  elimina solo il tempo registrato: la voce *Da fare* torna aperta (poi puoi
+  ignorarla);
 - le **pause** hanno una **descrizione** facoltativa (es. "Telefonata
   CLIENTE" per quelle create da una chiamata; vuota per quelle manuali):
   toccando una pausa la modifichi o la cancelli, anche con "Orari
@@ -459,7 +469,9 @@ cambia la scadenza del gestionale.
   calendario; in Home compare solo il giorno in cui l'hai ignorata. Un altro
   trascinamento la ripristina. Un import dal gestionale non la ripristina.
 - Toccando una voce: "Avvia attività", "Posticipa", "Segna come fatta" /
-  "Segna come da fare", "Ripianifica" (o "Modifica" se non pianificata).
+  "Segna come da fare", "Ripianifica" (o "Modifica" se non pianificata) e,
+  per le voci create a mano, **"Elimina"** (quelle importate si ignorano,
+  altrimenti il prossimo import le riporterebbe).
 - Una voce può avere più attività (es. un lavoro su più giorni).
 
 ---
@@ -794,8 +806,9 @@ Regole:
 - un'attività non parte in pausa; dalla pausa non si sospende;
 - più attività possono essere in corso insieme, ognuna con le sue pause;
 - un'attività sotto il minuto, fermata dall'app, può essere scartata;
-- un tratto aggiunto o modificato dura almeno un minuto, sta nel passato e non
-  si sovrappone agli altri tratti della stessa attività.
+- un tratto aggiunto o modificato dura almeno un minuto e sta nel passato;
+  sopra altri tratti della stessa attività viene salvato dopo una conferma,
+  che li accorcia.
 
 ## 20. Stati dei *Da fare*
 

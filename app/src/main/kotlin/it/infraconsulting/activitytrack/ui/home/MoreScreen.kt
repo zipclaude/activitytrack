@@ -19,12 +19,12 @@ fun MoreScreen(onOpen: (Screen) -> Unit) {
 	ScreenScaffold(title = stringResource(R.string.nav_more), onBack = null) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 			val rows = listOf(
-				Screen.Todos to R.string.todo_title,
-				Screen.Export to R.string.export_title,
-				Screen.MasterData to R.string.md_title,
-				Screen.Settings to R.string.settings_title,
+				Triple(Screen.Todos, R.string.todo_title, R.drawable.ic_menu_todo),
+				Triple(Screen.Export, R.string.export_title, R.drawable.ic_menu_import_export),
+				Triple(Screen.MasterData, R.string.md_title, R.drawable.ic_menu_folder),
+				Triple(Screen.Settings, R.string.settings_title, R.drawable.ic_menu_settings),
 			)
-			items(rows) { (screen, label) -> ClickableRow(stringResource(label)) { onOpen(screen) } }
+			items(rows) { (screen, label, icon) -> ClickableRow(stringResource(label), icon = icon) { onOpen(screen) } }
 		}
 	}
 }

@@ -112,16 +112,16 @@ fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
 	ScreenScaffold(title = stringResource(R.string.md_title), onBack = onBack) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 			val sections = listOf(
-				Screen.Companies to R.string.md_companies,
-				Screen.Clients to R.string.md_clients,
-				Screen.Roles to R.string.md_roles,
-				Screen.Presets to R.string.md_presets,
-				Screen.Places to R.string.md_places,
-				Screen.Schedule to R.string.md_schedule,
-				Screen.DaysOff to R.string.md_days_off,
-				Screen.Contacts to R.string.md_contacts,
+				Triple(Screen.Companies, R.string.md_companies, R.drawable.ic_menu_business),
+				Triple(Screen.Clients, R.string.md_clients, R.drawable.ic_menu_person),
+				Triple(Screen.Contacts, R.string.md_contacts, R.drawable.ic_menu_phone),
+				Triple(Screen.Roles, R.string.md_roles, R.drawable.ic_menu_work),
+				Triple(Screen.Presets, R.string.md_presets, R.drawable.ic_menu_list),
+				Triple(Screen.Places, R.string.md_places, R.drawable.ic_menu_place),
+				Triple(Screen.Schedule, R.string.md_schedule, R.drawable.ic_clock),
+				Triple(Screen.DaysOff, R.string.md_days_off, R.drawable.ic_calendar),
 			)
-			items(sections) { (screen, label) -> ClickableRow(stringResource(label)) { onOpen(screen) } }
+			items(sections) { (screen, label, icon) -> ClickableRow(stringResource(label), icon = icon) { onOpen(screen) } }
 		}
 	}
 }

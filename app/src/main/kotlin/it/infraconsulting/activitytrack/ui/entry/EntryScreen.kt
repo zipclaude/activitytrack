@@ -95,7 +95,12 @@ import java.time.ZoneId
 fun EntryScreen(entryId: Long, onBack: () -> Unit) {
 	val vm = appViewModel { EntryViewModel(entryId, it.entries, it.masterData, it.todos, it.settings.settings.map { s -> s.editableTimes }) }
 	val entry by vm.entry.collectAsState()
-	ScreenScaffold(title = stringResource(R.string.entry_title), onBack = onBack) { padding ->
+	ScreenScaffold(
+		title = stringResource(R.string.entry_title),
+		onBack = onBack,
+		/* the whole entry (issue #40) */
+		actions = { TextButton(onClick = vm::askDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) } },
+	) { padding ->
 		/* the form starts from the first loaded state; later emissions refresh only status and lists */
 		entry?.let { EntryForm(it, vm, onBack, Modifier.padding(padding)) }
 	}
@@ -310,6 +315,50 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 		ManualSegmentDialog(kind, firstDay, zone, vm) { adding = null }
 	}
 	editingSegment?.let { s -> SegmentDialog(s, zone, vm) { editingSegment = null } }
+	/* a segment saved over others: which ones, then confirm (issue #40) */
+	val overlap by vm.overlap.collectAsState()
+	overlap?.let { p ->
+		AlertDialog(
+			onDismissRequest = vm::cancelOverlap,
+			title = { Text(stringResource(R.string.overlap_title)) },
+			text = {
+				Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+					Text(stringResource(R.string.overlap_text))
+					for (c in p.conflicts)
+						Text("• ${kindLabel(c.kind)}  ${clockOf(c.startUtcMs, zone)} – ${c.endUtcMs?.let { clockOf(it, zone) } ?: "…"}")
+					Text(stringResource(R.string.overlap_hint), style = MaterialTheme.typography.bodySmall)
+				}
+			},
+			confirmButton = { TextButton(onClick = vm::confirmOverlap) { Text(stringResource(R.string.action_confirm)) } },
+			dismissButton = { TextButton(onClick = vm::cancelOverlap) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
+	val deletion by vm.deletion.collectAsState()
+	deletion?.let { d ->
+		if (d.attachments > 0)
+			AlertDialog(
+				onDismissRequest = vm::cancelDelete,
+				title = { Text(stringResource(R.string.entry_delete_title)) },
+				text = { Text(stringResource(R.string.entry_delete_attachments, d.attachments)) },
+				confirmButton = { TextButton(onClick = vm::cancelDelete) { Text(stringResource(R.string.action_ok)) } },
+			)
+		else
+			AlertDialog(
+				onDismissRequest = vm::cancelDelete,
+				title = { Text(stringResource(R.string.entry_delete_title)) },
+				text = {
+					Text(
+						d.ticket?.let { stringResource(R.string.entry_delete_ticket, it) } ?: stringResource(R.string.entry_delete_text),
+					)
+				},
+				confirmButton = {
+					TextButton(onClick = { vm.deleteEntry(onBack) }) {
+						Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+					}
+				},
+				dismissButton = { TextButton(onClick = vm::cancelDelete) { Text(stringResource(R.string.action_cancel)) } },
+			)
+	}
 	/* outside the lazy list: always composed, whatever is scrolled into view */
 	ExpenseAdder(initial.id, addRequest) { addRequest = null }
 	AttachmentAdder(initial.id, addRequest) { addRequest = null }

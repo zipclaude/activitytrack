@@ -80,19 +80,19 @@ private enum class F {
 }
 
 /* Settings grouped in sub-screens (backlog 2, 2026-10-18). */
-enum class SettingsSection(val label: Int, val form: Boolean = true) {
-	DISPLAY(R.string.sec_display),
-	TIMES(R.string.sec_times),
-	CALLS(R.string.sec_calls),
-	REMINDERS(R.string.sec_reminders),
-	NOTIFICATIONS(R.string.sec_notifications, form = false),
-	LOCATION(R.string.sec_location),
-	CALENDAR(R.string.sec_calendar, form = false),
-	DICTATION(R.string.sec_dictation),
-	REPORTS(R.string.sec_reports),
-	ONLINE(R.string.sec_online),
-	STORAGE(R.string.sec_storage),
-	ADVANCED(R.string.sec_advanced),
+enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = true) {
+	DISPLAY(R.string.sec_display, R.drawable.ic_menu_phone_android),
+	TIMES(R.string.sec_times, R.drawable.ic_clock),
+	CALLS(R.string.sec_calls, R.drawable.ic_menu_phone),
+	REMINDERS(R.string.sec_reminders, R.drawable.ic_menu_alarm),
+	NOTIFICATIONS(R.string.sec_notifications, R.drawable.ic_menu_bell, form = false),
+	LOCATION(R.string.sec_location, R.drawable.ic_menu_place),
+	CALENDAR(R.string.sec_calendar, R.drawable.ic_calendar, form = false),
+	DICTATION(R.string.sec_dictation, R.drawable.ic_mic),
+	REPORTS(R.string.sec_reports, R.drawable.ic_nav_report),
+	ONLINE(R.string.sec_online, R.drawable.ic_menu_public),
+	STORAGE(R.string.sec_storage, R.drawable.ic_menu_folder),
+	ADVANCED(R.string.sec_advanced, R.drawable.ic_menu_tune),
 }
 
 /* [section] null: the list of sections (and Gestures); else that section's form. */
@@ -103,8 +103,8 @@ fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen:
 	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title), onBack = onBack) { padding ->
 		if (section == null)
 			LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-				items(SettingsSection.entries) { sec -> ClickableRow(stringResource(sec.label)) { onOpen(Screen.SettingsPage(sec.name)) } }
-				item { ClickableRow(stringResource(R.string.gestures_title)) { onOpen(Screen.Gestures) } }
+				items(SettingsSection.entries) { sec -> ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) } }
+				item { ClickableRow(stringResource(R.string.gestures_title), icon = R.drawable.ic_menu_touch) { onOpen(Screen.Gestures) } }
 			}
 		else if (s != null)
 			SettingsForm(s, vm, section, Modifier.padding(padding))

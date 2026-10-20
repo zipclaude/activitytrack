@@ -647,4 +647,56 @@ class RepositoryTest {
 		/* the open work began after the call: nothing */
 		assertEquals(false, entries.insertCallPause(id, from, to, "x"))
 	}
+
+	/* issue #40: a segment saved over others of the entry wins once confirmed */
+	@Test
+	fun overlapResolvedOnConfirm() = runBlocking<Unit> {
+		val t0 = clock.now.toEpochMilli()
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(60)
+		entries.apply(id, EntryCommand.STOP)
+		val m = { min: Int -> t0 + min * 60_000L }
+		assertEquals(1, entries.segmentConflicts(id, null, m(20), m(30)).size)
+		assertEquals(Reason.OVERLAPPING_SEGMENTS, reason { entries.addManualSegment(id, SegmentKind.PAUSE, m(20), m(30)) })
+		entries.addManualSegment(id, SegmentKind.PAUSE, m(20), m(30), resolve = true)
+		var segs = entries.segments(id).first()
+		assertEquals(listOf(SegmentKind.WORK, SegmentKind.PAUSE, SegmentKind.WORK), segs.map { it.kind })
+		assertEquals(listOf(m(0) to m(20), m(20) to m(30), m(30) to m(60)), segs.map { it.startUtcMs to it.endUtcMs })
+		/* the pause stretched to 10–40: the previous work is shortened, the next one starts later */
+		entries.updateSegment(segs[1].id, m(10), m(40), resolve = true)
+		segs = entries.segments(id).first()
+		assertEquals(listOf(m(0) to m(10), m(10) to m(40), m(40) to m(60)), segs.map { it.startUtcMs to it.endUtcMs })
+	}
+
+	/* issue #40: deleting an entry; attachments first; a ticket's to-do opens again; hand-made to-dos deletable */
+	@Test
+	fun deleteEntryAndTodos() = runBlocking<Unit> {
+		val now = clock.now.toEpochMilli()
+		val ticket = db.todoDao().insert(
+			it.infraconsulting.activitytrack.data.db.TodoEntity(
+				uid = "t1", companyId = acme, clientId = client, title = "Ticket", externalKey = "T-1", done = true, createdUtcMs = now, updatedUtcMs = now,
+			),
+		)
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, todoId = ticket))
+		clock.advance(30)
+		entries.apply(id, EntryCommand.STOP)
+		val att = db.entryDao().insertAttachment(
+			it.infraconsulting.activitytrack.data.db.AttachmentEntity(
+				entryId = id, kind = it.infraconsulting.activitytrack.data.db.AttachmentKind.PHOTO, relPath = "x.jpg", mime = "image/jpeg", createdUtcMs = now,
+			),
+		)
+		assertEquals(EntryRepository.Deletion(1, "Ticket"), entries.deletion(id))
+		assertEquals(Reason.HAS_ATTACHMENTS, reason { entries.deleteEntry(id) })
+		db.entryDao().deleteAttachment(att)
+		entries.deleteEntry(id)
+		assertNull(entries.find(id))
+		assertEquals(false, db.todoDao().byId(ticket)?.done)
+		val todos = TodoRepository(db, clock)
+		assertEquals(Reason.IN_USE, reason { todos.delete(ticket) })
+		val own = db.todoDao().insert(
+			it.infraconsulting.activitytrack.data.db.TodoEntity(uid = "t2", companyId = acme, title = "Mine", createdUtcMs = now, updatedUtcMs = now),
+		)
+		todos.delete(own)
+		assertNull(db.todoDao().byId(own))
+	}
 }
