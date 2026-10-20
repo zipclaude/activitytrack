@@ -538,4 +538,8 @@ Tap the green play button below to start one.</string>
   <string name="entry_delete_text">The activity is deleted with its segments, expenses, references and tags.</string>
   <string name="entry_delete_ticket">The recorded time is deleted; the to-do "%1$s" goes back to the open ones.</string>
   <string name="entry_delete_attachments">The activity has %1$d attachments: delete them first, from the Attachments section.</string>
+  <!-- issue #44 -->
+  <string name="backup_section">Backup</string>
+  <string name="backup_hint">A copy of the data goes into the \"backup\" folder of the data folder every day; this makes one now.</string>
+  <string name="backup_moved_hint">\"Back up now\" and the restore are in More → Import / export.</string>
 </resources>

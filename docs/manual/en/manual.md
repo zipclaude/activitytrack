@@ -173,7 +173,8 @@ once a company is picked or comes from the client.
 ### Dates and times
 Dates are picked on the Android calendar. Times on a **5-minute grid**: one
 row per hour, 12 cells per row, 12 hours at a time (**▲ Earlier** /
-**Later ▼** move the window by 3 hours).
+**Later ▼** move the window by 3 hours). With no time chosen yet the window
+opens centred on that day's working hours.
 - single time: tap a cell; **"Exact time"** opens the Android clock for
   minutes off the grid (e.g. 09:37); OK without a tap keeps the time as it
   was;
@@ -394,9 +395,10 @@ on the right the period's reported total).
   concurrent activities side by side; planned to-dos are blocks with a
   coloured border.
 - **Week** — seven columns from Monday; tapping a day opens the Day view.
-- In Day and Week the timeline covers the working hours and opens on the
-  running activity (or the current time); **"Fit"** fits all working hours on
-  one screen, **"Scroll"** goes back to the normal scale.
+- In Day and Week the timeline covers the whole day and opens with all the
+  working hours on the screen (or on the running activity, when outside
+  them); **two fingers** (pinch) zoom the scale in or out.
+- The Agenda reopens on the last view picked.
 - **Month** — a grid with reported hours per day, one dot per company and one
   for to-dos; tapping a day opens the Day view.
 
@@ -456,7 +458,7 @@ system's due date.
   calendar event; on Home it shows only on the day you ignored it. Another
   drag restores it. An import never restores it.
 - Tapping a to-do: "Start activity", "Postpone", "Mark as done" / "Mark as to
-  do", "Re-plan" (or "Edit" when not planned) and, for to-dos created by
+  do", **"Edit"** (also to re-plan it) and, for to-dos created by
   hand, **"Delete"** (imported ones are ignored, or the next import would
   bring them back).
 - A to-do may have several activities (e.g. a job over several days).
@@ -476,6 +478,8 @@ system's due date.
 
 ## 10. Master data
 
+- In the Companies, Clients and Contacts lists a **dot** shows the chosen
+  colour (for contacts, their client's).
 - **Companies** — in the company screen: **"Management system"** (code in the
   management system, connector; for now the generic file one) and **"This
   company's calendar"**; below, the company's **sites**.
@@ -530,7 +534,7 @@ only to-dos). The report shows what was added, what was already there, the
 with the reason. Importing the same file again creates no duplicates.
 
 **Backup** — every day the app saves the database into the `backup` folder
-(14 kept, adjustable); "Back up now" in Settings. **"Restore backup"**
+(14 kept, adjustable); **"Back up now"** here, in Import / export. **"Restore backup"**
 replaces all data with a chosen backup: first it saves the current data as
 `…-before-restore.zip`, then it restarts the app.
 
@@ -722,7 +726,8 @@ each can be switched on or off and pointed to your own server. Default: on,
 public servers.
 
 ### Storage
-Data folder, daily backups kept (1–365, default 14), "Back up now".
+Data folder, daily backups kept (1–365, default 14). "Back up now" and the
+restore are in More → Import / export.
 
 ### Advanced
 

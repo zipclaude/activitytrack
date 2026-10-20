@@ -548,6 +548,7 @@ private fun SegmentGrid(
 		initial = if (a != null && b != null && b > a && a < 1440) a until b else null,
 		range = true,
 		busy = busy,
+		day = day,
 		onDismiss = onClose,
 	) { from, to ->
 		onClose()

@@ -164,7 +164,7 @@ fun CompaniesScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 			if (companies.isEmpty())
 				item { EmptyText() }
 			items(shown(companies, reorder), key = { it.id }) { c ->
-				ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id) { onOpen(c.id) }
+				ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id, c.color) { onOpen(c.id) }
 			}
 		}
 	}
@@ -291,7 +291,7 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 					continue
 				item(key = "h${co.id}") { SectionHeader(co.name) }
 				items(own, key = { it.id }) { c ->
-					ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id) { onOpen(c.id) }
+					ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id, c.color) { onOpen(c.id) }
 				}
 			}
 		}

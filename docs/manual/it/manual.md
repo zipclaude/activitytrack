@@ -178,7 +178,9 @@ bordo è neutro, diventa verde quando un'azienda è scelta o viene dal cliente.
 ### Date e orari
 Le date si scelgono con il calendario di Android. Gli orari con una
 **griglia a 5 minuti**: una riga per ora, 12 caselle per riga, 12 ore alla
-volta (**▲ Prima** / **Dopo ▼** spostano la finestra di 3 ore).
+volta (**▲ Prima** / **Dopo ▼** spostano la finestra di 3 ore). Senza un
+orario già scelto la finestra si apre centrata sull'orario di lavoro di quel
+giorno.
 - orario singolo: tocca una casella; **"Orario esatto"** apre l'orologio di
   Android per i minuti fuori dalla griglia (es. 09:37); OK senza toccare nulla
   lascia l'orario com'era;
@@ -401,9 +403,10 @@ oggi; a destra il totale rendicontato del periodo).
   fine; attività contemporanee affiancate; le *Da fare* pianificate sono
   blocchi con il bordo colorato.
 - **Settimana** — sette colonne da lunedì; toccando un giorno si apre la vista Giorno.
-- In Giorno e Settimana la linea del tempo copre l'orario di lavoro e si apre
-  sull'attività in corso (o sull'ora attuale); **"Adatta"** fa stare tutto
-  l'orario di lavoro in uno schermo, **"Scorri"** torna alla scala normale.
+- In Giorno e Settimana la linea del tempo copre l'intera giornata e si apre
+  con tutto l'orario di lavoro nello schermo (o sull'attività in corso, se è
+  fuori orario); **due dita** (pinch) ingrandiscono o riducono la scala.
+- L'Agenda si riapre sull'ultima vista scelta.
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
@@ -467,7 +470,7 @@ cambia la scadenza del gestionale.
   calendario; in Home compare solo il giorno in cui l'hai ignorata. Un altro
   trascinamento la ripristina. Un import dal gestionale non la ripristina.
 - Toccando una voce: "Avvia attività", "Posticipa", "Segna come fatta" /
-  "Segna come da fare", "Ripianifica" (o "Modifica" se non pianificata) e,
+  "Segna come da fare", **"Modifica"** (anche per ripianificarla) e,
   per le voci create a mano, **"Elimina"** (quelle importate si ignorano,
   altrimenti il prossimo import le riporterebbe).
 - Una voce può avere più attività (es. un lavoro su più giorni).
@@ -487,6 +490,8 @@ cambia la scadenza del gestionale.
 
 ## 10. Anagrafiche
 
+- Negli elenchi di Aziende, Clienti e Contatti un **pallino** mostra il colore
+  scelto (per i contatti, quello del loro cliente).
 - **Aziende** — nella scheda: sezione **"Gestionale"** (codice nel gestionale,
   connettore; per ora il generico, a file) e **"Calendario di questa azienda"**;
   sotto, le **sedi** dell'azienda.
@@ -544,7 +549,8 @@ presente, i **conflitti** (i dati dell'app restano invariati) e ciò che non è
 stato importato con il motivo. Reimportare lo stesso file non crea doppioni.
 
 **Backup** — ogni giorno l'app salva il database nella cartella `backup`
-(ne conserva 14, modificabile); "Esegui backup ora" in Impostazioni.
+(ne conserva 14, modificabile); **"Esegui backup ora"** qui, in Importa /
+esporta.
 **"Ripristina backup"** sostituisce tutti i dati con un backup scelto: prima
 salva i dati attuali come backup `…-before-restore.zip`, poi riavvia l'app.
 
@@ -739,8 +745,8 @@ OpenStreetMap: ognuno si accende o spegne e può puntare a un server proprio.
 Predefinito: attivi, server pubblici.
 
 ### Archiviazione
-Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14),
-"Esegui backup ora".
+Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14).
+"Esegui backup ora" e il ripristino sono in Altro → Importa / esporta.
 
 ### Avanzate
 
