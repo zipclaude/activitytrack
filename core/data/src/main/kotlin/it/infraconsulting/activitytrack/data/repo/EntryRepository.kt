@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.repo
 
+import it.infraconsulting.activitytrack.domain.model.SpanChange
+import it.infraconsulting.activitytrack.domain.model.Span
+import it.infraconsulting.activitytrack.domain.model.SegmentOverlap
 import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.domain.tag.Tags
 import it.infraconsulting.activitytrack.data.db.EntryTagEntity
@@ -433,6 +436,8 @@ class EntryRepository(
 		startUtcMs: Long,
 		endUtcMs: Long,
 		kmDeclared: Double? = null,
+		/* the other segments it overlaps make room (issue #40), after the user confirmed */
+		resolve: Boolean = false,
 	): Long = db.withTransaction {
 		/* under a minute is an error (owner, 2026-10-18) */
 		if (startUtcMs < endUtcMs && endUtcMs - startUtcMs < MIN_LENGTH_MS)
@@ -442,6 +447,8 @@ class EntryRepository(
 			(kmDeclared != null && kind != SegmentKind.TRAVEL))
 			throw ValidationException(Reason.INVALID_SEGMENT)
 		val e = load(entryId)
+		if (resolve)
+			makeRoom(entryId, null, startUtcMs, endUtcMs)
 		val id = dao.insertSegment(
 			SegmentEntity(
 				entryId = entryId,
@@ -495,7 +502,7 @@ class EntryRepository(
 		verify(s.entryId)
 	}
 
-	suspend fun updateSegment(segmentId: Long, startUtcMs: Long, endUtcMs: Long, kmDeclared: Double? = null) = db.withTransaction {
+	suspend fun updateSegment(segmentId: Long, startUtcMs: Long, endUtcMs: Long, kmDeclared: Double? = null, resolve: Boolean = false) = db.withTransaction {
 		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
 		if (s.endUtcMs == null)
 			throw ValidationException(Reason.INVALID_SEGMENT, "running segment")
@@ -505,6 +512,8 @@ class EntryRepository(
 			(kmDeclared != null && (kmDeclared.isNaN() || kmDeclared < 0 || s.kind != SegmentKind.TRAVEL)))
 			throw ValidationException(Reason.INVALID_SEGMENT)
 		val e = load(s.entryId)
+		if (resolve)
+			makeRoom(s.entryId, s.id, startUtcMs, endUtcMs)
 		dao.updateSegment(
 			s.copy(
 				startUtcMs = startUtcMs,
@@ -539,6 +548,55 @@ class EntryRepository(
 	suspend fun recordedMs(entryId: Long): Long {
 		val now = clock.millis()
 		return dao.segments(entryId).sumOf { maxOf(0L, (it.endUtcMs ?: now) - it.startUtcMs) }
+	}
+
+	/* Segments of the entry that [startUtcMs, endUtcMs) would overlap, [except] left out (issue #40). */
+	suspend fun segmentConflicts(entryId: Long, except: Long?, startUtcMs: Long, endUtcMs: Long): List<SegmentEntity> {
+		val segs = dao.segments(entryId).filter { it.id != except }
+		val hit = SegmentOverlap.conflicts(segs.map { Span(it.id, it.startUtcMs, it.endUtcMs) }, startUtcMs, endUtcMs).map { it.id }.toSet()
+		return segs.filter { it.id in hit }
+	}
+
+	/* The overlapped segments are shortened, split or dropped (SegmentOverlap). */
+	private suspend fun makeRoom(entryId: Long, except: Long?, startUtcMs: Long, endUtcMs: Long) {
+		val segs = dao.segments(entryId).filter { it.id != except }.associateBy { it.id }
+		val changes = SegmentOverlap.resolve(segs.values.map { Span(it.id, it.startUtcMs, it.endUtcMs) }, startUtcMs, endUtcMs, MIN_LENGTH_MS)
+		for (c in changes) {
+			val o = segs.getValue(c.id)
+			when (c) {
+				is SpanChange.Delete -> dao.deleteSegment(o.id)
+				is SpanChange.Resize -> dao.updateSegment(o.copy(startUtcMs = c.start, endUtcMs = c.end))
+				is SpanChange.Split -> {
+					dao.updateSegment(o.copy(endUtcMs = c.firstEnd))
+					dao.insertSegment(o.copy(id = 0, startUtcMs = c.secondStart, kmDeclared = null, kmEstimated = null))
+				}
+			}
+		}
+	}
+
+	/* What deleting an entry involves (issue #40): attachments block it; a ticket's to-do goes back to open. */
+	data class Deletion(val attachments: Int, val ticket: String?)
+
+	suspend fun deletion(entryId: Long): Deletion {
+		val e = load(entryId)
+		val todo = e.todoId?.let { db.todoDao().byId(it) }?.takeIf { it.externalKey != null }
+		return Deletion(dao.attachmentCount(entryId), todo?.title)
+	}
+
+	/*
+	 * Delete an entry with its segments, expenses, references and tags
+	 * (owner, issue #40). With attachments it is refused: an entry with
+	 * attachments is hardly a mistake, they are deleted by hand first. An
+	 * entry from a ticket gives back its to-do, open again.
+	 */
+	suspend fun deleteEntry(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (dao.attachmentCount(entryId) > 0)
+			throw ValidationException(Reason.HAS_ATTACHMENTS)
+		e.todoId?.let { db.todoDao().byId(it) }?.takeIf { it.externalKey != null }?.let {
+			db.todoDao().update(it.copy(done = false, updatedUtcMs = clock.millis()))
+		}
+		dao.deleteEntry(entryId)
 	}
 
 	/*
