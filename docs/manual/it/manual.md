@@ -1,22 +1,20 @@
-Versione 0.6.2 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.6.3 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.6.2**
-- "Nuova attività": **Inizio e Fine** sulla stessa riga; un Inizio che oggi
-  deve ancora arrivare chiede se **pianificarla**, avviarla adesso o
-  registrarla da ieri (§4).
-- Scheda attività: in alto una riga **Spesa · Foto · Nota voc. · File** (§5).
-- *Da fare*: ripianificazione con **inizio e fine** sulla griglia al posto
-  della durata; nella Home il titolo **"Da fare · 24 h ▾"** sceglie il periodo
-  (§3, §8).
-- **"+"** per aggiungere al volo aziende, clienti, ruoli e predefinite in tutti
-  i dialoghi delle anagrafiche, anche nell'importazione dei contatti (§3).
-- Manuale: schermate più piccole, affiancate.
+**Novità della 0.6.3**
+- **Tratti sovrapposti**: un tratto salvato o aggiunto sopra altri della
+  stessa attività li mostra e, confermando, li accorcia (o li divide); una
+  Pausa aggiunta dentro un tratto di lavoro lo divide in due (§6).
+- **Elimina** l'intera attività dalla sua scheda; se viene da un ticket, la
+  voce *Da fare* torna aperta (§6). Le voci *Da fare* create a mano si
+  possono eliminare (§8).
+- Icone accanto alle voci di Altro, Anagrafiche e Impostazioni.
 
-**Nella 0.6.1**: chiamate con i clienti e reperibilità (§5), contatti e
-chiamate nella scheda del cliente (§10), descrizione delle pause (§6).
+**Nella 0.6.2**: Inizio e Fine sulla stessa riga, inizio nel futuro da
+pianificare, riga Spesa · Foto · Nota voc. · File, periodo dei *Da fare* nella
+Home, "+" in tutti i dialoghi delle anagrafiche.
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
 telefono in un'altra lingua l'app usa inglese, tedesco o spagnolo.
