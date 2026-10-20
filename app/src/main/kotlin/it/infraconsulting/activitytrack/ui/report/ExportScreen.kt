@@ -339,6 +339,18 @@ fun ExportScreen(onBack: () -> Unit) {
 				modifier = Modifier.fillMaxWidth(),
 			) { Text(stringResource(R.string.import_action)) }
 
+			/* backup and restore together (owner, issue #44); the folder and retention stay in Settings */
+			SectionHeader(stringResource(R.string.backup_section))
+			Text(stringResource(R.string.backup_hint), style = MaterialTheme.typography.bodySmall)
+			val started = stringResource(R.string.backup_started)
+			OutlinedButton(
+				onClick = {
+					it.infraconsulting.activitytrack.backup.BackupWorker.runNow(context)
+					android.widget.Toast.makeText(context, started, android.widget.Toast.LENGTH_SHORT).show()
+				},
+				modifier = Modifier.fillMaxWidth(),
+			) { Text(stringResource(R.string.backup_now)) }
+
 			SectionHeader(stringResource(R.string.restore_section))
 			Text(stringResource(R.string.restore_hint), style = MaterialTheme.typography.bodySmall)
 			OutlinedButton(

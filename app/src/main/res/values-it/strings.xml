@@ -527,4 +527,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="entry_delete_text">L\'attività viene eliminata con tratti, spese, riferimenti e tag.</string>
   <string name="entry_delete_ticket">Il tempo registrato viene eliminato; la voce «%1$s» torna tra le cose da fare.</string>
   <string name="entry_delete_attachments">L\'attività ha %1$d allegati: eliminali prima, dalla sezione Allegati.</string>
+  <!-- issue #44 -->
+  <string name="backup_section">Backup</string>
+  <string name="backup_hint">Ogni giorno una copia dei dati va nella cartella \"backup\" della cartella dati; questo pulsante ne fa una adesso.</string>
+  <string name="backup_moved_hint">\"Esegui backup ora\" e il ripristino sono in Altro → Importa / esporta.</string>
 </resources>

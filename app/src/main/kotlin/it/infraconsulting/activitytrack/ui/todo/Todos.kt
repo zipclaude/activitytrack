@@ -468,7 +468,7 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 				}
 				onEdit?.let {
 					TextButton(onClick = { onDismiss(); it() }) {
-						Text(stringResource(if (t.plan() != null) R.string.action_replan else R.string.todo_edit))
+						Text(stringResource(R.string.todo_edit))
 					}
 				}
 				/* only the ones created by hand (issue #40): imported ones would come back */
@@ -760,6 +760,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			initial = if (a != null && b != null && b > a && a < 1440) a until b else null,
 			range = true,
 			busy = emptyList(),
+			day = parseDate(planDay) ?: LocalDate.now(),
 			onDismiss = { planGrid = false },
 		) { from, to ->
 			planGrid = false

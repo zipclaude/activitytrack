@@ -155,9 +155,9 @@ fun importanceColors(importance: Importance?, filled: Boolean): TextFieldColors 
 	return OutlinedTextFieldDefaults.colors(focusedBorderColor = c, unfocusedBorderColor = c, focusedLabelColor = c)
 }
 
-/* The colour dot of a company or client (M12) in a field or a menu row. */
+/* The colour dot of a company or client (M12) in a field, a menu row or a list (issue #44). */
 @Composable
-private fun ColorDot(color: Int) {
+fun ColorDot(color: Int) {
 	Box(Modifier.size(12.dp).clip(CircleShape).background(rgb(color)))
 }
 
@@ -307,14 +307,14 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
 }
 
 @Composable
-fun ClickableRow(headline: String, supporting: String? = null, @androidx.annotation.DrawableRes icon: Int? = null, onClick: () -> Unit) {
+fun ClickableRow(headline: String, supporting: String? = null, @androidx.annotation.DrawableRes icon: Int? = null, dot: Int? = null, onClick: () -> Unit) {
 	ListItem(
 		headlineContent = { Text(headline) },
 		supportingContent = supporting?.let { { Text(it) } },
 		/* menu rows (owner, 2026-10-20): an icon beside the label */
 		leadingContent = icon?.let {
 			{ androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(it), contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-		},
+		} ?: dot?.let { { ColorDot(it) } },
 		modifier = Modifier.clickable(onClick = onClick),
 	)
 }

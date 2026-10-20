@@ -1,20 +1,19 @@
-Versione 0.6.3 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.6.4 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.6.3**
-- **Tratti sovrapposti**: un tratto salvato o aggiunto sopra altri della
-  stessa attività li mostra e, confermando, li accorcia (o li divide); una
-  Pausa aggiunta dentro un tratto di lavoro lo divide in due (§6).
-- **Elimina** l'intera attività dalla sua scheda; se viene da un ticket, la
-  voce *Da fare* torna aperta (§6). Le voci *Da fare* create a mano si
-  possono eliminare (§8).
-- Icone accanto alle voci di Altro, Anagrafiche e Impostazioni.
+**Novità della 0.6.4** (versione non provata sul telefono)
+- **Agenda**: si riapre sull'ultima vista; in Giorno e Settimana l'orario di
+  lavoro riempie lo schermo e la scala si regola con **due dita** (§7).
+- **Griglia degli orari** centrata sull'orario di lavoro (§3).
+- *Da fare*: **"Modifica"** al posto di "Ripianifica" (§8).
+- **Pallino colorato** negli elenchi di aziende, clienti e contatti (§10).
+- **"Esegui backup ora"** in Importa / esporta, accanto al ripristino (§11).
+- PDF del manuale: le schermate non escono più a pagina intera.
 
-**Nella 0.6.2**: Inizio e Fine sulla stessa riga, inizio nel futuro da
-pianificare, riga Spesa · Foto · Nota voc. · File, periodo dei *Da fare* nella
-Home, "+" in tutti i dialoghi delle anagrafiche.
+**Nella 0.6.3**: tratti sovrapposti risolti con una conferma, eliminazione di
+un'attività e delle voci *Da fare* create a mano, icone nei menu.
 
 I nomi tra virgolette sono le voci dell'interfaccia in italiano; con il
 telefono in un'altra lingua l'app usa inglese, tedesco o spagnolo.
@@ -178,7 +177,9 @@ bordo è neutro, diventa verde quando un'azienda è scelta o viene dal cliente.
 ### Date e orari
 Le date si scelgono con il calendario di Android. Gli orari con una
 **griglia a 5 minuti**: una riga per ora, 12 caselle per riga, 12 ore alla
-volta (**▲ Prima** / **Dopo ▼** spostano la finestra di 3 ore).
+volta (**▲ Prima** / **Dopo ▼** spostano la finestra di 3 ore). Senza un
+orario già scelto la finestra si apre centrata sull'orario di lavoro di quel
+giorno.
 - orario singolo: tocca una casella; **"Orario esatto"** apre l'orologio di
   Android per i minuti fuori dalla griglia (es. 09:37); OK senza toccare nulla
   lascia l'orario com'era;
@@ -401,13 +402,14 @@ oggi; a destra il totale rendicontato del periodo).
   fine; attività contemporanee affiancate; le *Da fare* pianificate sono
   blocchi con il bordo colorato.
 - **Settimana** — sette colonne da lunedì; toccando un giorno si apre la vista Giorno.
-- In Giorno e Settimana la linea del tempo copre l'orario di lavoro e si apre
-  sull'attività in corso (o sull'ora attuale); **"Adatta"** fa stare tutto
-  l'orario di lavoro in uno schermo, **"Scorri"** torna alla scala normale.
+- In Giorno e Settimana la linea del tempo copre l'intera giornata e si apre
+  con tutto l'orario di lavoro nello schermo (o sull'attività in corso, se è
+  fuori orario); **due dita** (pinch) ingrandiscono o riducono la scala.
+- L'Agenda si riapre sull'ultima vista scelta.
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
-![Agenda: vista Giorno](img/agenda-day.png)
+![Agenda: vista Giorno (immagine vecchia: ora la scala si regola con due dita)](img/agenda-day.png)
 
 **Filtro per tag**: il chip "Tutti i tag ▾" accanto alle modalità (compare
 quando nel periodo ci sono attività con tag) mostra solo le attività con quel
@@ -467,7 +469,7 @@ cambia la scadenza del gestionale.
   calendario; in Home compare solo il giorno in cui l'hai ignorata. Un altro
   trascinamento la ripristina. Un import dal gestionale non la ripristina.
 - Toccando una voce: "Avvia attività", "Posticipa", "Segna come fatta" /
-  "Segna come da fare", "Ripianifica" (o "Modifica" se non pianificata) e,
+  "Segna come da fare", **"Modifica"** (anche per ripianificarla) e,
   per le voci create a mano, **"Elimina"** (quelle importate si ignorano,
   altrimenti il prossimo import le riporterebbe).
 - Una voce può avere più attività (es. un lavoro su più giorni).
@@ -487,6 +489,8 @@ cambia la scadenza del gestionale.
 
 ## 10. Anagrafiche
 
+- Negli elenchi di Aziende, Clienti e Contatti un **pallino** mostra il colore
+  scelto (per i contatti, quello del loro cliente).
 - **Aziende** — nella scheda: sezione **"Gestionale"** (codice nel gestionale,
   connettore; per ora il generico, a file) e **"Calendario di questa azienda"**;
   sotto, le **sedi** dell'azienda.
@@ -544,7 +548,8 @@ presente, i **conflitti** (i dati dell'app restano invariati) e ciò che non è
 stato importato con il motivo. Reimportare lo stesso file non crea doppioni.
 
 **Backup** — ogni giorno l'app salva il database nella cartella `backup`
-(ne conserva 14, modificabile); "Esegui backup ora" in Impostazioni.
+(ne conserva 14, modificabile); **"Esegui backup ora"** qui, in Importa /
+esporta.
 **"Ripristina backup"** sostituisce tutti i dati con un backup scelto: prima
 salva i dati attuali come backup `…-before-restore.zip`, poi riavvia l'app.
 
@@ -739,8 +744,8 @@ OpenStreetMap: ognuno si accende o spegne e può puntare a un server proprio.
 Predefinito: attivi, server pubblici.
 
 ### Archiviazione
-Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14),
-"Esegui backup ora".
+Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14).
+"Esegui backup ora" e il ripristino sono in Altro → Importa / esporta.
 
 ### Avanzate
 

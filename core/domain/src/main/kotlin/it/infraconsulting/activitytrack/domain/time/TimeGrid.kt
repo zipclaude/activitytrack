@@ -27,6 +27,16 @@ object TimeGrid {
 	/* First hour of the window showing [minute] with two hours before it, kept inside the day. */
 	fun windowFor(minute: Int): Int = (minute.coerceIn(0, 1439) / 60 - 2).coerceIn(0, 24 - WINDOW_HOURS)
 
+	/*
+	 * The window centred on the working hours [from, to) of the day (owner,
+	 * issue #44: opened at 18 it showed 12-24 instead of the working day).
+	 */
+	fun windowForWork(from: Int, to: Int): Int =
+		((from + to) / 2 / 60 - WINDOW_HOURS / 2).coerceIn(0, 24 - WINDOW_HOURS).let { w ->
+			/* a working day longer than the window starts at its beginning */
+			if (to - from > WINDOW_HOURS * 60) (from / 60).coerceIn(0, 24 - WINDOW_HOURS) else w
+		}
+
 	/* The window moved by [hours], kept inside the day. */
 	fun shift(first: Int, hours: Int): Int = (first + hours).coerceIn(0, 24 - WINDOW_HOURS)
 

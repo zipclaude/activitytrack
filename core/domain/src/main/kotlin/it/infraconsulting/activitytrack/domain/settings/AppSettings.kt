@@ -57,6 +57,8 @@ data class AppSettings(
 	val todoWindowHours: Int = 0,
 	/* the Home's own window, chosen on its header (issue #37); 24 h by default */
 	val homeTodoWindowHours: Int = 24,
+	/* the agenda reopens on the last view picked (issue #44): LIST, DAY, WEEK, MONTH */
+	val agendaView: String = "LIST",
 	/* ignored to-dos listed (struck through) or hidden */
 	val todoShowIgnored: Boolean = true,
 	/* order of the master-data lists and drop-downs (M16) */
