@@ -157,10 +157,12 @@ Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
 riquadri e pulsanti più stretti, per vedere più attività e voci insieme.
 
 ### Nuova azienda o cliente al volo
-In "Nuova attività" il **+** accanto ad Azienda, Cliente, Predefinita e
-Ruolo crea il nuovo elemento senza uscire (nell'editor delle voci da fare,
-Azienda e Cliente); il nuovo elemento risulta già scelto (la predefinita
-riempie la descrizione).
+Il **+** accanto a un campo di anagrafica crea il nuovo elemento senza
+uscire, che risulta già scelto (la predefinita riempie la descrizione):
+Azienda, Cliente, Predefinita e Ruolo in "Nuova attività" e nella scheda
+attività; Azienda e Cliente nell'editor delle voci da fare; il cliente nel
+contatto (anche importato dalla rubrica); l'azienda nel cliente e nella
+predefinita, con il ruolo proposto.
 
 ### Campi obbligatori e facoltativi
 Il bordo dei campi dice quanto contano: **rosso** se obbligatorio e ancora
@@ -417,7 +419,7 @@ sezioni dell'interscambio non sono filtrate).
 
 Attività da fare, importate da un gestionale o create a mano ("Altro" →
 "Da fare" → "Aggiungi", oppure dall'Agenda): titolo, cliente (o azienda),
-**data e ora pianificate**, **durata**, scadenza e ora, priorità
+**data pianificata** con **inizio** e **fine**, scadenza e ora, priorità
 (1 = massima), note, riferimenti (uno per riga).
 
 ![Da fare con i filtri rapidi](img/todos.png)
@@ -425,9 +427,10 @@ Attività da fare, importate da un gestionale o create a mano ("Altro" →
 Stati: **aperta** (senza pianificazione) → **pianificata** (data e ora) →
 **fatta**. La pianificazione è separata dalla scadenza: ripianificare non
 cambia la scadenza del gestionale.
-- **Durata**: se la indichi, il blocco dura quella; se la lasci vuota dura
-  un'ora e, finché la voce resta aperta, si allunga di ora in ora (fino a fine
-  giornata).
+- **Inizio e fine**: toccandoli si apre la griglia a intervallo, che li
+  imposta insieme; con la fine il blocco dura fino a lì, senza fine dura
+  un'ora e, finché la voce resta aperta, si allunga di ora in ora (fino a
+  fine giornata).
 - **Promemoria**: 15 minuti prima dell'ora pianificata arriva la notifica
   "Titolo alle HH:MM" con "Avvia attività", "Posticipa 30 min" (sposta la
   pianificazione di 30 minuti dall'ora pianificata o, se è già passata, da

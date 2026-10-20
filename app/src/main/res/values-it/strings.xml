@@ -505,4 +505,5 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="call_propose_text">%1$s–%2$s: registrarla come attività?</string>
   <string name="call_propose_action">Crea attività</string>
   <string name="segment_note">Descrizione</string>
+  <string name="start_end_hint">Inizio vuoto = adesso; Fine vuota = aperta; una Fine già passata registra l\'attività come conclusa.</string>
 </resources>

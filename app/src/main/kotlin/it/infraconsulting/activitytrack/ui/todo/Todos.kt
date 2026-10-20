@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import it.infraconsulting.activitytrack.ui.common.TimeGridSheet
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.todo.withinHours
 import it.infraconsulting.activitytrack.domain.todo.todoMoment
@@ -597,7 +598,8 @@ private inline fun <T> optional(text: String, parse: (String) -> T?): Result<T?>
 	if (text.isBlank()) Result.success(null) else parse(text)?.let { Result.success(it) } ?: Result.failure(IllegalArgumentException(text))
 
 /*
- * Title, client (its company follows), planned date, time and duration,
+ * Title, client (its company follows), planned date, start and end (the
+ * duration follows; issue #37, picked as a range on the grid),
  * due date and time, priority, notes, references.
  */
 @Composable
@@ -614,7 +616,10 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	val companyId = picked ?: companies.firstOrNull()?.id
 	var planDay by remember { mutableStateOf(initial.planEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var planTime by remember { mutableStateOf(initial.planStartMin?.let(::formatMin).orEmpty()) }
-	var duration by remember { mutableStateOf(initial.durationMin?.toString().orEmpty()) }
+	var planEnd by remember {
+		mutableStateOf(initial.planStartMin?.let { s0 -> initial.durationMin?.let { formatMin((s0 + it).coerceAtMost(1440)) } }.orEmpty())
+	}
+	var planGrid by remember { mutableStateOf(false) }
 	var due by remember { mutableStateOf(initial.dueEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var time by remember { mutableStateOf(initial.dueTimeMin?.let(::formatMin).orEmpty()) }
 	var priority by remember { mutableStateOf(initial.priority?.toString().orEmpty()) }
@@ -652,7 +657,8 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				vm.invalid(ValidationException.Reason.INVALID_TIME)
 				return@EditDialog
 			}
-			val dur = optional(duration) { it.trim().toIntOrNull()?.takeIf { d -> d > 0 } }
+			/* the end on the same day, after the start; empty = no duration (1 h growing) */
+			val dur = optional(planEnd) { e -> parseHhMm(e)?.let { m -> pt.getOrNull()?.let { m - it } }?.takeIf { d -> d > 0 } }
 			if (dur.isFailure) {
 				vm.invalid(ValidationException.Reason.INVALID_TIME_RANGE)
 				return@EditDialog
@@ -690,16 +696,39 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			stringResource(R.string.todo_field_plan_date), planDay, { planDay = it }, clearable = true,
 			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing }, importance = Importance.IMPORTANT,
 		)
-		TimeField(
-			stringResource(R.string.todo_field_plan_time), planTime, { planTime = it }, clearable = true,
-			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = Importance.IMPORTANT,
-		)
-		TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number, importance = Importance.OPTIONAL)
+		androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+			Column(Modifier.weight(1f)) {
+				TimeField(
+					stringResource(R.string.field_start), planTime, { planTime = it }, clearable = true,
+					error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = Importance.IMPORTANT,
+					onOpen = { planGrid = true },
+				)
+			}
+			Column(Modifier.weight(1f)) {
+				TimeField(stringResource(R.string.field_end), planEnd, { planEnd = it }, clearable = true, endOfDay = true,
+					importance = Importance.OPTIONAL, onOpen = { planGrid = true })
+			}
+		}
 		DateField(stringResource(R.string.todo_field_due), due, { due = it }, clearable = true, importance = Importance.OPTIONAL)
 		TimeField(stringResource(R.string.todo_field_time), time, { time = it }, clearable = true, importance = Importance.OPTIONAL)
 		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it }, importance = Importance.OPTIONAL)
 		TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
 		TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false, importance = Importance.OPTIONAL)
+	}
+	if (planGrid) {
+		val a = parseHhMm(planTime)
+		val b = parseHhMm(planEnd)
+		TimeGridSheet(
+			title = stringResource(R.string.todo_field_plan_date),
+			initial = if (a != null && b != null && b > a && a < 1440) a until b else null,
+			range = true,
+			busy = emptyList(),
+			onDismiss = { planGrid = false },
+		) { from, to ->
+			planGrid = false
+			planTime = formatMin(from)
+			planEnd = formatMin(to)
+		}
 	}
 	if (addCompany)
 		QuickCompanyDialog(onDone = { addCompany = false; picked = it; clientId = null }, onDismiss = { addCompany = false })

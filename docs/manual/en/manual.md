@@ -154,9 +154,11 @@ Settings → "Display" → **Compact**: slightly smaller text, tighter cards and
 buttons, to see more activities and to-dos at once.
 
 ### New company or client on the fly
-In "New activity" the **+** next to Company, Client, Preset and Role creates
-the new item without leaving (in the to-do editor, Company and Client); the
-new item is already selected (a preset fills the description).
+The **+** next to a master-data field creates the new item without leaving,
+already selected (a preset fills the description): Company, Client, Preset
+and Role in "New activity" and in the activity screen; Company and Client in
+the to-do editor; the client of a contact (also one imported from the phone
+book); the company of a client and of a preset, with its proposed role.
 
 ### Required and optional fields
 The field border tells how much it matters: **red** when required and still
@@ -409,7 +411,7 @@ not filtered).
 
 To-dos, imported from a management system or created by hand ("More" →
 "To-dos" → "Add", or from the Agenda): title, client (or company), **planned
-date and time**, **duration**, due date and time, priority (1 = highest),
+date** with **start** and **end**, due date and time, priority (1 = highest),
 notes, references (one per line).
 
 ![To-dos with the quick filters](img/todos.png)
@@ -417,9 +419,9 @@ notes, references (one per line).
 States: **open** (no plan) → **planned** (date and time) → **done**. The plan
 is separate from the due date: re-planning does not change the management
 system's due date.
-- **Duration**: when given, the block lasts that long; left empty it lasts an
-  hour and, while the to-do stays open, grows hour by hour (up to the end of
-  the day).
+- **Start and end**: tapping them opens the range grid, which sets both;
+  with an end the block lasts until then, without one it lasts an hour and,
+  while the to-do stays open, grows hour by hour (up to the end of the day).
 - **Reminder**: 15 minutes before the planned time the "Title at HH:MM"
   notification comes, with "Start activity", "Postpone 30 min" (moves the
   plan 30 minutes from the planned time or, if that has passed, from now; the
