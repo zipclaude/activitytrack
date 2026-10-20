@@ -24,8 +24,10 @@ code { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; background: #
  * side. Diagrams (SVG) keep the full width.
  */
 figure { margin: .8em 0; text-align: center; break-inside: avoid; display: inline-block; width: 48%; vertical-align: top; }
-figure img { max-width: 100%; max-height: 105mm; border: 1px solid #d5d9e2; border-radius: 6px; }
+/* every screenshot, inside a figure or not (pandoc versions differ) */
+img { max-width: 48%; max-height: 105mm; border: 1px solid #d5d9e2; border-radius: 6px; }
+figure img { max-width: 100%; }
 figure:has(img[src$=".svg"]) { display: block; width: auto; }
-figure img[src$=".svg"] { border: 0; max-height: 150mm; }
+img[src$=".svg"], figure img[src$=".svg"] { border: 0; max-width: 100%; max-height: 150mm; }
 figcaption { font-size: 9pt; color: #5b6475; margin-top: .3em; }
 blockquote { margin: .6em 0; padding: .4em .8em; border-left: 4px solid #f2b705; background: #fff8e1; }
