@@ -570,4 +570,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="policy_applied_unsigned">Nicht signiert. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>
   <string name="policy_more_errors">… und %1$d weitere</string>
   <string name="policy_too_large">größer als 1 MB</string>
+  <!-- issue #48 plugins -->
+  <string name="plugin_refused_title">Plugin %1$s abgelehnt</string>
+  <string name="plugin_logged_in">Bei %1$s angemeldet</string>
+  <string name="plugin_login_failed">Anmeldung fehlgeschlagen: %1$s</string>
 </resources>

@@ -1,9 +1,11 @@
 # Integration plugins — descriptor format (draft, issue #48 part B)
 
 Status: format approved by the owner (2026-10-21; changes, if any, in a
-later release). Implemented: the parser with its checks and the
-expression evaluator (`core/domain/…/plugin`); the HTTP engine, import,
-export and the settings card follow (issue #48 B2–B6).
+later release). Implemented: the parser with its checks, the
+expression evaluator and the HTTP engine (`core/domain/…/plugin`:
+paging, retries, Basic / API key / bearer; OAuth PKCE login in the app),
+plugin loading from the data folder with the signature rule. Import,
+export and the settings card follow (issue #48 B3–B6).
 
 Plugins are not built into the app (owner): published in `plugins/` of
 this repository, copied by the user into `plugins/` of the data folder.

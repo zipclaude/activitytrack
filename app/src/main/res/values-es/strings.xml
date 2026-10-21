@@ -571,4 +571,8 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="policy_applied_unsigned">Sin firma. Antes se hizo una copia; la política anterior está en policy_old.json.</string>
   <string name="policy_more_errors">… y %1$d más</string>
   <string name="policy_too_large">mayor de 1 MB</string>
+  <!-- issue #48 plugins -->
+  <string name="plugin_refused_title">Plugin %1$s rechazado</string>
+  <string name="plugin_logged_in">Sesión iniciada en %1$s</string>
+  <string name="plugin_login_failed">Inicio de sesión fallido: %1$s</string>
 </resources>

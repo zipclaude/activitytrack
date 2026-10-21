@@ -21,6 +21,7 @@ class UserDataDir(context: Context) {
 		ATTACHMENTS("attachments"),
 		BACKUP("backup"),
 		EXPORT("export"),
+		PLUGINS("plugins"),		/* integration descriptors (issue #48) */
 	}
 
 	/* Keeps read/write access to [tree] across reboots. */

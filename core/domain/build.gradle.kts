@@ -21,8 +21,11 @@ kotlin {
 }
 
 dependencies {
-	/* interchange JSON (M4); multiplatform library, no Android dependency */
-	implementation(libs.kotlinx.serialization.json)
+	/*
+	 * interchange JSON (M4); multiplatform library, no Android dependency.
+	 * api: the plugin engine (issue #48) has JsonElement in its public types.
+	 */
+	api(libs.kotlinx.serialization.json)
 	testImplementation(libs.kotlin.test.junit)
 	testImplementation(libs.junit4)
 }
