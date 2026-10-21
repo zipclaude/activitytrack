@@ -1,7 +1,11 @@
-Versione 0.6.6 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.6.7 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.6.7** (versione non provata sul telefono)
+- **Policy** (`policy.json`) e **integrazioni come plugin** (cartella
+  `plugins`): §11, "Policy e integrazioni". Primo rilascio, da provare.
 
 **Novità della 0.6.4** (versione non provata sul telefono)
 - **Agenda**: si riapre sull'ultima vista; in Giorno e Settimana l'orario di
@@ -561,11 +565,48 @@ solo *Da fare*). Il rapporto mostra cosa è stato aggiunto, cosa era già
 presente, i **conflitti** (i dati dell'app restano invariati) e ciò che non è
 stato importato con il motivo. Reimportare lo stesso file non crea doppioni.
 
-**Backup** — ogni giorno l'app salva il database nella cartella `backup`
-(ne conserva 14, modificabile); **"Esegui backup ora"** qui, in Importa /
-esporta.
+**Backup** — l'app salva il database nella cartella `backup` con la
+frequenza e all'ora scelte in Impostazioni (ogni giorno alle 02:00 se non
+cambiate; ne conserva 14, modificabile); **"Esegui backup ora"** qui, in
+Importa / esporta.
 **"Ripristina backup"** sostituisce tutti i dati con un backup scelto: prima
 salva i dati attuali come backup `…-before-restore.zip`, poi riavvia l'app.
+
+### Policy e integrazioni
+
+**Policy** — un file `policy.json` nella cartella dati (accanto a
+`backup`) cambia l'app senza passare dalle Impostazioni: spegne funzioni,
+nasconde, rinomina o colora campi, fissa impostazioni (grigie con il
+lucchetto, o nascoste). È pensata per un'azienda che distribuisce l'app ai
+suoi collaboratori, o per usarla in un altro settore ("Cantiere" al posto di
+"Cliente").
+- L'app la legge all'avvio e ogni volta che torna in primo piano. Se è
+  valida: prima fa un backup `…-policy.zip` (mai cancellato in automatico),
+  salva la policy precedente in `policy_old.json`, poi la applica e lo
+  notifica. Se non è valida, la notifica elenca gli errori con la riga e la
+  ignora finché il file non cambia.
+- **Firma** (facoltativa): `policy.json.sig`, creata con
+  `scripts/sign-policy.sh` e un certificato di una CA di cui il telefono si
+  fida. La prima policy firmata fissa il nome (CN) del firmatario: da lì in
+  poi l'app accetta solo policy firmate con lo stesso nome.
+- Togliere il file non toglie la policy: serve una policy vuota (firmata, se
+  la precedente lo era).
+- In questa versione la policy fissa le impostazioni; nascondere campi e
+  funzioni nelle schermate arriverà nelle prossime.
+
+**Integrazioni (plugin)** — un gestionale si collega con un file
+`<nome>.json` nella cartella `plugins` dei dati (i plugin pubblicati sono
+nella cartella `plugins` del repository; formato in `docs/PLUGINS.md`).
+- Scheda dell'azienda → "Gestionale" → "Connettore": scegli il plugin; compaiono le sue
+  opzioni (quelle con `*` sono obbligatorie), "Accedi" se il gestionale
+  usa un login, poi "Sincronizza ora".
+- La sincronizzazione scarica le liste del gestionale, i clienti, i contatti
+  e le *Da fare*, e invia le attività chiuse; ripeterla non crea doppioni.
+- Nella scheda dell'attività compaiono i campi del plugin (per esempio il
+  servizio e il tipo di attività). Alla chiusura l'app chiede se inviare,
+  invia sempre o mai, secondo le opzioni del plugin; senza rete aspetta.
+- Con una policy firmata anche i plugin devono essere firmati con lo stesso
+  nome (`<nome>.json.sig`).
 
 ---
 
