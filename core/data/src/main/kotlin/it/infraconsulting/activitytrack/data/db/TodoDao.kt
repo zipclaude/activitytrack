@@ -27,8 +27,9 @@ interface TodoDao {
 	@Query("SELECT * FROM todo WHERE uid = :uid")
 	suspend fun byUid(uid: String): TodoEntity?
 
-	@Query("SELECT * FROM todo WHERE company_id = :companyId AND external_key = :key")
-	suspend fun byExternalKey(companyId: Long, key: String): TodoEntity?
+	/* IS: null matches the to-dos of no company (issue #48) */
+	@Query("SELECT * FROM todo WHERE company_id IS :companyId AND external_key = :key")
+	suspend fun byExternalKey(companyId: Long?, key: String): TodoEntity?
 
 	/* open (not done, not ignored) first by due date (undated last), then priority (1 = highest) */
 	@Query(

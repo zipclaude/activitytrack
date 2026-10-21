@@ -4,7 +4,7 @@ package it.infraconsulting.activitytrack.domain.start
 /* A client as offered by the start flow; [lastUsedMs] is the newest entry on it, if any. */
 data class ClientChoice(
 	val id: Long,
-	val companyId: Long,
+	val companyId: Long?,
 	val name: String,
 	val archived: Boolean,
 	val lastUsedMs: Long?,

@@ -48,8 +48,9 @@ class QuickAddViewModel(private val master: MasterDataRepository) : ActionViewMo
 		run({ done(text.trim()) }) { master.savePreset(ActivityPresetEntity(text = text, companyId = companyId, defaultRoleId = roleId)) }
 	}
 
-	fun addClient(companyId: Long?, name: String, done: (Long, Long) -> Unit) {
-		if (companyId == null) {
+	/* [withoutCompany]: the policy hides the companies, the client belongs to none (issue #48) */
+	fun addClient(companyId: Long?, name: String, withoutCompany: Boolean, done: (Long, Long?) -> Unit) {
+		if (companyId == null && !withoutCompany) {
 			fail(it.infraconsulting.activitytrack.data.repo.ValidationException.Reason.CLIENT_REQUIRED)
 			return
 		}
@@ -63,10 +64,12 @@ private fun quickAddViewModel() = appViewModel(key = "quick-add") { QuickAddView
 
 /* [field] with a "+" beside it. */
 @Composable
-fun WithAddButton(label: String, onAdd: () -> Unit, field: @Composable () -> Unit) {
+fun WithAddButton(label: String, onAdd: () -> Unit, masterData: Boolean = false, field: @Composable () -> Unit) {
 	Row(verticalAlignment = Alignment.CenterVertically) {
 		Box(Modifier.weight(1f)) { field() }
-		IconButton(onClick = onAdd) { Icon(painterResource(R.drawable.ic_add), contentDescription = label) }
+		/* companies, clients and contacts may come from imports only (policy masterData, issue #48) */
+		if (!masterData || canCreateMasterData())
+			IconButton(onClick = onAdd) { Icon(painterResource(R.drawable.ic_add), contentDescription = label) }
 	}
 }
 
@@ -142,7 +145,8 @@ fun QuickPresetDialog(text: String, companyId: Long?, onDone: (String) -> Unit, 
 
 /* [companyId]: proposed company (the current filter); done gets the client and its company. */
 @Composable
-fun QuickClientDialog(companyId: Long?, onDone: (Long, Long) -> Unit, onDismiss: () -> Unit) {
+fun QuickClientDialog(companyId: Long?, onDone: (Long, Long?) -> Unit, onDismiss: () -> Unit) {
+	val withCompanies = companiesShown()
 	val vm = quickAddViewModel()
 	val error by vm.error.collectAsState()
 	val companies by vm.companies.collectAsState()
@@ -154,15 +158,17 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long) -> Unit, onDismiss:
 		title = stringResource(R.string.quick_client),
 		error = error,
 		onDismiss = { vm.clearError(); onDismiss() },
-		onConfirm = { vm.addClient(chosen, name, onDone) },
+		onConfirm = { vm.addClient(chosen.takeIf { withCompanies }, name, !withCompanies, onDone) },
 	) {
 		TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
-		WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
-			ChoiceField(
-				stringResource(R.string.field_company), companies.filter { !it.archived }.map { it.id to it.name }, chosen,
-				importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
-			) { company = it }
-		}
+		if (withCompanies)
+			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }, masterData = true) {
+				ChoiceField(
+					fieldLabel(it.infraconsulting.activitytrack.domain.policy.Field.COMPANY, R.string.field_company),
+					companies.filter { !it.archived }.map { it.id to it.name }, chosen,
+					importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
+				) { company = it }
+			}
 	}
 	if (addCompany)
 		QuickCompanyDialog(onDone = { addCompany = false; company = it }, onDismiss = { addCompany = false })

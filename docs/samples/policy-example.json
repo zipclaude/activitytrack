@@ -1,0 +1,22 @@
+{
+	"format": "activitytrack-policy",
+	"schema": 1,
+	"id": "example",
+	"version": "1",
+	"features": { "planning": false, "concurrentEntries": false, "ignoreTodos": false, "deleteEntries": false },
+	"fields": {
+		"client": { "label": { "it": "Cantiere", "en": "Site" } },
+		"role": { "required": true },
+		"km": { "visible": false }
+	},
+	"settings": {
+		"editableTimes": { "value": false, "locked": true },
+		"roundingWorkMin": { "value": 30, "locked": true },
+		"compactDisplay": true
+	},
+	"behaviours": { "askTravelDone": false },
+	"integrations": { "antares": { "plugin": "antares.json" } },
+	"entries": { "source": "todosOnly" },
+	"masterData": { "source": "importOnly" },
+	"export": { "formats": ["csv"] }
+}

@@ -285,7 +285,9 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	/* planning from the agenda (M9): a tap on a free slot or "Add" opens a new planned to-do */
-	val plan: (LocalDate, Int) -> Unit = { day, min -> todosVm.clearError(); editing = newTodo(day, min) }
+	val policy = it.infraconsulting.activitytrack.ui.common.LocalPolicy.current
+	val canPlan = policy.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.PLANNING) && policy.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.TODOS)
+	val plan: (LocalDate, Int) -> Unit = { day, min -> if (canPlan) { todosVm.clearError(); editing = newTodo(day, min) } }
 	val onTodo: (TodoEntity) -> Unit = { selected = it }
 	/* swipes on open entries run the commands like Home (owner, 2026-10-18: gestures everywhere) */
 	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries) }

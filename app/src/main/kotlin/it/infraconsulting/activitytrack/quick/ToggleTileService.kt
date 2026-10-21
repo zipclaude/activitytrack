@@ -41,6 +41,8 @@ class ToggleTileService : TileService() {
 	override fun onClick() {
 		super.onClick()
 		scope.launch {
+			if (!tileAllowed())
+				return@launch
 			val toggled = try {
 				withContext(Dispatchers.Default) { QuickToggle.toggle(container) }
 			} catch (e: IllegalTransitionException) {
@@ -74,6 +76,12 @@ class ToggleTileService : TileService() {
 
 	private suspend fun render() {
 		val tile = qsTile ?: return
+		/* switched off by the policy (issue #48): shown unavailable, taps ignored */
+		if (!tileAllowed()) {
+			tile.state = Tile.STATE_UNAVAILABLE
+			tile.updateTile()
+			return
+		}
 		val e = withContext(Dispatchers.Default) { QuickToggle.target(container) }
 		val title = e?.let { withContext(Dispatchers.Default) { titleOf(it.clientId, it.companyId) } }
 		when {
@@ -111,5 +119,10 @@ class ToggleTileService : TileService() {
 		fun refresh(context: Context) {
 			requestListeningState(context, ComponentName(context, ToggleTileService::class.java))
 		}
+	}
+
+	private suspend fun tileAllowed(): Boolean = container.policies.now().let { p ->
+		p.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.QUICK_TILE) &&
+			p.entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.FREE
 	}
 }

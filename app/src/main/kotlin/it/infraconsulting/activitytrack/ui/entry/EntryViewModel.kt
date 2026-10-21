@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.domain.policy.Field as PField
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import java.time.ZoneId
 import java.time.LocalDate
@@ -28,6 +29,8 @@ class EntryViewModel(
 	master: MasterDataRepository,
 	private val todos: TodoRepository,
 	editableTimes: Flow<Boolean> = flowOf(false),
+	/* the policy in force: the fields it makes required (issue #48) */
+	private val policy: () -> it.infraconsulting.activitytrack.domain.policy.Policy = { it.infraconsulting.activitytrack.domain.policy.Policy.NONE },
 ) : ActionViewModel() {
 	/* segments editable and deletable only with the option on (M17) */
 	val editableTimes = editableTimes.state(false)
@@ -42,7 +45,16 @@ class EntryViewModel(
 	val roles = master.roles.state(emptyList())
 	val presets = master.presets.state(emptyList())
 
-	fun save(d: EntryDetails, done: () -> Unit) = run(done) { entries.updateDetails(entryId, d) }
+	fun save(d: EntryDetails, done: () -> Unit) {
+		policy().missingRequired(
+			mapOf(
+				PField.COMPANY to (d.companyId != null), PField.CLIENT to (d.clientId != null), PField.ROLE to (d.roleId != null),
+				PField.LOCALITY to !d.locality.isNullOrBlank(), PField.PLACE to (d.locationKind != null), PField.NOTES to !d.notes.isNullOrBlank(),
+				PField.CONTACT to (d.contactId != null),
+			),
+		)?.let { _ -> return fail(it.infraconsulting.activitytrack.data.repo.ValidationException.Reason.POLICY_REQUIRED) }
+		run(done) { entries.updateDetails(entryId, d) }
+	}
 	/* Completion without activity text: asked first (empty / copy the last one / edit). */
 	data class EmptyActivityPrompt(val details: EntryDetails, val lastActivity: String?)
 

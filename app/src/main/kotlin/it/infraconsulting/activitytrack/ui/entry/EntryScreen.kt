@@ -1,6 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.common.enabled
+import it.infraconsulting.activitytrack.ui.common.fieldShown
+import it.infraconsulting.activitytrack.ui.common.fieldImportance
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
+import it.infraconsulting.activitytrack.ui.common.fieldLabel
+import it.infraconsulting.activitytrack.ui.common.PolicyField
+import it.infraconsulting.activitytrack.domain.policy.Feature
+import it.infraconsulting.activitytrack.domain.policy.Field
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import it.infraconsulting.activitytrack.ui.masterdata.ContactsViewModel
@@ -96,13 +104,16 @@ import java.time.ZoneId
 
 @Composable
 fun EntryScreen(entryId: Long, onBack: () -> Unit) {
-	val vm = appViewModel { EntryViewModel(entryId, it.entries, it.masterData, it.todos, it.settings.settings.map { s -> s.editableTimes }) }
+	val vm = appViewModel { c -> EntryViewModel(entryId, c.entries, c.masterData, c.todos, c.settings.settings.map { s -> s.editableTimes }, { c.policies.current.value }) }
 	val entry by vm.entry.collectAsState()
 	ScreenScaffold(
 		title = stringResource(R.string.entry_title),
 		onBack = onBack,
 		/* the whole entry (issue #40) */
-		actions = { TextButton(onClick = vm::askDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) } },
+		actions = {
+			if (LocalPolicy.current.enabled(Feature.DELETE_ENTRIES))
+				TextButton(onClick = vm::askDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+		},
 	) { padding ->
 		/* the form starts from the first loaded state; later emissions refresh only status and lists */
 		entry?.let { EntryForm(it, vm, onBack, Modifier.padding(padding).consumeWindowInsets(padding).imePadding()) }
@@ -150,6 +161,9 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	/* compact display (M11): tighter spacing; locality, place and notes folded while empty */
 	val compact = LocalCompact.current
 	var more by remember { mutableStateOf(false) }
+	/* read here: the lazy list's builder is not composable (issue #48) */
+	val policy = LocalPolicy.current
+	val entryPlugin = rememberEntryPlugin(e)
 	Column(modifier = modifier.fillMaxSize()) {
 		LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
 			item {
@@ -159,81 +173,95 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 						Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
 						val travel = commandStyle(EntryCommand.TRAVEL)!!
 						val pause = commandStyle(EntryCommand.PAUSE)!!
-						ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
+						if (enabled(Feature.TRAVEL))
+							ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
 						ColoredActionButton(stringResource(R.string.add_pause), pause.icon, pause.container, { vm.clearError(); adding = SegmentKind.PAUSE }, pause.content)
 					}
 					/* expense, photo, voice note, file on one row, before the client (owner, issue #37) */
-					Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-						for ((req, label, icon, color) in listOf(
-							AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_euro, MAGENTA),
-							AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE),
-							AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL),
-							AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO),
-							AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK),
-						))
-							MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
-					}
+					/* only what the policy keeps (issue #48) */
+					val choices = listOfNotNull(
+						AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_euro, MAGENTA).takeIf { policy.enabled(Feature.EXPENSES) },
+						AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE).takeIf { policy.enabled(Feature.ATTACHMENTS) },
+						AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL).takeIf { policy.enabled(Feature.VOICE_NOTES) },
+						AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO).takeIf { policy.enabled(Feature.ATTACHMENTS) },
+						AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK).takeIf { policy.enabled(Feature.MATERIALS) },
+					)
+					if (choices.isNotEmpty())
+						Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+							for ((req, label, icon, color) in choices)
+								MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
+						}
 					val coNames = companies.associate { it.id to it.name }
 					/* by company in the company order, then in the client order (M16; stable sort) */
 					val coIndex = companies.withIndex().associate { (i, c) -> c.id to i }
-					WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
+					if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {
 						SearchableChoiceField(
-							stringResource(R.string.field_client),
+							fieldLabel(Field.CLIENT, R.string.field_client),
 							listOf<Pair<Long?, String>>(null to none) +
 								clients.filter { !it.archived || it.id == clientId }
 									.filter { initial.companyId == null || initial.clientId != null || it.companyId == initial.companyId }
 									.sortedBy { coIndex[it.companyId] ?: Int.MAX_VALUE }
-									.map { it.id to "${coNames[it.companyId].orEmpty()} · ${it.name}" },
+									.map { it.id to if (policy.field(Field.COMPANY).visible) "${coNames[it.companyId].orEmpty()} · ${it.name}" else it.name },
 							clientId,
 							importance = Importance.REQUIRED,
 							colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
 						) { clientId = it }
-					}
+					} }
 					val usable = presets.filter { it.companyId == null || it.companyId == companyId }
-					WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) {
+					if (fieldShown(Field.QUICK_PICK)) WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) { PolicyField(Field.QUICK_PICK) {
 						ChoiceField(
-							stringResource(R.string.field_preset),
+							fieldLabel(Field.QUICK_PICK, R.string.field_preset),
 							listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
 							null,
-							importance = Importance.OPTIONAL,
+							importance = fieldImportance(Field.QUICK_PICK, Importance.OPTIONAL),
 						) { id ->
 							usable.firstOrNull { it.id == id }?.let { p ->
 								activity = p.text
 								if (roleId == null) roleId = p.defaultRoleId
 							}
 						}
+					} }
+					PolicyField(Field.DESCRIPTION) {
+						DictationInput(fieldLabel(Field.DESCRIPTION, R.string.field_activity), activity, { activity = it }, Importance.REQUIRED)
 					}
-					DictationInput(stringResource(R.string.field_activity), activity, { activity = it }, Importance.REQUIRED)
 					val people by appViewModel(key = "contacts") { c -> ContactsViewModel(c.calls) }.contacts.collectAsState()
 					val ofClient = people.filter { it.contact.clientId == clientId }
-					if (ofClient.isNotEmpty() || contactId != null)
+					if ((ofClient.isNotEmpty() || contactId != null) && fieldShown(Field.CONTACT))
+						PolicyField(Field.CONTACT) {
+							ChoiceField(
+								fieldLabel(Field.CONTACT, R.string.field_contact),
+								listOf<Pair<Long?, String>>(null to none) + ofClient.map { it.contact.id to it.contact.name },
+								contactId.takeIf { id -> ofClient.any { it.contact.id == id } },
+								importance = fieldImportance(Field.CONTACT, Importance.OPTIONAL),
+							) { contactId = it }
+						}
+					if (fieldShown(Field.ROLE)) WithAddButton(stringResource(R.string.quick_role), { addRole = true }) { PolicyField(Field.ROLE) {
 						ChoiceField(
-							stringResource(R.string.field_contact),
-							listOf<Pair<Long?, String>>(null to none) + ofClient.map { it.contact.id to it.contact.name },
-							contactId.takeIf { id -> ofClient.any { it.contact.id == id } },
-							importance = Importance.OPTIONAL,
-						) { contactId = it }
-					WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
-						ChoiceField(
-							stringResource(R.string.field_role),
+							fieldLabel(Field.ROLE, R.string.field_role),
 							listOf<Pair<Long?, String>>(null to none) +
 								roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
 							roleId,
-							importance = Importance.IMPORTANT,
+							importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
 						) { roleId = it }
-					}
+					} }
 					val folded = compact && !more && locality.isEmpty() && locationKind == null && notes.isEmpty()
 					if (folded)
 						TextButton(onClick = { more = true }) { Text(stringResource(R.string.more_details) + " ▾") }
 					else {
-						TextInput(stringResource(R.string.field_locality), locality, { locality = it }, importance = Importance.OPTIONAL)
-						ChoiceField(
-							stringResource(R.string.field_location_kind),
-							listOf<Pair<LocationKind?, String>>(null to none) + LocationKind.entries.map { it to locationLabel(it) },
-							locationKind,
-							importance = Importance.OPTIONAL,
-						) { locationKind = it }
-						TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
+						PolicyField(Field.LOCALITY) {
+							TextInput(fieldLabel(Field.LOCALITY, R.string.field_locality), locality, { locality = it }, importance = fieldImportance(Field.LOCALITY, Importance.OPTIONAL))
+						}
+						PolicyField(Field.PLACE) {
+							ChoiceField(
+								fieldLabel(Field.PLACE, R.string.field_location_kind),
+								listOf<Pair<LocationKind?, String>>(null to none) + LocationKind.entries.map { it to locationLabel(it) },
+								locationKind,
+								importance = fieldImportance(Field.PLACE, Importance.OPTIONAL),
+							) { locationKind = it }
+						}
+						PolicyField(Field.NOTES) {
+							TextInput(fieldLabel(Field.NOTES, R.string.field_notes), notes, { notes = it }, singleLine = false, importance = fieldImportance(Field.NOTES, Importance.OPTIONAL))
+						}
 					}
 				}
 			}
@@ -267,24 +295,31 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				}
 			}
 
-			item { TagsSection(vm) }
-			item { SectionHeader(stringResource(R.string.external_refs)) }
-			items(refs, key = { "r${it.id}" }) { r ->
-				ClickableRow(r.value, refKindLabel(r.kind)) { deletingRef = r }
-			}
-			item {
-				Row(Modifier.padding(horizontal = 16.dp)) {
-					Column(Modifier.weight(1f)) {
-						TextInput(stringResource(R.string.external_ref_new), newRef, { newRef = it })
-					}
-					AddButton { vm.addRef(newRef) { newRef = "" } }
+			if (policy.field(Field.TAGS).visible)
+				item { TagsSection(vm) }
+			if (policy.field(Field.REFS).visible) {
+				item { SectionHeader(fieldLabel(Field.REFS, R.string.external_refs)) }
+				items(refs, key = { "r${it.id}" }) { r ->
+					ClickableRow(r.value, refKindLabel(r.kind)) { if (policy.field(Field.REFS).enabled) deletingRef = r }
 				}
+				if (policy.field(Field.REFS).enabled)
+					item {
+						Row(Modifier.padding(horizontal = 16.dp)) {
+							Column(Modifier.weight(1f)) {
+								TextInput(stringResource(R.string.external_ref_new), newRef, { newRef = it })
+							}
+							AddButton { vm.addRef(newRef) { newRef = "" } }
+						}
+					}
 			}
 			/* the fields of the company's integration plugin (issue #48) */
-			item { PluginFieldsSection(e) }
-			item { ExpensesSection(initial.id) }
-			item { MaterialsSection(initial.id) }
-			item { AttachmentsSection(initial.id, zone) }
+			entryPlugin?.let { (co, plugin) -> item(key = "plugin") { PluginFieldsSection(e, co, plugin) } }
+			if (policy.enabled(Feature.EXPENSES))
+				item { ExpensesSection(initial.id) }
+			if (policy.enabled(Feature.MATERIALS))
+				item { MaterialsSection(initial.id) }
+			if (policy.enabled(Feature.ATTACHMENTS) || policy.enabled(Feature.VOICE_NOTES))
+				item { AttachmentsSection(initial.id, zone) }
 		}
 
 		/* outside the list: a validation error must stay visible above the buttons */
@@ -446,7 +481,7 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 		TimeField(stringResource(R.string.field_start), start, { start = it }, importance = Importance.REQUIRED, onOpen = { grid = true })
 		TimeField(stringResource(R.string.field_end), end, { end = it }, importance = Importance.REQUIRED, onOpen = { grid = true })
 		if (s.kind == SegmentKind.TRAVEL)
-			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = Importance.OPTIONAL)
+			PolicyField(Field.KM) { TextInput(fieldLabel(Field.KM, R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = fieldImportance(Field.KM, Importance.OPTIONAL)) }
 		if (s.kind == SegmentKind.PAUSE)
 			TextInput(stringResource(R.string.segment_note), note, { note = it }, importance = Importance.OPTIONAL)
 	}
@@ -533,7 +568,7 @@ private fun ManualSegmentDialog(
 		TimeField(stringResource(R.string.field_start), start, { start = it }, onOpen = { grid = true })
 		TimeField(stringResource(R.string.field_end), end, { end = it }, onOpen = { grid = true })
 		if (kind == SegmentKind.TRAVEL)
-			TextInput(stringResource(R.string.field_km), km, { km = it }, KeyboardType.Decimal)
+			PolicyField(Field.KM) { TextInput(fieldLabel(Field.KM, R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = fieldImportance(Field.KM, null)) }
 		Text(stringResource(R.string.segment_hint), style = MaterialTheme.typography.bodySmall)
 	}
 	if (grid)

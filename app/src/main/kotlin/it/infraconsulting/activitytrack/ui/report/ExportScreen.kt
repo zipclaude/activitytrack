@@ -119,7 +119,9 @@ class ExportViewModel(private val c: AppContainer) : ViewModel() {
 	) {
 		/* CSV is a period report; the interchange may be unbounded (full backup) */
 		val bounded = from != null && to != null
-		if ((format == OutFormat.CSV && !bounded) || (bounded && (to!!.isBefore(from) || from!!.plusYears(1) < to))) {
+		/* at most a year, or the policy's limit (behaviours.exportMaxDays, issue #48) */
+		val maxDays = c.policies.current.value.behaviours.exportMaxDays.toLong()
+		if ((format == OutFormat.CSV && !bounded) || (bounded && (to!!.isBefore(from) || java.time.temporal.ChronoUnit.DAYS.between(from, to) >= maxDays))) {
 			_state.value = ExchangeState.InvalidRange
 			return
 		}
@@ -282,62 +284,71 @@ fun ExportScreen(onBack: () -> Unit) {
 			modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
 			verticalArrangement = Arrangement.spacedBy(12.dp),
 		) {
-			SectionHeader(stringResource(R.string.export_section))
-			Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				for (f in OutFormat.entries)
-					FilterChip(selected = format == f, onClick = { format = f }, label = { Text(f.label) })
-			}
-			DateField(stringResource(R.string.export_from), from, { from = it }, clearable = true)
-			DateField(stringResource(R.string.export_to), to, { to = it }, clearable = true)
-			ChoiceField(
-				stringResource(R.string.field_company),
-				listOf<Pair<Long?, String>>(null to all) + companies.map { it.id to it.name },
-				companyId,
-			) { companyId = it; clientId = null }
-			ChoiceField(
-				stringResource(R.string.field_client),
-				listOf<Pair<Long?, String>>(null to all) +
-					clients.filter { companyId == null || it.companyId == companyId }.map { it.id to it.name },
-				clientId,
-			) { clientId = it }
-			/* M19: only the entries with this tag (the other sections are not filtered) */
-			if (tags.isNotEmpty())
+			/* the policy may restrict or remove import, export and restore (issue #48) */
+			val policy = it.infraconsulting.activitytrack.ui.common.LocalPolicy.current
+			val formats = OutFormat.entries.filter { f -> policy.exportFormats?.contains(f.name.lowercase()) ?: true }
+			if (policy.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.EXPORT) && formats.isNotEmpty()) {
+				if (format !in formats)
+					format = formats.first()
+				SectionHeader(stringResource(R.string.export_section))
+				Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+					for (f in formats)
+						FilterChip(selected = format == f, onClick = { format = f }, label = { Text(f.label) })
+				}
+				DateField(stringResource(R.string.export_from), from, { from = it }, clearable = true)
+				DateField(stringResource(R.string.export_to), to, { to = it }, clearable = true)
 				ChoiceField(
-					stringResource(R.string.tags),
-					listOf<Pair<String?, String>>(null to all) + tags.map { it to "#$it" },
-					tag,
-				) { tag = it }
-			if (format == OutFormat.CSV)
-				Text(stringResource(R.string.export_hint), style = MaterialTheme.typography.bodySmall)
-			else {
-				Text(stringResource(R.string.export_sections), style = MaterialTheme.typography.labelLarge)
-				FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-					for (sec in ExportSection.entries)
-						FilterChip(
-							selected = sec in sections,
-							onClick = { sections = if (sec in sections) sections - sec else sections + sec },
-							label = { Text(sectionLabel(sec)) },
-						)
+					stringResource(R.string.field_company),
+					listOf<Pair<Long?, String>>(null to all) + companies.map { it.id to it.name },
+					companyId,
+				) { companyId = it; clientId = null }
+				ChoiceField(
+					stringResource(R.string.field_client),
+					listOf<Pair<Long?, String>>(null to all) +
+						clients.filter { companyId == null || it.companyId == companyId }.map { it.id to it.name },
+					clientId,
+				) { clientId = it }
+				/* M19: only the entries with this tag (the other sections are not filtered) */
+				if (tags.isNotEmpty())
+					ChoiceField(
+						stringResource(R.string.tags),
+						listOf<Pair<String?, String>>(null to all) + tags.map { it to "#$it" },
+						tag,
+					) { tag = it }
+				if (format == OutFormat.CSV)
+					Text(stringResource(R.string.export_hint), style = MaterialTheme.typography.bodySmall)
+				else {
+					Text(stringResource(R.string.export_sections), style = MaterialTheme.typography.labelLarge)
+					FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+						for (sec in ExportSection.entries)
+							FilterChip(
+								selected = sec in sections,
+								onClick = { sections = if (sec in sections) sections - sec else sections + sec },
+								label = { Text(sectionLabel(sec)) },
+							)
+					}
+					SwitchRow(stringResource(R.string.export_site_coordinates), coordinates) { coordinates = it }
+					Text(stringResource(R.string.export_interchange_hint), style = MaterialTheme.typography.bodySmall)
 				}
-				SwitchRow(stringResource(R.string.export_site_coordinates), coordinates) { coordinates = it }
-				Text(stringResource(R.string.export_interchange_hint), style = MaterialTheme.typography.bodySmall)
-			}
-			Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				Button(onClick = { run(false) }, enabled = state != ExchangeState.Running, modifier = Modifier.weight(1f)) {
-					Text(stringResource(R.string.export_action))
-				}
-				OutlinedButton(onClick = { run(true) }, enabled = state != ExchangeState.Running, modifier = Modifier.weight(1f)) {
-					Text(stringResource(R.string.export_share))
+				Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+					Button(onClick = { run(false) }, enabled = state != ExchangeState.Running, modifier = Modifier.weight(1f)) {
+						Text(stringResource(R.string.export_action))
+					}
+					OutlinedButton(onClick = { run(true) }, enabled = state != ExchangeState.Running, modifier = Modifier.weight(1f)) {
+						Text(stringResource(R.string.export_share))
+					}
 				}
 			}
 
-			SectionHeader(stringResource(R.string.import_section))
-			Text(stringResource(R.string.import_hint), style = MaterialTheme.typography.bodySmall)
-			OutlinedButton(
-				onClick = { pick.launch(arrayOf("application/json", "application/xml", "text/xml", "text/plain", "application/octet-stream")) },
-				enabled = state != ExchangeState.Running,
-				modifier = Modifier.fillMaxWidth(),
-			) { Text(stringResource(R.string.import_action)) }
+			if (policy.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.IMPORT)) {
+				SectionHeader(stringResource(R.string.import_section))
+				Text(stringResource(R.string.import_hint), style = MaterialTheme.typography.bodySmall)
+				OutlinedButton(
+					onClick = { pick.launch(arrayOf("application/json", "application/xml", "text/xml", "text/plain", "application/octet-stream")) },
+					enabled = state != ExchangeState.Running,
+					modifier = Modifier.fillMaxWidth(),
+				) { Text(stringResource(R.string.import_action)) }
+			}
 
 			/* backup and restore together (owner, issue #44); the folder and retention stay in Settings */
 			SectionHeader(stringResource(R.string.backup_section))
@@ -351,13 +362,15 @@ fun ExportScreen(onBack: () -> Unit) {
 				modifier = Modifier.fillMaxWidth(),
 			) { Text(stringResource(R.string.backup_now)) }
 
-			SectionHeader(stringResource(R.string.restore_section))
-			Text(stringResource(R.string.restore_hint), style = MaterialTheme.typography.bodySmall)
-			OutlinedButton(
-				onClick = { pickBackup.launch(arrayOf("application/zip", "application/octet-stream")) },
-				enabled = state != ExchangeState.Running,
-				modifier = Modifier.fillMaxWidth(),
-			) { Text(stringResource(R.string.restore_action)) }
+			if (policy.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.RESTORE)) {
+				SectionHeader(stringResource(R.string.restore_section))
+				Text(stringResource(R.string.restore_hint), style = MaterialTheme.typography.bodySmall)
+				OutlinedButton(
+					onClick = { pickBackup.launch(arrayOf("application/zip", "application/octet-stream")) },
+					enabled = state != ExchangeState.Running,
+					modifier = Modifier.fillMaxWidth(),
+				) { Text(stringResource(R.string.restore_action)) }
+			}
 
 			when (val s = state) {
 				is ExchangeState.Exported -> Text(

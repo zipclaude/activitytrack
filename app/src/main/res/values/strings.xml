@@ -613,4 +613,8 @@ New clients: %2$d
 New contacts: %3$d
 To-dos: %4$d
 Sent: %5$d, updated: %6$d, deleted: %7$d</string>
+  <string name="err_policy_required">Fill the fields with a red border.</string>
+  <string name="policy_locked">Set by the policy</string>
+  <string name="widget_disabled">Switched off by the policy</string>
+  <string name="err_todos_only">Activities start from a to-do only.</string>
 </resources>

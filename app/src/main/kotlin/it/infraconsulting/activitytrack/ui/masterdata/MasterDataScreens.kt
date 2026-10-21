@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import it.infraconsulting.activitytrack.ui.common.companiesShown
+import it.infraconsulting.activitytrack.ui.common.canCreateMasterData
 import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
@@ -109,10 +111,11 @@ internal fun archivedSuffix(archived: Boolean) = if (archived) stringResource(R.
 
 @Composable
 fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
+	val withCompanies = companiesShown()
 	ScreenScaffold(title = stringResource(R.string.md_title), onBack = onBack) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-			val sections = listOf(
-				Triple(Screen.Companies, R.string.md_companies, R.drawable.ic_menu_business),
+			val sections = listOfNotNull(
+				Triple(Screen.Companies, R.string.md_companies, R.drawable.ic_menu_business).takeIf { withCompanies },
 				Triple(Screen.Clients, R.string.md_clients, R.drawable.ic_menu_person),
 				Triple(Screen.Contacts, R.string.md_contacts, R.drawable.ic_menu_phone),
 				Triple(Screen.Roles, R.string.md_roles, R.drawable.ic_menu_work),
@@ -158,7 +161,8 @@ fun CompaniesScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 	ScreenScaffold(
 		title = stringResource(R.string.md_companies),
 		onBack = onBack,
-		actions = { AddButton { vm.clearError(); adding = true } },
+		/* imports only (policy masterData, issue #48): no new ones here */
+		actions = { if (canCreateMasterData()) AddButton { vm.clearError(); adding = true } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
 			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.COMPANIES, it) } }
@@ -253,9 +257,10 @@ private fun ClientDialog(
 		{ onSave(initial.copy(name = name, companyId = companyId, archived = archived)) }, onDelete,
 	) {
 		TextInput(stringResource(R.string.field_name), name, { name = it })
-		WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
-			ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { companyId = it }
-		}
+		if (companiesShown())
+			WithAddButton(stringResource(R.string.quick_company), { addCompany = true }, masterData = true) {
+				ChoiceField(stringResource(R.string.field_company), companies.map { it.id to it.name }, companyId) { companyId = it }
+			}
 		SwitchRow(stringResource(R.string.field_archived), archived) { archived = it }
 	}
 	if (addCompany)
@@ -271,22 +276,28 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 	var adding by remember { mutableStateOf(false) }
 	val active = companies.filter { !it.archived }
 	val listState = rememberLazyListState()
+	val withCompanies = companiesShown()
 	val (order, reorder) = orderedList(vm, OrderedList.CLIENTS, listState, clients, { it.id }, { it.companyId to it.archived })
 	val list = shown(clients, reorder)
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_clients),
 		onBack = onBack,
-		actions = { if (active.isNotEmpty()) AddButton { vm.clearError(); adding = true } },
+		actions = { if ((active.isNotEmpty() || !withCompanies) && canCreateMasterData()) AddButton { vm.clearError(); adding = true } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
 			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.CLIENTS, it) } }
-			if (companies.isEmpty())
+			if (companies.isEmpty() && withCompanies)
 				item { EmptyText(stringResource(R.string.clients_need_company)) }
 			else if (clients.isEmpty())
 				item { EmptyText() }
+			/* without companies (policy, issue #48): one list */
+			if (!withCompanies)
+				items(list, key = { it.id }) { c ->
+					ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id, c.color) { onOpen(c.id) }
+				}
 			/* grouped by company, in company order; manual order within each company */
-			for (co in companies) {
+			else for (co in companies) {
 				val own = list.filter { it.companyId == co.id }
 				if (own.isEmpty())
 					continue
@@ -298,7 +309,7 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 		}
 	}
 	if (adding)
-		ClientDialog(ClientEntity(companyId = active.first().id, name = ""), active, error, { adding = false }, null) {
+		ClientDialog(ClientEntity(companyId = active.firstOrNull()?.id.takeIf { withCompanies }, name = ""), active, error, { adding = false }, null) {
 			vm.save(it) { adding = false }
 		}
 }

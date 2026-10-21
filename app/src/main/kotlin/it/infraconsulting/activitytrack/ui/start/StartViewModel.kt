@@ -72,6 +72,8 @@ class StartViewModel(
 	private val todos: TodoRepository,
 	private val position: suspend () -> GeoPoint?,
 	editableTimes: Flow<Boolean> = flowOf(false),
+	/* the policy in force: the fields it makes required (issue #48) */
+	private val policy: () -> it.infraconsulting.activitytrack.domain.policy.Policy = { it.infraconsulting.activitytrack.domain.policy.Policy.NONE },
 ) : ActionViewModel() {
 	val editableTimes = editableTimes.state(false)
 
@@ -275,7 +277,7 @@ class StartViewModel(
 	}
 
 	/* a client just created here (M11): select it with its company */
-	fun pickNewClient(clientId: Long, companyId: Long) {
+	fun pickNewClient(clientId: Long, companyId: Long?) {
 		_form.update { it.copy(clientId = clientId, companyId = companyId, clientTouched = true) }
 		viewModelScope.launch { applyDefaults(clientId) }
 	}
@@ -321,6 +323,19 @@ class StartViewModel(
 		val e = _form.value.endTime
 		if (e.isNotBlank() && parseHhMm(e) == null)
 			return fail(ValidationException.Reason.INVALID_TIME)
+		val f = _form.value
+		/* entries only from to-dos, e.g. a management system's tickets (policy entries.source, issue #48) */
+		if (todoId == null && policy().entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.TODOS_ONLY)
+			return fail(ValidationException.Reason.TODOS_ONLY)
+		val company = f.companyId ?: allChoices.value.firstOrNull { it.id == f.clientId }?.companyId
+		policy().missingRequired(
+			mapOf(
+				it.infraconsulting.activitytrack.domain.policy.Field.COMPANY to (company != null),
+				it.infraconsulting.activitytrack.domain.policy.Field.CLIENT to (f.clientId != null || f.mode == SegmentKind.TRAVEL),
+				it.infraconsulting.activitytrack.domain.policy.Field.ROLE to (f.roleId != null),
+				it.infraconsulting.activitytrack.domain.policy.Field.DESCRIPTION to f.activity.isNotBlank(),
+			),
+		)?.let { return fail(ValidationException.Reason.POLICY_REQUIRED) }
 		onStarted = onDone
 		decisions.clear()
 		val startMin = parseHhMm(t)
@@ -361,7 +376,11 @@ class StartViewModel(
 		viewModelScope.launch {
 			val clients = master.clients.first().associateBy { it.id }
 			val companies = master.companies.first().associateBy { it.id }
-			val active = entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+			val all = entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+			/* "is the travel completed?" not asked (policy behaviours.askTravelDone, issue #48): a running travel stops */
+			val active = if (policy().behaviours.askTravelDone) all else all.filter { e ->
+				(e.mode != SegmentKind.TRAVEL).also { asked -> if (!asked) decisions[e.id] = EntryCommand.STOP }
+			}
 			_pending.value = active.map { e ->
 				RunningEntry(e, e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name }.orEmpty())
 			}

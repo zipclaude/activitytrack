@@ -31,7 +31,8 @@ data class EventTags(val work: String = "", val travel: String = "", val pause: 
 /* A planned, open to-do to show as a tentative event (M9). */
 data class TodoEvent(
 	val uid: String,
-	val companyId: Long,
+	/* null: a to-do of no company (issue #48) */
+	val companyId: Long?,
 	val start: Instant,
 	val end: Instant,
 	val title: String,
