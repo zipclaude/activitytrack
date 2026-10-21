@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import android.app.Application
 import it.infraconsulting.activitytrack.backup.BackupWorker
 import it.infraconsulting.activitytrack.calendar.CalendarSync
@@ -43,6 +46,10 @@ class ActivityTrackApp : Application() {
 		tracking = TrackingMonitor(this, container)
 		ClientShortcuts(this, container).start(appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
-		BackupWorker.schedule(this)
+		/* the backup follows its frequency and hour (issue #44) */
+		appScope.launch {
+			container.settings.settings.map { it.backupEveryHours to it.backupHour }.distinctUntilChanged()
+				.collect { (every, hour) -> BackupWorker.schedule(this@ActivityTrackApp, every, hour) }
+		}
 	}
 }

@@ -373,6 +373,8 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.LAST_SEGMENT -> R.string.err_last_segment
 		Reason.HAS_ATTACHMENTS -> R.string.err_generic
 		Reason.INVALID_VALUE -> R.string.err_invalid_value
+		Reason.START_REQUIRED -> R.string.err_start_required
+		Reason.END_REQUIRED -> R.string.err_end_required
 		Reason.FUTURE_TIME -> R.string.err_future_time
 		Reason.BEFORE_SEGMENT -> R.string.err_before_segment
 		else -> R.string.err_generic

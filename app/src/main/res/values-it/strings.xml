@@ -549,4 +549,18 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <!-- issue #47 -->
   <string name="field_start_end">Inizio – Fine</string>
   <string name="todo_more_details">Note e riferimenti</string>
+  <!-- issue #44 -->
+  <string name="set_backup_every">Backup automatico</string>
+  <string name="set_backup_hour">Ora preferita</string>
+  <string name="backup_every_6h">Ogni 6 ore</string>
+  <string name="backup_every_12h">Ogni 12 ore</string>
+  <string name="backup_every_day">Ogni giorno</string>
+  <string name="backup_every_week">Ogni settimana</string>
+  <string name="backup_hour_hint">Android lo esegue vicino a quell\'ora, non esattamente; con 6 o 12 ore l\'ora fissa il ritmo (es. 02, 08, 14, 20).</string>
+  <string name="home_filter_entries">Anche le attività sopra</string>
+  <!-- issue #44 date -->
+  <string name="err_start_required">Per un altro giorno serve l\'inizio.</string>
+  <string name="err_end_required">Per un giorno passato serve anche la fine.</string>
+  <string name="plan_question">Pianificare per %1$s alle %2$s?</string>
+  <string name="plan_question_text">Diventa una voce Da fare pianificata con questo cliente e questa descrizione.</string>
 </resources>

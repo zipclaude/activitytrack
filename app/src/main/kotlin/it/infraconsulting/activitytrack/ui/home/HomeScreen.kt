@@ -156,12 +156,12 @@ fun HomeScreen(
 	onStartTodo: (Long) -> Unit,
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
-	val cards by vm.cards.collectAsState()
+	val allCards by vm.cards.collectAsState()
 	val selected by vm.selected.collectAsState()
 	val settings by vm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
-	val run = rememberEntryCommands(vm, settings?.editableTimes == true) { id -> cards.firstOrNull { it.entry.id == id }?.title ?: fallback }
+	val run = rememberEntryCommands(vm, settings?.editableTimes == true) { id -> allCards.firstOrNull { it.entry.id == id }?.title ?: fallback }
 
 	/* elapsed times refresh every 30 s; the DB keeps exact timestamps */
 	val now by produceState(System.currentTimeMillis()) {
@@ -170,13 +170,17 @@ fun HomeScreen(
 			value = System.currentTimeMillis()
 		}
 	}
+	/* the company filter on the entries too, when chosen (issue #44) */
+	val only = settings?.todoCompanyFilter?.takeIf { settings?.homeFilterEntries == true }
+	val cards = if (only == null) allCards else allCards.filter { it.entry.companyId == only }
 	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
 	val small = cards.filter { it !== big }
 	/*
 	 * the last completed entries stay in view: 2 (normal) or 3 (compact)
 	 * small cards, open background entries take their places first
 	 */
-	val closed by vm.closed.collectAsState()
+	val allClosed by vm.closed.collectAsState()
+	val closed = if (only == null) allClosed else allClosed.filter { it.entry.companyId == only }
 	val slots = if (LocalCompact.current) 3 else 2
 	val recent = closed.take(maxOf(0, slots - small.size))
 

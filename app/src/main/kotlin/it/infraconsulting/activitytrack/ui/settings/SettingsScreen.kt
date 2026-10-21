@@ -67,7 +67,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* data folder, calendars and gestures change through their own rows, not this form */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, todoShowIgnored = cur.todoShowIgnored, listOrders = cur.listOrders) }
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, homeFilterEntries = cur.homeFilterEntries, todoShowIgnored = cur.todoShowIgnored, listOrders = cur.listOrders) }
 			onDone()
 		}
 	}
@@ -146,6 +146,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var callPause by remember { mutableStateOf(initial.callAutoPause) }
 	var callPropose by remember { mutableStateOf(initial.callProposeEntry) }
 	var callsAlways by remember { mutableStateOf(initial.callsAlways) }
+	var backupEvery by remember { mutableStateOf(initial.backupEveryHours) }
+	var backupHour by remember { mutableStateOf(initial.backupHour) }
 	/* recognition needs the phone state and the call log: asked when switched on */
 	val callPermissions = androidx.activity.compose.rememberLauncherForActivityResult(
 		androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
@@ -189,6 +191,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		callAutoPause = callPause,
 		callProposeEntry = callPropose,
 		callsAlways = callsAlways,
+		backupEveryHours = backupEvery,
+		backupHour = backupHour,
 		rounding = ReportRounding(
 			work.copy(minimum = minutes(F.WORK_MIN, work.minimum)),
 			travel.copy(minimum = minutes(F.TRAVEL_MIN, travel.minimum)),
@@ -264,6 +268,16 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				SettingsSection.STORAGE -> {
 					DataDirRow(initial.rootUri)
 					field(F.RETENTION, R.string.set_backup_retention)
+					/* frequency and preferred hour of the automatic backup (issue #44) */
+					val every = mapOf(
+						6 to stringResource(R.string.backup_every_6h), 12 to stringResource(R.string.backup_every_12h),
+						24 to stringResource(R.string.backup_every_day), 168 to stringResource(R.string.backup_every_week),
+					)
+					it.infraconsulting.activitytrack.ui.common.ChoiceField(stringResource(R.string.set_backup_every), every.toList(), backupEvery) { backupEvery = it }
+					it.infraconsulting.activitytrack.ui.common.ChoiceField(
+						stringResource(R.string.set_backup_hour), (0..23).map { h -> h to "%02d:00".format(h) }, backupHour,
+					) { backupHour = it }
+					Text(stringResource(R.string.backup_hour_hint), style = MaterialTheme.typography.bodySmall)
 					/* "Back up now" moved to Import / export, beside the restore (issue #44) */
 					Text(stringResource(R.string.backup_moved_hint), style = MaterialTheme.typography.bodySmall)
 				}
