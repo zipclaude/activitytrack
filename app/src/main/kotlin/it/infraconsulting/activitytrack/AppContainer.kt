@@ -45,7 +45,7 @@ class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	val attachments: AttachmentRepository by lazy { AttachmentRepository(database, userDataDir, clock) }
 
 	/* Nominatim policy: identify the application (no personal contact). */
-	private val userAgent: String by lazy {
+	val userAgent: String by lazy {
 		val version = appContext.packageManager.getPackageInfo(appContext.packageName, 0).versionName.orEmpty()
 		"ActivityTrack/$version (+https://github.com/zipclaude/activitytrack)"
 	}

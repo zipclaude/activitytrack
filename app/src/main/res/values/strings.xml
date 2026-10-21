@@ -582,4 +582,8 @@ Tap the green play button below to start one.</string>
   <string name="policy_applied_unsigned">Not signed. A backup was made first; the previous policy is in policy_old.json.</string>
   <string name="policy_more_errors">… and %1$d more</string>
   <string name="policy_too_large">larger than 1 MB</string>
+  <!-- issue #48 plugins -->
+  <string name="plugin_refused_title">Plugin %1$s refused</string>
+  <string name="plugin_logged_in">Logged in to %1$s</string>
+  <string name="plugin_login_failed">Login failed: %1$s</string>
 </resources>

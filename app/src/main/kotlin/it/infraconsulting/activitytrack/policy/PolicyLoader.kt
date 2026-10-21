@@ -46,12 +46,21 @@ object PolicyLoader {
 	private val lock = Mutex()
 
 	suspend fun check(context: Context) = lock.withLock {
+		val app = context.applicationContext as ActivityTrackApp
 		try {
-			run(context.applicationContext)
+			run(app)
 		} catch (e: CancellationException) {
 			throw e
 		} catch (e: Exception) {
 			Log.w(TAG, "policy check failed", e)
+		}
+		/* the plugins follow the policy in force: which ones, signed or not (issue #48 B2) */
+		try {
+			app.plugins.reload()
+		} catch (e: CancellationException) {
+			throw e
+		} catch (e: Exception) {
+			Log.w(TAG, "plugin check failed", e)
 		}
 	}
 
@@ -115,7 +124,7 @@ object PolicyLoader {
 	}
 
 	/* The phone's trusted CAs, system and user/MDM ones (owner, issue #48). */
-	private fun trustAnchors(): Set<TrustAnchor> {
+	fun trustAnchors(): Set<TrustAnchor> {
 		val ks = KeyStore.getInstance("AndroidCAStore").apply { load(null) }
 		return ks.aliases().toList().mapNotNull { (ks.getCertificate(it) as? X509Certificate)?.let { c -> TrustAnchor(c, null) } }.toSet()
 	}
@@ -123,15 +132,15 @@ object PolicyLoader {
 	private fun more(app: Context, errors: List<PolicyError>) =
 		if (errors.size > 8) "\n" + app.getString(R.string.policy_more_errors, errors.size - 8) else ""
 
-	private fun notify(app: Context, title: String, text: String) {
+	fun notify(app: Context, title: String, text: String, id: Int = NOTIFICATION_ID) {
 		val n = Notification.Builder(app, NotificationChannels.POLICY)
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(title)
 			.setContentText(text.lineSequence().first())
 			.setStyle(Notification.BigTextStyle().bigText(text))
-			.setContentIntent(EntryLinks.openScreen(app, Screen.Settings, NOTIFICATION_ID))
+			.setContentIntent(EntryLinks.openScreen(app, Screen.Settings, id))
 			.setAutoCancel(true)
 			.build()
-		app.getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, n)
+		app.getSystemService(NotificationManager::class.java).notify(id, n)
 	}
 }
