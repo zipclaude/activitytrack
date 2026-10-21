@@ -1,6 +1,14 @@
 # Integration plugins — descriptor format (draft, issue #48 part B)
 
-Status: **draft for the owner's review**; nothing below is implemented yet.
+Status: format approved by the owner (2026-10-21; changes, if any, in a
+later release). Implemented: the parser with its checks and the
+expression evaluator (`core/domain/…/plugin`); the HTTP engine, import,
+export and the settings card follow (issue #48 B2–B6).
+
+Plugins are not built into the app (owner): published in `plugins/` of
+this repository, copied by the user into `plugins/` of the data folder.
+With a signed policy in force, a plugin must be signed with the same CN
+(`<name>.json.sig`, made by `scripts/sign-policy.sh`).
 
 An integration is a JSON file `plugins/<name>.json` in the data folder,
 enabled by the policy (`"integrations": { "<name>": { "plugin": "<name>.json" } }`)
@@ -12,7 +20,7 @@ is loaded, and a bad descriptor is refused with path and line, like
 `policy.json`. Secrets never live in the file: they are entered (or
 obtained by a login) in the app and kept in the keystore-encrypted store.
 
-The complete Antares example is `docs/samples/plugins/antares.json`.
+The complete Antares example is `plugins/antares.json`.
 
 ## 1. Top level
 
@@ -91,7 +99,7 @@ Wherever a value is expected the descriptor may write:
 | Transform | Result |
 |---|---|
 | `{"coalesce": [a, b, …]}` | the first non-empty |
-| `{"concat": [a, b, …]}` | strings joined |
+| `{"concat": [a, b, …], "separator": "\n"}` | non-empty strings joined |
 | `{"eq": [a, b]}`, `{"ne": [a, b]}` | boolean |
 | `{"in": [value, list]}`, `{"notIn": [value, list]}` | boolean |
 | `{"and": […]}`, `{"or": […]}`, `{"not": a}` | boolean |
