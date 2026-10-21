@@ -142,15 +142,18 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
-Released v0.6.5 (2026-10-20, NOT device-tested, like 0.6.4): consumables
+Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
+the entries, Date in New activity: future day plans, past day records with
+its end; backup every 6/12/24 h or weekly at a preferred hour). Issue #48
+(policy.json + declarative plugins): plan and estimate posted (A ≈ 12.5,
+B ≈ 13 working days), 8 questions waiting; nothing implemented before the
+owner approves. Released v0.6.5 (2026-10-20, NOT device-tested, like 0.6.4): consumables
 (#41), contact e-mail/optional numbers and entry contact (#44), compact
 fields, Description / Quick pick, planning editor per mockup
 https://claude.ai/artifact/QvVjq5Fn5a57s2smRFN2dg (#47); schema v11.
 Next (0.6.6, owner 2026-10-20): device test of 0.6.4/0.6.5, manual updated
 with screenshots (0.6.4/0.6.5 only bumped the version line; agenda-day shot
-captioned "old"), the rest of #44 (Home filter switch for the entries,
-Date field in New activity with plan-on-future-date, backup frequency +
-preferred hour), the owner's new requests. Antares PR #29 moves to schema
+captioned "old"), the owner's new requests. Antares PR #29 moves to schema
 v12 (main took v11). Released v0.6.3 (2026-10-20): #40 segment overlap resolved on confirm
 (SegmentOverlap), delete an entry (attachments first; ticket to-do reopens),
 delete hand-made to-dos, menu icons. Before it, v0.6.2 (2026-10-20): #37 start/end row, future start → plan,
@@ -348,7 +351,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-19 | Calendar events are private (ACCESS_PRIVATE), PR #19 |
 | 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
 | 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
-| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.6.2 (#37 display and usability fixes; 2026-10-20); v0.6.3 (#40 overlapping segments, delete entry/to-do, menu icons; 2026-10-20); v0.6.4 (#44 part, untested; 2026-10-20); v0.6.5 (#41, #47, #44 contacts, schema v11, untested; 2026-10-20); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
+| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.6.2 (#37 display and usability fixes; 2026-10-20); v0.6.3 (#40 overlapping segments, delete entry/to-do, menu icons; 2026-10-20); v0.6.4 (#44 part, untested; 2026-10-20); v0.6.5 (#41, #47, #44 contacts, schema v11, untested; 2026-10-20); v0.6.6 (#44 completed, untested; 2026-10-21); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
