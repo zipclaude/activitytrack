@@ -1,7 +1,14 @@
-Version 0.6.7 (October 2026). Please report any difference between this
+Version 0.6.8 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.6.8** (tested on the debug phone)
+- The **policy** acts on the screens: fields hidden, renamed, coloured or
+  required, features switched off, settings locked with a padlock, use
+  **without companies** (§11, "Policy and integrations").
+- The management system's fields show in the activity screen (in 0.6.7
+  they stayed invisible).
 
 **New in 0.6.7** (version not tested on the phone)
 - **Policy** (`policy.json`) and **integrations as plugins** (`plugins`
