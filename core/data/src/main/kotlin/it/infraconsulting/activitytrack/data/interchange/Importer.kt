@@ -74,8 +74,9 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		val conflicts = ArrayList<ImportNote>()
 		val skipped = ArrayList<ImportNote>()
 		val companies = HashMap<String, Long>()
-		val clients = HashMap<Pair<Long, String>, Long>()
-		val clientCompany = HashMap<Long, Long>()
+		/* company null: clients of no company (issue #48) */
+		val clients = HashMap<Pair<Long?, String>, Long>()
+		val clientCompany = HashMap<Long, Long?>()
 
 		fun added(section: String) {
 			inserted.merge(section, 1, Int::plus)
@@ -171,7 +172,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		}?.also { r.companies[key] = it }
 
 	private suspend fun client(r: Run, x: XClient) {
-		val companyId = companyId(r, x.companyKey) ?: return r.skip("clients", x.key, "unknown company ${x.companyKey}")
+		val companyId = x.companyKey?.let { companyId(r, it) ?: return r.skip("clients", x.key, "unknown company $it") }
 		val name = x.name.trim()
 		val all = master.allClients().filter { it.companyId == companyId }
 		val existing = all.firstOrNull { it.externalCode == x.key }
@@ -241,7 +242,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			?: master.insertRole(RoleEntity(name = name.trim()))
 
 	private suspend fun todo(r: Run, x: XTodo) {
-		val companyId = companyId(r, x.companyKey) ?: return r.skip("todos", x.key, "unknown company ${x.companyKey}")
+		val companyId = x.companyKey?.let { companyId(r, it) ?: return r.skip("todos", x.key, "unknown company $it") }
 		val clientId = x.clientKey?.let { clientId(r, companyId, it) ?: return r.skip("todos", x.key, "unknown client ${x.clientKey}") }
 		val due = x.dueDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "due date $it") }
 		val time = x.dueTime?.let { minutes(it) ?: return r.skip("todos", x.key, "due time $it") }

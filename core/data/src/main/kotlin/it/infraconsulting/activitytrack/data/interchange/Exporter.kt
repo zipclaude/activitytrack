@@ -54,7 +54,9 @@ class Exporter(private val db: ActivityTrackDatabase) {
 		val companies = master.allCompanies().filter { f.companyId == null || it.id == f.companyId }
 		val companyIds = companies.map { it.id }.toSet()
 		val allClients = master.allClients()
-		val clients = allClients.filter { it.companyId in companyIds && (f.clientId == null || it.id == f.clientId) }
+		/* clients of no company (issue #48) belong to every unfiltered export */
+		val inScope = { companyId: Long? -> if (companyId == null) f.companyId == null else companyId in companyIds }
+		val clients = allClients.filter { inScope(it.companyId) && (f.clientId == null || it.id == f.clientId) }
 		val clientIds = clients.map { it.id }.toSet()
 		val companyKey = master.allCompanies().associate { it.id to key(it) }
 		val clientKey = allClients.associate { it.id to key(it) }
@@ -67,14 +69,14 @@ class Exporter(private val db: ActivityTrackDatabase) {
 		if (ExportSection.MASTER_DATA in f.sections) {
 			out = out.copy(
 				companies = companies.map { XCompany(key(it), it.name, it.archived, XColor.format(it.color)) },
-				clients = clients.map { XClient(key(it), companyKey.getValue(it.companyId), it.name, it.archived, XColor.format(it.color)) },
+				clients = clients.map { XClient(key(it), it.companyId?.let(companyKey::getValue), it.name, it.archived, XColor.format(it.color)) },
 				sites = master.allCompanySites().filter { it.companyId in companyIds && f.clientId == null }.map {
 					XSite("company", companyKey.getValue(it.companyId), it.label, it.address,
 						it.lat.takeIf { f.siteCoordinates }, it.lon.takeIf { f.siteCoordinates }, it.radiusM)
 				} + master.allClientSites().filter { it.clientId in clientIds }.map {
 					XSite("client", clientKey.getValue(it.clientId), it.label, it.address,
 						it.lat.takeIf { f.siteCoordinates }, it.lon.takeIf { f.siteCoordinates }, it.radiusM,
-						companyKey = allClients.first { c -> c.id == it.clientId }.companyId.let(companyKey::getValue))
+						companyKey = allClients.first { c -> c.id == it.clientId }.companyId?.let(companyKey::getValue))
 				},
 				roles = roles.values.map { XRole(it.name, it.archived) },
 				presets = bulk.allPresets().filter { it.companyId == null || it.companyId in companyIds }.map {
@@ -85,9 +87,9 @@ class Exporter(private val db: ActivityTrackDatabase) {
 
 		if (ExportSection.TODOS in f.sections) {
 			out = out.copy(
-				todos = todoRows.filter { it.companyId in companyIds && (f.clientId == null || it.clientId == f.clientId) }.map {
+				todos = todoRows.filter { inScope(it.companyId) && (f.clientId == null || it.clientId == f.clientId) }.map {
 					XTodo(
-						key = key(it), companyKey = companyKey.getValue(it.companyId), clientKey = it.clientId?.let(clientKey::getValue),
+						key = key(it), companyKey = it.companyId?.let(companyKey::getValue), clientKey = it.clientId?.let(clientKey::getValue),
 						title = it.title, notes = it.notes, refs = it.refs.lines().filter(String::isNotBlank),
 						dueDate = it.dueEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
 						dueTime = it.dueTimeMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },

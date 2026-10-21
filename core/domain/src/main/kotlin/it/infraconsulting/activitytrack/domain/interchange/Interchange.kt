@@ -39,7 +39,8 @@ data class Interchange(
 data class XCompany(val key: String, val name: String, val archived: Boolean = false, val color: String? = null)
 
 @Serializable
-data class XClient(val key: String, val companyKey: String, val name: String, val archived: Boolean = false, val color: String? = null)
+/* [companyKey] null: a client of no company (issue #48, policy without companies) */
+data class XClient(val key: String, val companyKey: String? = null, val name: String, val archived: Boolean = false, val color: String? = null)
 
 /* A site of a company or of a client ([ownerKind] "company" / "client"). */
 @Serializable
@@ -72,7 +73,8 @@ data class XPreset(val text: String, val companyKey: String? = null, val roleNam
 @Serializable
 data class XTodo(
 	val key: String,
-	val companyKey: String,
+	/* null: a to-do of no company (issue #48) */
+	val companyKey: String? = null,
 	val clientKey: String? = null,
 	val title: String,
 	val notes: String? = null,

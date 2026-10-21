@@ -57,6 +57,10 @@ fun PolicyField(f: Field, content: @Composable () -> Unit) {
 @Composable
 fun fieldShown(f: Field): Boolean = LocalPolicy.current.field(f).visible
 
+/* false: the policy hides the companies (issue #48, freelancers): clients and to-dos of no company */
+@Composable
+fun companiesShown(): Boolean = LocalPolicy.current.field(Field.COMPANY).visible
+
 /* companies, clients and contacts created in the app, or only by imports (policy masterData) */
 @Composable
 fun canCreateMasterData(): Boolean = LocalPolicy.current.masterData == it.infraconsulting.activitytrack.domain.policy.MasterDataSource.USER

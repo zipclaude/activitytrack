@@ -10,6 +10,8 @@ Management-system plugins map their own APIs or files to this model
 - Records are identified by `key`: the management system's code, or for data
   born in the app the entry uid / the master-data name. References between
   records use keys (`companyKey`, `clientKey`, `todoKey`, `ownerKey`).
+- `companyKey` of a client or a to-do may be missing: it belongs to no
+  company (app used without companies, policy `fields.company.visible: false`).
 - Instants: ISO-8601 UTC (`2026-10-17T07:00:00Z`) with `zone` apart; dates
   `yyyy-mm-dd`; times `HH:MM`; amounts decimal strings in EUR (`"12.50"`).
 - Location samples never travel. Site coordinates are optional master data.

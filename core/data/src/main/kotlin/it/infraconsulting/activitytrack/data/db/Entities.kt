@@ -86,7 +86,8 @@ data class CompanySiteEntity(
 )
 data class ClientEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
-	@ColumnInfo(name = "company_id") val companyId: Long,
+	/* null when the policy hides the companies (issue #48): clients of no company */
+	@ColumnInfo(name = "company_id") val companyId: Long?,
 	val name: String,
 	val archived: Boolean = false,
 	/* band colour when one company is shown (M12), 0xRRGGBB; null = none */
@@ -196,7 +197,8 @@ data class ActivityPresetEntity(
 data class TodoEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	val uid: String,
-	@ColumnInfo(name = "company_id") val companyId: Long,
+	/* null when the policy hides the companies (issue #48) */
+	@ColumnInfo(name = "company_id") val companyId: Long?,
 	@ColumnInfo(name = "client_id") val clientId: Long? = null,
 	/* key in the management system; null for to-dos created in the app */
 	@ColumnInfo(name = "external_key") val externalKey: String? = null,
