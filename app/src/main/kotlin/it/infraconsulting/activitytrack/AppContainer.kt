@@ -25,7 +25,7 @@ import java.time.ZoneId
  * Manual dependency injection (decision A15): one instance per process, owned
  * by [ActivityTrackApp]. Components are created lazily on first use.
  */
-class AppContainer(context: Context) {
+class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	private val appContext = context.applicationContext
 
 	val clock: Clock = DefaultZoneClock
@@ -36,7 +36,9 @@ class AppContainer(context: Context) {
 	val calls: it.infraconsulting.activitytrack.data.repo.CallRepository by lazy { it.infraconsulting.activitytrack.data.repo.CallRepository(database) }
 	val materials: it.infraconsulting.activitytrack.data.repo.MaterialRepository by lazy { it.infraconsulting.activitytrack.data.repo.MaterialRepository(database, clock) }
 	val reports: ReportRepository by lazy { ReportRepository(database, clock) }
-	val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
+	val settings: SettingsRepository by lazy { SettingsRepository(appContext, policies.current) }
+	/* policy.json (issue #48): the policy in force and its history */
+	val policies: it.infraconsulting.activitytrack.data.repo.PolicyRepository by lazy { it.infraconsulting.activitytrack.data.repo.PolicyRepository(database, clock, scope) }
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
 	val backup: DatabaseBackup by lazy { DatabaseBackup(database, appContext.cacheDir) }
 	val locations: LocationRepository by lazy { LocationRepository(database) }

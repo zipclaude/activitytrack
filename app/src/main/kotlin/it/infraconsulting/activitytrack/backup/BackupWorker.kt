@@ -34,24 +34,8 @@ class BackupWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 
 		val now = Instant.now()
 		val name = DatabaseBackup.fileName(now, ZoneId.systemDefault())
-		val uri = try {
-			c.userDataDir.createFile(tree, UserDataDir.Sub.BACKUP, name, "application/zip")
-		} catch (e: CancellationException) {
-			throw e
-		} catch (e: Exception) {
-			Log.w(TAG, "cannot create $name", e)
+		if (!write(applicationContext, tree, name, now))
 			return Result.retry()
-		}
-		try {
-			c.userDataDir.openOutput(uri).use { c.backup.writeZip(appVersion(), now, it) }
-		} catch (e: CancellationException) {
-			c.userDataDir.delete(uri)
-			throw e
-		} catch (e: Exception) {
-			Log.w(TAG, "backup failed", e)
-			c.userDataDir.delete(uri)
-			return Result.retry()
-		}
 
 		val files = c.userDataDir.list(tree, UserDataDir.Sub.BACKUP)
 		val expired = DatabaseBackup.expired(files.map { it.name }, settings.backupRetention).toSet()
@@ -60,11 +44,33 @@ class BackupWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 		return Result.success()
 	}
 
-	private fun appVersion(): String =
-		applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0).versionName.orEmpty()
-
 	companion object {
 		private const val TAG = "BackupWorker"
+
+		/* One backup zip [name] in <root>/backup; false (and no file left) on failure. */
+		suspend fun write(context: Context, tree: android.net.Uri, name: String, now: Instant): Boolean {
+			val c = (context.applicationContext as ActivityTrackApp).container
+			val uri = try {
+				c.userDataDir.createFile(tree, UserDataDir.Sub.BACKUP, name, "application/zip")
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: Exception) {
+				Log.w(TAG, "cannot create $name", e)
+				return false
+			}
+			try {
+				val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+				c.userDataDir.openOutput(uri).use { c.backup.writeZip(version, now, it) }
+			} catch (e: CancellationException) {
+				c.userDataDir.delete(uri)
+				throw e
+			} catch (e: Exception) {
+				Log.w(TAG, "backup failed", e)
+				c.userDataDir.delete(uri)
+				return false
+			}
+			return true
+		}
 		private const val DAILY = "backup-daily"
 		private const val NOW = "backup-now"
 

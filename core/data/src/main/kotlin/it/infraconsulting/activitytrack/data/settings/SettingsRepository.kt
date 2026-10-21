@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.settings
 
+import it.infraconsulting.activitytrack.domain.policy.Policy
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import it.infraconsulting.activitytrack.domain.settings.OrderedList
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -35,17 +40,20 @@ private val Context.settingsStore: DataStore<Preferences> by preferencesDataStor
  * AppSettings defaults; every write is validated. Key names are persisted:
  * never rename them.
  */
-class SettingsRepository(context: Context) {
+class SettingsRepository(context: Context, private val policy: StateFlow<Policy> = MutableStateFlow(Policy.NONE)) {
 	private val store = context.applicationContext.settingsStore
 
+	/* the values a policy fixes (issue #48) win over the stored ones */
 	val settings: Flow<AppSettings> = store.data
 		.catch { if (it is IOException) emit(emptyPreferences()) else throw it }
 		.map(::read)
+		.combine(policy) { s, p -> p.enforce(s).validated() }
+		.distinctUntilChanged()
 
 	suspend fun current(): AppSettings = settings.first()
 
 	suspend fun update(transform: (AppSettings) -> AppSettings) {
-		store.edit { p -> write(p, transform(read(p)).validated()) }
+		store.edit { p -> write(p, policy.value.enforce(transform(read(p))).validated()) }
 	}
 
 	private object K {

@@ -39,13 +39,15 @@ class ActivityTrackApp : Application() {
 
 	override fun onCreate() {
 		super.onCreate()
-		container = AppContainer(this)
+		container = AppContainer(this, appScope)
 		NotificationChannels.register(this)
 		notificationSync = NotificationSync(this, container, appScope).also { it.start() }
 		reminders = ReminderScheduler(this, container).also { it.start(appScope) }
 		tracking = TrackingMonitor(this, container)
 		ClientShortcuts(this, container).start(appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
+		/* a new policy.json in the data folder (issue #48) */
+		appScope.launch { it.infraconsulting.activitytrack.policy.PolicyLoader.check(this@ActivityTrackApp) }
 		/* the backup follows its frequency and hour (issue #44) */
 		appScope.launch {
 			container.settings.settings.map { it.backupEveryHours to it.backupHour }.distinctUntilChanged()

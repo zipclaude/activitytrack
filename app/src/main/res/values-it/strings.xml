@@ -563,4 +563,12 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_end_required">Per un giorno passato serve anche la fine.</string>
   <string name="plan_question">Pianificare per %1$s alle %2$s?</string>
   <string name="plan_question_text">Diventa una voce Da fare pianificata con questo cliente e questa descrizione.</string>
+  <!-- issue #48 policy -->
+  <string name="ch_policy">Policy</string>
+  <string name="policy_refused_title">policy.json rifiutata</string>
+  <string name="policy_applied_title">Policy %1$s applicata</string>
+  <string name="policy_applied_signed">Firmata da %1$s. Prima è stato fatto un backup; la policy precedente è in policy_old.json.</string>
+  <string name="policy_applied_unsigned">Non firmata. Prima è stato fatto un backup; la policy precedente è in policy_old.json.</string>
+  <string name="policy_more_errors">… e altri %1$d</string>
+  <string name="policy_too_large">più grande di 1 MB</string>
 </resources>
