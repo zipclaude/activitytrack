@@ -575,4 +575,31 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="plugin_refused_title">Plugin %1$s rechazado</string>
   <string name="plugin_logged_in">Sesión iniciada en %1$s</string>
   <string name="plugin_login_failed">Inicio de sesión fallido: %1$s</string>
+  <!-- issue #48 plugin sync -->
+  <string name="ch_remote">Sistemas de gestión</string>
+  <string name="plugin_send_question">¿Enviar a %1$s?</string>
+  <string name="plugin_send_now">Enviar</string>
+  <string name="plugin_new_todo">Nueva tarea de %1$s</string>
+  <string name="plugin_not_sent_title">Actividad no enviada</string>
+  <string name="plugin_missing_field">%1$s: falta %2$s</string>
+  <string name="plugin_send_failed">Envío a %1$s fallido</string>
+  <plurals name="plugin_new_todos">
+    <item quantity="one">%d tarea nueva</item>
+    <item quantity="other">%d tareas nuevas</item>
+  </plurals>
+  <!-- issue #48 plugin card -->
+  <string name="plugin_options_missing">Por configurar: %1$s</string>
+  <string name="plugin_log_in">Iniciar sesión</string>
+  <string name="plugin_log_out">Cerrar sesión</string>
+  <string name="plugin_logged_in_state">Sesión iniciada</string>
+  <string name="plugin_sync_now">Sincronizar ahora</string>
+  <string name="plugin_syncing">Sincronizando…</string>
+  <string name="plugin_https_only">Una dirección https://</string>
+  <string name="plugin_sync_done">%1$s: sincronizado</string>
+  <string name="plugin_sync_failed">%1$s: sincronización fallida</string>
+  <string name="plugin_sync_report">Listas: %1$d elementos
+Clientes nuevos: %2$d
+Contactos nuevos: %3$d
+Tareas: %4$d
+Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
 </resources>

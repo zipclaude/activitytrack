@@ -575,4 +575,31 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="plugin_refused_title">Plugin %1$s rifiutato</string>
   <string name="plugin_logged_in">Accesso a %1$s eseguito</string>
   <string name="plugin_login_failed">Accesso non riuscito: %1$s</string>
+  <!-- issue #48 plugin sync -->
+  <string name="ch_remote">Gestionali</string>
+  <string name="plugin_send_question">Inviare a %1$s?</string>
+  <string name="plugin_send_now">Invia</string>
+  <string name="plugin_new_todo">Nuova voce da %1$s</string>
+  <string name="plugin_not_sent_title">Attività non inviata</string>
+  <string name="plugin_missing_field">%1$s: manca %2$s</string>
+  <string name="plugin_send_failed">Invio a %1$s non riuscito</string>
+  <plurals name="plugin_new_todos">
+    <item quantity="one">%d nuova voce</item>
+    <item quantity="other">%d nuove voci</item>
+  </plurals>
+  <!-- issue #48 plugin card -->
+  <string name="plugin_options_missing">Da impostare: %1$s</string>
+  <string name="plugin_log_in">Accedi</string>
+  <string name="plugin_log_out">Esci</string>
+  <string name="plugin_logged_in_state">Accesso eseguito</string>
+  <string name="plugin_sync_now">Sincronizza ora</string>
+  <string name="plugin_syncing">Sincronizzazione…</string>
+  <string name="plugin_https_only">Un indirizzo https://</string>
+  <string name="plugin_sync_done">%1$s: sincronizzazione eseguita</string>
+  <string name="plugin_sync_failed">%1$s: sincronizzazione non riuscita</string>
+  <string name="plugin_sync_report">Liste: %1$d elementi
+Nuovi clienti: %2$d
+Nuovi contatti: %3$d
+Voci da fare: %4$d
+Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
 </resources>

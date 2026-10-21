@@ -81,7 +81,10 @@ class MainActivity : ComponentActivity() {
 		val compactFlow = (application as ActivityTrackApp).container.settings.settings.map { it.compactDisplay }
 		setContent {
 			val compact by compactFlow.collectAsState(initial = false)
-			ActivityTrackTheme(compact) { Root(deepLink.value) { deepLink.value = null } }
+			ActivityTrackTheme(compact) {
+				Root(deepLink.value) { deepLink.value = null }
+				it.infraconsulting.activitytrack.connect.plugin.PluginCloseDialog((application as ActivityTrackApp).pluginWatcher)
+			}
 		}
 	}
 
