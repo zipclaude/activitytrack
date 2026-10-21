@@ -120,6 +120,7 @@ class TodosViewModel(
 	/* next 24 hours (and overdue) only, or all (backlog 9, owner 2026-10-19) */
 	fun setWindow(hours: Int) = run { settingsRepo.update { it.copy(todoWindowHours = hours) } }
 	fun setHomeWindow(hours: Int) = run { settingsRepo.update { it.copy(homeTodoWindowHours = hours) } }
+	fun setHomeFilterEntries(on: Boolean) = run { settingsRepo.update { it.copy(homeFilterEntries = on) } }
 
 	/* ignored to-dos listed or hidden (owner, 2026-10-19) */
 	fun setShowIgnored(on: Boolean) = run { settingsRepo.update { it.copy(todoShowIgnored = on) } }
@@ -315,7 +316,7 @@ private fun TodoHeader(count: Int, window: Int, vm: TodosViewModel) {
 		}
 		HorizontalDivider(Modifier.weight(1f))
 		Text(count.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-		CompanyFilter(vm)
+		CompanyFilter(vm, onHome = true)
 	}
 }
 
@@ -341,7 +342,7 @@ private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
  * the ✕ removes it. Shared by Home and the To-dos screen.
  */
 @Composable
-private fun CompanyFilter(vm: TodosViewModel) {
+private fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false) {
 	val settings by vm.settings.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val current = companies.firstOrNull { it.id == settings?.todoCompanyFilter }
@@ -361,6 +362,13 @@ private fun CompanyFilter(vm: TodosViewModel) {
 		)
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
 			DropdownMenuItem(text = { Text(stringResource(R.string.todo_filter_all)) }, onClick = { open = false; vm.setCompanyFilter(null) })
+			/* on Home: the filter may hide the entries above too (owner, issue #44; off by default) */
+			if (onHome)
+				DropdownMenuItem(
+					text = { Text(stringResource(R.string.home_filter_entries)) },
+					leadingIcon = { androidx.compose.material3.Checkbox(checked = settings?.homeFilterEntries == true, onCheckedChange = null) },
+					onClick = { open = false; vm.setHomeFilterEntries(settings?.homeFilterEntries != true) },
+				)
 			for (c in companies.filter { !it.archived })
 				DropdownMenuItem(
 					text = { Text(c.name) },

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.settings
 
+import it.infraconsulting.activitytrack.domain.backup.BackupSchedule
 import it.infraconsulting.activitytrack.domain.rounding.ReportRounding
 import it.infraconsulting.activitytrack.domain.rounding.RoundingRule
 import java.time.Duration
@@ -31,6 +32,11 @@ data class AppSettings(
 	val carryOverMin: Int = 6 * 60,			/* day attribution carry-over, minutes after midnight */
 	val kmFactor: Double = 1.25,			/* straight-line -> road distance fallback */
 	val backupRetention: Int = 14,
+	/* automatic backup every N hours (6, 12, 24, 168) at a preferred hour (issue #44) */
+	val backupEveryHours: Int = 24,
+	val backupHour: Int = 2,
+	/* the Home company filter also hides the entries of other companies (issue #44) */
+	val homeFilterEntries: Boolean = false,
 	val rootUri: String? = null,			/* SAF tree of the user data directory */
 	val nominatim: OnlineService = OnlineService(true, "https://nominatim.openstreetmap.org"),
 	val osrm: OnlineService = OnlineService(true, "https://router.project-osrm.org"),
@@ -97,6 +103,8 @@ data class AppSettings(
 		carryOverMin = carryOverMin.coerceIn(0, 12 * 60),
 		kmFactor = if (kmFactor.isNaN()) 1.25 else kmFactor.coerceIn(1.0, 3.0),
 		backupRetention = backupRetention.coerceIn(1, 365),
+		backupEveryHours = backupEveryHours.takeIf { it in BackupSchedule.FREQUENCIES } ?: 24,
+		backupHour = backupHour.coerceIn(0, 23),
 		nominatim = nominatim.copy(endpoint = nominatim.endpoint.trim().trimEnd('/')),
 		osrm = osrm.copy(endpoint = osrm.endpoint.trim().trimEnd('/')),
 		tiles = tiles.copy(endpoint = tiles.endpoint.trim()),

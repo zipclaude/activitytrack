@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import it.infraconsulting.activitytrack.ui.common.parseDate
 import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.domain.time.atMinute
 import kotlinx.coroutines.flow.flowOf
@@ -49,6 +50,8 @@ data class StartForm(
 	val startTime: String = "",
 	/* chosen end "hh:mm" (M22); blank = open */
 	val endTime: String = "",
+	/* the day "yyyy-mm-dd" (issue #44); blank = today, or yesterday for a time still to come */
+	val date: String = "",
 ) {
 	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
 }
@@ -147,6 +150,18 @@ class StartViewModel(
 	/* applied after the client's defaults, which would otherwise replace it */
 	private var callActivity: String? = null
 	fun setEndTime(hhmm: String) = _form.update { it.copy(endTime = hhmm) }
+	fun setDate(iso: String) = _form.update { it.copy(date = iso) }
+
+	/* a future day: planned as a to-do after a confirmation (issue #44) */
+	private val _askPlan = MutableStateFlow<Pair<java.time.LocalDate, Int>?>(null)
+	val askPlan = _askPlan.asStateFlow()
+
+	fun confirmPlan(yes: Boolean) {
+		val (day, min) = _askPlan.value ?: return
+		_askPlan.value = null
+		if (yes)
+			plan(min, day)
+	}
 
 	/* the description of an entry from a call (set by the screen in the app language) */
 	var callText: (String) -> String = { "Chiamata telefonica con $it" }
@@ -170,12 +185,14 @@ class StartViewModel(
 		val min = _askFuture.value ?: return
 		_askFuture.value = null
 		when (choice) {
-			FutureChoice.PLAN -> plan(min)
+			FutureChoice.PLAN -> plan(min, java.time.LocalDate.now())
 			FutureChoice.NOW -> {
 				_form.update { it.copy(startTime = "") }
 				requestStart(onStarted)
 			}
 			FutureChoice.YESTERDAY -> {
+				/* "yesterday" overrides a day picked as today */
+				_form.update { it.copy(date = "") }
 				futureAnswered = true
 				requestStart(onStarted)
 			}
@@ -187,7 +204,7 @@ class StartViewModel(
 	}
 
 	/* A planned to-do today from the form: client, title = description (or client), start, end. */
-	private fun plan(startMin: Int) {
+	private fun plan(startMin: Int, day: java.time.LocalDate) {
 		val f = _form.value
 		val end = parseHhMm(f.endTime)?.takeIf { it > startMin }
 		run(onStarted) {
@@ -198,7 +215,7 @@ class StartViewModel(
 				TodoEntity(
 					uid = java.util.UUID.randomUUID().toString(), companyId = company, clientId = client?.id,
 					title = f.activity.trim().ifEmpty { client?.name.orEmpty() },
-					planEpochDay = java.time.LocalDate.now().toEpochDay(), planStartMin = startMin,
+					planEpochDay = day.toEpochDay(), planStartMin = startMin,
 					durationMin = end?.let { it - startMin }, createdUtcMs = now, updatedUtcMs = now,
 				),
 			)
@@ -215,7 +232,9 @@ class StartViewModel(
 			return null to null
 		val zone = ZoneId.systemDefault()
 		val now = Instant.now()
-		val start = parseHhMm(f.startTime)?.takeIf { it < 1440 }?.let { latestAt(it, now, zone) }
+		/* a chosen day: the start on that day (issue #44); else the latest occurrence */
+		val day = parseDate(f.date)
+		val start = parseHhMm(f.startTime)?.takeIf { it < 1440 }?.let { m -> day?.atMinute(m, zone) ?: latestAt(m, now, zone) }
 		val end = parseHhMm(f.endTime)?.let { min ->
 			val from = (start ?: now).atZone(zone)
 			var t = from.toLocalDate().atMinute(min, zone)
@@ -304,8 +323,25 @@ class StartViewModel(
 			return fail(ValidationException.Reason.INVALID_TIME)
 		onStarted = onDone
 		decisions.clear()
-		/* a Start still to come today: ask first (issue #37) */
 		val startMin = parseHhMm(t)
+		/* a chosen day other than today (issue #44) */
+		val day = parseDate(_form.value.date)
+		val today = java.time.LocalDate.now()
+		if (editableTimes.value && day != null && day != today) {
+			if (startMin == null)
+				return fail(ValidationException.Reason.START_REQUIRED)
+			if (day.isAfter(today)) {
+				_askPlan.value = day to startMin
+				return
+			}
+			/* a past day: a past activity, with its end */
+			if (parseHhMm(e) == null)
+				return fail(ValidationException.Reason.END_REQUIRED)
+			endMs = times(_form.value).second
+			doStart()
+			return
+		}
+		/* a Start still to come today: ask first (issue #37) */
 		val nowMin = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
 		if (editableTimes.value && startMin != null && startMin > nowMin && !futureAnswered) {
 			_askFuture.value = startMin
