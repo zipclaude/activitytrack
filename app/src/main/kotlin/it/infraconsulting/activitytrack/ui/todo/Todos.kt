@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.todo
 
+import it.infraconsulting.activitytrack.ui.common.companiesShown
 import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.domain.policy.Field as PField
 import it.infraconsulting.activitytrack.ui.common.enabled
@@ -160,7 +161,7 @@ internal fun todosViewModel() = appViewModel(key = "todos") { c -> TodosViewMode
 
 /* A new to-do, planned at [day] [startMin] when given (agenda). */
 internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = TodoEntity(
-	uid = "", companyId = 0, title = "", createdUtcMs = 0, updatedUtcMs = 0,
+	uid = "", companyId = null, title = "", createdUtcMs = 0, updatedUtcMs = 0,
 	planEpochDay = day?.toEpochDay(), planStartMin = startMin,
 )
 
@@ -678,10 +679,12 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	var title by remember { mutableStateOf(initial.title) }
 	var clientId by remember { mutableStateOf(initial.clientId) }
 	/* the companies may still be loading when the dialog opens (agenda): default to the first once known */
-	var picked by remember { mutableStateOf(initial.companyId.takeIf { it != 0L }) }
+	var picked by remember { mutableStateOf(initial.companyId) }
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
-	val companyId = picked ?: companies.firstOrNull()?.id
+	/* without companies (policy, issue #48) a to-do belongs to none */
+	val withCompanies = companiesShown()
+	val companyId = if (withCompanies) picked ?: companies.firstOrNull()?.id else null
 	var planDay by remember { mutableStateOf(initial.planEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var planTime by remember { mutableStateOf(initial.planStartMin?.let(::formatMin).orEmpty()) }
 	var planEnd by remember {
@@ -704,7 +707,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		onDismiss = onClose,
 		onConfirm = {
 			val company = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
-			if (company == null) {
+			if (company == null && withCompanies) {
 				vm.missingCompany()
 				return@EditDialog
 			}

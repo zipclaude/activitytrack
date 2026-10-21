@@ -277,7 +277,7 @@ class StartViewModel(
 	}
 
 	/* a client just created here (M11): select it with its company */
-	fun pickNewClient(clientId: Long, companyId: Long) {
+	fun pickNewClient(clientId: Long, companyId: Long?) {
 		_form.update { it.copy(clientId = clientId, companyId = companyId, clientTouched = true) }
 		viewModelScope.launch { applyDefaults(clientId) }
 	}

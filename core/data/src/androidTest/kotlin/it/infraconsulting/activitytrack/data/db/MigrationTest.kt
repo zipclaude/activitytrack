@@ -220,6 +220,22 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v12ToV13AllowsClientsAndTodosWithoutCompany() {
+		helper.createDatabase(DB, 12).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO client (id, company_id, name, archived) VALUES (1, 1, 'Bank', 0)")
+		}
+		helper.runMigrationsAndValidate(DB, 13, true).use { db ->
+			db.query("SELECT company_id FROM client WHERE id = 1").use { c ->
+				c.moveToFirst()
+				assertEquals(1L, c.getLong(0))
+			}
+			db.execSQL("INSERT INTO client (id, company_id, name, archived) VALUES (2, NULL, 'Rossi', 0)")
+			db.execSQL("INSERT INTO todo (uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms) VALUES ('t1', NULL, 'Call', '', 0, 0, 0)")
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}
