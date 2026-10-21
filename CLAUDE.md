@@ -152,9 +152,16 @@ scripts/sign-policy.sh: chain to phone CAs incl. user, no revocation, first
 signed policy pins the CN, unsigned refused afterwards). Owner answers:
 hidden settings hidden, fixed ones locked with padlock; essential fields
 client (company if client off), times, description; labels fall back to
-the policy's English. Waiting: approval of the descriptor draft
-`docs/PLUGINS.md` + `docs/samples/plugins/antares.json` and 5 questions
-(issue comment 6314312508). Not device-tested.
+the policy's English. Descriptor format approved
+(docs/PLUGINS.md); B1 done (domain/plugin: Plugin model, PluginParser with
+reference checks per section, JsonPath subset, Expr + eval; tests on
+plugins/antares.json). Owner: plugins live outside the app (`plugins/` in
+the repo, copied to the data folder's plugins/); with a signed policy,
+plugins signed with the same CN; plugin assigned per company (whole app
+without companies); PR #29 to be closed, code reused. Asked: separate
+plugins repo or folder (comment 6314983381). Next: B2 HTTP engine, auth
+adapters (PKCE from #29), paging, plugin loading + signature. Not
+device-tested.
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
 its end; backup every 6/12/24 h or weekly at a preferred hour). Released v0.6.5 (2026-10-20, NOT device-tested, like 0.6.4): consumables
