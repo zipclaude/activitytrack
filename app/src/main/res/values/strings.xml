@@ -613,4 +613,5 @@ New clients: %2$d
 New contacts: %3$d
 To-dos: %4$d
 Sent: %5$d, updated: %6$d, deleted: %7$d</string>
+  <string name="err_policy_required">Fill the fields with a red border.</string>
 </resources>

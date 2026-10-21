@@ -63,10 +63,12 @@ private fun quickAddViewModel() = appViewModel(key = "quick-add") { QuickAddView
 
 /* [field] with a "+" beside it. */
 @Composable
-fun WithAddButton(label: String, onAdd: () -> Unit, field: @Composable () -> Unit) {
+fun WithAddButton(label: String, onAdd: () -> Unit, masterData: Boolean = false, field: @Composable () -> Unit) {
 	Row(verticalAlignment = Alignment.CenterVertically) {
 		Box(Modifier.weight(1f)) { field() }
-		IconButton(onClick = onAdd) { Icon(painterResource(R.drawable.ic_add), contentDescription = label) }
+		/* companies, clients and contacts may come from imports only (policy masterData, issue #48) */
+		if (!masterData || canCreateMasterData())
+			IconButton(onClick = onAdd) { Icon(painterResource(R.drawable.ic_add), contentDescription = label) }
 	}
 }
 

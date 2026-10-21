@@ -601,4 +601,5 @@ Neue Kunden: %2$d
 Neue Kontakte: %3$d
 Aufgaben: %4$d
 Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
+  <string name="err_policy_required">Bitte die rot umrandeten Felder ausfüllen.</string>
 </resources>

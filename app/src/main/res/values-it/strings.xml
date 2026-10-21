@@ -602,4 +602,5 @@ Nuovi clienti: %2$d
 Nuovi contatti: %3$d
 Voci da fare: %4$d
 Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
+  <string name="err_policy_required">Compila i campi con il bordo rosso.</string>
 </resources>

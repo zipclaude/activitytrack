@@ -1,6 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.todo
 
+import it.infraconsulting.activitytrack.domain.policy.Field as PField
+import it.infraconsulting.activitytrack.ui.common.enabled
+import it.infraconsulting.activitytrack.ui.common.fieldShown
+import it.infraconsulting.activitytrack.ui.common.fieldImportance
+import it.infraconsulting.activitytrack.ui.common.fieldLabel
+import it.infraconsulting.activitytrack.ui.common.PolicyField
+import it.infraconsulting.activitytrack.domain.policy.Feature
+import it.infraconsulting.activitytrack.domain.policy.Field
 import it.infraconsulting.activitytrack.ui.common.DateTimeField
 import it.infraconsulting.activitytrack.ui.common.RangeField
 import it.infraconsulting.activitytrack.ui.common.companyColor
@@ -106,6 +114,8 @@ class TodosViewModel(
 	private val todos: TodoRepository,
 	master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
+	/* the policy in force: the fields it makes required (issue #48) */
+	private val policy: () -> it.infraconsulting.activitytrack.domain.policy.Policy = { it.infraconsulting.activitytrack.domain.policy.Policy.NONE },
 ) : ActionViewModel() {
 	val open = todos.open.state(emptyList())
 	val ignored = todos.ignored.state(emptyList())
@@ -128,7 +138,15 @@ class TodosViewModel(
 	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
 	fun delete(t: TodoEntity) = run { todos.delete(t.id) }
 	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
-	fun save(t: TodoEntity, done: () -> Unit) = run(done) { todos.save(t) }
+	fun save(t: TodoEntity, done: () -> Unit) {
+		policy().missingRequired(
+			mapOf(
+				PField.CLIENT to (t.clientId != null), PField.NOTES to !t.notes.isNullOrBlank(), PField.REFS to t.refs.isNotBlank(),
+				PField.TODO_PRIORITY to (t.priority != null), PField.TODO_DUE to (t.dueEpochDay != null), PField.TODO_PLAN to (t.planEpochDay != null),
+			),
+		)?.let { _ -> return fail(it.infraconsulting.activitytrack.data.repo.ValidationException.Reason.POLICY_REQUIRED) }
+		run(done) { todos.save(t) }
+	}
 	fun postpone(t: TodoEntity, minutes: Int) = run { todos.postpone(t.id, minutes) }
 
 	/* a to-do belongs to a company: through its client or chosen directly */
@@ -137,7 +155,7 @@ class TodosViewModel(
 }
 
 @Composable
-internal fun todosViewModel() = appViewModel(key = "todos") { TodosViewModel(it.todos, it.masterData, it.settings) }
+internal fun todosViewModel() = appViewModel(key = "todos") { c -> TodosViewModel(c.todos, c.masterData, c.settings, { c.policies.current.value }) }
 
 /* A new to-do, planned at [day] [startMin] when given (agenda). */
 internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = TodoEntity(
@@ -723,9 +741,9 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	) {
 		/* order and fields of the approved mockup (owner, issue #47) */
 		val shownCompany = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
-		WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+		if (fieldShown(Field.COMPANY)) WithAddButton(stringResource(R.string.quick_company), { addCompany = true }, masterData = true) { PolicyField(Field.COMPANY) {
 			ChoiceField(
-				stringResource(R.string.field_company), companies.map { it.id to it.name }, shownCompany,
+				fieldLabel(Field.COMPANY, R.string.field_company), companies.map { it.id to it.name }, shownCompany,
 				importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 			) { co ->
 				picked = co
@@ -733,35 +751,46 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				if (clients.firstOrNull { it.id == clientId }?.companyId != co)
 					clientId = null
 			}
-		}
-		WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
+		} }
+		if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {
 			SearchableChoiceField(
-				stringResource(R.string.field_client),
+				fieldLabel(Field.CLIENT, R.string.field_client),
 				listOf<Pair<Long?, String>>(null to stringResource(R.string.field_none)) +
 					clients.filter { !it.archived && (shownCompany == null || it.companyId == shownCompany) }.map { it.id to it.name },
 				clientId,
-				importance = Importance.IMPORTANT,
+				importance = fieldImportance(Field.CLIENT, Importance.IMPORTANT),
 				colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
 			) { clientId = it }
+		} }
+		/* the planned slot only with planning (policy, issue #48) */
+		if (enabled(Feature.PLANNING) && fieldShown(Field.TODO_PLAN)) PolicyField(Field.TODO_PLAN) {
+			DateField(
+				fieldLabel(Field.TODO_PLAN, R.string.field_date), planDay, { planDay = it }, clearable = true,
+				error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing }, importance = fieldImportance(Field.TODO_PLAN, Importance.IMPORTANT),
+			)
+			/* one full-width field: the times stay readable (issue #47) */
+			RangeField(
+				stringResource(R.string.field_start_end), planTime, planEnd, { planGrid = true }, { planTime = ""; planEnd = "" },
+				error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = fieldImportance(Field.TODO_PLAN, Importance.IMPORTANT),
+			)
 		}
-		DateField(
-			stringResource(R.string.field_date), planDay, { planDay = it }, clearable = true,
-			error = stringResource(R.string.todo_plan_date_missing).takeIf { planDayMissing }, importance = Importance.IMPORTANT,
-		)
-		/* one full-width field: the times stay readable (issue #47) */
-		RangeField(
-			stringResource(R.string.field_start_end), planTime, planEnd, { planGrid = true }, { planTime = ""; planEnd = "" },
-			error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = Importance.IMPORTANT,
-		)
 		TextInput(stringResource(R.string.todo_field_title), title, { title = it }, singleLine = false, minLines = 3, importance = Importance.REQUIRED)
-		DateTimeField(stringResource(R.string.todo_field_due), due, time, { d, t -> due = d; time = t }, importance = Importance.OPTIONAL)
-		TextInput(stringResource(R.string.todo_field_priority), priority, { priority = it }, importance = Importance.OPTIONAL)
+		PolicyField(Field.TODO_DUE) {
+			DateTimeField(fieldLabel(Field.TODO_DUE, R.string.todo_field_due), due, time, { d, t -> due = d; time = t }, importance = fieldImportance(Field.TODO_DUE, Importance.OPTIONAL))
+		}
+		PolicyField(Field.TODO_PRIORITY) {
+			TextInput(fieldLabel(Field.TODO_PRIORITY, R.string.todo_field_priority), priority, { priority = it }, importance = fieldImportance(Field.TODO_PRIORITY, Importance.OPTIONAL))
+		}
 		var details by remember { mutableStateOf(notes.isNotBlank() || refs.isNotBlank()) }
 		if (!details)
 			TextButton(onClick = { details = true }) { Text(stringResource(R.string.todo_more_details) + " ▾") }
 		else {
-			TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
-			TextInput(stringResource(R.string.todo_field_refs), refs, { refs = it }, singleLine = false, importance = Importance.OPTIONAL)
+			PolicyField(Field.NOTES) {
+				TextInput(fieldLabel(Field.NOTES, R.string.field_notes), notes, { notes = it }, singleLine = false, importance = fieldImportance(Field.NOTES, Importance.OPTIONAL))
+			}
+			PolicyField(Field.REFS) {
+				TextInput(fieldLabel(Field.REFS, R.string.todo_field_refs), refs, { refs = it }, singleLine = false, importance = fieldImportance(Field.REFS, Importance.OPTIONAL))
+			}
 		}
 	}
 	if (planGrid) {

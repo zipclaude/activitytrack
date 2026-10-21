@@ -72,6 +72,8 @@ class StartViewModel(
 	private val todos: TodoRepository,
 	private val position: suspend () -> GeoPoint?,
 	editableTimes: Flow<Boolean> = flowOf(false),
+	/* the policy in force: the fields it makes required (issue #48) */
+	private val policy: () -> it.infraconsulting.activitytrack.domain.policy.Policy = { it.infraconsulting.activitytrack.domain.policy.Policy.NONE },
 ) : ActionViewModel() {
 	val editableTimes = editableTimes.state(false)
 
@@ -321,6 +323,16 @@ class StartViewModel(
 		val e = _form.value.endTime
 		if (e.isNotBlank() && parseHhMm(e) == null)
 			return fail(ValidationException.Reason.INVALID_TIME)
+		val f = _form.value
+		val company = f.companyId ?: allChoices.value.firstOrNull { it.id == f.clientId }?.companyId
+		policy().missingRequired(
+			mapOf(
+				it.infraconsulting.activitytrack.domain.policy.Field.COMPANY to (company != null),
+				it.infraconsulting.activitytrack.domain.policy.Field.CLIENT to (f.clientId != null || f.mode == SegmentKind.TRAVEL),
+				it.infraconsulting.activitytrack.domain.policy.Field.ROLE to (f.roleId != null),
+				it.infraconsulting.activitytrack.domain.policy.Field.DESCRIPTION to f.activity.isNotBlank(),
+			),
+		)?.let { return fail(ValidationException.Reason.POLICY_REQUIRED) }
 		onStarted = onDone
 		decisions.clear()
 		val startMin = parseHhMm(t)

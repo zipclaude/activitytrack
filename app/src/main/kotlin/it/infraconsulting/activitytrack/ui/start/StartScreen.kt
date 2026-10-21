@@ -1,6 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import it.infraconsulting.activitytrack.ui.common.enabled
+import it.infraconsulting.activitytrack.ui.common.fieldShown
+import it.infraconsulting.activitytrack.ui.common.fieldImportance
+import it.infraconsulting.activitytrack.ui.common.fieldLabel
+import it.infraconsulting.activitytrack.ui.common.PolicyField
+import it.infraconsulting.activitytrack.domain.policy.Feature
+import it.infraconsulting.activitytrack.domain.policy.Field
 import it.infraconsulting.activitytrack.ui.common.DateField
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
@@ -64,7 +71,7 @@ import it.infraconsulting.activitytrack.ui.common.reasonText
 fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null, travel: Boolean = false, call: CallPrefill? = null) {
 	val context = LocalContext.current.applicationContext
 	val vm = appViewModel {
-		StartViewModel(it.entries, it.masterData, clientId, todoId, it.todos, { CurrentPosition.get(context) }, it.settings.settings.map { s -> s.editableTimes })
+		StartViewModel(it.entries, it.masterData, clientId, todoId, it.todos, { CurrentPosition.get(context) }, it.settings.settings.map { s -> s.editableTimes }, { it.policies.current.value })
 			.also { vm -> if (travel) vm.setMode(SegmentKind.TRAVEL) }
 			.also { vm ->
 				vm.callText = { n -> context.getString(R.string.call_entry_activity, n) }
@@ -83,6 +90,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	val askEnded by vm.askEnded.collectAsState()
 	var rangeGrid by remember { mutableStateOf(false) }
 	val none = stringResource(R.string.field_none)
+	/* read here: the lazy list's builder is not composable */
+	val policy = it.infraconsulting.activitytrack.ui.common.LocalPolicy.current
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
 	var addRole by remember { mutableStateOf(false) }
@@ -102,18 +111,19 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 							onClick = { vm.setMode(SegmentKind.WORK) },
 							label = { Text(stringResource(R.string.cmd_work)) },
 						)
-						FilterChip(
-							selected = f.mode == SegmentKind.TRAVEL,
-							onClick = { vm.setMode(SegmentKind.TRAVEL) },
-							label = { Text(stringResource(R.string.cmd_travel)) },
-						)
+						if (enabled(Feature.TRAVEL))
+							FilterChip(
+								selected = f.mode == SegmentKind.TRAVEL,
+								onClick = { vm.setMode(SegmentKind.TRAVEL) },
+								label = { Text(stringResource(R.string.cmd_travel)) },
+							)
 					}
 				}
-				item {
+				if (policy.field(Field.COMPANY).visible) item {
 					Column(modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)) {
-						WithAddButton(stringResource(R.string.quick_company), { addCompany = true }) {
+						WithAddButton(stringResource(R.string.quick_company), { addCompany = true }, masterData = true) { PolicyField(Field.COMPANY) {
 							ChoiceField(
-								stringResource(R.string.field_company),
+								fieldLabel(Field.COMPANY, R.string.field_company),
 								listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) +
 									companies.filter { !it.archived || it.id == f.companyId }.map { it.id to it.name },
 								f.companyId,
@@ -121,19 +131,19 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 								importance = if (f.companyId == null) null else Importance.REQUIRED,
 								colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 							) { vm.setCompany(it) }
-						}
+						} }
 					}
 				}
-				item {
+				if (policy.field(Field.CLIENT).visible) item {
 					/* combo box (owner request): type to search, or pick from the dropdown; most recent first; "+" adds one (M11) */
 					val unknown = stringResource(R.string.client_unknown)
 					Column(modifier = Modifier.padding(start = 16.dp, end = 4.dp)) {
-						WithAddButton(stringResource(R.string.quick_client), { addClient = true }) {
+						WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {
 							if (clients.isEmpty())
 								EmptyText(stringResource(R.string.start_no_clients))
 							else
 								SearchableChoiceField(
-									stringResource(R.string.field_client),
+									fieldLabel(Field.CLIENT, R.string.field_client),
 									(if (f.mode == SegmentKind.TRAVEL) listOf<Pair<Long?, String>>(null to unknown) else emptyList()) +
 										clients.map { it.id to it.name },
 									f.clientId,
@@ -141,7 +151,7 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 									importance = if (f.mode == SegmentKind.TRAVEL) Importance.IMPORTANT else Importance.REQUIRED,
 									colorOf = { id -> id?.let { clientColors[it] } },
 								) { vm.setClient(it) }
-						}
+						} }
 					}
 				}
 				item {
@@ -150,25 +160,29 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						verticalArrangement = Arrangement.spacedBy(8.dp),
 					) {
 						/* order (owner, issue #47): role, start-end, quick pick, description */
-						WithAddButton(stringResource(R.string.quick_role), { addRole = true }) {
-							ChoiceField(
-								stringResource(R.string.field_role),
-								listOf<Pair<Long?, String>>(null to none) +
-									roles.filter { !it.archived || it.id == f.roleId }.map { it.id to it.name },
-								f.roleId,
-								importance = Importance.IMPORTANT,
-							) { vm.setRole(it) }
-						}
+						if (fieldShown(Field.ROLE))
+							WithAddButton(stringResource(R.string.quick_role), { addRole = true }) { PolicyField(Field.ROLE) {
+								ChoiceField(
+									fieldLabel(Field.ROLE, R.string.field_role),
+									listOf<Pair<Long?, String>>(null to none) +
+										roles.filter { !it.archived || it.id == f.roleId }.map { it.id to it.name },
+									f.roleId,
+									importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
+								) { vm.setRole(it) }
+							} }
 						/* M17: start in the past; empty = now */
 						if (editableTimes) {
 							/* the day (issue #44): empty = today; another day plans or records */
-							DateField(stringResource(R.string.field_date), f.date, { vm.setDate(it); vm.clearError() }, clearable = true, importance = Importance.OPTIONAL)
+							if (fieldShown(Field.DATE))
+								PolicyField(Field.DATE) {
+									DateField(fieldLabel(Field.DATE, R.string.field_date), f.date, { vm.setDate(it); vm.clearError() }, clearable = true, importance = fieldImportance(Field.DATE, Importance.OPTIONAL))
+								}
 							/* start and end on one row (issue #37) */
 							androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
 								Column(Modifier.weight(1f)) {
 									/* empty Start: the range grid sets start and end; a set Start: the usual picker (issue #30) */
 									TimeField(
-										stringResource(R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() },
+										fieldLabel(Field.TIMES, R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() },
 										clearable = true, importance = Importance.OPTIONAL,
 										onOpen = if (f.startTime.isBlank()) ({ rangeGrid = true }) else null,
 									)
@@ -186,16 +200,19 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						val companyId = clients.firstOrNull { it.id == f.clientId }?.companyId ?: f.companyId
 						val usable = presets.filter { it.companyId == null || it.companyId == companyId }
 						/* "+" also for presets and roles (backlog 4, 2026-10-18) */
-						WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) {
-							ChoiceField(
-								stringResource(R.string.field_preset),
-								listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
-								null,
-								importance = Importance.OPTIONAL,
-							) { id -> id?.let(vm::applyPreset) }
-						}
+						if (fieldShown(Field.QUICK_PICK))
+							WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) { PolicyField(Field.QUICK_PICK) {
+								ChoiceField(
+									fieldLabel(Field.QUICK_PICK, R.string.field_preset),
+									listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
+									null,
+									importance = fieldImportance(Field.QUICK_PICK, Importance.OPTIONAL),
+								) { id -> id?.let(vm::applyPreset) }
+							} }
 						/* required: typed or from a preset (owner, 2026-10-19) */
-						DictationInput(stringResource(R.string.field_activity), f.activity, vm::setActivity, Importance.REQUIRED)
+						PolicyField(Field.DESCRIPTION) {
+							DictationInput(fieldLabel(Field.DESCRIPTION, R.string.field_activity), f.activity, vm::setActivity, Importance.REQUIRED)
+						}
 						if (error != null)
 							Text(reasonText(error!!), color = MaterialTheme.colorScheme.error)
 					}

@@ -147,11 +147,13 @@ private val FIELD_BLUE = Color(0xFF42A5F5)
 
 @Composable
 fun importanceColors(importance: Importance?, filled: Boolean): TextFieldColors {
+	/* a policy may give the field its own colours (issue #48): invalid while required and empty, valid once filled */
+	val own = LocalFieldColors.current
 	val c = when (importance) {
 		null -> return OutlinedTextFieldDefaults.colors()
-		Importance.REQUIRED -> if (filled) FIELD_GREEN else MaterialTheme.colorScheme.error
-		Importance.IMPORTANT -> FIELD_YELLOW
-		Importance.OPTIONAL -> FIELD_BLUE
+		Importance.REQUIRED -> if (filled) own.valid ?: FIELD_GREEN else own.invalid ?: MaterialTheme.colorScheme.error
+		Importance.IMPORTANT -> if (filled) own.valid ?: FIELD_YELLOW else FIELD_YELLOW
+		Importance.OPTIONAL -> if (filled) own.valid ?: FIELD_BLUE else FIELD_BLUE
 	}
 	return OutlinedTextFieldDefaults.colors(focusedBorderColor = c, unfocusedBorderColor = c, focusedLabelColor = c)
 }
@@ -175,12 +177,14 @@ fun TextInput(
 	/* a taller field for long text, e.g. the description (issue #47) */
 	minLines: Int = 1,
 ) {
+	val editable = LocalFieldEnabled.current
 	CompactTextField(
 		value = value,
 		onValueChange = onChange,
+		readOnly = !editable,
 		label = { Text(label) },
 		/* the ✕ empties the field at once (owner, 2026-10-19), before any other button */
-		trailingIcon = if (value.isEmpty() && trailing == null) null else ({
+		trailingIcon = if (!editable || (value.isEmpty() && trailing == null)) null else ({
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				if (value.isNotEmpty())
 					ClearButton { onChange("") }
@@ -217,10 +221,12 @@ fun <T> SearchableChoiceField(
 	val query = fold(text)
 	/* the full list while the field shows the current choice, matches once the user types */
 	val shown = if (text == selectedText) options else options.filter { fold(it.second).contains(query) }
-	ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+	val editable = LocalFieldEnabled.current
+	ExposedDropdownMenuBox(expanded = expanded && editable, onExpandedChange = { expanded = it && editable }) {
 		CompactTextField(
 			value = text,
 			onValueChange = { text = it; expanded = true },
+			readOnly = !editable,
 			singleLine = true,
 			label = { Text(label) },
 			leadingIcon = colorOf(selected)?.let { c -> { ColorDot(c) } },
@@ -236,7 +242,7 @@ fun <T> SearchableChoiceField(
 			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
 				.onFocusChanged { if (!it.isFocused) text = selectedText },
 		)
-		ExposedDropdownMenu(expanded = expanded && shown.isNotEmpty(), onDismissRequest = { expanded = false }) {
+		ExposedDropdownMenu(expanded = expanded && editable && shown.isNotEmpty(), onDismissRequest = { expanded = false }) {
 			shown.forEach { (value, optionText) ->
 				DropdownMenuItem(
 					text = { Text(optionText) },
@@ -276,7 +282,8 @@ fun <T> ChoiceField(
 	onSelect: (T) -> Unit,
 ) {
 	var expanded by remember { mutableStateOf(false) }
-	ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+	val editable = LocalFieldEnabled.current
+	ExposedDropdownMenuBox(expanded = expanded && editable, onExpandedChange = { expanded = it && editable }) {
 		CompactTextField(
 			value = options.firstOrNull { it.first == selected }?.second.orEmpty(),
 			onValueChange = {},
@@ -287,7 +294,7 @@ fun <T> ChoiceField(
 			colors = importanceColors(importance, selected != null),
 			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
 		)
-		ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+		ExposedDropdownMenu(expanded = expanded && editable, onDismissRequest = { expanded = false }) {
 			options.forEach { (value, text) ->
 				DropdownMenuItem(
 					text = { Text(text) },
@@ -374,6 +381,7 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.HAS_ATTACHMENTS -> R.string.err_generic
 		Reason.INVALID_VALUE -> R.string.err_invalid_value
 		Reason.START_REQUIRED -> R.string.err_start_required
+		Reason.POLICY_REQUIRED -> R.string.err_policy_required
 		Reason.END_REQUIRED -> R.string.err_end_required
 		Reason.FUTURE_TIME -> R.string.err_future_time
 		Reason.BEFORE_SEGMENT -> R.string.err_before_segment
