@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import kotlinx.coroutines.launch
+import it.infraconsulting.activitytrack.policy.PolicyLoader
 import it.infraconsulting.activitytrack.ui.start.CallPrefill
 import android.Manifest
 import android.content.Intent
@@ -76,10 +78,13 @@ class MainActivity : ComponentActivity() {
 		enableEdgeToEdge()
 		if (savedInstanceState == null)
 			deepLink.value = EntryLinks.screenOf(intent)
-		val settings = (application as ActivityTrackApp).container.settings.settings
+		val compactFlow = (application as ActivityTrackApp).container.settings.settings.map { it.compactDisplay }
 		setContent {
-			val compact by settings.map { it.compactDisplay }.collectAsState(initial = false)
-			ActivityTrackTheme(compact) { Root(deepLink.value) { deepLink.value = null } }
+			val compact by compactFlow.collectAsState(initial = false)
+			ActivityTrackTheme(compact) {
+				Root(deepLink.value) { deepLink.value = null }
+				it.infraconsulting.activitytrack.connect.plugin.PluginCloseDialog((application as ActivityTrackApp).pluginWatcher)
+			}
 		}
 	}
 
@@ -90,6 +95,8 @@ class MainActivity : ComponentActivity() {
 	override fun onStart() {
 		super.onStart()
 		(application as ActivityTrackApp).notificationSync.refresh()
+		/* a policy.json dropped while the app was running (issue #48) */
+		(application as ActivityTrackApp).let { app -> app.appScope.launch { PolicyLoader.check(app) } }
 	}
 
 	override fun onNewIntent(intent: Intent) {

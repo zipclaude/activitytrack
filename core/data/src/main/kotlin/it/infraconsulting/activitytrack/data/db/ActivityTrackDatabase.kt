@@ -35,6 +35,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		CallLogEntity::class,
 		MaterialEntity::class,
 		EntryMaterialEntity::class,
+		PolicyRecordEntity::class,
+		RemoteItemEntity::class,
+		RemoteRecordEntity::class,
 	],
 	version = ActivityTrackDatabase.VERSION,
 	exportSchema = true,
@@ -49,6 +52,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		AutoMigration(from = 8, to = 9),	/* M22 planned end */
 		AutoMigration(from = 9, to = 10),	/* issue #28 contacts, calls, pause notes */
 		AutoMigration(from = 10, to = 11),	/* issue #41 materials; #44 contact e-mail, entry contact */
+		AutoMigration(from = 11, to = 12),	/* issue #48 policy history; plugin lists and sent records, entry and to-do plugin fields, contact key */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
@@ -59,12 +63,14 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 	abstract fun interchangeDao(): InterchangeDao
 	abstract fun callDao(): CallDao
 	abstract fun materialDao(): MaterialDao
+	abstract fun policyDao(): PolicyDao
+	abstract fun pluginDao(): PluginDao
 
 	companion object {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 11
+		const val VERSION = 12
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =

@@ -1,0 +1,142 @@
+{
+	"format": "activitytrack-plugin",
+	"schema": 1,
+	"id": "antares",
+	"name": "Antares (Saidea)",
+	"version": "1",
+
+	"options": [
+		{ "key": "apiUrl", "type": "url", "required": true, "default": "https://demo.goantares.uno/public/api",
+		  "label": { "it": "URL API", "en": "API URL" } },
+		{ "key": "identityUrl", "type": "url", "required": true, "default": "https://identitydemo.goantares.uno",
+		  "label": { "it": "Identity provider", "en": "Identity provider" } },
+		{ "key": "clientId", "type": "string", "required": true,
+		  "label": { "it": "Client ID", "en": "Client ID" } },
+		{ "key": "pauseSplitMin", "type": "int", "min": 1, "max": 600, "default": 60,
+		  "label": { "it": "Pausa che divide l'attività (min)", "en": "Pause splitting the activity (min)" } },
+		{ "key": "closeMode", "type": "choice", "default": "ask",
+		  "choices": { "ask": { "it": "Chiedi", "en": "Ask" }, "always": { "it": "Sempre", "en": "Always" }, "off": { "it": "Mai", "en": "Never" } },
+		  "label": { "it": "Invio alla chiusura", "en": "Send on close" } },
+		{ "key": "closeScope", "type": "choice", "default": "todos",
+		  "choices": { "todos": { "it": "Solo ticket", "en": "Tickets only" }, "all": { "it": "Tutte", "en": "All" } },
+		  "label": { "it": "Attività da inviare alla chiusura", "en": "Entries sent on close" } },
+		{ "key": "closeSync", "type": "choice", "default": "full",
+		  "choices": { "full": { "it": "Sincronizzazione completa", "en": "Full sync" }, "entry": { "it": "Solo l'attività", "en": "The entry only" } },
+		  "label": { "it": "Alla chiusura", "en": "On close" } },
+		{ "key": "fetchMin", "type": "choice", "default": "60",
+		  "choices": { "15": { "en": "15 min" }, "30": { "en": "30 min" }, "60": { "it": "1 ora", "en": "1 hour" }, "120": { "it": "2 ore", "en": "2 hours" },
+		               "240": { "it": "4 ore", "en": "4 hours" }, "480": { "it": "8 ore", "en": "8 hours" }, "1440": { "it": "1 giorno", "en": "1 day" } },
+		  "label": { "it": "Aggiornamento in background", "en": "Background download" } }
+	],
+
+	"auth": {
+		"type": "oauth2Pkce",
+		"issuer": "@option.identityUrl",
+		"clientId": "@option.clientId",
+		"scopes": "openid profile public-api offline_access"
+	},
+
+	"http": {
+		"baseUrl": "@option.apiUrl",
+		"headers": { "Accept": "application/json" },
+		"timeoutSec": 60,
+		"paging": { "style": "odata", "pageSize": 200 }
+	},
+
+	"identity": {
+		"request": { "path": "/me/claims" },
+		"values": { "personId": "$[?(@.type == 'antares:person:id')].value", "username": "$[?(@.type == 'antares:user:username')].value" }
+	},
+
+	"lookups": {
+		"serviceStates": { "request": { "path": "/v3/Enums", "query": { "$filter": "Type eq 'ServicePortfolioState'" } }, "select": "$[?(@.EntityState != null)].Value" },
+		"serviceLifecycles": { "request": { "path": "/v3/Enums", "query": { "$filter": "Type eq 'ServicePortfolioLifecycle'" } }, "select": "$[?(@.EntityState != null)].Value" },
+		"projectStates": { "request": { "path": "/v3/Enums", "query": { "$filter": "Type eq 'ProjectStatus'" } }, "select": "$[?(@.EntityState != null)].Value" },
+		"ticketStates": { "request": { "path": "/v3/Enums", "query": { "$filter": "Type eq 'TicketState'" } }, "select": "$[?(@.EntityState != null)].Value" }
+	},
+
+	"lists": {
+		"portfolio": {
+			"sources": [
+				{ "request": { "path": "/v3/ServicePortfolios", "query": { "$select": "Id,Name,CustomerId,State,Lifecycle", "$orderby": "Name" }, "paged": true },
+				  "map": { "id": "$.Id", "name": "$.Name", "clientCode": "$.CustomerId", "kind": "service",
+				           "active": { "and": [ { "in": ["$.State", "@lookup.serviceStates"] }, { "in": ["$.Lifecycle", "@lookup.serviceLifecycles"] } ] },
+				           "extra": { "path": "/v3/ServicePortfolios" } } },
+				{ "request": { "path": "/v3/Projects", "query": { "$select": "Id,Name,CustomerId,Status", "$orderby": "Name" }, "paged": true },
+				  "map": { "id": "$.Id", "name": "$.Name", "clientCode": "$.CustomerId", "kind": "project",
+				           "active": { "in": ["$.Status", "@lookup.projectStates"] },
+				           "extra": { "path": "/v3/Projects" } } }
+			]
+		},
+		"activityType": {
+			"parent": "portfolio",
+			"sources": [
+				{ "request": { "path": "${parent.extra.path}/${parent.id}/ActivityTypes" },
+				  "map": { "id": "$.ActivityTypeId", "name": "$.ActivityTypeName", "order": "$.Order", "extra": { "included": "$.Included" } } }
+			]
+		}
+	},
+
+	"import": {
+		"clients": {
+			"request": { "path": "/v3/Customers", "query": { "$select": "Id,Name", "$orderby": "Name" }, "paged": true },
+			"key": "$.Id",
+			"map": { "name": "$.Name", "code": "$.Id" }
+		},
+		"todos": {
+			"request": { "path": "/v3/Tickets", "query": { "$select": "Id,Code,Name,Description,State,PortfolioId,CustomerId,Priority",
+			             "$orderby": "LastUpdateDate desc", "$filter": "TechnicianId eq ${identity.personId}" }, "paged": true },
+			"key": "$.Id",
+			"skipNew": { "notIn": ["$.State", "@lookup.ticketStates"] },
+			"map": {
+				"title": { "coalesce": ["$.Name", "$.Code"] },
+				"notes": "$.Description",
+				"refs": "$.Code",
+				"clientCode": "$.CustomerId",
+				"priority": "$.Priority",
+				"done": { "notIn": ["$.State", "@lookup.ticketStates"] },
+				"fields": { "portfolio": "$.PortfolioId" }
+			}
+		}
+	},
+
+	"entryFields": [
+		{ "key": "portfolio", "list": "portfolio", "label": { "it": "Servizio o progetto", "en": "Service or project" },
+		  "required": { "eq": ["@todo", null] }, "hidden": { "ne": ["@todo", null] }, "filter": { "clientCode": "@entry.client.code" } },
+		{ "key": "activityType", "list": "activityType", "parent": "@field.portfolio", "required": true,
+		  "label": { "it": "Tipo di attività", "en": "Activity type" } },
+		{ "key": "included", "type": "bool", "default": "@list.activityType.selected.extra.included",
+		  "label": { "it": "Incluso nel contratto", "en": "Included in the contract" } }
+	],
+
+	"export": {
+		"entries": "closed",
+		"group": { "by": "dayBlock", "splitPauseMin": "@option.pauseSplitMin", "travel": "nearestBlock", "round": "work" },
+		"body": {
+			"RelationType": { "if": { "ne": ["@todo", null] }, "then": 2,
+			                  "else": { "map": "@list.portfolio.selected.kind", "cases": { "service": 1, "project": 5 } } },
+			"TicketId": { "if": { "ne": ["@todo", null] }, "then": "@todo.externalKey" },
+			"PortfolioId": { "if": { "eq": ["@todo", null] }, "then": "@field.portfolio" },
+			"ActivityTypeId": "@field.activityType",
+			"OwnerId": "@identity.personId",
+			"FromDate": { "date": "@block.from", "format": "isoOffset" },
+			"ToDate": { "date": "@block.to", "format": "isoOffset" },
+			"TimeFormat": 1,
+			"Status": 1,
+			"Included": "@field.included",
+			"ActivityReport": { "concat": ["@entry.activity", { "materials": "text" }], "separator": "\n\n" },
+			"Note": "@entry.notes",
+			"TravelTimeMinutes": "@block.travelMinutes",
+			"TravelKm": "@block.travelKm"
+		},
+		"create": { "method": "POST", "path": "/v3/Activities", "id": "$.Id" },
+		"update": { "method": "PUT", "path": "/v3/Activities/${remote.id}", "fetchFirst": true,
+		            "add": { "Id": "@remote.id", "Timestamp": "@remote.Timestamp" } },
+		"delete": { "method": "DELETE", "path": "/v3/Activities/${remote.id}" }
+	},
+
+	"schedule": {
+		"onClose": { "mode": "@option.closeMode", "scope": "@option.closeScope", "sync": "@option.closeSync" },
+		"fetchEveryMin": "@option.fetchMin"
+	}
+}

@@ -280,6 +280,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					AddButton { vm.addRef(newRef) { newRef = "" } }
 				}
 			}
+			/* the fields of the company's integration plugin (issue #48) */
+			item { PluginFieldsSection(e) }
 			item { ExpensesSection(initial.id) }
 			item { MaterialsSection(initial.id) }
 			item { AttachmentsSection(initial.id, zone) }
