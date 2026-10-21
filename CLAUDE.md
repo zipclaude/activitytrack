@@ -167,10 +167,13 @@ with the policy check, signature rule). B3 done (PluginImport; PluginSync
 plugin_fields). B4 done (PluginExport groupings = AntaresPlan generalized,
 bodies, hash plan; remote_record; PluginSync.sync sends). Schema v12 (not
 released) holds policy_record, remote_item, remote_record, time_entry and
-todo plugin_fields, contact external_key. Next: B5 UI (company screen
-plugin card generated from options, Log in, Sync; entry screen plugin
-fields; close prompt + periodic fetch from schedule), B6 Antares on the
-demo, close PR #29, then A3-A6. Not
+todo plugin_fields, contact external_key. B5 done (ConnectorSection plugin card from
+options, Log in/out, Sync now + report; PluginFieldsSection in the entry
+screen; PluginWork: close prompt/notification, periodic fetch, REMOTE
+channel). Release v0.6.7 (owner 2026-10-21: no Antares, just to see it
+work; NOT device-tested; manual §11 "Policy e integrazioni"). Next: B6
+Antares on the demo, close PR #29, then A3-A6 (fields/features on the
+screens, locked settings UI, company-less). Not
 device-tested.
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
@@ -378,7 +381,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-19 | Calendar events are private (ACCESS_PRIVATE), PR #19 |
 | 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
 | 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
-| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.6.2 (#37 display and usability fixes; 2026-10-20); v0.6.3 (#40 overlapping segments, delete entry/to-do, menu icons; 2026-10-20); v0.6.4 (#44 part, untested; 2026-10-20); v0.6.5 (#41, #47, #44 contacts, schema v11, untested; 2026-10-20); v0.6.6 (#44 completed, untested; 2026-10-21); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
+| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.6.2 (#37 display and usability fixes; 2026-10-20); v0.6.3 (#40 overlapping segments, delete entry/to-do, menu icons; 2026-10-20); v0.6.4 (#44 part, untested; 2026-10-20); v0.6.5 (#41, #47, #44 contacts, schema v11, untested; 2026-10-20); v0.6.6 (#44 completed, untested; 2026-10-21); v0.6.7 (#48 policy + plugin engine, untested; 2026-10-21); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
