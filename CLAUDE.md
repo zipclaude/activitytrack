@@ -171,10 +171,21 @@ todo plugin_fields, contact external_key. B5 done (ConnectorSection plugin card 
 options, Log in/out, Sync now + report; PluginFieldsSection in the entry
 screen; PluginWork: close prompt/notification, periodic fetch, REMOTE
 channel). Release v0.6.7 (owner 2026-10-21: no Antares, just to see it
-work; NOT device-tested; manual §11 "Policy e integrazioni"). Next: B6
-Antares on the demo, close PR #29, then A3-A6 (fields/features on the
-screens, locked settings UI, company-less). Not
-device-tested.
+work; NOT device-tested; manual §11 "Policy e integrazioni"). A3-A6 done (branch `issue-48-ui`, 2026-10-21):
+LocalPolicy + PolicyField/PolicySetting (ui/common/PolicyUi.kt), fields
+hidden/read-only/renamed/coloured/required (POLICY_REQUIRED checked in the
+start, entry and to-do view models), features gated on every screen and in
+receivers/widgets/tile, locked settings with padlock, behaviours wired
+(EntryRepository min length and close on Stop, travel question, export
+range), TODOS_ONLY, importOnly, forced language; company-less use (schema
+**v13**: client and todo company_id nullable; interchange companyKey
+optional); docs/POLICY.md + PolicyCatalogDocTest. Device-tested 2026-10-21
+on the new debug phone (Xiaomi 22031116BG, Android 13, adb `--user 0`;
+MIUI needs "Install via USB"): policy apply, -policy.zip, policy_old.json,
+plugin card, labels/colours, required role, locked/hidden settings,
+plugin fields in the entry; fixes: ICU regex in Expr (crash), plugin
+fields item loaded outside the lazy list, field spacing. Next: B6 Antares
+on the demo, close PR #29; manual screenshots not refreshed this session.
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
 its end; backup every 6/12/24 h or weekly at a preferred hour). Released v0.6.5 (2026-10-20, NOT device-tested, like 0.6.4): consumables
