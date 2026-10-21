@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.settings
 
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
+import it.infraconsulting.activitytrack.ui.common.PolicySetting
+import it.infraconsulting.activitytrack.domain.policy.Feature
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.compose.foundation.layout.Arrangement
@@ -80,15 +83,15 @@ private enum class F {
 }
 
 /* Settings grouped in sub-screens (backlog 2, 2026-10-18). */
-enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = true) {
+enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = true, val feature: Feature? = null) {
 	DISPLAY(R.string.sec_display, R.drawable.ic_menu_phone_android),
 	TIMES(R.string.sec_times, R.drawable.ic_clock),
-	CALLS(R.string.sec_calls, R.drawable.ic_menu_phone),
+	CALLS(R.string.sec_calls, R.drawable.ic_menu_phone, feature = Feature.CALLS),
 	REMINDERS(R.string.sec_reminders, R.drawable.ic_menu_alarm),
 	NOTIFICATIONS(R.string.sec_notifications, R.drawable.ic_menu_bell, form = false),
-	LOCATION(R.string.sec_location, R.drawable.ic_menu_place),
-	CALENDAR(R.string.sec_calendar, R.drawable.ic_calendar, form = false),
-	DICTATION(R.string.sec_dictation, R.drawable.ic_mic),
+	LOCATION(R.string.sec_location, R.drawable.ic_menu_place, feature = Feature.LOCATION),
+	CALENDAR(R.string.sec_calendar, R.drawable.ic_calendar, form = false, feature = Feature.CALENDAR),
+	DICTATION(R.string.sec_dictation, R.drawable.ic_mic, feature = Feature.DICTATION),
 	REPORTS(R.string.sec_reports, R.drawable.ic_nav_report),
 	ONLINE(R.string.sec_online, R.drawable.ic_menu_public),
 	STORAGE(R.string.sec_storage, R.drawable.ic_menu_folder),
@@ -100,11 +103,16 @@ enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = tr
 fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen: (Screen) -> Unit = {}) {
 	val vm = appViewModel { SettingsViewModel(it.settings) }
 	val s = vm.settings.collectAsState().value
+	val policy = LocalPolicy.current
 	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title), onBack = onBack) { padding ->
 		if (section == null)
 			LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-				items(SettingsSection.entries) { sec -> ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) } }
-				item { ClickableRow(stringResource(R.string.gestures_title), icon = R.drawable.ic_menu_touch) { onOpen(Screen.Gestures) } }
+				/* sections of features the policy switched off are not offered (issue #48) */
+				items(SettingsSection.entries.filter { it.feature?.let(policy::enabled) ?: true }) { sec ->
+					ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) }
+				}
+				if (policy.enabled(Feature.GESTURES))
+					item { ClickableRow(stringResource(R.string.gestures_title), icon = R.drawable.ic_menu_touch) { onOpen(Screen.Gestures) } }
 			}
 		else if (s != null)
 			SettingsForm(s, vm, section, Modifier.padding(padding))
@@ -201,89 +209,99 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	)
 
 	@Composable
-	fun field(f: F, label: Int, type: KeyboardType = KeyboardType.Number) =
-		TextInput(stringResource(label), text[f].orEmpty(), { text[f] = it }, type)
+	fun field(f: F, label: Int, type: KeyboardType = KeyboardType.Number, key: String? = null) =
+		if (key == null) TextInput(stringResource(label), text[f].orEmpty(), { text[f] = it }, type)
+		else PolicySetting(key) { TextInput(stringResource(label), text[f].orEmpty(), { text[f] = it }, type) }
 
 	Column(modifier = modifier.fillMaxSize()) {
 		Column(
-			modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+			/* top padding: the first outlined field's label sits above its border */
+			modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 8.dp),
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			when (section) {
-				SettingsSection.DISPLAY -> ChoiceField(
-					stringResource(R.string.set_display),
-					listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
-					compact,
-				) { compact = it }
+				SettingsSection.DISPLAY -> PolicySetting("compactDisplay") {
+					ChoiceField(
+						stringResource(R.string.set_display),
+						listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
+						compact,
+					) { compact = it }
+				}
 				SettingsSection.TIMES -> {
-					SwitchRow(stringResource(R.string.set_editable_times), editableTimes) { editableTimes = it }
-					Text(stringResource(R.string.set_editable_times_hint), style = MaterialTheme.typography.bodySmall)
+					PolicySetting("editableTimes") {
+						SwitchRow(stringResource(R.string.set_editable_times), editableTimes) { editableTimes = it }
+						Text(stringResource(R.string.set_editable_times_hint), style = MaterialTheme.typography.bodySmall)
+					}
 				}
 				SettingsSection.CALLS -> {
-					SwitchRow(stringResource(R.string.set_calls_incoming), callsIn) { callsIn = it; if (it) askCalls() }
-					SwitchRow(stringResource(R.string.set_calls_outgoing), callsOut) { callsOut = it; if (it) askCalls() }
-					SwitchRow(stringResource(R.string.set_call_pause), callPause) { callPause = it }
-					SwitchRow(stringResource(R.string.set_call_propose), callPropose) { callPropose = it }
-					SwitchRow(stringResource(R.string.set_calls_always), callsAlways) { callsAlways = it }
+					PolicySetting("callsIncoming") { SwitchRow(stringResource(R.string.set_calls_incoming), callsIn) { callsIn = it; if (it) askCalls() } }
+					PolicySetting("callsOutgoing") { SwitchRow(stringResource(R.string.set_calls_outgoing), callsOut) { callsOut = it; if (it) askCalls() } }
+					PolicySetting("callAutoPause") { SwitchRow(stringResource(R.string.set_call_pause), callPause) { callPause = it } }
+					PolicySetting("callProposeEntry") { SwitchRow(stringResource(R.string.set_call_propose), callPropose) { callPropose = it } }
+					PolicySetting("callsAlways") { SwitchRow(stringResource(R.string.set_calls_always), callsAlways) { callsAlways = it } }
 					Text(stringResource(R.string.set_calls_hint), style = MaterialTheme.typography.bodySmall)
 				}
 				SettingsSection.REMINDERS -> {
-					field(F.CONFIRM, R.string.set_confirm_interval)
-					field(F.MAX_CONFIRM, R.string.set_max_confirmations)
-					field(F.PAUSE, R.string.set_pause_interval)
-					field(F.DAY_START, R.string.set_day_start_delay)
+					field(F.CONFIRM, R.string.set_confirm_interval, key = "confirmIntervalMin")
+					field(F.MAX_CONFIRM, R.string.set_max_confirmations, key = "maxConfirmations")
+					field(F.PAUSE, R.string.set_pause_interval, key = "pauseIntervalMin")
+					field(F.DAY_START, R.string.set_day_start_delay, key = "dayStartDelayMin")
 				}
 				SettingsSection.NOTIFICATIONS -> NotificationRows()
 				SettingsSection.LOCATION -> {
 					LocationPermissionRows()
 					AddTileRow()
-					field(F.MOVEMENT, R.string.set_movement)
+					field(F.MOVEMENT, R.string.set_movement, key = "movementThresholdM")
 					field(F.ST_RADIUS, R.string.set_stationary_radius)
 					field(F.ST_MIN, R.string.set_stationary_min)
 					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
 				}
 				SettingsSection.CALENDAR -> CalendarRows()
 				/* language names in their own language, as in the system pickers */
-				SettingsSection.DICTATION -> ChoiceField(
-					stringResource(R.string.set_dictation_language),
-					AppSettings.DICTATION_LANGUAGES.map { tag ->
-						tag to java.util.Locale.forLanguageTag(tag).let { it.getDisplayLanguage(it).replaceFirstChar(Char::titlecase) }
-					},
-					dictation,
-				) { dictation = it }
+				SettingsSection.DICTATION -> PolicySetting("dictationLanguage") {
+					ChoiceField(
+						stringResource(R.string.set_dictation_language),
+						AppSettings.DICTATION_LANGUAGES.map { tag ->
+							tag to java.util.Locale.forLanguageTag(tag).let { it.getDisplayLanguage(it).replaceFirstChar(Char::titlecase) }
+						},
+						dictation,
+					) { dictation = it }
+				}
 				SettingsSection.REPORTS -> {
-					TimeField(stringResource(R.string.set_carry_over), text[F.CARRY_OVER].orEmpty(), { text[F.CARRY_OVER] = it })
-					RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text)
-					RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text)
-					RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text)
+					PolicySetting("carryOverMin") { TimeField(stringResource(R.string.set_carry_over), text[F.CARRY_OVER].orEmpty(), { text[F.CARRY_OVER] = it }) }
+					PolicySetting("roundingWorkMin") { RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text) }
+					PolicySetting("roundingTravelMin") { RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text) }
+					PolicySetting("roundingPauseMin") { RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text) }
 				}
 				SettingsSection.ONLINE -> {
-					SwitchRow(stringResource(R.string.set_nominatim), nominatimOn) { nominatimOn = it }
+					PolicySetting("nominatimEnabled") { SwitchRow(stringResource(R.string.set_nominatim), nominatimOn) { nominatimOn = it } }
 					field(F.NOMINATIM, R.string.set_endpoint, KeyboardType.Uri)
-					SwitchRow(stringResource(R.string.set_osrm), osrmOn) { osrmOn = it }
+					PolicySetting("osrmEnabled") { SwitchRow(stringResource(R.string.set_osrm), osrmOn) { osrmOn = it } }
 					field(F.OSRM, R.string.set_endpoint, KeyboardType.Uri)
-					SwitchRow(stringResource(R.string.set_tiles), tilesOn) { tilesOn = it }
+					PolicySetting("tilesEnabled") { SwitchRow(stringResource(R.string.set_tiles), tilesOn) { tilesOn = it } }
 					field(F.TILES, R.string.set_endpoint, KeyboardType.Uri)
 				}
 				SettingsSection.STORAGE -> {
 					DataDirRow(initial.rootUri)
-					field(F.RETENTION, R.string.set_backup_retention)
+					field(F.RETENTION, R.string.set_backup_retention, key = "backupRetention")
 					/* frequency and preferred hour of the automatic backup (issue #44) */
 					val every = mapOf(
 						6 to stringResource(R.string.backup_every_6h), 12 to stringResource(R.string.backup_every_12h),
 						24 to stringResource(R.string.backup_every_day), 168 to stringResource(R.string.backup_every_week),
 					)
-					it.infraconsulting.activitytrack.ui.common.ChoiceField(stringResource(R.string.set_backup_every), every.toList(), backupEvery) { backupEvery = it }
-					it.infraconsulting.activitytrack.ui.common.ChoiceField(
-						stringResource(R.string.set_backup_hour), (0..23).map { h -> h to "%02d:00".format(h) }, backupHour,
-					) { backupHour = it }
+					PolicySetting("backupEveryHours") { ChoiceField(stringResource(R.string.set_backup_every), every.toList(), backupEvery) { backupEvery = it } }
+					PolicySetting("backupHour") {
+						ChoiceField(
+							stringResource(R.string.set_backup_hour), (0..23).map { h -> h to "%02d:00".format(h) }, backupHour,
+						) { backupHour = it }
+					}
 					Text(stringResource(R.string.backup_hour_hint), style = MaterialTheme.typography.bodySmall)
 					/* "Back up now" moved to Import / export, beside the restore (issue #44) */
 					Text(stringResource(R.string.backup_moved_hint), style = MaterialTheme.typography.bodySmall)
 				}
 				SettingsSection.ADVANCED -> {
-					field(F.PLAN_LEAD, R.string.set_plan_lead)
-					field(F.PLAN_SNOOZE, R.string.set_plan_snooze)
+					field(F.PLAN_LEAD, R.string.set_plan_lead, key = "planLeadMin")
+					field(F.PLAN_SNOOZE, R.string.set_plan_snooze, key = "planSnoozeMin")
 				}
 			}
 

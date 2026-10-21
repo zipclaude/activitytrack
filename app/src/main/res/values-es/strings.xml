@@ -602,4 +602,8 @@ Clientes nuevos: %2$d
 Contactos nuevos: %3$d
 Tareas: %4$d
 Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
+  <string name="err_policy_required">Rellena los campos con borde rojo.</string>
+  <string name="policy_locked">Fijado por la política</string>
+  <string name="widget_disabled">Desactivado por la política</string>
+  <string name="err_todos_only">Las actividades empiezan solo desde una tarea.</string>
 </resources>

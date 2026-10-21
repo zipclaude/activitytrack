@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
+import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.ui.common.companyColor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.draw.alpha
@@ -184,15 +186,19 @@ fun HomeScreen(
 	val slots = if (LocalCompact.current) 3 else 2
 	val recent = closed.take(maxOf(0, slots - small.size))
 
+	/* policy (issue #48): entries only from to-dos, no travel, no to-dos */
+	val policy = LocalPolicy.current
+	val canStart = policy.entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.FREE
+	val canTravel = policy.enabled(Feature.TRAVEL)
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
 		onBack = null,
 		/* with entries open the empty card is gone: start and travel move to the bar (owner, 2026-10-18) */
 		actions = {
 			if (cards.isNotEmpty())
-				for ((cmd, label, go) in listOf(
-					Triple(EntryCommand.WORK, R.string.start_title, onStart),
-					Triple(EntryCommand.TRAVEL, R.string.start_travel, onStartTravel),
+				for ((cmd, label, go) in listOfNotNull(
+					Triple(EntryCommand.WORK, R.string.start_title, onStart).takeIf { canStart },
+					Triple(EntryCommand.TRAVEL, R.string.start_travel, onStartTravel).takeIf { canStart && canTravel },
 				)) {
 					val st = commandStyle(cmd)!!
 					IconButton(onClick = go) { Icon(painterResource(st.icon), contentDescription = stringResource(label), tint = st.container) }
@@ -207,7 +213,7 @@ fun HomeScreen(
 			) {
 				item(key = "big") {
 					if (big == null)
-						EmptyEntryCard(gestures.fullSwipe, onStart, vm::startTravel, Modifier.padding(horizontal = 16.dp))
+						EmptyEntryCard(gestures.fullSwipe, onStart.takeIf { canStart }, vm::startTravel.takeIf { canStart && canTravel }, Modifier.padding(horizontal = 16.dp))
 					else
 						SwipeCard(
 							toStart = entrySwipeActions(big.entry, gestures.entryToStart) { run(big.entry, it) },
@@ -235,7 +241,8 @@ fun HomeScreen(
 						SmallEntryCard(c, now, onSelect = { onOpenEntry(c.entry.id) }, onCommand = {}, onOpen = { onOpenEntry(c.entry.id) })
 					}
 				}
-				item(key = "todos") { TodoTodaySection(onStartTodo) }
+				if (policy.enabled(Feature.TODOS))
+					item(key = "todos") { TodoTodaySection(onStartTodo) }
 			}
 		}
 	}
@@ -247,15 +254,15 @@ fun HomeScreen(
  * swipe to the left starts like the button, to the right starts a travel.
  */
 @Composable
-private fun EmptyEntryCard(fullSwipe: Boolean, onStart: () -> Unit, onTravel: () -> Unit, modifier: Modifier) {
+private fun EmptyEntryCard(fullSwipe: Boolean, onStart: (() -> Unit)?, onTravel: (() -> Unit)?, modifier: Modifier) {
 	val compact = LocalCompact.current
 	val start = commandStyle(EntryCommand.WORK)!!
 	val travel = commandStyle(EntryCommand.TRAVEL)!!
 	val startLabel = stringResource(R.string.swipe_start)
 	val travelLabel = stringResource(R.string.cmd_travel)
 	SwipeCard(
-		toStart = listOf(SwipeAction(startLabel, start.icon, start.container, start.content, onStart)),
-		toEnd = listOf(SwipeAction(travelLabel, travel.icon, travel.container, travel.content, onTravel)),
+		toStart = listOfNotNull(onStart?.let { SwipeAction(startLabel, start.icon, start.container, start.content, it) }),
+		toEnd = listOfNotNull(onTravel?.let { SwipeAction(travelLabel, travel.icon, travel.container, travel.content, it) }),
 		fullSwipe = fullSwipe,
 		shape = CardDefaults.shape,
 		modifier = modifier,
@@ -269,8 +276,8 @@ private fun EmptyEntryCard(fullSwipe: Boolean, onStart: () -> Unit, onTravel: ()
 				Text(stringResource(R.string.home_none), style = MaterialTheme.typography.titleLarge)
 				Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
 					val size = if (compact) 48.dp else 64.dp
-					CommandIconButton(start, startLabel, onStart, Modifier.size(size))
-					CommandIconButton(travel, stringResource(R.string.start_travel), onTravel, Modifier.size(size))
+					onStart?.let { CommandIconButton(start, startLabel, it, Modifier.size(size)) }
+					onTravel?.let { CommandIconButton(travel, stringResource(R.string.start_travel), it, Modifier.size(size)) }
 				}
 			}
 		}

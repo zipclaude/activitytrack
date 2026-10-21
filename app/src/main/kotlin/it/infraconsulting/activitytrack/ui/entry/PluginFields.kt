@@ -49,14 +49,25 @@ import kotlinx.serialization.json.JsonPrimitive
  * and text. Values stored with the entry; an imported to-do's values and
  * the descriptor's defaults show until the user picks another.
  */
+/*
+ * The entry's company and its plugin with entry fields, or null. Called
+ * outside the lazy list (EntryForm): loaded inside an item, the first
+ * composition would be empty, zero high, and the list would never show it.
+ */
 @Composable
-fun PluginFieldsSection(e: TimeEntryEntity) {
+fun rememberEntryPlugin(e: TimeEntryEntity): Pair<it.infraconsulting.activitytrack.data.db.CompanyEntity, it.infraconsulting.activitytrack.domain.plugin.Plugin>? {
+	val app = LocalContext.current.applicationContext as ActivityTrackApp
+	val plugins by app.plugins.plugins.collectAsState()
+	val company by produceState<it.infraconsulting.activitytrack.data.db.CompanyEntity?>(null, e.companyId) { value = e.companyId?.let { app.container.masterData.company(it) } }
+	val co = company ?: return null
+	val plugin = co.connectorId?.let { plugins[it] }?.takeIf { it.entryFields.isNotEmpty() } ?: return null
+	return co to plugin
+}
+
+@Composable
+fun PluginFieldsSection(e: TimeEntryEntity, co: it.infraconsulting.activitytrack.data.db.CompanyEntity, plugin: it.infraconsulting.activitytrack.domain.plugin.Plugin) {
 	val app = LocalContext.current.applicationContext as ActivityTrackApp
 	val c = app.container
-	val plugins by app.plugins.plugins.collectAsState()
-	val company by produceState<it.infraconsulting.activitytrack.data.db.CompanyEntity?>(null, e.companyId) { value = e.companyId?.let { c.masterData.company(it) } }
-	val plugin = company?.connectorId?.let { plugins[it] }?.takeIf { it.entryFields.isNotEmpty() } ?: return
-	val co = company ?: return
 	val itemsFlow = remember(co.id, plugin.id) { c.pluginData.observeAllItems(co.id, plugin.id) }
 	val items by itemsFlow.collectAsState(initial = emptyList())
 	val todo by produceState<it.infraconsulting.activitytrack.data.db.TodoEntity?>(null, e.todoId) { value = e.todoId?.let { c.pluginData.todo(it) } }
@@ -108,7 +119,7 @@ fun PluginFieldsSection(e: TimeEntryEntity) {
 
 	Column {
 		SectionHeader(plugin.name)
-		val padded = Modifier.padding(horizontal = 16.dp)
+		val padded = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
 		run {
 			for (f in plugin.entryFields) {
 				if (truthy(f.hidden.eval(null, env)))

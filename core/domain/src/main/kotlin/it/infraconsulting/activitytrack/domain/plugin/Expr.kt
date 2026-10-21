@@ -59,7 +59,7 @@ sealed interface Expr {
 		val DATE_FORMATS = setOf("isoOffset", "isoLocal", "isoDate", "epochMs")
 		val ROUNDINGS = setOf("work", "travel", "pause", "none")
 		private val REF = Regex("@([A-Za-z][A-Za-z0-9]*)((?:\\.[A-Za-z0-9_:-]+)*)")
-		private val TEMPLATE_REF = Regex("\\$\\{([A-Za-z][A-Za-z0-9]*)((?:\\.[A-Za-z0-9_:-]+)*)}")
+		private val TEMPLATE_REF = Regex("\\$\\{([A-Za-z][A-Za-z0-9]*)((?:\\.[A-Za-z0-9_:-]+)*)\\}")
 
 		/*
 		 * Parses [e]; problems go to [error] with a sub-path ("" = here).

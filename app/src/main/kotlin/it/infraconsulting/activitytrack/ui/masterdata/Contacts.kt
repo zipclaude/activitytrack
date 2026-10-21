@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import it.infraconsulting.activitytrack.ui.common.canCreateMasterData
 import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import android.content.Intent
@@ -79,7 +80,7 @@ fun ContactsScreen(onBack: () -> Unit) {
 	ScreenScaffold(
 		title = stringResource(R.string.md_contacts),
 		onBack = onBack,
-		actions = { AddButton { vm.clearError(); editing = ContactEntity(clientId = clients.firstOrNull()?.id ?: 0, name = "") to emptyList() } },
+		actions = { if (canCreateMasterData()) AddButton { vm.clearError(); editing = ContactEntity(clientId = clients.firstOrNull()?.id ?: 0, name = "") to emptyList() } },
 	) { padding ->
 		LazyColumn(Modifier.fillMaxSize().padding(padding)) {
 			item {

@@ -65,7 +65,15 @@ class PluginRegistry(private val app: ActivityTrackApp) {
 			val bytes = read(file.uri) ?: continue
 			val sig = files["$name.sig"]?.let { read(it.uri) }
 			val fingerprint = PolicyGate.fingerprint(bytes, sig)
-			val errors = check(name, bytes, sig, pinned)
+			/* a broken file is refused, never a crash of the app */
+			val errors = try {
+				check(name, bytes, sig, pinned)
+			} catch (e: kotlinx.coroutines.CancellationException) {
+				throw e
+			} catch (e: Throwable) {
+				Log.e(TAG, "$name: check failed", e)
+				listOf(PolicyError("", null, "cannot read the plugin: ${e.javaClass.simpleName} ${e.message.orEmpty()}"))
+			}
 			if (errors.isNotEmpty()) {
 				if (seen.getString(name, null) != fingerprint) {
 					seen.edit { putString(name, fingerprint) }

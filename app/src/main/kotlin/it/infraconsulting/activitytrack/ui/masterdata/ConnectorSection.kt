@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -71,7 +72,8 @@ fun ConnectorSection(company: CompanyEntity, vm: MasterDataViewModel) {
 	Column {
 		SectionHeader(stringResource(R.string.connector_title))
 		ClickableRow(stringResource(R.string.connector_external_code), company.externalCode ?: notSet) { editingCode = true }
-		Column(Modifier.padding(horizontal = 16.dp)) {
+		/* spaced: an outlined field's label sits on its top border, over the field above otherwise */
+		Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
 			ChoiceField(stringResource(R.string.connector_plugin), choices, selected) { id ->
 				if (id != selected) {
 					company.connectorId?.let { old -> app.oauth.logout(company.id, old) }
@@ -145,7 +147,7 @@ private fun PluginCard(company: CompanyEntity, plugin: Plugin, config: JSONObjec
 	}
 
 	Column {
-		Column(Modifier.padding(horizontal = 16.dp)) {
+		Column(Modifier.padding(horizontal = 16.dp).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
 			for (o in plugin.options) {
 				val label = o.label.pick(language, o.key)
 				when (o.type) {

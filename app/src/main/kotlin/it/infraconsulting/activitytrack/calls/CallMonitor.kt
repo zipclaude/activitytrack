@@ -45,6 +45,10 @@ class CallReceiver : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
 		if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED)
 			return
+		/* the policy may switch call recognition off (issue #48); the in-memory value, the receiver must not block */
+		val app = context.applicationContext as it.infraconsulting.activitytrack.ActivityTrackApp
+		if (!app.container.policies.current.value.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.CALLS))
+			return
 		val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
 		val prefs = context.getSharedPreferences("calls", Context.MODE_PRIVATE)
 		/* a call happened if the phone was off hook since the last idle */
