@@ -26,6 +26,16 @@ data class Policy(
 
 	fun field(f: Field): FieldPolicy = fields[f] ?: FieldPolicy()
 
+	/*
+	 * The first field the policy makes required that [filled] reports
+	 * empty; only fields shown and editable count (the user could not fill
+	 * the others), only the fields the caller knows are checked.
+	 */
+	fun missingRequired(filled: Map<Field, Boolean>): Field? = filled.entries.firstOrNull { (f, ok) ->
+		val p = field(f)
+		!ok && p.required == true && p.visible && p.enabled
+	}?.key
+
 	/* At import: every value of the policy written into the settings, fixed or not. */
 	fun applyTo(s: AppSettings): AppSettings = write(s) { true }
 
