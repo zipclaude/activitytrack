@@ -142,12 +142,22 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-19)
 
+Issue #48 (policy.json + declarative plugins), branch `issue-48-policy`
+(no PR yet, 2026-10-21): order A1–A2 → B1–B6 (0.7.0 = Antares as the first
+plugin, PR #29 to be closed and reused) → A3–A6. Done: A1 (domain/policy:
+catalogue, parser, validator), A2 (PolicyLoader at start/onStart, extra
+`-policy.zip` backup never expired, policy_old.json, policy_record table
+schema **v12**, settings enforcement, optional signature policy.json.sig by
+scripts/sign-policy.sh: chain to phone CAs incl. user, no revocation, first
+signed policy pins the CN, unsigned refused afterwards). Owner answers:
+hidden settings hidden, fixed ones locked with padlock; essential fields
+client (company if client off), times, description; labels fall back to
+the policy's English. Waiting: approval of the descriptor draft
+`docs/PLUGINS.md` + `docs/samples/plugins/antares.json` and 5 questions
+(issue comment 6314312508). Not device-tested.
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
-its end; backup every 6/12/24 h or weekly at a preferred hour). Issue #48
-(policy.json + declarative plugins): plan and estimate posted (A ≈ 12.5,
-B ≈ 13 working days), 8 questions waiting; nothing implemented before the
-owner approves. Released v0.6.5 (2026-10-20, NOT device-tested, like 0.6.4): consumables
+its end; backup every 6/12/24 h or weekly at a preferred hour). Released v0.6.5 (2026-10-20, NOT device-tested, like 0.6.4): consumables
 (#41), contact e-mail/optional numbers and entry contact (#44), compact
 fields, Description / Quick pick, planning editor per mockup
 https://claude.ai/artifact/QvVjq5Fn5a57s2smRFN2dg (#47); schema v11.
