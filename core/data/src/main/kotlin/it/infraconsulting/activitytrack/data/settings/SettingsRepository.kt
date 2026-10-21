@@ -61,6 +61,9 @@ class SettingsRepository(context: Context) {
 		val carryOver = intPreferencesKey("carry_over_min")
 		val kmFactor = doublePreferencesKey("km_factor")
 		val backupRetention = intPreferencesKey("backup_retention")
+		val backupEveryHours = intPreferencesKey("backup_every_hours")
+		val backupHour = intPreferencesKey("backup_hour")
+		val homeFilterEntries = booleanPreferencesKey("home_filter_entries")
 		val rootUri = stringPreferencesKey("root_uri")
 		val dictationLanguage = stringPreferencesKey("dictation_language")
 		val calendarId = longPreferencesKey("calendar_id")
@@ -110,6 +113,9 @@ class SettingsRepository(context: Context) {
 			carryOverMin = p[K.carryOver] ?: d.carryOverMin,
 			kmFactor = p[K.kmFactor] ?: d.kmFactor,
 			backupRetention = p[K.backupRetention] ?: d.backupRetention,
+			backupEveryHours = p[K.backupEveryHours] ?: d.backupEveryHours,
+			backupHour = p[K.backupHour] ?: d.backupHour,
+			homeFilterEntries = p[K.homeFilterEntries] ?: d.homeFilterEntries,
 			dictationLanguage = p[K.dictationLanguage] ?: d.dictationLanguage,
 			calendarId = p[K.calendarId],
 			companyCalendars = p[K.companyCalendars].orEmpty().split(',').mapNotNull { pair ->
@@ -160,6 +166,9 @@ class SettingsRepository(context: Context) {
 		p[K.carryOver] = s.carryOverMin
 		p[K.kmFactor] = s.kmFactor
 		p[K.backupRetention] = s.backupRetention
+		p[K.backupEveryHours] = s.backupEveryHours
+		p[K.backupHour] = s.backupHour
+		p[K.homeFilterEntries] = s.homeFilterEntries
 		p[K.dictationLanguage] = s.dictationLanguage
 		s.calendarId?.let { p[K.calendarId] = it } ?: p.remove(K.calendarId)
 		p[K.companyCalendars] = s.companyCalendars.entries.joinToString(",") { "${it.key}:${it.value}" }
