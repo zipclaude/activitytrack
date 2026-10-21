@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 12,
-    "identityHash": "0c3aa0b79fd493bfa87e7a7b09e5abb5",
+    "identityHash": "c2005c09bd6bb332ee0b86d778404a43",
     "entities": [
       {
         "tableName": "company",
@@ -2139,11 +2139,74 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "remote_record",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`entry_id` INTEGER NOT NULL, `plugin_id` TEXT NOT NULL, `block_key` TEXT NOT NULL, `remote_id` TEXT NOT NULL, `hash` TEXT NOT NULL, `sent_utc_ms` INTEGER NOT NULL, PRIMARY KEY(`entry_id`, `plugin_id`, `block_key`), FOREIGN KEY(`entry_id`) REFERENCES `time_entry`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "entryId",
+            "columnName": "entry_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pluginId",
+            "columnName": "plugin_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "blockKey",
+            "columnName": "block_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteId",
+            "columnName": "remote_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hash",
+            "columnName": "hash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sentUtcMs",
+            "columnName": "sent_utc_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "entry_id",
+            "plugin_id",
+            "block_key"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "time_entry",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "entry_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0c3aa0b79fd493bfa87e7a7b09e5abb5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c2005c09bd6bb332ee0b86d778404a43')"
     ]
   }
 }

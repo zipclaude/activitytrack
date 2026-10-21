@@ -53,4 +53,40 @@ interface PluginDao {
 
 	@Insert
 	suspend fun insertPhone(p: ContactPhoneEntity)
+
+	/*
+	 * Closed entries of the company the plugin may send (B4): those with its
+	 * entry fields, those started from an imported to-do, and those already
+	 * sent (an edit or a deletion of blocks must reach the remote side).
+	 */
+	@Query(
+		"SELECT * FROM time_entry WHERE company_id = :companyId AND status = 'CLOSED' AND (plugin_fields IS NOT NULL " +
+			"OR todo_id IN (SELECT id FROM todo WHERE external_key IS NOT NULL) " +
+			"OR id IN (SELECT entry_id FROM remote_record WHERE plugin_id = :pluginId)) ORDER BY id",
+	)
+	suspend fun entriesToSend(companyId: Long, pluginId: String): List<TimeEntryEntity>
+
+	@Query("SELECT * FROM segment WHERE entry_id = :entryId ORDER BY start_utc_ms")
+	suspend fun segmentsOf(entryId: Long): List<SegmentEntity>
+
+	@Query("SELECT * FROM todo WHERE id = :id")
+	suspend fun todo(id: Long): TodoEntity?
+
+	@Query("SELECT * FROM client WHERE id = :id")
+	suspend fun client(id: Long): ClientEntity?
+
+	@Query("SELECT * FROM entry_material WHERE entry_id = :entryId ORDER BY created_utc_ms, id")
+	suspend fun materialsOf(entryId: Long): List<EntryMaterialEntity>
+
+	@Query("SELECT * FROM remote_record WHERE entry_id = :entryId AND plugin_id = :pluginId")
+	suspend fun sent(entryId: Long, pluginId: String): List<RemoteRecordEntity>
+
+	@Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
+	suspend fun recordSent(r: RemoteRecordEntity)
+
+	@Query("DELETE FROM remote_record WHERE entry_id = :entryId AND plugin_id = :pluginId AND block_key = :key")
+	suspend fun forgetSent(entryId: Long, pluginId: String, key: String)
+
+	@Query("UPDATE time_entry SET plugin_fields = :json WHERE id = :entryId")
+	suspend fun setEntryFields(entryId: Long, json: String?)
 }

@@ -37,6 +37,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		EntryMaterialEntity::class,
 		PolicyRecordEntity::class,
 		RemoteItemEntity::class,
+		RemoteRecordEntity::class,
 	],
 	version = ActivityTrackDatabase.VERSION,
 	exportSchema = true,
@@ -51,7 +52,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		AutoMigration(from = 8, to = 9),	/* M22 planned end */
 		AutoMigration(from = 9, to = 10),	/* issue #28 contacts, calls, pause notes */
 		AutoMigration(from = 10, to = 11),	/* issue #41 materials; #44 contact e-mail, entry contact */
-		AutoMigration(from = 11, to = 12),	/* issue #48 policy history; plugin lists, entry and to-do plugin fields, contact key */
+		AutoMigration(from = 11, to = 12),	/* issue #48 policy history; plugin lists and sent records, entry and to-do plugin fields, contact key */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
