@@ -574,4 +574,12 @@ Tap the green play button below to start one.</string>
   <string name="err_end_required">A past day needs the end time too.</string>
   <string name="plan_question">Plan it for %1$s at %2$s?</string>
   <string name="plan_question_text">It becomes a planned to-do with this client and description.</string>
+  <!-- issue #48 policy -->
+  <string name="ch_policy">Policy</string>
+  <string name="policy_refused_title">policy.json refused</string>
+  <string name="policy_applied_title">Policy %1$s applied</string>
+  <string name="policy_applied_signed">Signed by %1$s. A backup was made first; the previous policy is in policy_old.json.</string>
+  <string name="policy_applied_unsigned">Not signed. A backup was made first; the previous policy is in policy_old.json.</string>
+  <string name="policy_more_errors">… and %1$d more</string>
+  <string name="policy_too_large">larger than 1 MB</string>
 </resources>

@@ -577,3 +577,23 @@ data class EntryMaterialEntity(
 	/* quantity × unit cost; without a quantity one unit; null without a cost */
 	val totalCents: Long? get() = unitCostCents?.let { Math.round(it * (quantity ?: 1.0)) }
 }
+
+/*
+ * Every policy.json handled (issue #48): applied or refused, newest last.
+ * The policy in force is the latest applied row's text; the first signed
+ * applied row's CN is the one later policies must be signed with.
+ */
+@Entity(tableName = "policy_record")
+data class PolicyRecordEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	@ColumnInfo(name = "handled_utc_ms") val handledUtcMs: Long,
+	val fingerprint: String,
+	val applied: Boolean,
+	@ColumnInfo(name = "policy_id") val policyId: String? = null,
+	@ColumnInfo(name = "policy_version") val policyVersion: String? = null,
+	@ColumnInfo(name = "signer_cn") val signerCn: String? = null,
+	/* the policy.json applied, as read */
+	val text: String? = null,
+	/* the reasons of a refusal, one per line */
+	val errors: String? = null,
+)
