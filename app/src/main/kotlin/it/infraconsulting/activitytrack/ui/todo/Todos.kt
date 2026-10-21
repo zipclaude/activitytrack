@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.todo
 
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.domain.policy.Field as PField
 import it.infraconsulting.activitytrack.ui.common.enabled
 import it.infraconsulting.activitytrack.ui.common.fieldShown
@@ -278,7 +279,9 @@ internal fun todoSwipeActions(
 	onReplan: (TodoEntity) -> Unit,
 ): List<SwipeAction> {
 	val grey = MaterialTheme.colorScheme.outline
-	return Gestures.todoActions(swipe, ignored = t.ignoredUtcMs != null, planned = t.plan() != null, done = t.done).map { a ->
+	val canIgnore = LocalPolicy.current.enabled(Feature.IGNORE_TODOS)
+	return Gestures.todoActions(swipe, ignored = t.ignoredUtcMs != null, planned = t.plan() != null, done = t.done)
+		.filter { canIgnore || (it != TodoAction.IGNORE && it != TodoAction.RESTORE) }.map { a ->
 		when (a) {
 			TodoAction.START -> SwipeAction(stringResource(R.string.swipe_start), R.drawable.ic_cmd_play, GREEN, Color.White) { onStart(t.id) }
 			TodoAction.POSTPONE -> SwipeAction(stringResource(R.string.action_postpone, snooze), R.drawable.ic_clock, BLUE, Color.White) { vm.postpone(t, snooze) }
@@ -491,7 +494,7 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 					TextButton(onClick = { vm.setDone(t, !t.done); onDismiss() }) {
 						Text(stringResource(if (t.done) R.string.todo_reopen else R.string.todo_mark_done))
 					}
-					if (!t.done)
+					if (!t.done && LocalPolicy.current.enabled(Feature.IGNORE_TODOS))
 						TextButton(onClick = { vm.setIgnored(t, true); onDismiss() }) { Text(stringResource(R.string.swipe_ignore)) }
 				}
 				onEdit?.let {
@@ -500,7 +503,7 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 					}
 				}
 				/* only the ones created by hand (issue #40): imported ones would come back */
-				if (t.externalKey == null)
+				if (t.externalKey == null && LocalPolicy.current.enabled(Feature.DELETE_TODOS))
 					TextButton(onClick = { deleting = true }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
 			}
 		},

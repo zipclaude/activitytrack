@@ -60,3 +60,29 @@ fun fieldShown(f: Field): Boolean = LocalPolicy.current.field(f).visible
 /* companies, clients and contacts created in the app, or only by imports (policy masterData) */
 @Composable
 fun canCreateMasterData(): Boolean = LocalPolicy.current.masterData == it.infraconsulting.activitytrack.domain.policy.MasterDataSource.USER
+
+/*
+ * A setting the policy may fix (issue #48, owner answer 3): hidden ones
+ * are not drawn; locked ones show their value greyed, not changeable,
+ * with a padlock and "set by the policy".
+ */
+@Composable
+fun PolicySetting(key: String, content: @Composable () -> Unit) {
+	val p = LocalPolicy.current.settings[key]
+	if (p?.hidden == true)
+		return
+	if (p?.locked != true) {
+		content()
+		return
+	}
+	CompositionLocalProvider(LocalFieldEnabled provides false) {
+		androidx.compose.foundation.layout.Column {
+			content()
+			androidx.compose.material3.Text(
+				"🔒 " + stringResource(it.infraconsulting.activitytrack.R.string.policy_locked),
+				style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+				color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+			)
+		}
+	}
+}

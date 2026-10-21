@@ -215,8 +215,11 @@ fun dateText(d: LocalDate, locale: Locale): String =
 @Composable
 private fun PickerTextField(label: String, shown: String, icon: Int, onOpen: () -> Unit, onClear: (() -> Unit)?, error: String?, importance: Importance?) {
 	val source = remember { MutableInteractionSource() }
+	/* a field the policy locks or disables (issue #48) shows its value only */
+	val editable = LocalFieldEnabled.current
+	val open = androidx.compose.runtime.rememberUpdatedState(if (editable) onOpen else ({}))
 	LaunchedEffect(source) {
-		source.interactions.collect { if (it is PressInteraction.Release) onOpen() }
+		source.interactions.collect { if (it is PressInteraction.Release) open.value() }
 	}
 	CompactTextField(
 		value = shown,
@@ -230,10 +233,10 @@ private fun PickerTextField(label: String, shown: String, icon: Int, onOpen: () 
 		colors = importanceColors(importance, shown.isNotBlank()),
 		trailingIcon = {
 			Row {
-				onClear?.let {
+				onClear?.takeIf { editable }?.let {
 					IconButton(onClick = it) { Icon(painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.action_clear)) }
 				}
-				IconButton(onClick = onOpen) { Icon(painterResource(icon), contentDescription = label) }
+				IconButton(onClick = onOpen, enabled = editable) { Icon(painterResource(icon), contentDescription = label) }
 			}
 		},
 		modifier = Modifier.fillMaxWidth(),

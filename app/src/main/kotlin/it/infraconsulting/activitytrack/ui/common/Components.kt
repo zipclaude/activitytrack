@@ -308,12 +308,14 @@ fun <T> ChoiceField(
 
 @Composable
 fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+	/* a setting locked by the policy (issue #48) shows its value only */
+	val editable = LocalFieldEnabled.current
 	Row(
-		modifier = Modifier.fillMaxWidth().clickable { onChange(!checked) }.padding(vertical = 4.dp),
+		modifier = Modifier.fillMaxWidth().clickable(enabled = editable) { onChange(!checked) }.padding(vertical = 4.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		Text(label, modifier = Modifier.weight(1f))
-		Switch(checked = checked, onCheckedChange = onChange)
+		Switch(checked = checked, onCheckedChange = onChange, enabled = editable)
 	}
 }
 
@@ -382,6 +384,7 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.INVALID_VALUE -> R.string.err_invalid_value
 		Reason.START_REQUIRED -> R.string.err_start_required
 		Reason.POLICY_REQUIRED -> R.string.err_policy_required
+		Reason.TODOS_ONLY -> R.string.err_todos_only
 		Reason.END_REQUIRED -> R.string.err_end_required
 		Reason.FUTURE_TIME -> R.string.err_future_time
 		Reason.BEFORE_SEGMENT -> R.string.err_before_segment

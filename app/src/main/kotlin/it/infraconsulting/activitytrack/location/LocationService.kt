@@ -65,7 +65,10 @@ class LocationService : Service() {
 
 	/* Brings the service in line with [latest]; false when it stopped itself. */
 	private fun update(): Boolean {
-		val active = latest.filter { it.entry.status == EntryStatus.ACTIVE }
+		/* the policy may switch location tracking off (issue #48): only the placeholder, then stop */
+		val tracking = (application as it.infraconsulting.activitytrack.ActivityTrackApp).container.policies.current.value
+			.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.LOCATION)
+		val active = if (tracking) latest.filter { it.entry.status == EntryStatus.ACTIVE } else emptyList()
 		val chosen = active.firstOrNull { it.id == fgsEntry } ?: active.firstOrNull()
 		val id = chosen?.let { NotificationIds.of(it.id, NotificationIds.ONGOING) } ?: PLACEHOLDER_ID
 		/* startForeground is due after startForegroundService even when there is nothing to track any more */

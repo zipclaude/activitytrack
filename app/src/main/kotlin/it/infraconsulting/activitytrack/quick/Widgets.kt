@@ -96,6 +96,21 @@ private fun openScreen(context: Context, screen: Screen) =
 			.putExtra(EntryLinks.EXTRA_SCREEN, screen.key()),
 	)
 
+/* the policy may switch the widgets off (issue #48): a note, a tap opens the app */
+private suspend fun widgetsAllowed(context: Context): Boolean =
+	(context.applicationContext as it.infraconsulting.activitytrack.ActivityTrackApp).container.policies.now()
+		.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.WIDGETS)
+
+@Composable
+private fun DisabledWidget(context: Context) {
+	Box(
+		modifier = GlanceModifier.fillMaxSize().appWidgetBackground().clickable(openScreen(context, Screen.Home)),
+		contentAlignment = Alignment.Center,
+	) {
+		Text(context.getString(R.string.widget_disabled), style = TextStyle(color = GlanceTheme.colors.onSurface))
+	}
+}
+
 private val ENTRY = ActionParameters.Key<Long>("entry")
 private val COMMAND = ActionParameters.Key<String>("command")
 
@@ -148,6 +163,8 @@ private fun clock(ms: Long): String {
 /* 4×1: running entry with its commands, or recent clients to start from. */
 class StatusWidget : GlanceAppWidget() {
 	override suspend fun provideGlance(context: Context, id: GlanceId) {
+		if (!widgetsAllowed(context))
+			return provideContent { GlanceTheme { DisabledWidget(context) } }
 		val s = loadState(context)
 		provideContent { GlanceTheme { StatusContent(context, s) } }
 	}
@@ -218,6 +235,8 @@ class StatusWidget : GlanceAppWidget() {
 /* 1×1: one coloured toggle; with nothing ACTIVE it opens the start screen. */
 class ToggleWidget : GlanceAppWidget() {
 	override suspend fun provideGlance(context: Context, id: GlanceId) {
+		if (!widgetsAllowed(context))
+			return provideContent { GlanceTheme { DisabledWidget(context) } }
 		val s = loadState(context)
 		provideContent {
 			GlanceTheme {

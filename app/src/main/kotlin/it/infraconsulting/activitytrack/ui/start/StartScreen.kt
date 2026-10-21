@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.ui.common.enabled
 import it.infraconsulting.activitytrack.ui.common.fieldShown
 import it.infraconsulting.activitytrack.ui.common.fieldImportance
@@ -319,9 +320,11 @@ private fun RunningDialog(r: RunningEntry, vm: StartViewModel) {
 				TextButton(onClick = { vm.decide(EntryCommand.STOP) }) {
 					Text(stringResource(if (travel) R.string.action_yes else R.string.running_close))
 				}
-				TextButton(onClick = { vm.decide(null) }) {
-					Text(stringResource(if (travel) R.string.action_no else R.string.running_leave))
-				}
+				/* no concurrent entries (policy, issue #48): the running one is closed or suspended */
+				if (LocalPolicy.current.enabled(Feature.CONCURRENT_ENTRIES))
+					TextButton(onClick = { vm.decide(null) }) {
+						Text(stringResource(if (travel) R.string.action_no else R.string.running_leave))
+					}
 				if (!pause)
 					TextButton(onClick = { vm.decide(EntryCommand.SUSPEND) }) {
 						Text(stringResource(if (travel) R.string.travel_suspend else R.string.running_suspend))
