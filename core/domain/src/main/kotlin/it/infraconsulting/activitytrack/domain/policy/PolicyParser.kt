@@ -35,10 +35,8 @@ object PolicyParser {
 	val UI_LANGUAGES = setOf("it", "en", "de", "es")
 
 	private val COLOR = Regex("#[0-9A-Fa-f]{6}")
-	private val LANGUAGE = Regex("[a-z]{2,3}")
 	private val NAME = Regex("[a-z][a-z0-9_-]{0,39}")
 	private val PLUGIN_FILE = Regex("[A-Za-z0-9_-]{1,40}\\.json")
-	private const val LABEL_MAX = 40
 
 	/* SHA-256 of the file as read, hex: decides whether a policy.json is new. */
 	fun fingerprint(bytes: ByteArray): String =
@@ -64,7 +62,7 @@ object PolicyParser {
 	 * The line of a path, found by looking for each key in turn after the
 	 * previous one: good enough for error messages in a hand-written file.
 	 */
-	internal fun lineOf(text: String, path: String): Int? {
+	fun lineOf(text: String, path: String): Int? {
 		var at = 0
 		for (key in path.split('.').filter { it.isNotEmpty() && it.toIntOrNull() == null }) {
 			val m = Regex("\"" + Regex.escape(key) + "\"\\s*:").find(text, at) ?: return null
@@ -73,52 +71,7 @@ object PolicyParser {
 		return if (path.isEmpty()) null else lineAt(text, at)
 	}
 
-	private class Reader(val text: String) {
-		val errors = mutableListOf<PolicyError>()
-
-		fun error(path: String, message: String) {
-			errors += PolicyError(path, lineOf(text, path), message)
-		}
-
-		private fun obj(e: JsonElement?, path: String): JsonObject? = when (e) {
-			null -> null
-			is JsonObject -> e
-			else -> null.also { error(path, "must be an object") }
-		}
-
-		private fun keys(o: JsonObject, path: String, allowed: Set<String>) {
-			for (k in o.keys - allowed)
-				error(join(path, k), "unknown key (allowed: ${allowed.sorted().joinToString()})")
-		}
-
-		private fun bool(e: JsonElement?, path: String): Boolean? = when {
-			e == null -> null
-			e is JsonPrimitive && !e.isString && e.booleanOrNull != null -> e.booleanOrNull
-			else -> null.also { error(path, "must be true or false") }
-		}
-
-		private fun int(e: JsonElement?, path: String, range: IntRange): Int? {
-			if (e == null)
-				return null
-			val v = (e as? JsonPrimitive)?.takeIf { !it.isString }?.intOrNull
-			return when {
-				v == null -> null.also { error(path, "must be an integer") }
-				v !in range -> null.also { error(path, "must be in ${range.first}..${range.last}") }
-				else -> v
-			}
-		}
-
-		private fun string(e: JsonElement?, path: String): String? = when {
-			e == null -> null
-			e is JsonPrimitive && e.isString -> e.content
-			else -> null.also { error(path, "must be a string") }
-		}
-
-		private fun <T> choice(e: JsonElement?, path: String, byKey: Map<String, T>): T? {
-			val s = string(e, path) ?: return null
-			return byKey[s] ?: null.also { error(path, "must be one of ${byKey.keys.joinToString()}") }
-		}
-
+	private class Reader(text: String) : CheckedReader(text) {
 		fun policy(root: JsonElement): Policy? {
 			val o = obj(root, "") ?: return null.also { error("", "the policy must be a JSON object") }
 			keys(o, "", setOf("format", "schema", "id", "version", "features", "fields", "settings", "behaviours", "integrations", "entries", "masterData", "export", "ui"))
@@ -185,19 +138,6 @@ object PolicyParser {
 					invalidColor = colors?.let { color(it["invalid"], "$p.colors.invalid") },
 					validColor = colors?.let { color(it["valid"], "$p.colors.valid") },
 				)
-			}.toMap()
-		}
-
-		private fun labels(e: JsonElement?, path: String): Map<String, String> {
-			val o = obj(e, path) ?: return emptyMap()
-			return o.mapNotNull { (lang, v) ->
-				val p = join(path, lang)
-				val s = string(v, p) ?: return@mapNotNull null
-				when {
-					!LANGUAGE.matches(lang) -> null.also { error(p, "a language code like \"it\" or \"en\"") }
-					s.isBlank() || s.length > LABEL_MAX -> null.also { error(p, "1 to $LABEL_MAX characters") }
-					else -> lang to s.trim()
-				}
 			}.toMap()
 		}
 
@@ -269,8 +209,6 @@ object PolicyParser {
 				if (s in EXPORT_FORMATS) s else null.also { error("export.formats", "item ${i + 1}: must be one of ${EXPORT_FORMATS.joinToString()}") }
 			}.toSet()
 		}
-
-		private fun join(path: String, key: String) = if (path.isEmpty()) key else "$path.$key"
 	}
 }
 

@@ -124,7 +124,7 @@
 			"TimeFormat": 1,
 			"Status": 1,
 			"Included": "@field.included",
-			"ActivityReport": { "concat": ["@entry.activity", { "materials": "text" }] },
+			"ActivityReport": { "concat": ["@entry.activity", { "materials": "text" }], "separator": "\n\n" },
 			"Note": "@entry.notes",
 			"TravelTimeMinutes": "@block.travelMinutes",
 			"TravelKm": "@block.travelKm"
