@@ -30,6 +30,9 @@ interface PluginDao {
 	@Query("SELECT * FROM remote_item WHERE company_id = :companyId AND plugin_id = :pluginId")
 	suspend fun items(companyId: Long, pluginId: String): List<RemoteItemEntity>
 
+	@Query("SELECT * FROM remote_item WHERE company_id = :companyId AND plugin_id = :pluginId ORDER BY sort_order, name COLLATE NOCASE")
+	fun observeAllItems(companyId: Long, pluginId: String): Flow<List<RemoteItemEntity>>
+
 	@Query("SELECT * FROM client WHERE company_id = :companyId")
 	suspend fun clientsOf(companyId: Long): List<ClientEntity>
 

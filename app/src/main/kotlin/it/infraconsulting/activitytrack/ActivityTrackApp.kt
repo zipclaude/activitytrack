@@ -41,6 +41,10 @@ class ActivityTrackApp : Application() {
 	val plugins by lazy { it.infraconsulting.activitytrack.connect.plugin.PluginRegistry(this) }
 	val oauth by lazy { it.infraconsulting.activitytrack.connect.plugin.OAuthPkce(this, secrets) }
 
+	/* plugins: send on closing, periodic download */
+	lateinit var pluginWatcher: it.infraconsulting.activitytrack.connect.plugin.PluginWatcher
+		private set
+
 	override fun onCreate() {
 		super.onCreate()
 		container = AppContainer(this, appScope)
@@ -50,6 +54,7 @@ class ActivityTrackApp : Application() {
 		tracking = TrackingMonitor(this, container)
 		ClientShortcuts(this, container).start(appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
+		pluginWatcher = it.infraconsulting.activitytrack.connect.plugin.PluginWatcher(this).also { it.start(appScope) }
 		/* a new policy.json in the data folder (issue #48) */
 		appScope.launch { it.infraconsulting.activitytrack.policy.PolicyLoader.check(this@ActivityTrackApp) }
 		/* the backup follows its frequency and hour (issue #44) */

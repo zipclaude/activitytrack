@@ -586,4 +586,31 @@ Tap the green play button below to start one.</string>
   <string name="plugin_refused_title">Plugin %1$s refused</string>
   <string name="plugin_logged_in">Logged in to %1$s</string>
   <string name="plugin_login_failed">Login failed: %1$s</string>
+  <!-- issue #48 plugin sync -->
+  <string name="ch_remote">Management systems</string>
+  <string name="plugin_send_question">Send to %1$s?</string>
+  <string name="plugin_send_now">Send</string>
+  <string name="plugin_new_todo">New to-do from %1$s</string>
+  <string name="plugin_not_sent_title">Activity not sent</string>
+  <string name="plugin_missing_field">%1$s: %2$s missing</string>
+  <string name="plugin_send_failed">Sending to %1$s failed</string>
+  <plurals name="plugin_new_todos">
+    <item quantity="one">%d new to-do</item>
+    <item quantity="other">%d new to-dos</item>
+  </plurals>
+  <!-- issue #48 plugin card -->
+  <string name="plugin_options_missing">To set: %1$s</string>
+  <string name="plugin_log_in">Log in</string>
+  <string name="plugin_log_out">Log out</string>
+  <string name="plugin_logged_in_state">Logged in</string>
+  <string name="plugin_sync_now">Sync now</string>
+  <string name="plugin_syncing">Syncing…</string>
+  <string name="plugin_https_only">An https:// address</string>
+  <string name="plugin_sync_done">%1$s: sync done</string>
+  <string name="plugin_sync_failed">%1$s: sync failed</string>
+  <string name="plugin_sync_report">Lists: %1$d items
+New clients: %2$d
+New contacts: %3$d
+To-dos: %4$d
+Sent: %5$d, updated: %6$d, deleted: %7$d</string>
 </resources>
