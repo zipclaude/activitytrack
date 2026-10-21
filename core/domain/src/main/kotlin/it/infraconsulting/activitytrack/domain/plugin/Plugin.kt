@@ -89,8 +89,8 @@ data class RemoteList(val parent: String?, val sources: List<ListSource>)
 data class ListSource(val request: Request, val map: Map<String, Expr>)
 
 enum class ImportTarget(val key: String, val fields: Set<String>) {
-	CLIENTS("clients", setOf("name", "code", "notes", "email", "phone")),
-	CONTACTS("contacts", setOf("name", "email", "phone", "clientCode", "notes")),
+	CLIENTS("clients", setOf("name", "code")),
+	CONTACTS("contacts", setOf("name", "email", "phone", "clientCode")),
 	TODOS("todos", setOf("title", "notes", "refs", "clientCode", "priority", "done", "due", "planStart", "planEnd"));
 
 	companion object {

@@ -203,6 +203,23 @@ class MigrationTest {
 		}
 	}
 
+	@Test
+	fun v11ToV12AddsPolicyAndPluginData() {
+		helper.createDatabase(DB, 11).use { db ->
+			db.execSQL("INSERT INTO company (id, name, archived) VALUES (1, 'ACME', 0)")
+			db.execSQL("INSERT INTO client (id, company_id, name, archived) VALUES (1, 1, 'Bank', 0)")
+			db.execSQL("INSERT INTO contact (id, client_id, name) VALUES (1, 1, 'Rossi')")
+		}
+		helper.runMigrationsAndValidate(DB, 12, true).use { db ->
+			db.query("SELECT external_key FROM contact").use { c ->
+				c.moveToFirst()
+				assertEquals(true, c.isNull(0))
+			}
+			db.execSQL("INSERT INTO policy_record (handled_utc_ms, fingerprint, applied) VALUES (0, 'f', 1)")
+			db.execSQL("INSERT INTO remote_item (company_id, plugin_id, list, parent_id, id, name, active, extra) VALUES (1, 'antares', 'portfolio', '', 'S1', 'Assistenza', 1, '{}')")
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

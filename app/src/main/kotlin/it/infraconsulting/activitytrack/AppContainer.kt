@@ -38,6 +38,7 @@ class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	val reports: ReportRepository by lazy { ReportRepository(database, clock) }
 	val settings: SettingsRepository by lazy { SettingsRepository(appContext, policies.current) }
 	/* policy.json (issue #48): the policy in force and its history */
+	val pluginData: it.infraconsulting.activitytrack.data.repo.PluginRepository by lazy { it.infraconsulting.activitytrack.data.repo.PluginRepository(database) }
 	val policies: it.infraconsulting.activitytrack.data.repo.PolicyRepository by lazy { it.infraconsulting.activitytrack.data.repo.PolicyRepository(database, clock, scope) }
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
 	val backup: DatabaseBackup by lazy { DatabaseBackup(database, appContext.cacheDir) }
