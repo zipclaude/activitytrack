@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import it.infraconsulting.activitytrack.ui.common.DateField
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import java.time.ZoneId
@@ -160,6 +161,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						}
 						/* M17: start in the past; empty = now */
 						if (editableTimes) {
+							/* the day (issue #44): empty = today; another day plans or records */
+							DateField(stringResource(R.string.field_date), f.date, { vm.setDate(it); vm.clearError() }, clearable = true, importance = Importance.OPTIONAL)
 							/* start and end on one row (issue #37) */
 							androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
 								Column(Modifier.weight(1f)) {
@@ -211,6 +214,17 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	}
 
 	pending.firstOrNull()?.let { r -> RunningDialog(r, vm) }
+	val askPlan by vm.askPlan.collectAsState()
+	askPlan?.let { (day, min) ->
+		val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+		AlertDialog(
+			onDismissRequest = { vm.confirmPlan(false) },
+			title = { Text(stringResource(R.string.plan_question, it.infraconsulting.activitytrack.ui.common.dateText(day, locale), formatMin(min))) },
+			text = { Text(stringResource(R.string.plan_question_text)) },
+			confirmButton = { TextButton(onClick = { vm.confirmPlan(true) }) { Text(stringResource(R.string.action_yes)) } },
+			dismissButton = { TextButton(onClick = { vm.confirmPlan(false) }) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
 	val askFuture by vm.askFuture.collectAsState()
 	askFuture?.let { min ->
 		val at = formatMin(min)

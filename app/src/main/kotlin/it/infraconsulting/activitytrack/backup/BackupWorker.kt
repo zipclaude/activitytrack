@@ -68,12 +68,24 @@ class BackupWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 		private const val DAILY = "backup-daily"
 		private const val NOW = "backup-now"
 
-		/* Daily, battery not low; KEEP leaves an existing schedule untouched. */
-		fun schedule(context: Context) {
-			val request = PeriodicWorkRequestBuilder<BackupWorker>(24, TimeUnit.HOURS)
+		/*
+		 * Every [everyHours] from the next [hour] (issue #44), battery not low.
+		 * A change of frequency or hour replaces the schedule; the same values
+		 * leave the running one alone (no new first delay at every app start).
+		 */
+		fun schedule(context: Context, everyHours: Int, hour: Int) {
+			val prefs = context.getSharedPreferences("backup", Context.MODE_PRIVATE)
+			val key = "$everyHours@$hour"
+			val same = prefs.getString("schedule", null) == key
+			val delay = it.infraconsulting.activitytrack.domain.backup.BackupSchedule.initialDelay(java.time.ZonedDateTime.now(), everyHours, hour)
+			val request = PeriodicWorkRequestBuilder<BackupWorker>(everyHours.toLong(), TimeUnit.HOURS)
 				.setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
+				.setInitialDelay(delay.toMinutes(), TimeUnit.MINUTES)
 				.build()
-			WorkManager.getInstance(context).enqueueUniquePeriodicWork(DAILY, ExistingPeriodicWorkPolicy.KEEP, request)
+			WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+				DAILY, if (same) ExistingPeriodicWorkPolicy.KEEP else ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, request,
+			)
+			prefs.edit().putString("schedule", key).apply()
 		}
 
 		fun runNow(context: Context) {
