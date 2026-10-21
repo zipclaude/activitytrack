@@ -1,7 +1,11 @@
-Version 0.6.6 (October 2026). Please report any difference between this
+Version 0.6.7 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.6.7** (version not tested on the phone)
+- **Policy** (`policy.json`) and **integrations as plugins** (`plugins`
+  folder): §11, "Policy and integrations". First release, to be tried.
 
 **New in 0.6.4** (version not tested on the phone)
 - **Agenda**: reopens on the last view; in Day and Week the working hours fill
@@ -546,10 +550,47 @@ only to-dos). The report shows what was added, what was already there, the
 **conflicts** (the app's data stays unchanged) and what was not imported,
 with the reason. Importing the same file again creates no duplicates.
 
-**Backup** — every day the app saves the database into the `backup` folder
-(14 kept, adjustable); **"Back up now"** here, in Import / export. **"Restore backup"**
+**Backup** — the app saves the database into the `backup` folder at the
+frequency and hour chosen in Settings (every day at 02:00 unless changed;
+14 kept, adjustable); **"Back up now"** here, in Import / export. **"Restore backup"**
 replaces all data with a chosen backup: first it saves the current data as
 `…-before-restore.zip`, then it restarts the app.
+
+### Policy and integrations
+
+**Policy** — a `policy.json` file in the data folder (beside `backup`)
+changes the app without going through Settings: it switches features off,
+hides, renames or colours fields, fixes settings (greyed with a padlock, or
+hidden). It is meant for a company handing the app to its staff, or for
+another trade ("Site" instead of "Client").
+- The app reads it at start and whenever it comes back to the foreground.
+  A valid one: first a `…-policy.zip` backup (never removed automatically),
+  the previous policy saved as `policy_old.json`, then it is applied and
+  notified. An invalid one: the notification lists the errors with their
+  line, and the file is ignored until it changes.
+- **Signature** (optional): `policy.json.sig`, made by
+  `scripts/sign-policy.sh` with a certificate of a CA the phone trusts. The
+  first signed policy fixes the signer's name (CN): from then on only
+  policies signed with the same name are accepted.
+- Removing the file does not remove the policy: an empty policy does
+  (signed, if the previous one was).
+- In this version the policy fixes settings; hiding fields and features on
+  the screens comes in the next ones.
+
+**Integrations (plugins)** — a management system is connected with a
+`<name>.json` file in the data folder's `plugins` folder (the published
+plugins are in the repository's `plugins` folder; format in
+`docs/PLUGINS.md`).
+- Company screen → "Management system" → "Connector": pick the plugin; its options show
+  (those with `*` are required), "Log in" when the system has a login, then
+  "Sync now".
+- A sync downloads the system's lists, clients, contacts and to-dos, and
+  sends the closed activities; repeating it creates no duplicates.
+- The activity screen shows the plugin's fields (e.g. the service and the
+  activity type). On closing, the app asks whether to send, always sends or
+  never does, as the plugin's options say; without network it waits.
+- With a signed policy, plugins must be signed with the same name too
+  (`<name>.json.sig`).
 
 ---
 

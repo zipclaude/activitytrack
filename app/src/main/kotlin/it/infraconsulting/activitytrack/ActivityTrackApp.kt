@@ -37,15 +37,26 @@ class ActivityTrackApp : Application() {
 	/* connector secrets, keystore-encrypted (M4) */
 	val secrets: SecretStore by lazy { SecretStore(this) }
 
+	/* integration plugins of the data folder and their OAuth logins (issue #48) */
+	val plugins by lazy { it.infraconsulting.activitytrack.connect.plugin.PluginRegistry(this) }
+	val oauth by lazy { it.infraconsulting.activitytrack.connect.plugin.OAuthPkce(this, secrets) }
+
+	/* plugins: send on closing, periodic download */
+	lateinit var pluginWatcher: it.infraconsulting.activitytrack.connect.plugin.PluginWatcher
+		private set
+
 	override fun onCreate() {
 		super.onCreate()
-		container = AppContainer(this)
+		container = AppContainer(this, appScope)
 		NotificationChannels.register(this)
 		notificationSync = NotificationSync(this, container, appScope).also { it.start() }
 		reminders = ReminderScheduler(this, container).also { it.start(appScope) }
 		tracking = TrackingMonitor(this, container)
 		ClientShortcuts(this, container).start(appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
+		pluginWatcher = it.infraconsulting.activitytrack.connect.plugin.PluginWatcher(this).also { it.start(appScope) }
+		/* a new policy.json in the data folder (issue #48) */
+		appScope.launch { it.infraconsulting.activitytrack.policy.PolicyLoader.check(this@ActivityTrackApp) }
 		/* the backup follows its frequency and hour (issue #44) */
 		appScope.launch {
 			container.settings.settings.map { it.backupEveryHours to it.backupHour }.distinctUntilChanged()

@@ -121,10 +121,15 @@ class DatabaseBackup(
 		const val SUFFIX = ".zip"
 		private val STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
 
+		/* the extra backup before a new policy (issue #48): never removed automatically */
+		const val POLICY_SUFFIX = "-policy$SUFFIX"
+
 		fun fileName(now: Instant, zone: ZoneId): String = PREFIX + STAMP.format(now.atZone(zone)) + SUFFIX
 
-		/* Backups beyond the newest [keep] (names sort by time). */
+		fun policyFileName(now: Instant, zone: ZoneId): String = PREFIX + STAMP.format(now.atZone(zone)) + POLICY_SUFFIX
+
+		/* Backups beyond the newest [keep] (names sort by time); policy backups stay. */
 		fun expired(names: List<String>, keep: Int): List<String> =
-			names.filter { it.startsWith(PREFIX) && it.endsWith(SUFFIX) }.sortedDescending().drop(keep)
+			names.filter { it.startsWith(PREFIX) && it.endsWith(SUFFIX) && !it.endsWith(POLICY_SUFFIX) }.sortedDescending().drop(keep)
 	}
 }

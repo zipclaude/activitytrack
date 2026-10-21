@@ -562,4 +562,43 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="err_end_required">Für einen vergangenen Tag wird auch das Ende benötigt.</string>
   <string name="plan_question">Für %1$s um %2$s planen?</string>
   <string name="plan_question_text">Es wird eine geplante Aufgabe mit diesem Kunden und dieser Beschreibung.</string>
+  <!-- issue #48 policy -->
+  <string name="ch_policy">Richtlinie</string>
+  <string name="policy_refused_title">policy.json abgelehnt</string>
+  <string name="policy_applied_title">Richtlinie %1$s angewendet</string>
+  <string name="policy_applied_signed">Signiert von %1$s. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>
+  <string name="policy_applied_unsigned">Nicht signiert. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>
+  <string name="policy_more_errors">… und %1$d weitere</string>
+  <string name="policy_too_large">größer als 1 MB</string>
+  <!-- issue #48 plugins -->
+  <string name="plugin_refused_title">Plugin %1$s abgelehnt</string>
+  <string name="plugin_logged_in">Bei %1$s angemeldet</string>
+  <string name="plugin_login_failed">Anmeldung fehlgeschlagen: %1$s</string>
+  <!-- issue #48 plugin sync -->
+  <string name="ch_remote">Verwaltungssysteme</string>
+  <string name="plugin_send_question">An %1$s senden?</string>
+  <string name="plugin_send_now">Senden</string>
+  <string name="plugin_new_todo">Neue Aufgabe von %1$s</string>
+  <string name="plugin_not_sent_title">Tätigkeit nicht gesendet</string>
+  <string name="plugin_missing_field">%1$s: %2$s fehlt</string>
+  <string name="plugin_send_failed">Senden an %1$s fehlgeschlagen</string>
+  <plurals name="plugin_new_todos">
+    <item quantity="one">%d neue Aufgabe</item>
+    <item quantity="other">%d neue Aufgaben</item>
+  </plurals>
+  <!-- issue #48 plugin card -->
+  <string name="plugin_options_missing">Einzustellen: %1$s</string>
+  <string name="plugin_log_in">Anmelden</string>
+  <string name="plugin_log_out">Abmelden</string>
+  <string name="plugin_logged_in_state">Angemeldet</string>
+  <string name="plugin_sync_now">Jetzt synchronisieren</string>
+  <string name="plugin_syncing">Synchronisierung…</string>
+  <string name="plugin_https_only">Eine https://-Adresse</string>
+  <string name="plugin_sync_done">%1$s: synchronisiert</string>
+  <string name="plugin_sync_failed">%1$s: Synchronisierung fehlgeschlagen</string>
+  <string name="plugin_sync_report">Listen: %1$d Einträge
+Neue Kunden: %2$d
+Neue Kontakte: %3$d
+Aufgaben: %4$d
+Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
 </resources>
