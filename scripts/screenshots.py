@@ -45,7 +45,9 @@ def sh(*a):
 
 def nodes():
 	x = adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
-	x = x[x.index("<"):x.rindex(">") + 1]
+	# MIUI prints a stack trace (with "<clinit>") before the XML
+	start = x.find("<?xml")
+	x = x[start if start >= 0 else x.index("<hierarchy"):x.rindex(">") + 1]
 	for n in ET.fromstring(x).iter("node"):
 		b = [int(v) for v in re.findall(r"\d+", n.get("bounds", ""))]
 		if len(b) == 4:
@@ -62,6 +64,20 @@ def find(pattern, index=0):
 
 def tap(pattern, index=0, wait=1.8):
 	x1, y1, x2, y2 = find(pattern, index)
+	sh("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
+	time.sleep(wait)
+
+
+def nav(index, wait=1.8):
+	# the bottom bar by position (0 Home, 1 Agenda, 2 Report, 3 More): some
+	# phones (MIUI) report its labels with empty bounds
+	width = int(sh("wm", "size").split()[-1].split("x")[0])
+	height = int(sh("wm", "size").split()[-1].split("x")[1])
+	items = sorted({(b[0], b[1], b[2], b[3]) for n, b in nodes()
+		if (n.get("clickable") == "true" or n.get("selected") == "true") and b[1] > height * 0.8 and width / 5 < b[2] - b[0] < width / 3})
+	if len(items) != 4:
+		raise SystemExit(f"bottom bar not found ({len(items)} items)")
+	x1, y1, x2, y2 = items[index]
 	sh("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
 	time.sleep(wait)
 
@@ -116,12 +132,12 @@ def capture(lang):
 	tap(f"^{t['running']}$", wait=3)
 	shot(lang, "entry")
 	back()
-	tap(f"^{t['agenda']}$")
+	nav(1)
 	tap(f"^{t['day']}$")
 	shot(lang, "agenda-day")
-	tap(f"^{t['report']}$")
+	nav(2)
 	shot(lang, "report")
-	tap(f"^{t['more']}$")
+	nav(3)
 	tap(f"^{t['todos']}$")
 	shot(lang, "todos")
 	back()
