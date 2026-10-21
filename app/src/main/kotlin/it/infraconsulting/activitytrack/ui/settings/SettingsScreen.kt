@@ -215,7 +215,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 
 	Column(modifier = modifier.fillMaxSize()) {
 		Column(
-			modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+			/* top padding: the first outlined field's label sits above its border */
+			modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 8.dp),
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			when (section) {
@@ -227,8 +228,10 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					) { compact = it }
 				}
 				SettingsSection.TIMES -> {
-					PolicySetting("editableTimes") { SwitchRow(stringResource(R.string.set_editable_times), editableTimes) { editableTimes = it } }
-					Text(stringResource(R.string.set_editable_times_hint), style = MaterialTheme.typography.bodySmall)
+					PolicySetting("editableTimes") {
+						SwitchRow(stringResource(R.string.set_editable_times), editableTimes) { editableTimes = it }
+						Text(stringResource(R.string.set_editable_times_hint), style = MaterialTheme.typography.bodySmall)
+					}
 				}
 				SettingsSection.CALLS -> {
 					PolicySetting("callsIncoming") { SwitchRow(stringResource(R.string.set_calls_incoming), callsIn) { callsIn = it; if (it) askCalls() } }

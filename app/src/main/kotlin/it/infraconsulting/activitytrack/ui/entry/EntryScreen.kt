@@ -163,6 +163,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var more by remember { mutableStateOf(false) }
 	/* read here: the lazy list's builder is not composable (issue #48) */
 	val policy = LocalPolicy.current
+	val entryPlugin = rememberEntryPlugin(e)
 	Column(modifier = modifier.fillMaxSize()) {
 		LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
 			item {
@@ -312,7 +313,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					}
 			}
 			/* the fields of the company's integration plugin (issue #48) */
-			item { PluginFieldsSection(e) }
+			entryPlugin?.let { (co, plugin) -> item(key = "plugin") { PluginFieldsSection(e, co, plugin) } }
 			if (policy.enabled(Feature.EXPENSES))
 				item { ExpensesSection(initial.id) }
 			if (policy.enabled(Feature.MATERIALS))
