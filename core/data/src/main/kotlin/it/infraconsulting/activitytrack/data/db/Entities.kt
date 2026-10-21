@@ -631,3 +631,25 @@ data class RemoteItemEntity(
 	/* the extra values of the descriptor, JSON object */
 	val extra: String = "{}",
 )
+
+/*
+ * A record a plugin's export sent for an entry (issue #48 B4): one per
+ * block key ("2026-10-19#0"), with the remote id and the hash of the body
+ * sent, so an unchanged block is not sent again and a vanished one is
+ * deleted on the remote side.
+ */
+@Entity(
+	tableName = "remote_record",
+	primaryKeys = ["entry_id", "plugin_id", "block_key"],
+	foreignKeys = [
+		ForeignKey(entity = TimeEntryEntity::class, parentColumns = ["id"], childColumns = ["entry_id"], onDelete = ForeignKey.CASCADE),
+	],
+)
+data class RemoteRecordEntity(
+	@ColumnInfo(name = "entry_id") val entryId: Long,
+	@ColumnInfo(name = "plugin_id") val pluginId: String,
+	@ColumnInfo(name = "block_key") val blockKey: String,
+	@ColumnInfo(name = "remote_id") val remoteId: String,
+	val hash: String,
+	@ColumnInfo(name = "sent_utc_ms") val sentUtcMs: Long,
+)

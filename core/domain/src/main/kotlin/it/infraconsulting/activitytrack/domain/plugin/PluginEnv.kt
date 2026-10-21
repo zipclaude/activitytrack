@@ -60,6 +60,10 @@ class PluginEnv(
 
 	override fun materials(mode: String) = materialsOf(mode)
 
+	/* The same env with the report rounding, an entry's materials or its time zone. */
+	fun withHooks(rounding: ((String, Long) -> Long)? = null, materials: ((String) -> JsonElement)? = null, zone: ZoneId? = null): PluginEnv =
+		PluginEnv(plugin, values, secret, zone ?: this.zone, identity, lookups, more, rounding ?: this.rounding, materials ?: materialsOf)
+
 	/* The same env with more roots: [extra] wins over what this env gives. */
 	fun with(extra: (Expr.Ref) -> JsonElement?): PluginEnv =
 		PluginEnv(plugin, values, secret, zone, identity, lookups, { r -> extra(r) ?: more(r) }, rounding, materialsOf)

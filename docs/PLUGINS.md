@@ -4,8 +4,11 @@ Status: format approved by the owner (2026-10-21; changes, if any, in a
 later release). Implemented: the parser with its checks, the
 expression evaluator and the HTTP engine (`core/domain/…/plugin`:
 paging, retries, Basic / API key / bearer; OAuth PKCE login in the app),
-plugin loading from the data folder with the signature rule. Import,
-export and the settings card follow (issue #48 B3–B6).
+plugin loading from the data folder with the signature rule, the
+generic import (lists, clients, contacts, to-dos) and export (groupings,
+bodies, create / update / delete by hash). The settings card and the
+entry fields in the entry screen follow (issue #48 B5), then Antares on
+the demo (B6).
 
 Plugins are not built into the app (owner): published in `plugins/` of
 this repository, copied by the user into `plugins/` of the data folder.
@@ -220,7 +223,8 @@ Groupings (the aggregation library):
 day), `separate` (its own record, body from `travelBody`), `ignore`.
 `round`: the report rule applied to the block's length.
 
-Each record sent keeps its remote id and the hash of its body: unchanged
+A key whose value is `null` is left out of the body (`"TicketId"` of a
+service activity). Each record sent keeps its remote id and the hash of its body: unchanged
 → nothing sent; changed → `update`; gone (edited times, shorter pause) →
 `delete`. `fetchFirst` reads the current remote record before the update
 (Antares' `Timestamp` guards against overwriting someone else's change).
