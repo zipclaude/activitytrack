@@ -218,6 +218,8 @@ data class TodoEntity(
 	@ColumnInfo(name = "plan_reminded_utc_ms") val planRemindedUtcMs: Long? = null,
 	/* ignored (M10) instead of deleted: kept struck through, restorable, never re-created by imports */
 	@ColumnInfo(name = "ignored_utc_ms") val ignoredUtcMs: Long? = null,
+	/* entry fields of the company's plugin pre-filled by this imported to-do (issue #48), JSON object */
+	@ColumnInfo(name = "plugin_fields") val pluginFields: String? = null,
 )
 
 @Entity(
@@ -287,6 +289,8 @@ data class TimeEntryEntity(
 	@ColumnInfo(name = "unanswered_reminders") val unansweredReminders: Int = 0,
 	/* indicative end chosen at start (M22): "finished?" asked then; cleared once asked */
 	@ColumnInfo(name = "planned_end_utc_ms") val plannedEndUtcMs: Long? = null,
+	/* values of the company plugin's entry fields (issue #48), JSON object */
+	@ColumnInfo(name = "plugin_fields") val pluginFields: String? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
 	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
 )
@@ -493,6 +497,8 @@ data class ContactEntity(
 	val name: String,
 	/* optional (issue #44: for future use) */
 	val email: String? = null,
+	/* key in the management system of an imported contact (issue #48) */
+	@ColumnInfo(name = "external_key") val externalKey: String? = null,
 )
 
 /* A number of a contact, as dialled (digits and a leading +). */
@@ -596,4 +602,32 @@ data class PolicyRecordEntity(
 	val text: String? = null,
 	/* the reasons of a refusal, one per line */
 	val errors: String? = null,
+)
+
+/*
+ * An item of a plugin's remote list (issue #48): services, projects,
+ * activity types… kept for the entry form. [parentId] "" at the top level;
+ * the same id may appear under several parents (an activity type of two
+ * services). Inactive items stay for the entries that use them.
+ */
+@Entity(
+	tableName = "remote_item",
+	primaryKeys = ["company_id", "plugin_id", "list", "parent_id", "id"],
+	foreignKeys = [
+		ForeignKey(entity = CompanyEntity::class, parentColumns = ["id"], childColumns = ["company_id"], onDelete = ForeignKey.CASCADE),
+	],
+)
+data class RemoteItemEntity(
+	@ColumnInfo(name = "company_id") val companyId: Long,
+	@ColumnInfo(name = "plugin_id") val pluginId: String,
+	val list: String,
+	@ColumnInfo(name = "parent_id") val parentId: String,
+	val id: String,
+	val name: String,
+	@ColumnInfo(name = "client_code") val clientCode: String? = null,
+	val kind: String? = null,
+	val active: Boolean = true,
+	@ColumnInfo(name = "sort_order") val order: Int? = null,
+	/* the extra values of the descriptor, JSON object */
+	val extra: String = "{}",
 )
