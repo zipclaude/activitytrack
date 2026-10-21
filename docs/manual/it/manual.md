@@ -591,8 +591,17 @@ suoi collaboratori, o per usarla in un altro settore ("Cantiere" al posto di
   poi l'app accetta solo policy firmate con lo stesso nome.
 - Togliere il file non toglie la policy: serve una policy vuota (firmata, se
   la precedente lo era).
-- In questa versione la policy fissa le impostazioni; nascondere campi e
-  funzioni nelle schermate arriverà nelle prossime.
+- Cosa può fare: spegnere funzioni (pianificazione, viaggi, spese,
+  materiali, allegati, gesti, calendario, chiamate, importa / esporta…),
+  rinominare, colorare, nascondere o rendere obbligatori i campi (un campo
+  obbligatorio blocca l'avvio e il salvataggio), fissare impostazioni,
+  lasciar partire le attività solo da voci *Da fare*, creare aziende,
+  clienti e contatti solo da importazione, imporre la lingua.
+- **Senza aziende**: con il campo azienda nascosto i clienti e le *Da fare*
+  non hanno azienda e il menu Aziende sparisce (adatto a un libero
+  professionista).
+- Il riferimento di tutte le chiavi è `docs/POLICY.md`, con un esempio in
+  `docs/samples/policy-example.json`.
 
 **Integrazioni (plugin)** — un gestionale si collega con un file
 `<nome>.json` nella cartella `plugins` dei dati (i plugin pubblicati sono

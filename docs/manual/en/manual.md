@@ -574,8 +574,15 @@ another trade ("Site" instead of "Client").
   policies signed with the same name are accepted.
 - Removing the file does not remove the policy: an empty policy does
   (signed, if the previous one was).
-- In this version the policy fixes settings; hiding fields and features on
-  the screens comes in the next ones.
+- What it can do: switch features off (planning, travel, expenses,
+  materials, attachments, gestures, calendar, calls, import / export…),
+  rename, colour, hide or require fields (a required field blocks starting
+  and saving), fix settings, let activities start from to-dos only, create
+  companies, clients and contacts by import only, force the language.
+- **Without companies**: with the company field hidden, clients and to-dos
+  have no company and the Companies menu disappears (fit for a freelancer).
+- Every key is in `docs/POLICY.md`, with an example in
+  `docs/samples/policy-example.json`.
 
 **Integrations (plugins)** — a management system is connected with a
 `<name>.json` file in the data folder's `plugins` folder (the published
