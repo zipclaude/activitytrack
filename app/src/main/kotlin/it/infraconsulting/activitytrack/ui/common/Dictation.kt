@@ -59,7 +59,7 @@ fun DictationInput(label: String, value: String, onChange: (String) -> Unit, imp
 		/* the description shows 2-3 lines (owner, issue #47) */
 		minLines = minLines,
 		importance = importance,
-		trailing = if (!available) null else {
+		trailing = if (!available || !LocalPolicy.current.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.DICTATION)) null else {
 			{
 				IconButton(onClick = {
 					if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)

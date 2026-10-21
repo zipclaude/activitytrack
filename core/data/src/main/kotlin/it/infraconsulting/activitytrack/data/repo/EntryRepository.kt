@@ -84,7 +84,11 @@ data class EntryDetails(
 class EntryRepository(
 	private val db: ActivityTrackDatabase,
 	private val clock: Clock,
+	/* the choices a policy may change (issue #48): shortest segment, closing on Stop */
+	private val behaviours: () -> it.infraconsulting.activitytrack.domain.policy.Behaviours = { it.infraconsulting.activitytrack.domain.policy.Behaviours() },
 ) {
+	private fun minLengthMs(): Long = behaviours().minDurationSec * 1000L
+
 	private val dao = db.entryDao()
 	private val master = db.masterDataDao()
 
@@ -141,7 +145,7 @@ class EntryRepository(
 		if (req.startUtcMs != null && req.startUtcMs > now)
 			throw ValidationException(Reason.FUTURE_TIME)
 		val start = req.startUtcMs ?: now
-		if (req.endUtcMs != null && req.endUtcMs - start < MIN_LENGTH_MS)
+		if (req.endUtcMs != null && req.endUtcMs - start < minLengthMs())
 			throw ValidationException(if (req.endUtcMs > start) Reason.TOO_SHORT else Reason.INVALID_TIME_RANGE)
 		val zone = clock.zone.id
 		val id = dao.startEntry(
@@ -197,7 +201,7 @@ class EntryRepository(
 			 * completion step (owner, 2026-10-19). From a to-do it still stops
 			 * to complete, which asks whether the to-do is done.
 			 */
-			val next = if (t.next.status == EntryStatus.TO_COMPLETE && e.clientId != null && !e.activity.isNullOrBlank() && e.todoId == null)
+			val next = if (behaviours().closeCompleteOnStop && t.next.status == EntryStatus.TO_COMPLETE && e.clientId != null && !e.activity.isNullOrBlank() && e.todoId == null)
 				EntryStateMachine.apply(t.next, EntryCommand.COMPLETE).next
 			else
 				t.next
@@ -444,7 +448,7 @@ class EntryRepository(
 		resolve: Boolean = false,
 	): Long = db.withTransaction {
 		/* under a minute is an error (owner, 2026-10-18) */
-		if (startUtcMs < endUtcMs && endUtcMs - startUtcMs < MIN_LENGTH_MS)
+		if (startUtcMs < endUtcMs && endUtcMs - startUtcMs < minLengthMs())
 			throw ValidationException(Reason.TOO_SHORT)
 		if (kind == SegmentKind.WORK || startUtcMs >= endUtcMs || endUtcMs > clock.millis() ||
 			(kmDeclared != null && (kmDeclared.isNaN() || kmDeclared < 0)) ||
@@ -510,7 +514,7 @@ class EntryRepository(
 		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
 		if (s.endUtcMs == null)
 			throw ValidationException(Reason.INVALID_SEGMENT, "running segment")
-		if (startUtcMs < endUtcMs && endUtcMs - startUtcMs < MIN_LENGTH_MS)
+		if (startUtcMs < endUtcMs && endUtcMs - startUtcMs < minLengthMs())
 			throw ValidationException(Reason.TOO_SHORT)
 		if (startUtcMs >= endUtcMs || endUtcMs > clock.millis() ||
 			(kmDeclared != null && (kmDeclared.isNaN() || kmDeclared < 0 || s.kind != SegmentKind.TRAVEL)))
@@ -609,7 +613,7 @@ class EntryRepository(
 	 * so nothing the user added is lost.
 	 */
 	suspend fun isDiscardable(entryId: Long): Boolean =
-		recordedMs(entryId) < MIN_LENGTH_MS && dao.attachmentCount(entryId) == 0 && dao.expenseCount(entryId) == 0
+		recordedMs(entryId) < minLengthMs() && dao.attachmentCount(entryId) == 0 && dao.expenseCount(entryId) == 0
 
 	suspend fun discard(entryId: Long) = db.withTransaction {
 		load(entryId)

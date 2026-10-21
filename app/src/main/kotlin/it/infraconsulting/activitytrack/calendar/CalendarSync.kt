@@ -134,7 +134,8 @@ class CalendarSync(private val context: Context, private val container: AppConta
 
 	/* Brings our events of the last [days] days in line with the reports; returns the changes made. */
 	suspend fun sync(days: Long): Int = mutex.withLock {
-		if (!hasPermission())
+		/* the policy may switch the external calendar off (issue #48) */
+		if (!hasPermission() || !container.policies.now().enabled(it.infraconsulting.activitytrack.domain.policy.Feature.CALENDAR))
 			return@withLock 0
 		val s = container.settings.current()
 		if (s.calendarId == null && s.companyCalendars.isEmpty())

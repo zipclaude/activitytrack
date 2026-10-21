@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.masterdata
 
+import it.infraconsulting.activitytrack.ui.common.canCreateMasterData
 import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
@@ -158,7 +159,8 @@ fun CompaniesScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 	ScreenScaffold(
 		title = stringResource(R.string.md_companies),
 		onBack = onBack,
-		actions = { AddButton { vm.clearError(); adding = true } },
+		/* imports only (policy masterData, issue #48): no new ones here */
+		actions = { if (canCreateMasterData()) AddButton { vm.clearError(); adding = true } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
 			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.COMPANIES, it) } }
@@ -277,7 +279,7 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 	ScreenScaffold(
 		title = stringResource(R.string.md_clients),
 		onBack = onBack,
-		actions = { if (active.isNotEmpty()) AddButton { vm.clearError(); adding = true } },
+		actions = { if (active.isNotEmpty() && canCreateMasterData()) AddButton { vm.clearError(); adding = true } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
 			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.CLIENTS, it) } }

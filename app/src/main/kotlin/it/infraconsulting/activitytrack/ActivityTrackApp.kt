@@ -55,6 +55,16 @@ class ActivityTrackApp : Application() {
 		ClientShortcuts(this, container).start(appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
 		pluginWatcher = it.infraconsulting.activitytrack.connect.plugin.PluginWatcher(this).also { it.start(appScope) }
+		/* a UI language forced by the policy (ui.language, issue #48) */
+		appScope.launch {
+			container.policies.current.map { it.ui.language }.distinctUntilChanged().collect { lang ->
+				if (lang != null) {
+					val lm = getSystemService(android.app.LocaleManager::class.java)
+					if (lm.applicationLocales.toLanguageTags() != lang)
+						lm.applicationLocales = android.os.LocaleList.forLanguageTags(lang)
+				}
+			}
+		}
 		/* a new policy.json in the data folder (issue #48) */
 		appScope.launch { it.infraconsulting.activitytrack.policy.PolicyLoader.check(this@ActivityTrackApp) }
 		/* the backup follows its frequency and hour (issue #44) */

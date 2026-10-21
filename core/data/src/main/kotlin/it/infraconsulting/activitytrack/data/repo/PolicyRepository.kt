@@ -32,6 +32,12 @@ class PolicyRepository(private val db: ActivityTrackDatabase, private val clock:
 
 	suspend fun gateState(): PolicyGate.State = PolicyGate.State(dao.latest()?.fingerprint, dao.pinnedCn())
 
+	/*
+	 * The policy in force read now from the database: for receivers,
+	 * widgets and tiles woken in a fresh process, before [current] loads.
+	 */
+	suspend fun now(): Policy = dao.inForce()?.text?.let(::parsed) ?: Policy.NONE
+
 	/* The text of the policy in force, null = none ever applied. */
 	suspend fun inForceText(): String? = dao.inForce()?.text
 

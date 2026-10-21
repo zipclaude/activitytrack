@@ -324,6 +324,9 @@ class StartViewModel(
 		if (e.isNotBlank() && parseHhMm(e) == null)
 			return fail(ValidationException.Reason.INVALID_TIME)
 		val f = _form.value
+		/* entries only from to-dos, e.g. a management system's tickets (policy entries.source, issue #48) */
+		if (todoId == null && policy().entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.TODOS_ONLY)
+			return fail(ValidationException.Reason.TODOS_ONLY)
 		val company = f.companyId ?: allChoices.value.firstOrNull { it.id == f.clientId }?.companyId
 		policy().missingRequired(
 			mapOf(
@@ -373,7 +376,11 @@ class StartViewModel(
 		viewModelScope.launch {
 			val clients = master.clients.first().associateBy { it.id }
 			val companies = master.companies.first().associateBy { it.id }
-			val active = entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+			val all = entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+			/* "is the travel completed?" not asked (policy behaviours.askTravelDone, issue #48): a running travel stops */
+			val active = if (policy().behaviours.askTravelDone) all else all.filter { e ->
+				(e.mode != SegmentKind.TRAVEL).also { asked -> if (!asked) decisions[e.id] = EntryCommand.STOP }
+			}
 			_pending.value = active.map { e ->
 				RunningEntry(e, e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name }.orEmpty())
 			}

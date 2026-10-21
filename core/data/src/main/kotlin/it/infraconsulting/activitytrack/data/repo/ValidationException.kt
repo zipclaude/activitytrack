@@ -15,6 +15,7 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		CLIENT_COMPANY_MISMATCH,	/* entry company differs from the client's company */
 		CLIENT_REQUIRED,		/* WORK entries need a client */
 		POLICY_REQUIRED,		/* a field the policy makes required is empty (issue #48) */
+		TODOS_ONLY,			/* the policy lets activities start from to-dos only */
 		IN_USE,				/* referenced by other rows */
 		COMPLETION_INCOMPLETE,		/* no activity text and no attachment */
 		INVALID_SEGMENT,

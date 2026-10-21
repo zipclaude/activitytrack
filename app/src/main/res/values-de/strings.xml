@@ -602,4 +602,7 @@ Neue Kontakte: %3$d
 Aufgaben: %4$d
 Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="err_policy_required">Bitte die rot umrandeten Felder ausfüllen.</string>
+  <string name="policy_locked">Von der Richtlinie festgelegt</string>
+  <string name="widget_disabled">Von der Richtlinie deaktiviert</string>
+  <string name="err_todos_only">Tätigkeiten starten nur aus einer Aufgabe.</string>
 </resources>

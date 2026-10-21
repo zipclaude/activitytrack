@@ -96,6 +96,11 @@ fun SwipeCard(
 	modifier: Modifier = Modifier,
 	content: @Composable () -> Unit,
 ) {
+	/* the policy may switch the gestures off (issue #48): the card alone, its buttons still there */
+	if (!LocalPolicy.current.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.GESTURES)) {
+		androidx.compose.foundation.layout.Box(modifier.clip(shape)) { content() }
+		return
+	}
 	val density = LocalDensity.current
 	val dir = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1f else -1f
 	/* screen offset in px, positive = moved right */
