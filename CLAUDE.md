@@ -158,9 +158,19 @@ reference checks per section, JsonPath subset, Expr + eval; tests on
 plugins/antares.json). Owner: plugins live outside the app (`plugins/` in
 the repo, copied to the data folder's plugins/); with a signed policy,
 plugins signed with the same CN; plugin assigned per company (whole app
-without companies); PR #29 to be closed, code reused. Asked: separate
-plugins repo or folder (comment 6314983381). Next: B2 HTTP engine, auth
-adapters (PKCE from #29), paging, plugin loading + signature. Not
+without companies); PR #29 to be closed, code reused. Owner: `plugins/` folder of this repo
+(no separate repo). B2 done (PluginClient: https only, paging, retries,
+401 renewal; StaticAuthorizer; PluginEnv; app HttpTransport, OAuthPkce +
+OAuthRedirectActivity generic, PluginRegistry loads data-folder plugins/
+with the policy check, signature rule). B3 done (PluginImport; PluginSync
+.download: remote_item lists, clients, contacts, to-dos with
+plugin_fields). B4 done (PluginExport groupings = AntaresPlan generalized,
+bodies, hash plan; remote_record; PluginSync.sync sends). Schema v12 (not
+released) holds policy_record, remote_item, remote_record, time_entry and
+todo plugin_fields, contact external_key. Next: B5 UI (company screen
+plugin card generated from options, Log in, Sync; entry screen plugin
+fields; close prompt + periodic fetch from schedule), B6 Antares on the
+demo, close PR #29, then A3-A6. Not
 device-tested.
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
