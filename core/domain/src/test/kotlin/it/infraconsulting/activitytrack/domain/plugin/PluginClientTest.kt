@@ -48,7 +48,8 @@ class PluginClientTest {
 	fun identityAndLookupsFromTheAntaresDescriptor() {
 		val fake = Fake(
 			mutableListOf(
-				ok("""[ { "type": "antares:person:id", "value": "42" }, { "type": "antares:user:username", "value": "mrossi" } ]"""),
+				/* the demo's /me/claims, 2026-10-22: PascalCase claims */
+				ok("""[ { "Type": "sub", "Value": "603c" }, { "Type": "antares:person:id", "Value": "42" }, { "Type": "antares:user:username", "Value": "mrossi" } ]"""),
 				ok("""[ { "Value": 1, "EntityState": 1 }, { "Value": 2, "EntityState": null } ]"""),
 				ok("[]"), ok("[]"),
 				ok("""[ { "Value": 10, "EntityState": 0 } ]"""),

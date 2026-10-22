@@ -139,7 +139,9 @@ private fun PluginCard(company: CompanyEntity, plugin: Plugin, config: JSONObjec
 	var failure by remember { mutableStateOf<String?>(null) }
 	val env = remember(company, plugin, tick) { app.plugins.env(company, plugin) }
 	val oauth = plugin.auth is Auth.OAuth2Pkce
-	val loggedIn = remember(company, plugin, tick) { app.oauth.loggedIn(company.id, plugin.id) }
+	/* read again when the screen comes back from the browser's login */
+	val resumed = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState().value
+	val loggedIn = remember(company, plugin, tick, resumed) { app.oauth.loggedIn(company.id, plugin.id) }
 
 	fun save(key: String, value: Any?) {
 		val updated = JSONObject(config.toString()).apply { if (value == null) remove(key) else put(key, value) }

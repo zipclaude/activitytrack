@@ -45,7 +45,10 @@
 
 	"identity": {
 		"request": { "path": "/me/claims" },
-		"values": { "personId": "$[?(@.type == 'antares:person:id')].value", "username": "$[?(@.type == 'antares:user:username')].value" }
+		"values": {
+			"personId": { "coalesce": ["$[?(@.Type == 'antares:person:id')].Value", "$[?(@.type == 'antares:person:id')].value"] },
+			"username": { "coalesce": ["$[?(@.Type == 'antares:user:username')].Value", "$[?(@.type == 'antares:user:username')].value"] }
+		}
 	},
 
 	"lookups": {
