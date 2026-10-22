@@ -97,6 +97,8 @@ docs/manual/{it,en}/           quickstart.md + manual.md (owner: it/en, PDF with
                                 diagrams/diagrams.py (Graphviz), img/ screenshots, style.css
 scripts/build-manual.sh         PDFs into build/manual (pandoc + dot + headless Chromium)
 scripts/check-manual.sh         release step: version line, docs changed since the last tag, images present
+docs/brochure/                  presentation brochure (it, 4 A4 pages): brochure.html + committed PDF
+scripts/build-brochure.sh       brochure PDF (headless Chromium, Google Fonts need the network)
 scripts/sample-db.py            invented sample DB for the screenshots
 docs/samples/                   interchange samples for device tests (TEST data)
 docs/DESIGN.md                  technical design, toolchain, risks
