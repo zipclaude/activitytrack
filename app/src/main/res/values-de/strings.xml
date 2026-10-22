@@ -605,4 +605,12 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="policy_locked">Von der Richtlinie festgelegt</string>
   <string name="widget_disabled">Von der Richtlinie deaktiviert</string>
   <string name="err_todos_only">Tätigkeiten starten nur aus einer Aufgabe.</string>
+  <!-- issue #52 -->
+  <string name="grid_hint_point_or_range">Tippen für nur den Beginn, oder ziehen (oder zweimal tippen) für Beginn und Ende.</string>
+  <string name="todo_plan_time_optional">Uhrzeit (optional)</string>
+  <string name="unworked_replan">Auf %1$s verschieben</string>
+  <plurals name="unworked_title">
+    <item quantity="one">%d geplante Aufgabe heute nicht bearbeitet</item>
+    <item quantity="other">%d geplante Aufgaben heute nicht bearbeitet</item>
+  </plurals>
 </resources>

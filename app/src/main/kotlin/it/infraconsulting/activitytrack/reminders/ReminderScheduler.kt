@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.reminders
 
+import it.infraconsulting.activitytrack.domain.todo.nextWorkingDay
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -114,10 +115,11 @@ class ReminderScheduler(
 		val started = container.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }.mapNotNull { it.todoId }.toSet()
 		val out = ArrayList<ReminderTodo>()
 		for (t in container.todos.all.first()) {
-			val p = t.plan()
+			/* no reminder for a plan by day only (issue #52, answer 3) */
+			val p = t.plan()?.takeIf { !it.allDay }
 			val start = p?.start(zone)
-			/* the block as planned (duration or first hour): a reminder after it is moot */
-			val end = p?.end(zone, open = false, now = now)
+			/* after the block (a point: its first hour) a reminder is moot */
+			val end = p?.let { maxOf(it.end(zone), it.start(zone).plus(java.time.Duration.ofHours(1))) }
 			val live = start != null && end != null && t.isOpen() && t.id !in started && now.isBefore(end)
 			if (live)
 				out += ReminderTodo(t.id, start!!, end!!, t.planRemindedUtcMs)
@@ -167,6 +169,7 @@ class ReminderScheduler(
 					}
 					is Reminder.DaySummary -> {
 						postSummary(nm, r.day)
+						postUnworked(nm, r.day)
 						prefs.edit { putLong(KEY_SUMMARY_DAY, r.day.toEpochDay()) }
 					}
 					is Reminder.DayStart -> {
@@ -207,6 +210,18 @@ class ReminderScheduler(
 			ReminderNotifications.planned(context, todoId, t.title, client ?: company, start, container.settings.current().planSnoozeMin),
 		)
 		container.todos.markPlanReminded(todoId, start)
+	}
+
+	/* The planned to-dos of [day] not worked, with the next working day proposed (issue #52). */
+	private suspend fun postUnworked(nm: NotificationManager, day: LocalDate) {
+		val zone = ZoneId.systemDefault()
+		val todos = container.todos.unworked(day, zone)
+		if (todos.isEmpty())
+			return
+		val weekdays = container.masterData.schedule.first().map { it.dayOfWeek }.toSet()
+		val daysOff = container.masterData.daysOffBetween(day, day.plusDays(60))
+		val next = nextWorkingDay(day, weekdays) { it in daysOff || ItalianHolidays.isHoliday(it) }
+		nm.notify(NotificationIds.of(0, NotificationIds.UNWORKED), ReminderNotifications.unworked(context, todos.map { it.title }, todos.map { it.id }, next))
 	}
 
 	/* Solar vs reported totals of [day]; nothing when the day has no time. */

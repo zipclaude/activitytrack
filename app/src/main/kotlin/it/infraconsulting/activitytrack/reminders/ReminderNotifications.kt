@@ -114,6 +114,24 @@ object ReminderNotifications {
 			.build()
 	}
 
+	/*
+	 * The day's planned to-dos nobody worked on (issue #52, owner: one notice
+	 * at the end of the working hours, not one per to-do): re-plan them on
+	 * the next working day, or open the to-dos.
+	 */
+	fun unworked(context: Context, titles: List<String>, ids: List<Long>, next: java.time.LocalDate): Notification {
+		val day = next.format(java.time.format.DateTimeFormatter.ofPattern("EEE d/MM", java.util.Locale.getDefault()))
+		return Notification.Builder(context, NotificationChannels.PLANNED)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(context.resources.getQuantityString(R.plurals.unworked_title, titles.size, titles.size))
+			.setContentText(titles.joinToString(" · "))
+			.setStyle(Notification.BigTextStyle().bigText(titles.joinToString("\n")))
+			.setContentIntent(EntryLinks.openScreen(context, Screen.Todos, -6))
+			.setAutoCancel(true)
+			.addAction(action(context.getString(R.string.unworked_replan, day), ActionReceiver.replanUnworked(context, ids, next)))
+			.build()
+	}
+
 	fun daySummary(context: Context, solar: Duration, reported: Duration): Notification =
 		Notification.Builder(context, NotificationChannels.DAY_SUMMARY)
 			.setSmallIcon(R.drawable.ic_stat_timer)

@@ -87,5 +87,5 @@ required, quantity, unit and unitCost in EUR optional).
 | `locationKind` | COMPANY, CLIENT, HOME, OTHER |
 | `absences.kind` | FULL_DAY, LATE_ENTRY, EARLY_EXIT |
 | `sites.ownerKind` | company, client |
-| `todos.plannedDate` / `plannedTime` | local date and hh:mm of the planned start, both or neither (added 2026-10-18, still version 1: older apps ignore them) |
+| `todos.plannedDate` / `plannedTime` | local date and hh:mm of the planned start (added 2026-10-18, still version 1: older apps ignore them); the date alone plans the whole day, the time needs the date (2026-10-22) |
 | `todos.durationMin` | 1..1440; absent = one hour, growing hour by hour in the app while the to-do is open |
