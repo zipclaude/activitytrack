@@ -177,7 +177,8 @@ def main():
 	if adb("get-state").stdout.decode().strip() != "device":
 		raise SystemExit("no phone connected (adb get-state)")
 	with tempfile.TemporaryDirectory() as tmp:
-		saved = os.path.join(tmp, "saved")
+		# the phone's own data, kept outside /tmp: a lost connection must not lose it
+		saved = os.path.expanduser(time.strftime("~/activitytrack-device-backups/screenshots-%Y%m%d-%H%M%S"))
 		os.makedirs(saved)
 		sh("am", "force-stop", PKG)
 		for d in DBS:
@@ -191,6 +192,8 @@ def main():
 				put_db(sample)
 				capture(lang)
 		finally:
+			if adb("get-state").stdout.decode().strip() != "device":
+				raise SystemExit(f"phone offline: debug data NOT restored; the copy is in {saved}")
 			sh("am", "force-stop", PKG)
 			sh("run-as", PKG, "rm", "-f", *[f"databases/{d}" for d in DBS])
 			for d in DBS:
@@ -200,7 +203,12 @@ def main():
 					sh(f"run-as {PKG} cp /data/local/tmp/{d} databases/{d}")
 					sh("rm", f"/data/local/tmp/{d}")
 			sh("cmd", "locale", "set-app-locales", PKG, "--locales", "")
-			print("debug data restored")
+			# the restore must be what was saved, byte for byte
+			for d in DBS:
+				p = os.path.join(saved, d)
+				if os.path.exists(p) and adb("exec-out", "run-as", PKG, "cat", f"databases/{d}").stdout != open(p, "rb").read():
+					raise SystemExit(f"debug data NOT restored ({d} differs); the copy is in {saved}")
+			print(f"debug data restored (copy in {saved})")
 
 
 if __name__ == "__main__":
