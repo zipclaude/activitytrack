@@ -56,16 +56,16 @@ val PALETTE: List<Pair<Int, Int>> = listOf(
 /* 0xRRGGBB -> opaque Compose colour */
 fun rgb(c: Int): Color = Color(0xFF000000.toInt() or c)
 
-/* The colour row of a company or client screen; null = no colour. */
+/* The colour row of a company or client screen; null = no colour. Smaller [swatch] and no [inset] in dialogs (issue #54). */
 @Composable
-fun ColorPalette(selected: Int?, onPick: (Int?) -> Unit) {
-	Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+fun ColorPalette(selected: Int?, swatch: androidx.compose.ui.unit.Dp = 40.dp, inset: androidx.compose.ui.unit.Dp = 16.dp, onPick: (Int?) -> Unit) {
+	Column(Modifier.padding(horizontal = inset, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
 		FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
 			for ((c, name) in PALETTE) {
 				val on = c == selected
 				val label = stringResource(name)
 				Box(
-					Modifier.size(40.dp).clip(CircleShape)
+					Modifier.size(swatch).clip(CircleShape)
 						.border(if (on) 3.dp else 0.dp, if (on) MaterialTheme.colorScheme.onSurface else Color.Transparent, CircleShape)
 						.padding(if (on) 5.dp else 0.dp).clip(CircleShape).background(rgb(c))
 						.selectable(selected = on, role = Role.RadioButton) { onPick(c) }

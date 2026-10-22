@@ -606,4 +606,12 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="policy_locked">Fijado por la política</string>
   <string name="widget_disabled">Desactivado por la política</string>
   <string name="err_todos_only">Las actividades empiezan solo desde una tarea.</string>
+  <!-- issue #52 -->
+  <string name="grid_hint_point_or_range">Toca para solo la hora de inicio, o arrastra (o toca dos veces) para inicio y fin.</string>
+  <string name="todo_plan_time_optional">Hora (opcional)</string>
+  <string name="unworked_replan">Replanificar al %1$s</string>
+  <plurals name="unworked_title">
+    <item quantity="one">%d tarea planificada hoy sin trabajar</item>
+    <item quantity="other">%d tareas planificadas hoy sin trabajar</item>
+  </plurals>
 </resources>

@@ -34,6 +34,10 @@ class ActionReceiver : BroadcastReceiver() {
 			postpone(context, app, intent, goAsync())
 			return
 		}
+		if (intent.action == ACTION_REPLAN_UNWORKED) {
+			replan(context, app, intent, goAsync())
+			return
+		}
 		val entryId = intent.getLongExtra(EXTRA_ENTRY, -1)
 		if (entryId < 0)
 			return
@@ -106,8 +110,26 @@ class ActionReceiver : BroadcastReceiver() {
 		}
 	}
 
+	/* "Re-plan" on the end-of-day notice (issue #52): the to-dos not worked move to the next working day. */
+	private fun replan(context: Context, app: ActivityTrackApp, intent: Intent, pending: PendingResult) {
+		val ids = intent.getLongArrayExtra(EXTRA_REPLAN_TODOS)?.toList().orEmpty()
+		val day = intent.getLongExtra(EXTRA_REPLAN_DAY, Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let(java.time.LocalDate::ofEpochDay)
+		scope.launch {
+			try {
+				if (day != null)
+					app.container.todos.replan(ids, day)
+				context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(0, NotificationIds.UNWORKED))
+			} finally {
+				pending.finish()
+			}
+		}
+	}
+
 	companion object {
 		private const val TAG = "ActionReceiver"
+		private const val ACTION_REPLAN_UNWORKED = "it.infraconsulting.activitytrack.action.REPLAN_UNWORKED"
+		private const val EXTRA_REPLAN_TODOS = "replan_todos"
+		private const val EXTRA_REPLAN_DAY = "replan_day"
 		private const val ACTION_POSTPONE_TODO = "it.infraconsulting.activitytrack.action.POSTPONE_TODO"
 		private const val EXTRA_TODO = "todo"
 		private const val ACTION_ABSENT = "it.infraconsulting.activitytrack.action.ABSENT"
@@ -191,6 +213,15 @@ class ActionReceiver : BroadcastReceiver() {
 			)
 
 		/* to-do actions: negative request codes, apart from the entry ranges and -1 */
+		fun replanUnworked(context: Context, todoIds: List<Long>, day: java.time.LocalDate): PendingIntent =
+			PendingIntent.getBroadcast(
+				context,
+				-7,
+				Intent(context, ActionReceiver::class.java).setAction(ACTION_REPLAN_UNWORKED)
+					.putExtra(EXTRA_REPLAN_TODOS, todoIds.toLongArray()).putExtra(EXTRA_REPLAN_DAY, day.toEpochDay()),
+				PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+			)
+
 		fun postponeTodo(context: Context, todoId: Long): PendingIntent =
 			PendingIntent.getBroadcast(
 				context,

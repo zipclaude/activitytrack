@@ -1,7 +1,14 @@
-Version 0.7.0 (October 2026). Please report any difference between this
+Version 0.7.1 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.7.1** (planning not tested on the phone)
+- To-do **planning**: date only, date and start (a moment), or date and
+  range; at the end of the working hours a notice proposes to re-plan those
+  not worked on (§8).
+- **Colour** also when adding a company or a client from the screens (the
+  "+").
 
 **New in 0.7.0**
 - **Antares (Saidea)**: the first management system connected as a plugin,
@@ -464,23 +471,31 @@ not filtered).
 
 To-dos, imported from a management system or created by hand ("More" →
 "To-dos" → "Add", or from the Agenda): title, client (or company), **planned
-date** with **start** and **end**, due date and time, priority (1 = highest),
+date** with an optional **time**, due date and time, priority (1 = highest),
 notes, references (one per line).
 
 ![To-dos with the quick filters](img/todos.png)
 
-States: **open** (no plan) → **planned** (date and time) → **done**. The plan
-is separate from the due date: re-planning does not change the management
+States: **open** (no plan) → **planned** (a date) → **done**. The plan is
+separate from the due date: re-planning does not change the management
 system's due date.
-- **Start and end**: tapping them opens the range grid, which sets both;
-  with an end the block lasts until then, without one it lasts an hour and,
-  while the to-do stays open, grows hour by hour (up to the end of the day).
+- **Date only**: the to-do counts for the whole day; in the Agenda it sits in
+  the strip above the grid, in the calendar it is an all-day event, it has no
+  reminder and is "overdue" from the next day.
+- **Time**: tapping the field opens the grid; a **tap** and OK set the
+  **start** only (a moment, no length), a **drag** (or two taps) sets **start
+  and end**.
+- **At the end of the working hours**, if one or more to-dos planned for
+  today were not worked on (no activity started from them), one notification
+  lists them with **"Re-plan on …"**, which moves them to the next working
+  day keeping their time.
 - **Reminder**: 15 minutes before the planned time the "Title at HH:MM"
   notification comes, with "Start activity", "Postpone 30 min" (moves the
   plan 30 minutes from the planned time or, if that has passed, from now; the
   reminder comes again before the new time) and "Re-plan" (opens the to-do).
   It also comes outside working hours and on days off; it goes away when the
-  to-do is started, done, re-planned or its block is over.
+  to-do is started, done, re-planned or its block is over (for a moment
+  without length, an hour after its start).
 - On Home, **"To do · 24 h ▾"** shows those due or planned in the next 24
   hours (or in the period picked by tapping the title: 7 days, 30 days, all),
   overdue ones included; "overdue" marks those still open after their

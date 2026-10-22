@@ -109,27 +109,13 @@ class CalendarSync(private val context: Context, private val container: AppConta
 	 */
 	fun start(scope: CoroutineScope) {
 		val tick = MutableStateFlow(0)
-		var growth: Job? = null
 		scope.launch {
 			combine(container.reports.changes, container.settings.settings, container.todos.all, tick) { _, _, _, _ -> }.conflate().collect {
 				/* lets bursts of changes (stop + complete) settle */
 				delay(SETTLE_MS)
 				runCatching { sync(DEFAULT_DAYS) }.onFailure { Log.w(TAG, "sync failed", it) }
-				growth?.cancel()
-				nextGrowth()?.let { at ->
-					growth = scope.launch {
-						delay(at.toEpochMilli() - System.currentTimeMillis() + 1_000)
-						tick.value++
-					}
-				}
 			}
 		}
-	}
-
-	private suspend fun nextGrowth(): Instant? {
-		val zone = ZoneId.systemDefault()
-		val now = Instant.now()
-		return container.todos.planned().mapNotNull { it.plan()?.nextGrowth(zone, true, now) }.minOrNull()
 	}
 
 	/* Brings our events of the last [days] days in line with the reports; returns the changes made. */
@@ -175,7 +161,8 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			if (p.day < from)
 				return@mapNotNull null
 			TodoEvent(
-				uid = t.uid, companyId = t.companyId, start = p.start(zone), end = p.end(zone, true, now), title = t.title,
+				uid = t.uid, companyId = t.companyId, start = p.start(zone), end = p.end(zone), title = t.title,
+				allDay = p.allDay, day = p.day,
 				client = t.clientId?.let { clients[it]?.name } ?: companies[t.companyId]?.name.orEmpty(),
 				notes = t.notes.orEmpty(), refs = t.refs.lines().filter(String::isNotBlank),
 			)
@@ -249,7 +236,9 @@ class CalendarSync(private val context: Context, private val container: AppConta
 	private fun values(p: PlannedEvent) = ContentValues().apply {
 		put(Events.DTSTART, p.start.toEpochMilli())
 		put(Events.DTEND, p.end.toEpochMilli())
-		put(Events.EVENT_TIMEZONE, ZoneId.systemDefault().id)
+		/* an all-day event: UTC midnights and the UTC zone (CalendarContract) */
+		put(Events.ALL_DAY, if (p.allDay) 1 else 0)
+		put(Events.EVENT_TIMEZONE, if (p.allDay) "UTC" else ZoneId.systemDefault().id)
 		put(Events.TITLE, p.title)
 		put(Events.DESCRIPTION, p.description)
 		put(Events.EVENT_LOCATION, p.location)

@@ -248,8 +248,9 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		val time = x.dueTime?.let { minutes(it) ?: return r.skip("todos", x.key, "due time $it") }
 		val planDay = x.plannedDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "planned date $it") }
 		val planTime = x.plannedTime?.let { minutes(it) ?: return r.skip("todos", x.key, "planned time $it") }
-		if ((planDay == null) != (planTime == null))
-			return r.skip("todos", x.key, "planned date and time go together")
+		/* a planned time needs its date; a date alone plans the whole day (issue #52) */
+		if (planDay == null && planTime != null)
+			return r.skip("todos", x.key, "planned time without date")
 		val duration = x.durationMin?.takeIf { it in 1..TodoPlan.MAX_DURATION_MIN }
 			?: x.durationMin?.let { return r.skip("todos", x.key, "duration $it") }
 		val refs = x.refs.map(String::trim).filter(String::isNotEmpty).joinToString("\n")
