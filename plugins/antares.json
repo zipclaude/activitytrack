@@ -87,7 +87,7 @@
 			"map": { "name": "$.Name", "code": "$.Id" }
 		},
 		"todos": {
-			"request": { "path": "/v3/Tickets", "query": { "$select": "Id,Code,Name,Description,State,PortfolioId,CustomerId,Priority",
+			"request": { "path": "/v3/Tickets", "query": { "$select": "Id,Code,Name,Description,State,PortfolioId,CustomerId,CustomerPremisId,Priority",
 			             "$orderby": "LastUpdateDate desc", "$filter": "TechnicianId eq ${identity.personId}" }, "paged": true },
 			"key": "$.Id",
 			"skipNew": { "notIn": ["$.State", "@lookup.ticketStates"] },
@@ -98,7 +98,7 @@
 				"clientCode": "$.CustomerId",
 				"priority": "$.Priority",
 				"done": { "notIn": ["$.State", "@lookup.ticketStates"] },
-				"fields": { "portfolio": "$.PortfolioId" }
+				"fields": { "portfolio": "$.PortfolioId", "customer": "$.CustomerId", "customerPremis": "$.CustomerPremisId" }
 			}
 		}
 	},
@@ -120,6 +120,8 @@
 			                  "else": { "map": "@list.portfolio.selected.kind", "cases": { "service": 1, "project": 5 } } },
 			"TicketId": { "if": { "ne": ["@todo", null] }, "then": "@todo.externalKey" },
 			"PortfolioId": { "if": { "eq": ["@todo", null] }, "then": "@field.portfolio" },
+			"CustomerId": { "coalesce": ["@todo.fields.customer", "@list.portfolio.selected.clientCode"] },
+			"CustomerPremisId": "@todo.fields.customerPremis",
 			"ActivityTypeId": "@field.activityType",
 			"OwnerId": "@identity.personId",
 			"FromDate": { "date": "@block.from", "format": "isoOffset" },
