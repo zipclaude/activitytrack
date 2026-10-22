@@ -131,6 +131,8 @@ class PluginClientTest {
 	@Test
 	fun missingRequiredOptions() {
 		assertEquals(emptyList(), env().missingOptions().map { it.key })
-		assertEquals(listOf("clientId"), PluginEnv(antares, emptyMap(), { null }, ZoneId.of("UTC")).missingOptions().map { it.key })
+		/* the default client id counts; one blanked by the user does not */
+		assertEquals(emptyList(), PluginEnv(antares, emptyMap(), { null }, ZoneId.of("UTC")).missingOptions().map { it.key })
+		assertEquals(listOf("clientId"), PluginEnv(antares, mapOf("clientId" to JsonPrimitive(" ")), { null }, ZoneId.of("UTC")).missingOptions().map { it.key })
 	}
 }

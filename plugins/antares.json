@@ -10,7 +10,7 @@
 		  "label": { "it": "URL API", "en": "API URL" } },
 		{ "key": "identityUrl", "type": "url", "required": true, "default": "https://identitydemo.goantares.uno",
 		  "label": { "it": "Identity provider", "en": "Identity provider" } },
-		{ "key": "clientId", "type": "string", "required": true,
+		{ "key": "clientId", "type": "string", "required": true, "default": "activitytrack",
 		  "label": { "it": "Client ID", "en": "Client ID" } },
 		{ "key": "pauseSplitMin", "type": "int", "min": 1, "max": 600, "default": 60,
 		  "label": { "it": "Pausa che divide l'attività (min)", "en": "Pause splitting the activity (min)" } },
