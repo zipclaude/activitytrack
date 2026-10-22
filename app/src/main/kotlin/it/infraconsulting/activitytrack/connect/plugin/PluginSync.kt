@@ -203,8 +203,14 @@ class PluginSync(private val app: ActivityTrackApp) {
 					clientRow?.let { put("client", JsonObject(mapOf("id" to JsonPrimitive(it.id), "name" to JsonPrimitive(it.name), "code" to (it.externalCode?.let(::JsonPrimitive) ?: JsonNull)))) }
 				},
 			)
+			/* @todo.fields: what the import kept of the remote record (e.g. Antares' customer premises) */
 			val todoJson: JsonElement = todo?.let {
-				JsonObject(mapOf("id" to JsonPrimitive(it.id), "externalKey" to JsonPrimitive(it.externalKey!!), "title" to JsonPrimitive(it.title), "refs" to JsonPrimitive(it.refs)))
+				JsonObject(
+					mapOf(
+						"id" to JsonPrimitive(it.id), "externalKey" to JsonPrimitive(it.externalKey!!), "title" to JsonPrimitive(it.title),
+						"refs" to JsonPrimitive(it.refs), "fields" to (obj(it.pluginFields) ?: JsonObject(emptyMap())),
+					),
+				)
 			} ?: JsonNull
 			var blockJson: JsonElement = JsonNull
 			var remoteJson: JsonElement = JsonNull

@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.common
 
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
@@ -113,7 +117,8 @@ fun EditDialog(
 		title = { Text(title) },
 		text = {
 			Column(
-				modifier = Modifier.verticalScroll(rememberScrollState()),
+				/* top padding: the first outlined field's label sits above its border, clipped otherwise */
+				modifier = Modifier.verticalScroll(rememberScrollState()).padding(top = 8.dp),
 				verticalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				content()
@@ -222,6 +227,7 @@ fun <T> SearchableChoiceField(
 	/* the full list while the field shows the current choice, matches once the user types */
 	val shown = if (text == selectedText) options else options.filter { fold(it.second).contains(query) }
 	val editable = LocalFieldEnabled.current
+	val menu = rememberMenuHeight()
 	ExposedDropdownMenuBox(expanded = expanded && editable, onExpandedChange = { expanded = it && editable }) {
 		CompactTextField(
 			value = text,
@@ -240,9 +246,9 @@ fun <T> SearchableChoiceField(
 			},
 			colors = importanceColors(importance, selected != null),
 			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-				.onFocusChanged { if (!it.isFocused) text = selectedText },
+				.onFocusChanged { if (!it.isFocused) text = selectedText }.then(menu.anchor),
 		)
-		ExposedDropdownMenu(expanded = expanded && editable && shown.isNotEmpty(), onDismissRequest = { expanded = false }) {
+		ExposedDropdownMenu(expanded = expanded && editable && shown.isNotEmpty(), onDismissRequest = { expanded = false }, modifier = menu.limit) {
 			shown.forEach { (value, optionText) ->
 				DropdownMenuItem(
 					text = { Text(optionText) },
@@ -283,6 +289,7 @@ fun <T> ChoiceField(
 ) {
 	var expanded by remember { mutableStateOf(false) }
 	val editable = LocalFieldEnabled.current
+	val menu = rememberMenuHeight()
 	ExposedDropdownMenuBox(expanded = expanded && editable, onExpandedChange = { expanded = it && editable }) {
 		CompactTextField(
 			value = options.firstOrNull { it.first == selected }?.second.orEmpty(),
@@ -292,9 +299,9 @@ fun <T> ChoiceField(
 			leadingIcon = colorOf(selected)?.let { c -> { ColorDot(c) } },
 			trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
 			colors = importanceColors(importance, selected != null),
-			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+			modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).then(menu.anchor),
 		)
-		ExposedDropdownMenu(expanded = expanded && editable, onDismissRequest = { expanded = false }) {
+		ExposedDropdownMenu(expanded = expanded && editable, onDismissRequest = { expanded = false }, modifier = menu.limit) {
 			options.forEach { (value, text) ->
 				DropdownMenuItem(
 					text = { Text(text) },
@@ -464,4 +471,33 @@ fun CompactTextField(
 			},
 		)
 	}
+}
+
+/* [anchor] goes on the field, [limit] on its drop-down menu. */
+class MenuHeight(val anchor: Modifier, val limit: Modifier)
+
+/*
+ * The drop-down's height within the space the keyboard leaves (owner,
+ * 2026-10-22: with the keyboard open the last items were under it and
+ * could not be picked). The larger of the room below and above the
+ * field, so the menu scrolls instead of running under the keyboard.
+ */
+@Composable
+fun rememberMenuHeight(): MenuHeight {
+	val density = androidx.compose.ui.platform.LocalDensity.current
+	val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.height
+	val ime = androidx.compose.foundation.layout.WindowInsets.ime.getBottom(density)
+	var top by remember { mutableStateOf(0f) }
+	var bottom by remember { mutableStateOf(0f) }
+	val margin = with(density) { 16.dp.toPx() }
+	val room = maxOf(window - ime - bottom, top) - margin
+	val max = with(density) { room.coerceAtLeast(with(density) { 120.dp.toPx() }).toDp() }
+	return MenuHeight(
+		Modifier.onGloballyPositioned { c ->
+			val b = c.boundsInWindow()
+			top = b.top
+			bottom = b.bottom
+		},
+		Modifier.heightIn(max = max),
+	)
 }

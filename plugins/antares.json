@@ -10,7 +10,7 @@
 		  "label": { "it": "URL API", "en": "API URL" } },
 		{ "key": "identityUrl", "type": "url", "required": true, "default": "https://identitydemo.goantares.uno",
 		  "label": { "it": "Identity provider", "en": "Identity provider" } },
-		{ "key": "clientId", "type": "string", "required": true,
+		{ "key": "clientId", "type": "string", "required": true, "default": "activitytrack",
 		  "label": { "it": "Client ID", "en": "Client ID" } },
 		{ "key": "pauseSplitMin", "type": "int", "min": 1, "max": 600, "default": 60,
 		  "label": { "it": "Pausa che divide l'attività (min)", "en": "Pause splitting the activity (min)" } },
@@ -45,7 +45,10 @@
 
 	"identity": {
 		"request": { "path": "/me/claims" },
-		"values": { "personId": "$[?(@.type == 'antares:person:id')].value", "username": "$[?(@.type == 'antares:user:username')].value" }
+		"values": {
+			"personId": { "coalesce": ["$[?(@.Type == 'antares:person:id')].Value", "$[?(@.type == 'antares:person:id')].value"] },
+			"username": { "coalesce": ["$[?(@.Type == 'antares:user:username')].Value", "$[?(@.type == 'antares:user:username')].value"] }
+		}
 	},
 
 	"lookups": {
@@ -84,18 +87,18 @@
 			"map": { "name": "$.Name", "code": "$.Id" }
 		},
 		"todos": {
-			"request": { "path": "/v3/Tickets", "query": { "$select": "Id,Code,Name,Description,State,PortfolioId,CustomerId,Priority",
-			             "$orderby": "LastUpdateDate desc", "$filter": "TechnicianId eq ${identity.personId}" }, "paged": true },
+			"request": { "path": "/v3/Tickets", "query": { "$select": "Id,Code,Name,Description,State,PortfolioId,CustomerId,CustomerPremisId,Priority",
+			             "$orderby": "LastUpdateDate desc", "$filter": "TechnicianId eq ${identity.personId} or ApplicantId eq ${identity.personId}" }, "paged": true },
 			"key": "$.Id",
 			"skipNew": { "notIn": ["$.State", "@lookup.ticketStates"] },
 			"map": {
 				"title": { "coalesce": ["$.Name", "$.Code"] },
-				"notes": "$.Description",
+				"notes": { "plainText": "$.Description" },
 				"refs": "$.Code",
 				"clientCode": "$.CustomerId",
 				"priority": "$.Priority",
 				"done": { "notIn": ["$.State", "@lookup.ticketStates"] },
-				"fields": { "portfolio": "$.PortfolioId" }
+				"fields": { "portfolio": "$.PortfolioId", "customer": "$.CustomerId", "customerPremis": "$.CustomerPremisId" }
 			}
 		}
 	},
@@ -117,6 +120,8 @@
 			                  "else": { "map": "@list.portfolio.selected.kind", "cases": { "service": 1, "project": 5 } } },
 			"TicketId": { "if": { "ne": ["@todo", null] }, "then": "@todo.externalKey" },
 			"PortfolioId": { "if": { "eq": ["@todo", null] }, "then": "@field.portfolio" },
+			"CustomerId": { "coalesce": ["@todo.fields.customer", "@list.portfolio.selected.clientCode"] },
+			"CustomerPremisId": "@todo.fields.customerPremis",
 			"ActivityTypeId": "@field.activityType",
 			"OwnerId": "@identity.personId",
 			"FromDate": { "date": "@block.from", "format": "isoOffset" },

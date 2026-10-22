@@ -184,8 +184,14 @@ on the new debug phone (Xiaomi 22031116BG, Android 13, adb `--user 0`;
 MIUI needs "Install via USB"): policy apply, -policy.zip, policy_old.json,
 plugin card, labels/colours, required role, locked/hidden settings,
 plugin fields in the entry; fixes: ICU regex in Expr (crash), plugin
-fields item loaded outside the lazy list, field spacing. Next: B6 Antares
-on the demo, close PR #29; manual screenshots not refreshed this session.
+fields item loaded outside the lazy list, field spacing. B6 done 2026-10-22 on the demo (client "activitytrack", PascalCase
+claims, tickets where the person is technician OR applicant, ticket
+CustomerId + CustomerPremisId kept as to-do fields and sent, else HTTP 500;
+POST and PUT 200); PR #29 closed. Next: issue #52 (plan by date only,
+date + start as a point, date + range; all-day strip, all-day calendar
+event, end-of-workday notice proposing to re-plan; tap must not set a
+5-minute range). Not yet tested: deleting a sent activity, sending an
+activity on a service (premises?).
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
 its end; backup every 6/12/24 h or weekly at a preferred hour). Released v0.6.5 (2026-10-20, NOT device-tested, like 0.6.4): consumables
@@ -392,7 +398,7 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-19 | Calendar events are private (ACCESS_PRIVATE), PR #19 |
 | 2026-10-19 | Field importance borders: required red until filled then green (company, client, activity or preset, to-do title, expense amount and description, quick-add names), important yellow (role, planned date/time, client of a travel or to-do), accessory blue; visual only, no new blocking rule |
 | 2026-10-19 | To-do window = next 24 hours, overdue included (Home always, To-dos with a chip); "Ignored" chip; Home keeps the last 2 (normal) / 3 (compact) completed entries, open background entries first |
-| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.6.2 (#37 display and usability fixes; 2026-10-20); v0.6.3 (#40 overlapping segments, delete entry/to-do, menu icons; 2026-10-20); v0.6.4 (#44 part, untested; 2026-10-20); v0.6.5 (#41, #47, #44 contacts, schema v11, untested; 2026-10-20); v0.6.6 (#44 completed, untested; 2026-10-21); v0.6.7 (#48 policy + plugin engine, untested; 2026-10-21); v0.6.8 (#48 policy on the screens, company-less, schema v13; tested on the Xiaomi debug app; 2026-10-21); v0.6.8.1 (manual screenshots refreshed on the Xiaomi, app unchanged; 2026-10-22); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
+| 2026-10-18 | Releases: v0.2.0 (M4-M9, first signed release), v0.3.0 (M10), v0.4.0 (M11), v0.4.1 (M12), v0.4.2 (M13), v0.5.0 (M14–M19 + private calendar events, 2026-10-19), v0.6.0 (2026-10-19), v0.6.1 (calls #28/#33, #27, #30; 2026-10-20); v0.6.2 (#37 display and usability fixes; 2026-10-20); v0.6.3 (#40 overlapping segments, delete entry/to-do, menu icons; 2026-10-20); v0.6.4 (#44 part, untested; 2026-10-20); v0.6.5 (#41, #47, #44 contacts, schema v11, untested; 2026-10-20); v0.6.6 (#44 completed, untested; 2026-10-21); v0.6.7 (#48 policy + plugin engine, untested; 2026-10-21); v0.6.8 (#48 policy on the screens, company-less, schema v13; tested on the Xiaomi debug app; 2026-10-21); v0.6.8.1 (manual screenshots refreshed on the Xiaomi, app unchanged; 2026-10-22); v0.7.0 (Antares as the first plugin, tested on demo.goantares.uno; dialog label and drop-down above keyboard fixes; Antares guide PDF; 2026-10-22); v0.7.0 = Antares (PR #29) once tested on the demo; debug icon orange |
 | 2026-10-18 | Debug build "ActivityTrackDbg" (adb, tests) and signed release "ActivityTrack" (GitHub Releases on `v*` tags) coexist with separate data folders; R8 off in release until a minified build is device-tested; debug data restarts from an empty folder |
 | 2026-10-18 | Stacked PRs: retarget each to `main` after the previous merge (the ruleset forbids branch deletion, so GitHub does not retarget); drafts must be marked ready first |
 | 2026-10-18 | Calendar tags always in Italian (#lavoro #viaggio #pausa #pianificata), not the phone language |
