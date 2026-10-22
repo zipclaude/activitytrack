@@ -3,7 +3,9 @@
 #
 # Builds the user documentation (owner, 2026-10-19): for every language a
 # quick start guide and the full manual, as HTML and PDF, with the
-# Graphviz diagrams and the screenshots.
+# Graphviz diagrams and the screenshots; every management-system
+# integration has a guide of its own (owner), connectors/<name>.md, titled
+# by its first line "<!-- title: ... -->".
 #
 #   scripts/build-manual.sh [version]      -> build/manual/*.pdf
 #
@@ -49,5 +51,19 @@ for lang in it en; do
 		"$CHROME" --headless --disable-gpu --no-sandbox --no-pdf-header-footer \
 			--print-to-pdf="$OUT/ActivityTrack-$name-$VERSION.pdf" "file://$PWD/$work/$doc.html" 2>/dev/null
 		echo "$OUT/ActivityTrack-$name-$VERSION.pdf"
+	done
+	for f in "$work"/connectors/*.md; do
+		[ -f "$f" ] || continue
+		conn=$(basename "$f" .md)
+		ctitle=$(sed -n '1s/^<!-- title: \(.*\) -->$/\1/p' "$f")
+		[ "$lang" = it ] && suffix=Guida || suffix=Guide
+		# capitalised name in the file name: antares -> Antares
+		cname=$(printf '%s' "$conn" | sed 's/^./\U&/')
+		pandoc -f gfm+implicit_figures "$f" -s -H "$OUT/style.html" \
+			--metadata title="ActivityTrack — ${ctitle:-$conn}" --metadata subtitle="$VERSION" --metadata lang="$lang" \
+			-o "${f%.md}.html"
+		"$CHROME" --headless --disable-gpu --no-sandbox --no-pdf-header-footer \
+			--print-to-pdf="$OUT/ActivityTrack-$cname-$suffix-$VERSION.pdf" "file://$PWD/${f%.md}.html" 2>/dev/null
+		echo "$OUT/ActivityTrack-$cname-$suffix-$VERSION.pdf"
 	done
 done

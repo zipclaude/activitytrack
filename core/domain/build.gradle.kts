@@ -29,3 +29,9 @@ dependencies {
 	testImplementation(libs.kotlin.test.junit)
 	testImplementation(libs.junit4)
 }
+
+/* tests read the published plugins and the docs (issue #48): changes there run them again */
+tasks.test {
+	inputs.dir(rootProject.file("plugins"))
+	inputs.dir(rootProject.file("docs"))
+}

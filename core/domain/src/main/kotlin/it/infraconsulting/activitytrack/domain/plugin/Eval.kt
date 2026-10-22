@@ -87,6 +87,7 @@ private object Ops {
 			"lower" -> text(arg(0))?.let { JsonPrimitive(it.lowercase()) } ?: JsonNull
 			"upper" -> text(arg(0))?.let { JsonPrimitive(it.uppercase()) } ?: JsonNull
 			"trim" -> text(arg(0))?.let { JsonPrimitive(it.trim()) } ?: JsonNull
+			"plainText" -> text(arg(0))?.let { JsonPrimitive(plainText(it)) } ?: JsonNull
 			"string" -> text(arg(0))?.let { JsonPrimitive(it) } ?: JsonNull
 			"number" -> text(arg(0))?.trim()?.toBigDecimalOrNull()?.let { JsonPrimitive(it.stripTrailingZeros().let { n -> if (n.scale() <= 0) n.toLong() as Number else n.toDouble() }) } ?: JsonNull
 			"bool" -> when (val v = arg(0)) {
@@ -132,3 +133,29 @@ private object Ops {
 		}
 	}
 }
+
+/*
+ * Text of an HTML fragment (ticket descriptions of management systems):
+ * line breaks for <br> and block ends, tags dropped, the common entities
+ * decoded, blank lines collapsed. Nothing of it is ever rendered as HTML.
+ */
+fun plainText(html: String): String {
+	var s = html.replace(Regex("(?i)<br\\s*/?>|</(p|div|li|tr|h[1-6])>"), "\n")
+	s = s.replace(Regex("(?s)<!--.*?-->"), "").replace(Regex("<[^>]*>"), "")
+	s = Regex("&(#\\d+|#x[0-9A-Fa-f]+|[A-Za-z]+);").replace(s) { m ->
+		val e = m.groupValues[1]
+		when {
+			e.startsWith("#x") -> e.drop(2).toIntOrNull(16)?.let { String(Character.toChars(it)) }
+			e.startsWith("#") -> e.drop(1).toIntOrNull()?.let { String(Character.toChars(it)) }
+			else -> ENTITIES[e]
+		} ?: m.value
+	}
+	return s.lines().map { it.replace(Regex("[ \\t]+"), " ").trim() }.joinToString("\n").replace(Regex("\n{3,}"), "\n\n").trim()
+}
+
+private val ENTITIES = mapOf(
+	"amp" to "&", "lt" to "<", "gt" to ">", "quot" to "\"", "apos" to "'", "nbsp" to " ",
+	"agrave" to "à", "egrave" to "è", "eacute" to "é", "igrave" to "ì", "ograve" to "ò", "ugrave" to "ù",
+	"Agrave" to "À", "Egrave" to "È", "Eacute" to "É", "Igrave" to "Ì", "Ograve" to "Ò", "Ugrave" to "Ù",
+	"euro" to "€", "laquo" to "«", "raquo" to "»", "hellip" to "…", "ndash" to "–", "mdash" to "—",
+)
