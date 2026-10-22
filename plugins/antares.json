@@ -88,12 +88,12 @@
 		},
 		"todos": {
 			"request": { "path": "/v3/Tickets", "query": { "$select": "Id,Code,Name,Description,State,PortfolioId,CustomerId,CustomerPremisId,Priority",
-			             "$orderby": "LastUpdateDate desc", "$filter": "TechnicianId eq ${identity.personId}" }, "paged": true },
+			             "$orderby": "LastUpdateDate desc", "$filter": "TechnicianId eq ${identity.personId} or ApplicantId eq ${identity.personId}" }, "paged": true },
 			"key": "$.Id",
 			"skipNew": { "notIn": ["$.State", "@lookup.ticketStates"] },
 			"map": {
 				"title": { "coalesce": ["$.Name", "$.Code"] },
-				"notes": "$.Description",
+				"notes": { "plainText": "$.Description" },
 				"refs": "$.Code",
 				"clientCode": "$.CustomerId",
 				"priority": "$.Priority",

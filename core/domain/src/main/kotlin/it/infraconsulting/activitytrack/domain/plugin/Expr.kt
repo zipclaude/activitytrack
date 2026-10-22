@@ -46,6 +46,7 @@ sealed interface Expr {
 			"lower" to (1 to emptySet()),
 			"upper" to (1 to emptySet()),
 			"trim" to (1 to emptySet()),
+			"plainText" to (1 to emptySet()),
 			"number" to (1 to emptySet()),
 			"bool" to (1 to emptySet()),
 			"string" to (1 to emptySet()),

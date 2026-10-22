@@ -111,6 +111,7 @@ Wherever a value is expected the descriptor may write:
 | `{"if": cond, "then": a, "else": b}` | choice |
 | `{"map": value, "cases": {"x": 1, "y": 2}, "default": 0}` | value table |
 | `{"lower": a}`, `{"upper": a}`, `{"trim": a}` | text |
+| `{"plainText": a}` | text of an HTML fragment: tags dropped, entities decoded |
 | `{"number": a}`, `{"bool": a}`, `{"string": a}` | conversions |
 | `{"date": a, "format": "isoOffset" \| "isoLocal" \| "isoDate" \| "epochMs" \| "<pattern>"}` | dates in the entry's time zone |
 | `{"minutes": a, "round": "work" \| "travel" \| "pause" \| "none"}` | a length rounded by the report rule |
