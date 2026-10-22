@@ -22,39 +22,29 @@ class TodoPlanTest {
 	private fun at(d: LocalDate, hh: Int, mm: Int, ss: Int = 0): Instant = d.atTime(LocalTime.of(hh, mm, ss)).atZone(zone).toInstant()
 
 	@Test
-	fun durationGivesAFixedEnd() {
-		val p = TodoPlan(day, 9 * 60, 90)
-		assertEquals(at(day, 10, 30), p.end(zone, open = true, now = at(day, 15, 0)))
-		assertNull(p.nextGrowth(zone, open = true, now = at(day, 9, 0)))
-	}
-
-	@Test
-	fun withoutDurationOneHourGrowingHourByHourWhileOpen() {
-		val p = TodoPlan(day, 9 * 60)
-		assertEquals(at(day, 10, 0), p.end(zone, true, at(day, 8, 0)))
-		assertEquals(at(day, 10, 0), p.end(zone, true, at(day, 10, 0)))
-		assertEquals(at(day, 11, 0), p.end(zone, true, at(day, 10, 0, 1)))
-		assertEquals(at(day, 12, 0), p.end(zone, true, at(day, 11, 30)))
-		/* done: back to one hour */
-		assertEquals(at(day, 10, 0), p.end(zone, false, at(day, 11, 30)))
-		assertEquals(at(day, 12, 0), p.nextGrowth(zone, true, at(day, 11, 30)))
-		assertNull(p.nextGrowth(zone, false, at(day, 11, 30)))
-	}
-
-	@Test
-	fun growthStopsAtTheEndOfThePlannedDay() {
-		val p = TodoPlan(day, 22 * 60 + 30)
-		val midnight = day.plusDays(1).atStartOfDay(zone).toInstant()
-		assertEquals(midnight, p.end(zone, true, at(day.plusDays(1), 3, 0)))
-		assertNull(p.nextGrowth(zone, true, at(day.plusDays(1), 3, 0)))
-		/* a late start still gets its first hour */
-		assertEquals(at(day.plusDays(1), 0, 15), TodoPlan(day, 23 * 60 + 15).end(zone, true, at(day.plusDays(1), 5, 0)))
+	fun blockPointAndWholeDay() {
+		/* a duration: a block */
+		assertEquals(at(day, 10, 30), TodoPlan(day, 9 * 60, 90).end(zone))
+		/* a start only: a point (issue #52, answer 5) */
+		val point = TodoPlan(day, 9 * 60)
+		assertEquals(at(day, 9, 0), point.end(zone))
+		assertEquals(false, point.over(at(day, 9, 0), zone))
+		assertEquals(true, point.over(at(day, 9, 0, 1), zone))
+		/* the day only: the whole day, over from the next day (answer 4) */
+		val whole = TodoPlan(day)
+		assertTrue(whole.allDay)
+		assertEquals(at(day, 0, 0), whole.start(zone))
+		assertEquals(day.plusDays(1).atStartOfDay(zone).toInstant(), whole.end(zone))
+		assertEquals(false, whole.over(at(day, 23, 59), zone))
+		assertEquals(true, whole.over(at(day.plusDays(1), 0, 0), zone))
 	}
 
 	@Test
 	fun postponeCrossesMidnight() {
 		assertEquals(TodoPlan(day, 10 * 60, 45), TodoPlan(day, 9 * 60 + 30, 45).postponed(30))
 		assertEquals(TodoPlan(day.plusDays(1), 10), TodoPlan(day, 23 * 60 + 40).postponed(30))
+		/* a whole-day plan moves by days */
+		assertEquals(TodoPlan(day.plusDays(1)), TodoPlan(day).postponed(30))
 	}
 
 	@Test
@@ -101,8 +91,9 @@ class TodoPlanTest {
 	}
 
 	@Test
-	fun ofNeedsDayAndTime() {
-		assertNull(TodoPlan.of(day.toEpochDay(), null, 30))
+	fun ofNeedsADay() {
+		/* the day alone is a plan; a duration without a start is dropped */
+		assertEquals(TodoPlan(day), TodoPlan.of(day.toEpochDay(), null, 30))
 		assertNull(TodoPlan.of(null, 600, null))
 		assertEquals(TodoPlan(day, 600, 30), TodoPlan.of(day.toEpochDay(), 600, 30))
 	}
@@ -130,5 +121,14 @@ class TodoPlanTest {
 		/* phone off through the lead time: still shown during the block, not after */
 		assertEquals(1, planner.due(emptyList(), null, at(day, 9, 40), todos = listOf(t)).size)
 		assertTrue(planner.due(emptyList(), null, at(day, 10, 0), todos = listOf(t)).isEmpty())
+	}
+
+	@Test
+	fun nextWorkingDaySkipsWeekendsAndDaysOff() {
+		val friday = LocalDate.of(2026, 10, 23)
+		val weekdays = setOf(1, 2, 3, 4, 5)
+		assertEquals(LocalDate.of(2026, 10, 26), nextWorkingDay(friday, weekdays) { false })
+		assertEquals(LocalDate.of(2026, 10, 27), nextWorkingDay(friday, weekdays) { it == LocalDate.of(2026, 10, 26) })
+		assertEquals(friday.plusDays(1), nextWorkingDay(friday, emptySet()) { false })
 	}
 }

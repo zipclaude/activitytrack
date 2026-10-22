@@ -54,4 +54,11 @@ interface TodoDao {
 
 	@Query("SELECT COUNT(*) FROM time_entry WHERE todo_id = :todoId")
 	suspend fun entriesOf(todoId: Long): Int
+
+	/* worked between the two instants: a segment of an entry started from the to-do (issue #52) */
+	@Query(
+		"SELECT COUNT(*) FROM segment JOIN time_entry ON time_entry.id = segment.entry_id " +
+			"WHERE time_entry.todo_id = :todoId AND segment.start_utc_ms < :toMs AND COALESCE(segment.end_utc_ms, :toMs) > :fromMs",
+	)
+	suspend fun workedBetween(todoId: Long, fromMs: Long, toMs: Long): Int
 }

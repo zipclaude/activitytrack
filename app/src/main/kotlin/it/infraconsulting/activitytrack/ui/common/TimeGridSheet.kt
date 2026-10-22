@@ -68,10 +68,18 @@ fun TimeGridSheet(
 	onExact: (() -> Unit)? = null,
 	/* the day shown: without a selection the window opens on its working hours (issue #44) */
 	day: java.time.LocalDate = java.time.LocalDate.now(),
+	/*
+	 * In a range, a single tap then OK picks a start only (issue #52: a
+	 * planned to-do may be a point in time); onPick then gets end = start.
+	 * [initialPoint]: [initial] is such a start.
+	 */
+	allowPoint: Boolean = false,
+	initialPoint: Boolean = false,
 	onDismiss: () -> Unit,
 	onPick: (Int, Int) -> Unit,
 ) {
 	var selection by remember { mutableStateOf(initial) }
+	var point by remember { mutableStateOf(allowPoint && initialPoint && initial != null) }
 	val schedule by appViewModel(key = "grid-schedule") { ScheduleSource(it.masterData) }.schedule.collectAsState()
 	val work = schedule.filter { it.dayOfWeek == day.dayOfWeek.value }.takeIf { it.isNotEmpty() }
 		?.let { s -> s.minOf { it.startMin } to s.maxOf { it.endMin } }
@@ -99,16 +107,17 @@ fun TimeGridSheet(
 				Text(
 					when {
 						sel == null -> "–"
+						range && point -> formatMin(sel.first)
 						range -> formatMin(sel.first) + " – " + formatMin(sel.last + 1)
 						else -> formatMin(sel.first)
 					},
 					style = MaterialTheme.typography.headlineMedium,
 				)
-				if (range && sel != null)
+				if (range && sel != null && !point)
 					Text(formatDuration(sel.last + 1 - sel.first), color = MaterialTheme.colorScheme.onSurfaceVariant)
 			}
 			Text(
-				stringResource(if (range) R.string.grid_hint_range else R.string.grid_hint_single),
+				stringResource(if (range && allowPoint) R.string.grid_hint_point_or_range else if (range) R.string.grid_hint_range else R.string.grid_hint_single),
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 			)
@@ -164,6 +173,8 @@ fun TimeGridSheet(
 						/* a plain tap: first one opens the range, the second one closes it */
 						if (range && last == anchor)
 							pending = if (pending == null) anchor else null
+						/* a start alone while the range is still open (issue #52) */
+						point = allowPoint && range && last == anchor && pending != null
 					}
 				},
 			) {
@@ -200,7 +211,7 @@ fun TimeGridSheet(
 				onExact?.let { TextButton(onClick = it) { Text(stringResource(R.string.grid_exact)) } }
 				Spacer(Modifier.weight(1f))
 				TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-				Button(onClick = { sel?.let { onPick(it.first, it.last + 1) } }, enabled = sel != null) { Text(stringResource(R.string.action_ok)) }
+				Button(onClick = { sel?.let { if (point) onPick(it.first, it.first) else onPick(it.first, it.last + 1) } }, enabled = sel != null) { Text(stringResource(R.string.action_ok)) }
 			}
 		}
 	}

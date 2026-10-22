@@ -39,6 +39,9 @@ data class TodoEvent(
 	val client: String,
 	val notes: String,
 	val refs: List<String>,
+	/* planned by day only (issue #52): an all-day event on [day] */
+	val allDay: Boolean = false,
+	val day: java.time.LocalDate? = null,
 )
 
 /*
@@ -55,6 +58,8 @@ data class PlannedEvent(
 	val description: String,
 	val location: String?,
 	val tentative: Boolean = false,
+	/* all-day: [start] and [end] are UTC midnights, as calendar providers want them */
+	val allDay: Boolean = false,
 )
 
 /*
@@ -115,11 +120,13 @@ object CalendarEvents {
 				add("${labels.refs}: ${t.refs.joinToString(", ")}")
 			add(labels.tags.planned)
 		}.filter(String::isNotBlank)
+		val utc = java.time.ZoneOffset.UTC
 		PlannedEvent(
 			key = TODO_KEY + t.uid,
 			companyId = t.companyId,
-			start = t.start,
-			end = maxOf(t.end, t.start.plusSeconds(60)),
+			start = if (t.allDay && t.day != null) t.day.atStartOfDay(utc).toInstant() else t.start,
+			end = if (t.allDay && t.day != null) t.day.plusDays(1).atStartOfDay(utc).toInstant() else maxOf(t.end, t.start.plusSeconds(60)),
+			allDay = t.allDay && t.day != null,
 			title = listOf(t.client, t.title).filter(String::isNotBlank).joinToString(" – "),
 			description = parts.joinToString("\n"),
 			location = null,
