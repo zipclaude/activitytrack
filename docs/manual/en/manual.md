@@ -1,7 +1,10 @@
-Version 0.6.8 (October 2026). Please report any difference between this
+Version 0.6.8.1 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.6.8.1**
+- Manual: every screenshot updated to the current app.
 
 **New in 0.6.8** (tested on the debug phone)
 - The **policy** acts on the screens: fields hidden, renamed, coloured or
