@@ -1,7 +1,14 @@
-Versione 0.7.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.7.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.7.1** (pianificazione non provata sul telefono)
+- **Pianificazione** delle *Da fare*: solo la data, data e inizio (un
+  momento), oppure data e intervallo; a fine orario un avviso propone di
+  ripianificare quelle non lavorate (§8).
+- **Colore** anche quando si aggiunge un'azienda o un cliente dalle
+  schermate (il "+").
 
 **Novità della 0.7.0**
 - **Antares (Saidea)**: primo gestionale collegato come plugin, provato sul
@@ -474,25 +481,31 @@ sezioni dell'interscambio non sono filtrate).
 
 Attività da fare, importate da un gestionale o create a mano ("Altro" →
 "Da fare" → "Aggiungi", oppure dall'Agenda): titolo, cliente (o azienda),
-**data pianificata** con **inizio** e **fine**, scadenza e ora, priorità
+**data pianificata** con un **orario** facoltativo, scadenza e ora, priorità
 (1 = massima), note, riferimenti (uno per riga).
 
 ![Da fare con i filtri rapidi](img/todos.png)
 
-Stati: **aperta** (senza pianificazione) → **pianificata** (data e ora) →
+Stati: **aperta** (senza pianificazione) → **pianificata** (una data) →
 **fatta**. La pianificazione è separata dalla scadenza: ripianificare non
 cambia la scadenza del gestionale.
-- **Inizio e fine**: toccandoli si apre la griglia a intervallo, che li
-  imposta insieme; con la fine il blocco dura fino a lì, senza fine dura
-  un'ora e, finché la voce resta aperta, si allunga di ora in ora (fino a
-  fine giornata).
+- **Solo la data**: la voce vale per tutto il giorno; in Agenda sta nella
+  fascia sopra la griglia, nel calendario è un evento di tutto il giorno,
+  non ha promemoria ed è "in ritardo" dal giorno dopo.
+- **Orario**: toccando il campo si apre la griglia; un **tocco** e OK
+  fissano solo l'**inizio** (un momento, senza durata), un **trascinamento**
+  (o due tocchi) fissa **inizio e fine**.
+- **A fine orario di lavoro**, se una o più voci pianificate per oggi non
+  sono state lavorate (nessuna attività avviata da loro), arriva una sola
+  notifica con l'elenco e **"Ripianifica a …"**, che le sposta al giorno
+  lavorativo successivo mantenendo l'orario.
 - **Promemoria**: 15 minuti prima dell'ora pianificata arriva la notifica
   "Titolo alle HH:MM" con "Avvia attività", "Posticipa 30 min" (sposta la
   pianificazione di 30 minuti dall'ora pianificata o, se è già passata, da
   adesso; il promemoria torna prima della nuova ora) e "Ripianifica"
   (apre la voce). Arriva anche fuori orario e nei giorni liberi; sparisce se
   la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
-  passato.
+  passato (per un momento senza durata, un'ora dopo l'inizio).
 - In Home, **"Da fare · 24 h ▾"** mostra quelle in scadenza o pianificate
   nelle prossime 24 ore (o nel periodo scelto toccando il titolo: 7 giorni,
   30 giorni, tutte), comprese quelle in ritardo; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco

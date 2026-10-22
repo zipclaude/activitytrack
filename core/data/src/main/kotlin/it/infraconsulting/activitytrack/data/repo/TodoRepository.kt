@@ -35,12 +35,15 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 
 	/*
 	 * Create ([id] 0) or edit; the client must belong to the company; a plan
-	 * needs both day and time, and a duration within a day.
+	 * needs a day (issue #52: the time is optional), a duration needs a start
+	 * and stays within a day.
 	 */
 	suspend fun save(t: TodoEntity): Long = db.withTransaction {
 		val title = t.title.trim().ifEmpty { throw ValidationException(Reason.BLANK_VALUE) }
-		if ((t.planEpochDay == null) != (t.planStartMin == null))
-			throw ValidationException(if (t.planEpochDay == null) Reason.INVALID_DATE else Reason.INVALID_TIME)
+		if (t.planEpochDay == null && t.planStartMin != null)
+			throw ValidationException(Reason.INVALID_DATE)
+		if (t.durationMin != null && t.planStartMin == null)
+			throw ValidationException(Reason.INVALID_TIME)
 		if (t.planStartMin != null && t.planStartMin !in 0 until 1440)
 			throw ValidationException(Reason.INVALID_TIME)
 		if (t.durationMin != null && t.durationMin !in 1..TodoPlan.MAX_DURATION_MIN)
@@ -88,6 +91,23 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
 		val p = t.plan()?.postponed(minutes, clock.instant(), ZoneId.systemDefault()) ?: return@withTransaction
 		dao.update(t.copy(planEpochDay = p.day.toEpochDay(), planStartMin = p.startMin, updatedUtcMs = clock.millis()))
+	}
+
+	/* Open to-dos planned on [day] that nobody worked on that day (issue #52: asked at the end of the working hours). */
+	suspend fun unworked(day: java.time.LocalDate, zone: ZoneId): List<TodoEntity> {
+		val from = day.atStartOfDay(zone).toInstant().toEpochMilli()
+		val to = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+		return dao.all().filter { it.isOpen() && it.planEpochDay == day.toEpochDay() && dao.workedBetween(it.id, from, to) == 0 }
+	}
+
+	/* The plans of [ids] moved to [day], their time kept; their reminders may come again. */
+	suspend fun replan(ids: Collection<Long>, day: java.time.LocalDate) = db.withTransaction {
+		for (id in ids) {
+			val t = dao.byId(id) ?: continue
+			if (t.planEpochDay == null || !t.isOpen())
+				continue
+			dao.update(t.copy(planEpochDay = day.toEpochDay(), planRemindedUtcMs = null, updatedUtcMs = clock.millis()))
+		}
 	}
 
 	/* The reminder of the plan starting at [startMs] was shown. */

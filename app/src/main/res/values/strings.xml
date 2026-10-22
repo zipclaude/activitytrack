@@ -617,4 +617,12 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="policy_locked">Set by the policy</string>
   <string name="widget_disabled">Switched off by the policy</string>
   <string name="err_todos_only">Activities start from a to-do only.</string>
+  <!-- issue #52 -->
+  <string name="grid_hint_point_or_range">Tap for a start time only, or drag (or tap twice) for start and end.</string>
+  <string name="todo_plan_time_optional">Time (optional)</string>
+  <string name="unworked_replan">Re-plan on %1$s</string>
+  <plurals name="unworked_title">
+    <item quantity="one">%d planned to-do not worked today</item>
+    <item quantity="other">%d planned to-dos not worked today</item>
+  </plurals>
 </resources>

@@ -145,10 +145,12 @@ data class AgendaTodo(
 	val timeMin: Int?,
 	val start: Instant? = null,
 	val end: Instant? = null,
+	/* planned by day only (issue #52): the all-day strip */
+	val allDay: Boolean = false,
 ) {
 	val id get() = todo.id
 	val title get() = todo.title
-	val planned get() = start != null
+	val planned get() = start != null || allDay
 }
 
 data class AgendaData(
@@ -231,7 +233,7 @@ class AgendaViewModel(
 		val todos = open.mapNotNull { t ->
 			val p = t.plan()
 			val item = if (p != null)
-				AgendaTodo(t, p.day, p.startMin, p.start(zone), p.end(zone, true, now))
+				AgendaTodo(t, p.day, p.startMin, p.start(zone).takeIf { !p.allDay }, p.end(zone).takeIf { !p.allDay }, allDay = p.allDay)
 			else
 				AgendaTodo(t, t.dueEpochDay?.let(LocalDate::ofEpochDay) ?: return@mapNotNull null, t.dueTimeMin)
 			item.takeIf { it.day in from..to }
@@ -454,7 +456,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 					) {
 					Text(
 						"☐ " + listOfNotNull(
-							t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.let { e -> "–${clock(e, zone)}" } ?: "") },
+							t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.takeIf { e -> e != t.start }?.let { e -> "–${clock(e, zone)}" } ?: "") },
 							t.title,
 						).joinToString(" "),
 						modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -488,7 +490,8 @@ private fun Timeline(
 	val zone = ZoneId.systemDefault()
 	val byDay = days.associateWith { day ->
 		d.items.filter { it.day == day }.map { Block(it.start, it.end, it, null) } +
-			d.todos.filter { it.day == day && it.planned }.map { Block(it.start!!, it.end!!, null, it) }
+			/* a point in time shows as a short block (issue #52) */
+			d.todos.filter { it.day == day && it.planned && !it.allDay }.map { Block(it.start!!, maxOf(it.end!!, it.start.plusSeconds(15 * 60)), null, it) }
 	}
 	fun minuteOf(i: Instant, day: LocalDate): Int {
 		val local = i.atZone(zone)
@@ -525,10 +528,11 @@ private fun Timeline(
 						)
 					}
 			}
-		val dayTodos = d.todos.filter { it.day in days && !it.planned }
+		/* the strip above the grid: due dates without time and plans for the whole day (issue #52) */
+		val dayTodos = d.todos.filter { it.day in days && (!it.planned || it.allDay) }
 		for (t in dayTodos)
 			Text(
-				"☐ ${t.day.dayOfMonth} · " + t.title,
+				(if (t.allDay) "▭ " else "☐ ") + "${t.day.dayOfMonth} · " + t.title,
 				modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 2.dp),
 				style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
 			)

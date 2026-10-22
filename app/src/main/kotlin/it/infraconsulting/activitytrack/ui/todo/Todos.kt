@@ -177,7 +177,7 @@ internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean {
 	if (t.done || t.ignoredUtcMs != null)
 		return false
 	val zone = ZoneId.systemDefault()
-	return t.plan()?.let { now.isAfter(it.end(zone, open = false, now = now)) } == true ||
+	return t.plan()?.over(now, zone) == true ||
 		dueOverdue(t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, now, zone)
 }
 
@@ -193,7 +193,7 @@ private fun dayText(epochDay: Long): String {
 @Composable
 private fun subtitle(t: TodoEntity, clientName: String?): String {
 	val planned = t.plan()?.let { p ->
-		val text = "${dayText(p.day.toEpochDay())} ${formatMin(p.startMin)}" + (p.durationMin?.let { " ($it min)" } ?: "")
+		val text = dayText(p.day.toEpochDay()) + (p.startMin?.let { " ${formatMin(it)}" } ?: "") + (p.durationMin?.let { " ($it min)" } ?: "")
 		stringResource(R.string.todo_planned, text)
 	}
 	val due = t.dueEpochDay?.let { d -> dayText(d) + (t.dueTimeMin?.let { " ${formatMin(it)}" } ?: "") }
@@ -207,9 +207,15 @@ private fun cardTime(t: TodoEntity): String? {
 	val today = LocalDate.now()
 	t.plan()?.let { p ->
 		val zone = ZoneId.systemDefault()
-		val end = p.end(zone, open = false, now = Instant.now()).atZone(zone).toLocalTime()
-		val span = "${formatMin(p.startMin)}–${formatMin(end.hour * 60 + end.minute)}"
-		return if (p.day == today) span else "${dayText(p.day.toEpochDay())} $span"
+		/* the day only; a point; a block (issue #52) */
+		val time = p.startMin?.let { start ->
+			formatMin(start) + (p.durationMin?.let { _ -> p.end(zone).atZone(zone).toLocalTime().let { e -> "–" + formatMin(e.hour * 60 + e.minute) } } ?: "")
+		}
+		return when {
+			time == null -> dayText(p.day.toEpochDay())
+			p.day == today -> time
+			else -> "${dayText(p.day.toEpochDay())} $time"
+		}
 	}
 	val due = t.dueEpochDay?.let(LocalDate::ofEpochDay) ?: return null
 	val text = (if (due == today) "" else "${dayText(due.toEpochDay())} ") + (t.dueTimeMin?.let(::formatMin) ?: "")
@@ -698,7 +704,8 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	var refs by remember { mutableStateOf(initial.refs) }
 	/* a plan needs both day and time: the missing one is flagged on its field after Save (M13) */
 	var tried by remember { mutableStateOf(false) }
-	val planTimeMissing = tried && planDay.isNotBlank() && planTime.isBlank()
+	/* the time is optional (issue #52): only a time without its date is missing something */
+	val planTimeMissing = false
 	val planDayMissing = tried && planTime.isNotBlank() && planDay.isBlank()
 	val coNames = companies.associate { it.id to it.name }
 	EditDialog(
@@ -711,7 +718,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				vm.missingCompany()
 				return@EditDialog
 			}
-			if (planDay.isBlank() != planTime.isBlank()) {
+			if (planDay.isBlank() && planTime.isNotBlank()) {
 				tried = true
 				return@EditDialog
 			}
@@ -776,7 +783,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			)
 			/* one full-width field: the times stay readable (issue #47) */
 			RangeField(
-				stringResource(R.string.field_start_end), planTime, planEnd, { planGrid = true }, { planTime = ""; planEnd = "" },
+				stringResource(R.string.todo_plan_time_optional), planTime, planEnd, { planGrid = true }, { planTime = ""; planEnd = "" },
 				error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = fieldImportance(Field.TODO_PLAN, Importance.IMPORTANT),
 			)
 		}
@@ -804,15 +811,18 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		val b = parseHhMm(planEnd)
 		TimeGridSheet(
 			title = stringResource(R.string.todo_field_plan_date),
-			initial = if (a != null && b != null && b > a && a < 1440) a until b else null,
+			initial = if (a != null && b != null && b > a && a < 1440) a until b else if (a != null && a < 1440) a until a + 5 else null,
 			range = true,
 			busy = emptyList(),
 			day = parseDate(planDay) ?: LocalDate.now(),
+			/* a tap picks the start only, a drag the start and end (issue #52, answer 6) */
+			allowPoint = true,
+			initialPoint = a != null && b == null,
 			onDismiss = { planGrid = false },
 		) { from, to ->
 			planGrid = false
 			planTime = formatMin(from)
-			planEnd = formatMin(to)
+			planEnd = if (to > from) formatMin(to) else ""
 		}
 	}
 	if (addCompany)

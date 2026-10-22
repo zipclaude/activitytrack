@@ -606,4 +606,12 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="policy_locked">Fissato dalla policy</string>
   <string name="widget_disabled">Disattivato dalla policy</string>
   <string name="err_todos_only">Le attività partono solo da una voce Da fare.</string>
+  <!-- issue #52 -->
+  <string name="grid_hint_point_or_range">Tocca per il solo orario di inizio, oppure trascina (o tocca due volte) per inizio e fine.</string>
+  <string name="todo_plan_time_optional">Orario (facoltativo)</string>
+  <string name="unworked_replan">Ripianifica a %1$s</string>
+  <plurals name="unworked_title">
+    <item quantity="one">%d attività pianificata oggi non lavorata</item>
+    <item quantity="other">%d attività pianificate oggi non lavorate</item>
+  </plurals>
 </resources>

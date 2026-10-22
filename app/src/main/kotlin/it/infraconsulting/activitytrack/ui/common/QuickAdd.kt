@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.common
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
@@ -33,9 +36,10 @@ class QuickAddViewModel(private val master: MasterDataRepository) : ActionViewMo
 	val companies = master.companies.state(emptyList())
 	val roles = master.roles.state(emptyList())
 
-	fun addCompany(name: String, done: (Long) -> Unit) {
+	/* with its colour from the start (issue #54); null = none */
+	fun addCompany(name: String, color: Int?, done: (Long) -> Unit) {
 		var id = 0L
-		run({ done(id) }) { id = master.saveCompany(CompanyEntity(name = name)) }
+		run({ done(id) }) { id = master.saveCompany(CompanyEntity(name = name, color = color)) }
 	}
 
 	fun addRole(name: String, done: (Long) -> Unit) {
@@ -49,13 +53,13 @@ class QuickAddViewModel(private val master: MasterDataRepository) : ActionViewMo
 	}
 
 	/* [withoutCompany]: the policy hides the companies, the client belongs to none (issue #48) */
-	fun addClient(companyId: Long?, name: String, withoutCompany: Boolean, done: (Long, Long?) -> Unit) {
+	fun addClient(companyId: Long?, name: String, withoutCompany: Boolean, color: Int?, done: (Long, Long?) -> Unit) {
 		if (companyId == null && !withoutCompany) {
 			fail(it.infraconsulting.activitytrack.data.repo.ValidationException.Reason.CLIENT_REQUIRED)
 			return
 		}
 		var id = 0L
-		run({ done(id, companyId) }) { id = master.saveClient(ClientEntity(companyId = companyId, name = name)) }
+		run({ done(id, companyId) }) { id = master.saveClient(ClientEntity(companyId = companyId, name = name, color = color)) }
 	}
 }
 
@@ -78,12 +82,17 @@ fun QuickCompanyDialog(onDone: (Long) -> Unit, onDismiss: () -> Unit) {
 	val vm = quickAddViewModel()
 	val error by vm.error.collectAsState()
 	var name by remember { mutableStateOf("") }
+	var color by remember { mutableStateOf<Int?>(null) }
 	EditDialog(
 		title = stringResource(R.string.quick_company),
 		error = error,
 		onDismiss = { vm.clearError(); onDismiss() },
-		onConfirm = { vm.addCompany(name) { onDone(it) } },
-	) { TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED) }
+		onConfirm = { vm.addCompany(name, color) { onDone(it) } },
+	) {
+		TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
+		Text(stringResource(R.string.sec_color), style = MaterialTheme.typography.labelLarge)
+		ColorPalette(color, swatch = 32.dp, inset = 0.dp) { color = it }
+	}
 }
 
 @Composable
@@ -153,12 +162,13 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long?) -> Unit, onDismiss
 	var name by remember { mutableStateOf("") }
 	var company by remember { mutableStateOf(companyId) }
 	var addCompany by remember { mutableStateOf(false) }
+	var color by remember { mutableStateOf<Int?>(null) }
 	val chosen = company ?: companies.singleOrNull()?.id
 	EditDialog(
 		title = stringResource(R.string.quick_client),
 		error = error,
 		onDismiss = { vm.clearError(); onDismiss() },
-		onConfirm = { vm.addClient(chosen.takeIf { withCompanies }, name, !withCompanies, onDone) },
+		onConfirm = { vm.addClient(chosen.takeIf { withCompanies }, name, !withCompanies, color, onDone) },
 	) {
 		TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
 		if (withCompanies)
@@ -169,6 +179,8 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long?) -> Unit, onDismiss
 					importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 				) { company = it }
 			}
+		Text(stringResource(R.string.sec_color), style = MaterialTheme.typography.labelLarge)
+		ColorPalette(color, swatch = 32.dp, inset = 0.dp) { color = it }
 	}
 	if (addCompany)
 		QuickCompanyDialog(onDone = { addCompany = false; company = it }, onDismiss = { addCompany = false })

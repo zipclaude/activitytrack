@@ -43,6 +43,8 @@ object NotificationIds {
 	const val PLANNED = 8
 	/* "finished?" at the planned end (M22), per entry */
 	const val PLANNED_END = 9
+	/* planned to-dos of the day not worked (issue #52), global, entry 0 */
+	const val UNWORKED = 10
 
 	fun of(entryId: Long, slot: Int): Int = (entryId * 16 + slot).toInt()
 }
