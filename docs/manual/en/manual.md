@@ -423,7 +423,7 @@ on the right the period's reported total).
 - **Month** — a grid with reported hours per day, one dot per company and one
   for to-dos; tapping a day opens the Day view.
 
-![Agenda: Day view (old picture: the scale now changes with two fingers)](img/agenda-day.png)
+![Agenda: Day view (two fingers change the scale)](img/agenda-day.png)
 
 **Tag filter**: the "All tags ▾" chip next to the modes (shown when the
 period has tagged activities) shows only the activities with that tag;

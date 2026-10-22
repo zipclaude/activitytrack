@@ -431,7 +431,7 @@ oggi; a destra il totale rendicontato del periodo).
 - **Mese** — griglia con le ore rendicontate per giorno, un pallino per
   azienda e uno per le *Da fare*; toccando un giorno si apre la vista Giorno.
 
-![Agenda: vista Giorno (immagine vecchia: ora la scala si regola con due dita)](img/agenda-day.png)
+![Agenda: vista Giorno (la scala si regola con due dita)](img/agenda-day.png)
 
 **Filtro per tag**: il chip "Tutti i tag ▾" accanto alle modalità (compare
 quando nel periodo ci sono attività con tag) mostra solo le attività con quel

@@ -44,7 +44,14 @@ def sh(*a):
 
 
 def nodes():
-	x = adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
+	# uiautomator now and then answers without the XML (screen changing): try again
+	for _ in range(5):
+		x = adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
+		if "<hierarchy" in x:
+			break
+		time.sleep(1)
+	else:
+		raise SystemExit("uiautomator gave no window dump")
 	# MIUI prints a stack trace (with "<clinit>") before the XML
 	start = x.find("<?xml")
 	x = x[start if start >= 0 else x.index("<hierarchy"):x.rindex(">") + 1]
@@ -91,8 +98,12 @@ def back(n=1):
 def shot(lang, name):
 	out = os.path.join(ROOT, "docs/manual", lang, "img", name + ".png")
 	os.makedirs(os.path.dirname(out), exist_ok=True)
+	png = adb("exec-out", "screencap", "-p").stdout
+	# a lost connection gives nothing: keep the image there is
+	if not png.startswith(b"\x89PNG"):
+		raise SystemExit(f"no screenshot for {name} (phone offline?)")
 	with open(out, "wb") as f:
-		f.write(adb("exec-out", "screencap", "-p").stdout)
+		f.write(png)
 	print(out)
 
 
@@ -162,6 +173,9 @@ def capture(lang):
 
 def main():
 	langs = sys.argv[1:] or ["it", "en"]
+	# no phone: stop before anything, or every screenshot would be written empty
+	if adb("get-state").stdout.decode().strip() != "device":
+		raise SystemExit("no phone connected (adb get-state)")
 	with tempfile.TemporaryDirectory() as tmp:
 		saved = os.path.join(tmp, "saved")
 		os.makedirs(saved)
