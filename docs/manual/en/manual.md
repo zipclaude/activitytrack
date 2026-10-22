@@ -1,7 +1,16 @@
-Version 0.6.8.1 (October 2026). Please report any difference between this
+Version 0.7.0 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.7.0**
+- **Antares (Saidea)**: the first management system connected as a plugin,
+  tested on the demo (login, services, clients, tickets as to-dos, activities
+  sent and updated). Separate guide: *Antares integration*.
+- Tickets arrive where you are the technician or the applicant; their HTML
+  descriptions become plain text.
+- Dialogs: the first field's label is no longer cut; drop-down menus stay
+  above the keyboard.
 
 **New in 0.6.8.1**
 - Manual: every screenshot updated to the current app.
@@ -608,6 +617,8 @@ plugins are in the repository's `plugins` folder; format in
   never does, as the plugin's options say; without network it waits.
 - With a signed policy, plugins must be signed with the same name too
   (`<name>.json.sig`).
+- Every management system has a guide of its own (for Antares: *Antares
+  integration*).
 
 ---
 

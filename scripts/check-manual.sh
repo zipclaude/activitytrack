@@ -16,7 +16,9 @@ TAG=$1
 VERSION=${TAG#v}
 fail=0
 
-for f in docs/manual/it/manual.md docs/manual/it/quickstart.md docs/manual/en/manual.md docs/manual/en/quickstart.md; do
+for f in docs/manual/it/manual.md docs/manual/it/quickstart.md docs/manual/en/manual.md docs/manual/en/quickstart.md \
+	docs/manual/*/connectors/*.md; do
+	[ -f "$f" ] || continue
 	if ! head -n 12 "$f" | grep -q "\b$VERSION\b"; then
 		echo "::error file=$f::the document does not mention version $VERSION in its first lines"
 		fail=1

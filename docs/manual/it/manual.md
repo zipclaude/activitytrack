@@ -1,7 +1,16 @@
-Versione 0.6.8.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.7.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.7.0**
+- **Antares (Saidea)**: primo gestionale collegato come plugin, provato sul
+  demo (accesso, servizi, clienti, ticket come *Da fare*, invio e
+  aggiornamento delle attività). Guida a parte: *Integrazione Antares*.
+- I ticket del gestionale arrivano se sei tecnico o richiedente; le loro
+  descrizioni HTML diventano testo semplice.
+- Dialoghi: l'etichetta del primo campo non è più tagliata; i menu a tendina
+  restano sopra la tastiera.
 
 **Novità della 0.6.8.1**
 - Manuale: tutte le schermate aggiornate all'app attuale.
@@ -626,6 +635,7 @@ nella cartella `plugins` del repository; formato in `docs/PLUGINS.md`).
   invia sempre o mai, secondo le opzioni del plugin; senza rete aspetta.
 - Con una policy firmata anche i plugin devono essere firmati con lo stesso
   nome (`<nome>.json.sig`).
+- Ogni gestionale ha una guida a parte (per Antares: *Integrazione Antares*).
 
 ---
 
