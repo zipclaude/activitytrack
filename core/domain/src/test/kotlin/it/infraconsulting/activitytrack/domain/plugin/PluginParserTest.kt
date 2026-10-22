@@ -140,6 +140,11 @@ class PluginParserTest {
 		assertEquals(JsonPrimitive("/v3/x/P1"), ev("\"/v3/x/\${field.portfolio}\""))
 		assertEquals(JsonPrimitive(12L), ev("""{ "number": "$.n" }""", """{ "n": "12" }"""))
 		assertEquals(JsonNull, ev("\"$.missing.deeper\""))
+		/* a ticket description of the Antares demo: tags out, entities decoded */
+		assertEquals(
+			JsonPrimitive("Xss --&gt;Attack\nprova prova\n\ndsjafkl l\u00f2jflska"),
+			ev("""{ "plainText": "$.d" }""", """{ "d": "<div>Xss <img src=\"1\" onerror=\"alert(1)\"/> --&amp;gt;Attack</div><div>prova prova</div><div>&nbsp;</div><div>dsjafkl l&ograve;jflska</div>" }"""),
+		)
 	}
 
 	@Test
