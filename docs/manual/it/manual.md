@@ -1,7 +1,10 @@
-Versione 0.6.8 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.6.8.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.6.8.1**
+- Manuale: tutte le schermate aggiornate all'app attuale.
 
 **Novità della 0.6.8** (provata sul telefono di debug)
 - La **policy** agisce sulle schermate: campi nascosti, rinominati,
