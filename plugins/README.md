@@ -10,6 +10,8 @@ them per company (company screen → Management system) or through
 |---|---|
 | `antares.json` | Antares (Saidea), Public API v3 |
 
+Writing a plugin: [`GUIDE.en.md`](GUIDE.en.md) (Italian: [`GUIDE.it.md`](GUIDE.it.md)).
+
 With a signed policy in force, a plugin must be signed with the same CN:
 `scripts/sign-policy.sh antares.json key.pem cert.pem [chain.pem]` writes
 `antares.json.sig`.

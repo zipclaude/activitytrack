@@ -33,6 +33,7 @@ import it.infraconsulting.activitytrack.domain.plugin.PluginDataException
 import it.infraconsulting.activitytrack.domain.plugin.PluginEnv
 import it.infraconsulting.activitytrack.domain.plugin.PluginExport
 import it.infraconsulting.activitytrack.domain.plugin.RemoteItem
+import it.infraconsulting.activitytrack.domain.plugin.PluginHttpException
 import it.infraconsulting.activitytrack.domain.plugin.SentRecord
 import it.infraconsulting.activitytrack.domain.plugin.eval
 import it.infraconsulting.activitytrack.domain.plugin.text
@@ -182,6 +183,19 @@ class PluginSync(private val app: ActivityTrackApp) {
 		val items = dao.items(companyId, plugin.id)
 		val policy = DayAttributionPolicy(LocalTime.of(s.carryOverMin / 60, s.carryOverMin % 60))
 		var report = start
+		/* records of entries deleted in the app: deleted on the remote side too */
+		for (d in dao.deleted(companyId, plugin.id)) {
+			val remote = JsonObject(mapOf("id" to JsonPrimitive(d.remoteId)))
+			try {
+				spec.delete?.let { del -> client.call(del.method, del.path, base.with { r -> if (r.root == "remote") PluginEnv.dig(remote, r.path) else null }) }
+			} catch (x: PluginHttpException) {
+				/* already gone there: nothing left to delete */
+				if (x.status != 404)
+					throw x
+			}
+			dao.forgetDeleted(d.pluginId, d.remoteId)
+			report = report.copy(deleted = report.deleted + 1)
+		}
 		for (e in dao.entriesToSend(companyId, plugin.id).filter { only == null || it.id == only }) {
 			val zone = runCatching { ZoneId.of(e.zoneId) }.getOrDefault(ZoneId.systemDefault())
 			val todo = e.todoId?.let { dao.todo(it) }?.takeIf { it.companyId == companyId && it.externalKey != null }

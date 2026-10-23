@@ -1,14 +1,10 @@
-# Integration plugins — descriptor format (draft, issue #48 part B)
+# Integration plugins — descriptor format (issue #48 part B)
 
-Status: format approved by the owner (2026-10-21; changes, if any, in a
-later release). Implemented: the parser with its checks, the
-expression evaluator and the HTTP engine (`core/domain/…/plugin`:
-paging, retries, Basic / API key / bearer; OAuth PKCE login in the app),
-plugin loading from the data folder with the signature rule, the
-generic import (lists, clients, contacts, to-dos) and export (groupings,
-bodies, create / update / delete by hash). The settings card and the
-entry fields in the entry screen follow (issue #48 B5), then Antares on
-the demo (B6).
+Status: format approved by the owner (2026-10-21); implemented and in use
+since 0.7.0 (Antares, `plugins/antares.json`). Extensions since: list
+sources with `when` (0.7.2). A step-by-step guide to writing a plugin:
+[`plugins/GUIDE.en.md`](../plugins/GUIDE.en.md) (Italian:
+[`plugins/GUIDE.it.md`](../plugins/GUIDE.it.md)).
 
 Plugins are not built into the app (owner): published in `plugins/` of
 this repository, copied by the user into `plugins/` of the data folder.
@@ -141,6 +137,19 @@ Wherever a value is expected the descriptor may write:
 }
 ```
 
+A source may carry `"when"`: an expression on the parent item (`@parent`);
+the source is read only for the parents where it is true. Antares reads
+the customer premises of services only, since projects have none:
+
+```json
+"premises": {
+	"parent": "portfolio",
+	"sources": [ { "when": "@parent.extra.premises",
+	               "request": { "path": "/v3/ServicePortfolios/${parent.id}/CustomerPremises" },
+	               "map": { "id": { "coalesce": ["$.CustomerPremisId", "$.Id"] }, "name": { "coalesce": ["$.CustomerPremisName", "$.Name"] } } } ]
+}
+```
+
 A list item has `id`, `name`, optional `parentId`, `clientCode`, `kind`,
 `active` (inactive items are kept for old entries but not offered) and
 `extra` (any values used later). Lists replace the Antares-only tables of
@@ -227,7 +236,9 @@ day), `separate` (its own record, body from `travelBody`), `ignore`.
 A key whose value is `null` is left out of the body (`"TicketId"` of a
 service activity). Each record sent keeps its remote id and the hash of its body: unchanged
 → nothing sent; changed → `update`; gone (edited times, shorter pause) →
-`delete`. `fetchFirst` reads the current remote record before the update
+`delete`. An entry deleted in the app keeps its remote ids (table
+`remote_deleted`, with the company) until the next sync of that company
+deletes them; a `404` there counts as already deleted. `fetchFirst` reads the current remote record before the update
 (Antares' `Timestamp` guards against overwriting someone else's change).
 
 ## 10. Schedule

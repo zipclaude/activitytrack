@@ -90,6 +90,18 @@ interface PluginDao {
 	@Query("DELETE FROM remote_record WHERE entry_id = :entryId AND plugin_id = :pluginId AND block_key = :key")
 	suspend fun forgetSent(entryId: Long, pluginId: String, key: String)
 
+	@Query("SELECT * FROM remote_record WHERE entry_id = :entryId")
+	suspend fun sentAll(entryId: Long): List<RemoteRecordEntity>
+
+	@Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
+	suspend fun recordDeleted(d: RemoteDeletedEntity)
+
+	@Query("SELECT * FROM remote_deleted WHERE company_id = :companyId AND plugin_id = :pluginId ORDER BY deleted_utc_ms")
+	suspend fun deleted(companyId: Long, pluginId: String): List<RemoteDeletedEntity>
+
+	@Query("DELETE FROM remote_deleted WHERE plugin_id = :pluginId AND remote_id = :remoteId")
+	suspend fun forgetDeleted(pluginId: String, remoteId: String)
+
 	@Query("UPDATE time_entry SET plugin_fields = :json WHERE id = :entryId")
 	suspend fun setEntryFields(entryId: Long, json: String?)
 }

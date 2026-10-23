@@ -7,6 +7,7 @@ import it.infraconsulting.activitytrack.domain.model.SegmentOverlap
 import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.domain.tag.Tags
 import it.infraconsulting.activitytrack.data.db.EntryTagEntity
+import it.infraconsulting.activitytrack.data.db.RemoteDeletedEntity
 import it.infraconsulting.activitytrack.data.db.AbsenceEntity
 import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
@@ -603,13 +604,13 @@ class EntryRepository(
 		}
 	}
 
-	/* What deleting an entry involves (issue #40): attachments block it; a ticket's to-do goes back to open. */
-	data class Deletion(val attachments: Int, val ticket: String?)
+	/* What deleting an entry involves (issue #40): attachments block it; a ticket's to-do goes back to open; what a plugin sent is deleted there too. */
+	data class Deletion(val attachments: Int, val ticket: String?, val sent: Boolean = false)
 
 	suspend fun deletion(entryId: Long): Deletion {
 		val e = load(entryId)
 		val todo = e.todoId?.let { db.todoDao().byId(it) }?.takeIf { it.externalKey != null }
-		return Deletion(dao.attachmentCount(entryId), todo?.title)
+		return Deletion(dao.attachmentCount(entryId), todo?.title, db.pluginDao().sentAll(entryId).isNotEmpty())
 	}
 
 	/*
@@ -625,7 +626,15 @@ class EntryRepository(
 		e.todoId?.let { db.todoDao().byId(it) }?.takeIf { it.externalKey != null }?.let {
 			db.todoDao().update(it.copy(done = false, updatedUtcMs = clock.millis()))
 		}
+		keepRemoteIds(e)
 		dao.deleteEntry(entryId)
+	}
+
+	/* what a plugin sent for the entry is deleted on the remote side at the next sync (issue #48) */
+	private suspend fun keepRemoteIds(e: TimeEntryEntity) {
+		val company = e.companyId ?: return
+		for (r in db.pluginDao().sentAll(e.id))
+			db.pluginDao().recordDeleted(RemoteDeletedEntity(company, r.pluginId, r.remoteId, clock.millis()))
 	}
 
 	/*
@@ -640,6 +649,7 @@ class EntryRepository(
 		load(entryId)
 		if (!isDiscardable(entryId))
 			throw ValidationException(Reason.TOO_SHORT, "entry $entryId is not discardable")
+		keepRemoteIds(load(entryId))
 		dao.deleteEntry(entryId)
 	}
 

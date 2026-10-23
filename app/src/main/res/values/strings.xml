@@ -538,6 +538,7 @@ Tap the green play button below to start one.</string>
   <string name="entry_delete_title">Delete the activity</string>
   <string name="entry_delete_text">The activity is deleted with its segments, expenses, references and tags.</string>
   <string name="entry_delete_ticket">The recorded time is deleted; the to-do "%1$s" goes back to the open ones.</string>
+  <string name="entry_delete_sent">Already sent to the management system: it is deleted there too at the next sync.</string>
   <string name="entry_delete_attachments">The activity has %1$d attachments: delete them first, from the Attachments section.</string>
   <!-- issue #44 -->
   <string name="backup_section">Backup</string>

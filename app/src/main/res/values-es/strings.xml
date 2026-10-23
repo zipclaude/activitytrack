@@ -527,6 +527,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="entry_delete_title">Eliminar la actividad</string>
   <string name="entry_delete_text">La actividad se elimina con sus tramos, gastos, referencias y etiquetas.</string>
   <string name="entry_delete_ticket">El tiempo registrado se elimina; la tarea «%1$s» vuelve a estar abierta.</string>
+  <string name="entry_delete_sent">Ya enviada al sistema de gestión: allí se borra en la próxima sincronización.</string>
   <string name="entry_delete_attachments">La actividad tiene %1$d adjuntos: elimínalos antes, en la sección Adjuntos.</string>
   <!-- issue #44 -->
   <string name="backup_section">Copia de seguridad</string>
