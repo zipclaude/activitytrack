@@ -537,6 +537,27 @@ class EntryRepository(
 		}
 	}
 
+	/*
+	 * Move the start of the running segment (issue #57), e.g. a restart
+	 * recorded late; it must stay in the past. With [resolve] the segments
+	 * it now covers are shortened or dropped (issue #40).
+	 */
+	suspend fun moveRunningStart(segmentId: Long, startUtcMs: Long, resolve: Boolean = false) = db.withTransaction {
+		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
+		if (s.endUtcMs != null || startUtcMs >= clock.millis())
+			throw ValidationException(Reason.INVALID_SEGMENT)
+		val e = load(s.entryId)
+		if (resolve)
+			makeRoom(s.entryId, s.id, startUtcMs, RUNNING_END)
+		dao.updateSegment(s.copy(startUtcMs = startUtcMs))
+		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
+		try {
+			verify(s.entryId)
+		} catch (x: InvariantViolationException) {
+			throw ValidationException(Reason.OVERLAPPING_SEGMENTS, x.message)
+		}
+	}
+
 	/* Tags (backlog 13): the entry's tags, all tags in use (suggestions), replace the entry's. */
 	fun tags(entryId: Long) = dao.observeTags(entryId)
 	val allTags = dao.observeAllTags()
@@ -625,6 +646,8 @@ class EntryRepository(
 	companion object {
 		private val DEFAULTS_WINDOW: Duration = Duration.ofDays(30)
 		const val MIN_LENGTH_MS = 60_000L
+		/* the end of a running segment when checking overlaps: it goes on */
+		const val RUNNING_END = Long.MAX_VALUE
 		/* the most Home shows (compact display) */
 		const val RECENT_CLOSED = 3
 	}

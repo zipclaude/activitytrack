@@ -327,12 +327,19 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
 }
 
 @Composable
-fun ClickableRow(headline: String, supporting: String? = null, @androidx.annotation.DrawableRes icon: Int? = null, dot: Int? = null, onClick: () -> Unit) {
+fun ClickableRow(
+	headline: String,
+	supporting: String? = null,
+	@androidx.annotation.DrawableRes icon: Int? = null,
+	dot: Int? = null,
+	leading: (@Composable () -> Unit)? = null,
+	onClick: () -> Unit,
+) {
 	ListItem(
 		headlineContent = { Text(headline) },
 		supportingContent = supporting?.let { { Text(it) } },
 		/* menu rows (owner, 2026-10-20): an icon beside the label */
-		leadingContent = icon?.let {
+		leadingContent = leading ?: icon?.let {
 			{ androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(it), contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
 		} ?: dot?.let { { ColorDot(it) } },
 		modifier = Modifier.clickable(onClick = onClick),

@@ -280,6 +280,7 @@ Tap the green play button below to start one.</string>
   <string name="field_date">Date</string>
   <string name="field_km">km</string>
   <string name="segment_hint">An end before the start falls on the next day.</string>
+  <string name="segment_running_hint">The segment is running: its end is recorded with the next command.</string>
   <string name="ref_ticket">Ticket</string>
   <string name="ref_url">Link</string>
   <string name="ref_uuid">UUID</string>

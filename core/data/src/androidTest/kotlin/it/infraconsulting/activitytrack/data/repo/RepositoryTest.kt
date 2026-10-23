@@ -668,6 +668,28 @@ class RepositoryTest {
 		assertEquals(listOf(m(0) to m(10), m(10) to m(40), m(40) to m(60)), segs.map { it.startUtcMs to it.endUtcMs })
 	}
 
+	/* issue #57: the running segment moves its start; a pause it now covers is shortened once confirmed */
+	@Test
+	fun runningSegmentStartMoves() = runBlocking<Unit> {
+		val t0 = clock.now.toEpochMilli()
+		val m = { min: Int -> t0 + min * 60_000L }
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		entries.apply(id, EntryCommand.PAUSE)
+		clock.advance(20)
+		entries.apply(id, EntryCommand.WORK)
+		clock.advance(10)
+		val running = entries.segments(id).first().last()
+		assertNull(running.endUtcMs)
+		assertEquals(Reason.INVALID_SEGMENT, reason { entries.moveRunningStart(running.id, m(61)) })
+		assertEquals(1, entries.segmentConflicts(id, running.id, m(40), EntryRepository.RUNNING_END).size)
+		assertEquals(Reason.OVERLAPPING_SEGMENTS, reason { entries.moveRunningStart(running.id, m(40)) })
+		entries.moveRunningStart(running.id, m(40), resolve = true)
+		val segs = entries.segments(id).first()
+		assertEquals(listOf(SegmentKind.WORK, SegmentKind.PAUSE, SegmentKind.WORK), segs.map { it.kind })
+		assertEquals(listOf(m(0) to m(30), m(30) to m(40), m(40) to null), segs.map { it.startUtcMs to it.endUtcMs })
+	}
+
 	/* issue #40: deleting an entry; attachments first; a ticket's to-do opens again; hand-made to-dos deletable */
 	@Test
 	fun deleteEntryAndTodos() = runBlocking<Unit> {

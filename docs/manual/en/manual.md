@@ -388,9 +388,12 @@ complete", for the question about the to-do. In the activity screen:
   activity to the person you worked for;
   with the compact display locality, place and notes fold under "More details
   ▾" while empty;
-- "Times": with "Times freely editable" on, tapping a closed segment opens
+- "Times": every segment has the coloured icon of its kind (work green,
+  pause yellow, travel blue). With "Times freely editable" on, tapping a closed segment opens
   **"Edit segment"**: date, start, end and, for travels, km; **"Delete"**
-  removes it (not the running one nor the only one left). The new values
+  removes it (not the running one nor the only one left). The running
+  segment changes its date and start only (e.g. a restart recorded late);
+  its end is recorded with the next command. The new values
   replace the recorded ones. When the segment (also one added with Travel or
   Pause) overlaps other segments of the same activity, the app shows them
   and asks to confirm: then the saved segment wins and the others are

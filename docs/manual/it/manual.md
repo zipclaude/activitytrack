@@ -393,10 +393,13 @@ Nella schermata dell'attività:
 - controlla cliente, descrizione (dettabile), ruolo, località, luogo, note;
   il campo **Contatto** (facoltativo, se il cliente ha contatti) lega
   l'attività alla persona per cui hai lavorato;
-- "Tempi": i pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
+- "Tempi": ogni tratto ha l'icona colorata del suo tipo (lavoro verde,
+  pausa gialla, viaggio blu). I pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
   dimenticati (anche con i km; almeno un minuto). Con "Orari modificabili"
   acceso, toccando un tratto concluso si apre **"Modifica tratto"**: data, inizio, fine e, per i viaggi, i km;
-  **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). I
+  **"Elimina"** lo toglie (non il tratto in corso né l'unico rimasto). Del
+  tratto in corso si possono cambiare data e inizio (per esempio una
+  ripartenza registrata in ritardo); la fine si registra con il prossimo comando. I
   valori inseriti sostituiscono quelli registrati. Se il tratto (anche uno
   aggiunto con Viaggio o Pausa) si sovrappone ad altri tratti della stessa
   attività, l'app li mostra e chiede conferma: confermando, il tratto
