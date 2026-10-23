@@ -42,7 +42,8 @@ data class DeviceCalendar(val id: Long, val name: String, val account: String, v
 /*
  * One-way sync of the report lines to external calendars (M5, owner
  * decisions 2026-10-17) through the Android calendar provider: Google
- * accounts and CalDAV (DAVx5) sync the events on their own. Our events carry
+ * accounts, CalDAV (DAVx5) and the Outlook app sync the events on their own;
+ * on their calendars a changed event is replaced, not updated (#61). Our events carry
  * CUSTOM_APP_PACKAGE / CUSTOM_APP_URI, so they are found again without a
  * local table; events of others are never touched.
  */
@@ -147,7 +148,7 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			val windowStart = from.atStartOfDay(zone).toInstant().toEpochMilli()
 			/* planned to-dos reach into the future */
 			val windowEnd = to.plusDays(FUTURE_DAYS + 1).atStartOfDay(zone).toInstant().toEpochMilli()
-			apply(planned, existing(windowStart, windowEnd)) { s.calendarFor(it) }
+			apply(planned, existing(windowStart, windowEnd), localCalendars()) { s.calendarFor(it) }
 		}
 	}
 
@@ -196,7 +197,17 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		return out
 	}
 
-	private fun apply(planned: List<PlannedEvent>, existing: Map<String, Existing>, calendarOf: (Long?) -> Long?): Int {
+	/* Calendars of the local account: on this phone only, no sync adapter in between. */
+	private fun localCalendars(): Set<Long> {
+		val out = HashSet<Long>()
+		resolver.query(
+			Calendars.CONTENT_URI, arrayOf(Calendars._ID),
+			"${Calendars.ACCOUNT_TYPE} = ?", arrayOf(CalendarContract.ACCOUNT_TYPE_LOCAL), null,
+		)?.use { c -> while (c.moveToNext()) out += c.getLong(0) }
+		return out
+	}
+
+	private fun apply(planned: List<PlannedEvent>, existing: Map<String, Existing>, local: Set<Long>, calendarOf: (Long?) -> Long?): Int {
 		var changes = 0
 		val keep = HashSet<String>()
 		for (p in planned) {
@@ -219,7 +230,17 @@ class CalendarSync(private val context: Context, private val container: AppConta
 					e.title != p.title || e.description.orEmpty() != p.description || e.location != p.location ||
 					/* events written before they were private get fixed on the next sync */
 					e.accessLevel != Events.ACCESS_PRIVATE -> {
-					resolver.update(eventUri(e.id), values, null, null)
+					if (e.calendarId in local)
+						resolver.update(eventUri(e.id), values, null, null)
+					else {
+						/*
+						 * a synced account may drop other apps' updates: the
+						 * Outlook app restores the server's version, while
+						 * new and deleted events do reach the server (#61)
+						 */
+						resolver.delete(eventUri(e.id), null, null)
+						resolver.insert(Events.CONTENT_URI, values.apply { put(Events.CALENDAR_ID, e.calendarId) })
+					}
 					changes++
 				}
 			}
