@@ -45,6 +45,7 @@ import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
@@ -96,13 +97,15 @@ private fun openScreen(context: Context, screen: Screen) =
 			.putExtra(EntryLinks.EXTRA_SCREEN, screen.key()),
 	)
 
+internal fun widgetOpenScreen(context: Context, screen: Screen): Action = openScreen(context, screen)
+
 /* the policy may switch the widgets off (issue #48): a note, a tap opens the app */
-private suspend fun widgetsAllowed(context: Context): Boolean =
+internal suspend fun widgetsAllowed(context: Context): Boolean =
 	(context.applicationContext as it.infraconsulting.activitytrack.ActivityTrackApp).container.policies.now()
 		.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.WIDGETS)
 
 @Composable
-private fun DisabledWidget(context: Context) {
+internal fun DisabledWidget(context: Context) {
 	Box(
 		modifier = GlanceModifier.fillMaxSize().appWidgetBackground().clickable(openScreen(context, Screen.Home)),
 		contentAlignment = Alignment.Center,
@@ -111,8 +114,8 @@ private fun DisabledWidget(context: Context) {
 	}
 }
 
-private val ENTRY = ActionParameters.Key<Long>("entry")
-private val COMMAND = ActionParameters.Key<String>("command")
+internal val ENTRY = ActionParameters.Key<Long>("entry")
+internal val COMMAND = ActionParameters.Key<String>("command")
 
 /* Applies a state-machine command to an entry (STOP stops at once, as from a notification). */
 class WidgetCommandAction : ActionCallback {
@@ -139,7 +142,7 @@ class WidgetToggleAction : ActionCallback {
 }
 
 @Composable
-private fun CommandCircle(cmd: EntryCommand, size: Int, label: String, action: Action) {
+internal fun CommandCircle(cmd: EntryCommand, size: Int, label: String, action: Action) {
 	val style = commandStyle(cmd) ?: return
 	Box(
 		modifier = GlanceModifier.size(size.dp).cornerRadius((size / 2).dp)
@@ -155,7 +158,7 @@ private fun CommandCircle(cmd: EntryCommand, size: Int, label: String, action: A
 	}
 }
 
-private fun clock(ms: Long): String {
+internal fun clock(ms: Long): String {
 	val t = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalTime()
 	return "%02d:%02d".format(t.hour, t.minute)
 }
@@ -258,11 +261,12 @@ class ToggleWidget : GlanceAppWidget() {
 	}
 }
 
-private fun commandLabel(cmd: EntryCommand, mode: SegmentKind?): Int = when (cmd) {
+internal fun commandLabel(cmd: EntryCommand, mode: SegmentKind?): Int = when (cmd) {
 	EntryCommand.WORK -> if (mode == SegmentKind.PAUSE) R.string.cmd_resume else R.string.cmd_work
 	EntryCommand.TRAVEL -> R.string.cmd_travel
 	EntryCommand.PAUSE -> R.string.cmd_pause
 	EntryCommand.SUSPEND -> R.string.cmd_suspend
+	EntryCommand.REOPEN -> R.string.cmd_reopen
 	else -> R.string.cmd_stop
 }
 
@@ -275,9 +279,16 @@ class ToggleWidgetReceiver : GlanceAppWidgetReceiver() {
 }
 
 object QuickWidgets {
-	/* Called on every change of the open entries. */
+	/*
+	 * Called on every change of the open entries and, through WidgetTicker,
+	 * once a minute while an entry runs (the elapsed counter of the 4×2).
+	 */
 	suspend fun refresh(context: Context) {
 		StatusWidget().updateAll(context)
 		ToggleWidget().updateAll(context)
+		EntryWidget().updateAll(context)
+		TodoWidget().updateAll(context)
+		val c = (context.applicationContext as ActivityTrackApp).container
+		WidgetTicker.arm(context, c.entries.openEntries.first().any { e -> e.status == EntryStatus.ACTIVE })
 	}
 }

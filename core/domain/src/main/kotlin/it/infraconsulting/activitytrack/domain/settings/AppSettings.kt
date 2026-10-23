@@ -75,6 +75,11 @@ data class AppSettings(
 	 * carry-over boundary), or the last 24 h / 7 d / 30 d.
 	 */
 	val homeClosedWindow: Int = 0,
+	/*
+	 * The planned-to-dos widget window (issue #62): how far ahead it lists,
+	 * the overdue always included; 24 h by default (owner answer).
+	 */
+	val widgetTodoWindowHours: Int = 24,
 	/* ignored to-dos listed (struck through) or hidden */
 	val todoShowIgnored: Boolean = true,
 	/* order of the master-data lists and drop-downs (M16) */
@@ -109,6 +114,7 @@ data class AppSettings(
 		homeTodoWindowHours = homeTodoWindowHours.takeIf { it in TODO_WINDOWS } ?: 24,
 		homeTab = homeTab.takeIf { it in HOME_TABS } ?: "PLANNED",
 		homeClosedWindow = homeClosedWindow.takeIf { it in CLOSED_WINDOWS } ?: 0,
+		widgetTodoWindowHours = widgetTodoWindowHours.takeIf { it in WIDGET_WINDOWS } ?: 24,
 		movementThresholdM = movementThresholdM.coerceIn(50, 5_000),
 		stationaryRadiusM = stationaryRadiusM.coerceIn(25, 1_000),
 		stationaryMin = stationaryMin.coerceIn(5, 120),
@@ -146,3 +152,6 @@ val HOME_TABS = setOf("PLANNED", "CLOSED")
 
 /* the "Chiuse" windows offered (issue #59; hours; 0 = today) */
 val CLOSED_WINDOWS = setOf(0, 24, 168, 720)
+
+/* the planned-to-dos widget windows offered (issue #62; hours ahead) */
+val WIDGET_WINDOWS = setOf(24, 72, 168, 720)

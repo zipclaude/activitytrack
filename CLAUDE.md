@@ -72,7 +72,8 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
 | 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
-| Issue #59 Home tabs | **implemented** (branch `issue-59-home`): top unchanged, bottom Pianificate/Chiuse with swipe-on-header switch, remembered tab, windows 24/72/168/720 h + all (def. 24 h) and today/24 h/7/30 d (def. today, 06:00 boundary), Chiuse = closed/to-complete entries + done to-dos, no-date section; device-tested 2026-10-23 on the Xiaomi (upgrade with data, tabs, windows, swipe, restart memory) |
+| Issue #59 Home tabs | **implemented** (PR #67, open): top unchanged, bottom Pianificate/Chiuse with swipe-on-header switch, remembered tab, windows 24/72/168/720 h + all (def. 24 h) and today/24 h/7/30 d (def. today, 06:00 boundary), Chiuse = closed/to-complete entries + done to-dos, no-date section; device-tested 2026-10-23 on the Xiaomi (upgrade with data, tabs, windows, swipe, restart memory) |
+| Issue #62 widgets | **implemented** (branch `issue-62-widgets`, stacked on PR #67, 2026-10-23): 4×2 current-activity widget (latest open entry as the Home big card, elapsed per minute, stop at once, Avvia → start screen, Travel headless, resizable) and 4×2 planned to-dos (direct Start from a to-do with a client, else the start screen; Pause/Stop on the running row; done rows leave; window setting def. 24 h + overdue, policy `widgetTodoWindowHours`); WidgetTicker minute alarm re-armed by BootReceiver; local build green, NOT device-tested |
 | Issue #28 calls | **done** (PR #32, #33, on `main`): contacts, call recognition, call pauses, client calls, on-call option (schema v10); instrumented 53/53 and device-tested 2026-10-20 (real incoming call: pause, proposal, client calls, pause note with editable times off) |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
@@ -144,17 +145,24 @@ app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTe
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (review with the owner, 2026-10-19)
+## 5. Next steps (review with the owner, 2026-10-23)
 
-Issue #62 widgets (branch `issue-62-widgets`, next): 4×2 current-activity
-widget (stop immediate, only the latest open entry, per-minute elapsed,
-Avvia opens the start screen, resizable) and 4×2 planned to-dos widget
-(direct Start — approved exception to the 2026-10-17 "no direct start"
-rule; days visible a setting, default 24 h + overdue; Pause/Stop on the
-started row; done rows leave). Issue #59 done on `issue-59-home`
-(2026-10-23, device-tested on the Xiaomi, see §3); #60 closed as covered
-by #59 (done to-dos in the Chiuse tab). Not device-tested yet: done to-dos
-in Chiuse (sample DB has none), 3-day window chip, tag filter on Chiuse.
+Issue #62 widgets **implemented** on `issue-62-widgets` (stacked on #59 =
+PR #67, 2026-10-23; local build green, NOT device-tested): 4×2
+current-activity widget (only the latest open entry as the Home big card,
+elapsed per minute via WidgetTicker, stop at once like the notification,
+Avvia opens the start screen, Travel starts headlessly, resizable) and
+4×2 planned to-dos (direct Start from a to-do with a client — approved
+exception to the 2026-10-17 "no direct start" rule; without a client the
+start screen asks; Pause/Stop on the started row; done rows leave; window
+a setting, default 24 h + overdue, policy key `widgetTodoWindowHours`).
+BootReceiver re-arms the ticker after reboot/clock changes. To do: device
+test (add both widgets, elapsed moves each minute, start from a to-do row,
+pause/stop on the running row, policy locks the window setting). Issue
+#59 on PR #67 (device-tested on the Xiaomi, see §3); #60 closed as
+covered by #59 (done to-dos in the Chiuse tab). Not device-tested yet:
+done to-dos in Chiuse (sample DB has none), 3-day window chip, tag filter
+on Chiuse.
 
 Issue #48 (policy.json + declarative plugins), branch `issue-48-policy`
 (no PR yet, 2026-10-21): order A1–A2 → B1–B6 (0.7.0 = Antares as the first
