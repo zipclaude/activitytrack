@@ -224,9 +224,17 @@ hashtags per kind of time (#lavoro #viaggio #pausa, #pianificata; always Italian
 
 **Home (M10)**: the big card always shows: the most recent open entry, or the
 one tapped, or an empty-state message; every other open entry has a small
-card (about a third of it) with a resume / pause / complete button; the
-to-dos due or planned by today follow under a separator, one card each, the
-ones ignored today at the bottom.
+card (about a third of it) with a resume / pause / complete button. Below,
+two tabs (issue #59): **Pianificate**, the open to-dos from now on —
+window 24 h (default) / 3 d / 7 d / 30 d / all, overdue first, then the
+ones without a plan and without a due date under a "without a date"
+separator, the ones ignored today at the bottom — and **Chiuse**, the
+entries stopped (closed or to complete) with the to-dos marked done,
+window today (default, from the 06:00 carry-over boundary) / 24 h / 7 d /
+30 d, newest end first. The tabs switch by tap or a horizontal swipe on
+the header; the last one is remembered. The company filter (with the
+"also the entries above" choice) and, on Chiuse, the tag filter act on
+the list shown.
 
 **Swipe gestures (M10)**, on Home, Agenda list and To-dos, configurable per
 card type and direction (layout-relative start/end): to-do left = Start,
@@ -247,9 +255,8 @@ the start screen and the to-do editor creates one and selects it.
 **M14**: field borders by importance (required red until filled, then
 green; important yellow; accessory blue); company and client colour dots in
 drop-downs; to-dos in the next 24 hours (overdue included) on Home and with
-the "Next 24 h" chip, "Ignored" chip to list or hide ignored ones; Home keeps
-the last 2 (normal) or 3 (compact) completed entries as small dimmed cards,
-open background entries taking their places first.
+the "Next 24 h" chip, "Ignored" chip to list or hide ignored ones; the last
+completed entries on Home moved to the Chiuse tab (issue #59).
 
 **Backlog, first part (M13)**: settings in sub-screens (Gestures among
 them) and a Notifications section opening the Android page of each

@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,7 @@ import it.infraconsulting.activitytrack.ui.common.SwipeAction
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
@@ -72,8 +74,14 @@ import it.infraconsulting.activitytrack.ui.common.StatePill
 import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.stateStyle
-import it.infraconsulting.activitytrack.ui.todo.TodoTodaySection
+import it.infraconsulting.activitytrack.ui.todo.TodoActions
+import it.infraconsulting.activitytrack.ui.todo.TodoCard
+import it.infraconsulting.activitytrack.ui.todo.TodoEditDialog
+import it.infraconsulting.activitytrack.ui.todo.TodoSwipeCard
+import it.infraconsulting.activitytrack.ui.todo.bands
+import it.infraconsulting.activitytrack.ui.todo.todosViewModel
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,6 +96,10 @@ data class EntryCard(
 	val segments: List<SegmentEntity>,
 	/* company colour for the card band (M12) */
 	val companyColor: Int? = null,
+	/* the entry's tags, set on the "Chiuse" rows only (issue #59) */
+	val tags: Set<String> = emptySet(),
+	/* the last segment end: the sort key of the "Chiuse" list (issue #59) */
+	val endUtcMs: Long? = null,
 ) {
 	val title: String? get() = client ?: company
 
@@ -98,7 +110,7 @@ data class EntryCard(
 class HomeViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
-	settings: SettingsRepository,
+	private val settingsRepo: SettingsRepository,
 ) : EntryCommander(entries) {
 	val cards = combine(
 		entries.openEntries, entries.openEntrySegments, master.clients, master.companies,
@@ -111,19 +123,41 @@ class HomeViewModel(
 		}.sortedByDescending { it.lastChange }
 	}.state(emptyList())
 
-	val settings = settings.settings.state(null)
+	val settings = settingsRepo.settings.state(null)
 
-	/* the last completed entries, most recent first (owner, 2026-10-19) */
+	/*
+	 * The "Chiuse" tab (issue #59): the entries that stopped being worked on
+	 * (closed or to complete) with their last segment ending in the last 31
+	 * days — the largest window offered — newest end first. The window and
+	 * the company/tag filters are applied on top of it.
+	 */
+	private val closedFrom = System.currentTimeMillis() - 31L * 24 * 60 * 60 * 1000
 	val closed = combine(
-		entries.recentClosed, entries.recentClosedSegments, master.clients, master.companies,
-	) { list, segs, clients, companies ->
+		entries.closedEntriesSince(closedFrom, CLOSED_LIMIT),
+		entries.closedSegmentsSince(closedFrom, CLOSED_LIMIT),
+		entries.closedTagsSince(closedFrom, CLOSED_LIMIT),
+		master.clients, master.companies,
+	) { list, segs, tags, clients, companies ->
 		val cl = clients.associateBy { it.id }
 		val co = companies.associateBy { it.id }
 		val bySeg = segs.groupBy { it.entryId }
+		val byTag = tags.groupBy { it.entryId }
 		list.map { e ->
-			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), companyColor(e.companyId, e.companyId?.let { co[it]?.color }))
+			EntryCard(
+				e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(),
+				companyColor(e.companyId, e.companyId?.let { co[it]?.color }),
+				tags = byTag[e.id].orEmpty().map { it.tag }.toSet(),
+				endUtcMs = bySeg[e.id].orEmpty().maxOfOrNull { it.endUtcMs ?: 0L },
+			)
 		}
 	}.state(emptyList())
+
+	/* every tag in use, for the "Chiuse" filter */
+	val tags = entries.allTags.state(emptyList())
+
+	/* the last tab chosen and its window are remembered (issue #59, answer 5) */
+	fun setTab(tab: HomeTab) = run { settingsRepo.update { it.copy(homeTab = tab.name) } }
+	fun setClosedWindow(hours: Int) = run { settingsRepo.update { it.copy(homeClosedWindow = hours) } }
 
 	/* the entry shown in the big card; null = the most recent one */
 	private val _selected = MutableStateFlow<Long?>(null)
@@ -141,6 +175,10 @@ class HomeViewModel(
 	fun startTravel() = run {
 		val p = entries.startProposal(master.knownSites())
 		entries.start(StartRequest(SegmentKind.TRAVEL, clientId = null, companyId = p.companyId, locationKind = p.locationKind), emptyMap())
+	}
+
+	companion object {
+		private const val CLOSED_LIMIT = 200
 	}
 }
 
@@ -177,19 +215,69 @@ fun HomeScreen(
 	val cards = if (only == null) allCards else allCards.filter { it.entry.companyId == only }
 	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
 	val small = cards.filter { it !== big }
+
 	/*
-	 * the last completed entries stay in view: 2 (normal) or 3 (compact)
-	 * small cards, open background entries take their places first
+	 * The bottom tabs (issue #59): planned to-dos ahead, entries and done
+	 * to-dos behind; the filters act on the list shown. The to-do state
+	 * comes from the shared To-dos view model, as before.
 	 */
-	val allClosed by vm.closed.collectAsState()
-	val closed = if (only == null) allClosed else allClosed.filter { it.entry.companyId == only }
-	val slots = if (LocalCompact.current) 3 else 2
-	val recent = closed.take(maxOf(0, slots - small.size))
+	val todosVm = todosViewModel()
+	val openTodos by todosVm.open.collectAsState()
+	val ignoredTodos by todosVm.ignored.collectAsState()
+	val doneTodos by todosVm.done.collectAsState()
+	val todoClients by todosVm.clients.collectAsState()
+	val todoCompanies by todosVm.companies.collectAsState()
+	val closedCards by vm.closed.collectAsState()
+	val allTags by vm.tags.collectAsState()
+	var closedTag by rememberSaveable { mutableStateOf<String?>(null) }
+	var todoDialog by remember { mutableStateOf<TodoEntity?>(null) }
+	var todoEditing by remember { mutableStateOf<TodoEntity?>(null) }
 
 	/* policy (issue #48): entries only from to-dos, no travel, no to-dos */
 	val policy = LocalPolicy.current
 	val canStart = policy.entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.FREE
 	val canTravel = policy.enabled(Feature.TRAVEL)
+	val showPlanned = policy.enabled(Feature.TODOS)
+	val tab = if (showPlanned) HomeTab.of(settings?.homeTab) else HomeTab.CLOSED
+	val zone = ZoneId.systemDefault()
+	val todoCompany = settings?.todoCompanyFilter
+	val plannedWindow = settings?.homeTodoWindowHours ?: 24
+	val closedWindow = settings?.homeClosedWindow ?: 0
+	val split = plannedSplit(openTodos, todoCompany, plannedWindow, Instant.now(), zone)
+	val boundary = closedBoundary(closedWindow, settings?.carryOverMin ?: 6 * 60, Instant.now(), zone)
+	val closedRows = buildList {
+		for (c in closedCards)
+			if ((todoCompany == null || c.entry.companyId == todoCompany) &&
+				(closedTag == null || closedTag in c.tags) &&
+				(c.endUtcMs ?: c.entry.updatedUtcMs) > boundary.toEpochMilli()
+			)
+				add(ClosedRow.Entry(c))
+		for (t in doneTodos)
+			if ((todoCompany == null || t.companyId == todoCompany) && Instant.ofEpochMilli(t.updatedUtcMs).isAfter(boundary))
+				add(ClosedRow.Todo(t, todoClients.firstOrNull { it.id == t.clientId }?.name))
+	}.sortedByDescending { it.sortMs }
+	/* the ones ignored today stay at the bottom of the planned list (owner, 2026-10-18) */
+	val ignoredToday = if (settings?.todoShowIgnored == false) emptyList() else ignoredTodos.filter { t ->
+		(todoCompany == null || t.companyId == todoCompany) &&
+			t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == LocalDate.now()
+	}
+	val plannedCount = split.dated.size + split.noDate.size + ignoredToday.size
+	/* with a filter the header stays, so the filter can be removed */
+	val showTabs = plannedCount + closedRows.size > 0 || todoCompany != null || closedTag != null
+	val plannedLabels = listOf(
+		24 to stringResource(R.string.todo_window_24h),
+		72 to stringResource(R.string.todo_window_3d),
+		168 to stringResource(R.string.todo_window_7d),
+		720 to stringResource(R.string.todo_window_30d),
+		0 to stringResource(R.string.todo_window_all),
+	)
+	val closedLabels = listOf(
+		0 to stringResource(R.string.home_window_today),
+		24 to stringResource(R.string.todo_window_24h),
+		168 to stringResource(R.string.todo_window_7d),
+		720 to stringResource(R.string.todo_window_30d),
+	)
+	val plannedBands = bands(split.dated + split.noDate + ignoredToday, todoCompanies, todoClients)
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
 		onBack = null,
@@ -236,15 +324,90 @@ fun HomeScreen(
 						SmallEntryCard(c, now, onSelect = { vm.select(c.entry.id) }, onCommand = { run(c.entry, it) }, onOpen = { onOpenEntry(c.entry.id) })
 					}
 				}
-				items(recent, key = { "closed-${it.entry.id}" }) { c ->
-					Box(Modifier.padding(horizontal = 16.dp).alpha(0.75f)) {
-						SmallEntryCard(c, now, onSelect = { onOpenEntry(c.entry.id) }, onCommand = {}, onOpen = { onOpenEntry(c.entry.id) })
+				if (showTabs) {
+					item(key = "tabs") {
+						HomeTabsHeader(
+							tab = tab,
+							showPlanned = showPlanned,
+							count = if (tab == HomeTab.PLANNED) plannedCount else closedRows.size,
+							windowHours = if (tab == HomeTab.PLANNED) plannedWindow else closedWindow,
+							windowLabels = if (tab == HomeTab.PLANNED) plannedLabels else closedLabels,
+							onWindow = { if (tab == HomeTab.PLANNED) todosVm.setHomeWindow(it) else vm.setClosedWindow(it) },
+							todosVm = todosVm,
+							showTagFilter = tab == HomeTab.CLOSED,
+							tag = closedTag,
+							tags = allTags,
+							onTag = { closedTag = it },
+							onTab = { vm.setTab(it) },
+						)
+					}
+					when (tab) {
+						HomeTab.PLANNED -> {
+							items(split.dated, key = { "todo-${it.id}" }) { t ->
+								TodoSwipeCard(
+									t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
+									onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
+								) { todoDialog = t }
+							}
+							if (split.noDate.isNotEmpty()) {
+								item(key = "no-date") {
+									Text(
+										stringResource(R.string.home_no_date),
+										style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
+										modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+									)
+								}
+								items(split.noDate, key = { "todo-nodate-${it.id}" }) { t ->
+									TodoSwipeCard(
+										t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
+										onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
+									) { todoDialog = t }
+								}
+							}
+							items(ignoredToday, key = { "todo-ignored-${it.id}" }) { t ->
+								TodoSwipeCard(
+									t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
+									onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
+								) { todoDialog = t }
+							}
+							if (plannedCount == 0)
+								item(key = "planned-empty") { EmptyText(stringResource(R.string.home_planned_empty)) }
+						}
+						HomeTab.CLOSED -> {
+							items(
+								closedRows,
+								key = { row ->
+									when (row) {
+										is ClosedRow.Entry -> "closed-entry-${row.card.entry.id}"
+										is ClosedRow.Todo -> "closed-todo-${row.todo.id}"
+									}
+								},
+							) { row ->
+								when (row) {
+									is ClosedRow.Entry -> Box(Modifier.padding(horizontal = 16.dp).alpha(0.75f)) {
+										SmallEntryCard(
+											row.card, now,
+											onSelect = { onOpenEntry(row.card.entry.id) },
+											onCommand = {},
+											onOpen = { onOpenEntry(row.card.entry.id) },
+										)
+									}
+									is ClosedRow.Todo -> Box(Modifier.padding(horizontal = 16.dp)) {
+										TodoCard(row.todo, row.client) { todoDialog = row.todo }
+									}
+								}
+							}
+							if (closedRows.isEmpty())
+								item(key = "closed-empty") { EmptyText(stringResource(R.string.home_closed_empty)) }
+						}
 					}
 				}
-				if (policy.enabled(Feature.TODOS))
-					item(key = "todos") { TodoTodaySection(onStartTodo) }
 			}
 		}
+		todoDialog?.let { t ->
+			TodoActions(t, todosVm, onStart = { onStartTodo(t.id) }, onEdit = { todosVm.clearError(); todoEditing = t }) { todoDialog = null }
+		}
+		todoEditing?.let { t -> TodoEditDialog(t, todosVm) { todoEditing = null } }
 	}
 }
 
