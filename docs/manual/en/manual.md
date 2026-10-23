@@ -1,7 +1,15 @@
-Version 0.7.1 (October 2026). Please report any difference between this
+Version 0.7.2 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.7.2** (tested on the debug phone)
+- **Times** coloured by kind: work green, pause yellow, travel blue; the
+  **running** segment can change its date and start (§6).
+- **Integrations**: an activity deleted after sending is deleted in the
+  management system too at the next sync; Antares asks for the client's
+  **Premises** for activities on a service (without it they were refused).
+- A guide to writing a plugin (`plugins/GUIDE.en.md` in the repository).
 
 **New in 0.7.1** (planning not tested on the phone)
 - To-do **planning**: date only, date and start (a moment), or date and
