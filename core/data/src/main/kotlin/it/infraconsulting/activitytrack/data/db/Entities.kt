@@ -655,3 +655,16 @@ data class RemoteRecordEntity(
 	val hash: String,
 	@ColumnInfo(name = "sent_utc_ms") val sentUtcMs: Long,
 )
+
+/*
+ * A remote record whose entry was deleted (issue #48): its sent records go
+ * with the entry, so the remote id waits here, with the company whose
+ * plugin sent it, until the next sync deletes it on the remote side.
+ */
+@Entity(tableName = "remote_deleted", primaryKeys = ["plugin_id", "remote_id"])
+data class RemoteDeletedEntity(
+	@ColumnInfo(name = "company_id") val companyId: Long,
+	@ColumnInfo(name = "plugin_id") val pluginId: String,
+	@ColumnInfo(name = "remote_id") val remoteId: String,
+	@ColumnInfo(name = "deleted_utc_ms") val deletedUtcMs: Long,
+)

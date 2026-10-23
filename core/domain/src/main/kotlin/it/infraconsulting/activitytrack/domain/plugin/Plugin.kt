@@ -86,7 +86,8 @@ data class Lookup(val request: Request, val select: Expr)
 /* A remote list kept for the entry form; the map gives id, name, clientCode, kind, active, order, extra.* */
 data class RemoteList(val parent: String?, val sources: List<ListSource>)
 
-data class ListSource(val request: Request, val map: Map<String, Expr>)
+/* [whenExpr]: read only when true for the parent item (e.g. services have premises, projects not) */
+data class ListSource(val request: Request, val map: Map<String, Expr>, val whenExpr: Expr? = null)
 
 enum class ImportTarget(val key: String, val fields: Set<String>) {
 	CLIENTS("clients", setOf("name", "code")),

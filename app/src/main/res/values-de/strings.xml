@@ -526,6 +526,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="entry_delete_title">Tätigkeit löschen</string>
   <string name="entry_delete_text">Die Tätigkeit wird mit Abschnitten, Ausgaben, Verweisen und Tags gelöscht.</string>
   <string name="entry_delete_ticket">Die erfasste Zeit wird gelöscht; die Aufgabe „%1$s“ ist wieder offen.</string>
+  <string name="entry_delete_sent">Bereits an das Verwaltungssystem gesendet: dort wird sie bei der nächsten Synchronisierung gelöscht.</string>
   <string name="entry_delete_attachments">Die Tätigkeit hat %1$d Anhänge: zuerst im Bereich Anhänge löschen.</string>
   <!-- issue #44 -->
   <string name="backup_section">Sicherung</string>

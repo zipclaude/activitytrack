@@ -64,7 +64,7 @@
 				{ "request": { "path": "/v3/ServicePortfolios", "query": { "$select": "Id,Name,CustomerId,State,Lifecycle", "$orderby": "Name" }, "paged": true },
 				  "map": { "id": "$.Id", "name": "$.Name", "clientCode": "$.CustomerId", "kind": "service",
 				           "active": { "and": [ { "in": ["$.State", "@lookup.serviceStates"] }, { "in": ["$.Lifecycle", "@lookup.serviceLifecycles"] } ] },
-				           "extra": { "path": "/v3/ServicePortfolios" } } },
+				           "extra": { "path": "/v3/ServicePortfolios", "premises": true } } },
 				{ "request": { "path": "/v3/Projects", "query": { "$select": "Id,Name,CustomerId,Status", "$orderby": "Name" }, "paged": true },
 				  "map": { "id": "$.Id", "name": "$.Name", "clientCode": "$.CustomerId", "kind": "project",
 				           "active": { "in": ["$.Status", "@lookup.projectStates"] },
@@ -76,6 +76,14 @@
 			"sources": [
 				{ "request": { "path": "${parent.extra.path}/${parent.id}/ActivityTypes" },
 				  "map": { "id": "$.ActivityTypeId", "name": "$.ActivityTypeName", "order": "$.Order", "extra": { "included": "$.Included" } } }
+			]
+		},
+		"premises": {
+			"parent": "portfolio",
+			"sources": [
+				{ "when": "@parent.extra.premises",
+				  "request": { "path": "/v3/ServicePortfolios/${parent.id}/CustomerPremises" },
+				  "map": { "id": { "coalesce": ["$.CustomerPremisId", "$.Id"] }, "name": { "coalesce": ["$.CustomerPremisName", "$.Name"] } } }
 			]
 		}
 	},
@@ -106,6 +114,9 @@
 	"entryFields": [
 		{ "key": "portfolio", "list": "portfolio", "label": { "it": "Servizio o progetto", "en": "Service or project" },
 		  "required": { "eq": ["@todo", null] }, "hidden": { "ne": ["@todo", null] }, "filter": { "clientCode": "@entry.client.code" } },
+		{ "key": "premises", "list": "premises", "parent": "@field.portfolio",
+		  "required": { "and": [ { "eq": ["@todo", null] }, { "eq": ["@list.portfolio.selected.kind", "service"] } ] },
+		  "hidden": { "ne": ["@todo", null] }, "label": { "it": "Sede", "en": "Premises" } },
 		{ "key": "activityType", "list": "activityType", "parent": "@field.portfolio", "required": true,
 		  "label": { "it": "Tipo di attività", "en": "Activity type" } },
 		{ "key": "included", "type": "bool", "default": "@list.activityType.selected.extra.included",
@@ -121,7 +132,7 @@
 			"TicketId": { "if": { "ne": ["@todo", null] }, "then": "@todo.externalKey" },
 			"PortfolioId": { "if": { "eq": ["@todo", null] }, "then": "@field.portfolio" },
 			"CustomerId": { "coalesce": ["@todo.fields.customer", "@list.portfolio.selected.clientCode"] },
-			"CustomerPremisId": "@todo.fields.customerPremis",
+			"CustomerPremisId": { "coalesce": ["@todo.fields.customerPremis", "@field.premises"] },
 			"ActivityTypeId": "@field.activityType",
 			"OwnerId": "@identity.personId",
 			"FromDate": { "date": "@block.from", "format": "isoOffset" },

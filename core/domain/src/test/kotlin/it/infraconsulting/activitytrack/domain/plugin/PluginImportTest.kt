@@ -52,6 +52,7 @@ class PluginImportTest {
 				"/v3/Projects" to """[ { "Id": "P1", "Name": "Migrazione", "CustomerId": "C2", "Status": 5 } ]""",
 				"/v3/ServicePortfolios/S1/ActivityTypes" to """[ { "ActivityTypeId": "T1", "ActivityTypeName": "Intervento", "Included": true, "Order": 2 } ]""",
 				"/v3/Projects/P1/ActivityTypes" to """[ { "ActivityTypeId": "T1", "ActivityTypeName": "Intervento", "Included": false, "Order": 1 } ]""",
+				"/v3/ServicePortfolios/S1/CustomerPremises" to """[ { "CustomerPremisId": "H1", "CustomerPremisName": "Sede centrale" } ]""",
 			),
 		)
 		val items = run { PluginImport.lists(antares, PluginClient(antares, t, auth, { }), env()) }
@@ -63,6 +64,9 @@ class PluginImportTest {
 		assertEquals(listOf("S1", "P1"), types.map { it.parentId })
 		assertEquals(listOf(JsonPrimitive(true), JsonPrimitive(false)), types.map { it.extra["included"] })
 		assertTrue(t.urls.none { "S2/ActivityTypes" in it })
+		/* premises only under services ("when"): none asked for the project */
+		assertEquals(listOf("S1" to "Sede centrale"), items.filter { it.list == "premises" }.map { it.parentId to it.name })
+		assertTrue(t.urls.none { "P1/CustomerPremises" in it })
 	}
 
 	@Test

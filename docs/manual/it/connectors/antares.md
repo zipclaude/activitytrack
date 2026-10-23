@@ -1,5 +1,5 @@
 <!-- title: Integrazione Antares (Saidea) -->
-Versione 0.7.1 · guida al collegamento tra ActivityTrack e il gestionale
+Versione 0.7.2 · guida al collegamento tra ActivityTrack e il gestionale
 Antares di Saidea. L'uso generale dell'app è nel *Manuale*.
 
 ## 1. Cosa fa
@@ -95,6 +95,9 @@ Nella scheda di un'attività dell'azienda compare la sezione **Antares
 
 - **Servizio o progetto**, filtrato sul cliente dell'attività (nascosto se
   l'attività nasce da un ticket: vale quello del ticket);
+- **Sede** del cliente presso cui hai lavorato, tra quelle collegate al
+  servizio (obbligatoria per un servizio; nascosta se l'attività nasce da un
+  ticket: vale la sede del ticket);
 - **Tipo di attività**, tra quelli del servizio o progetto (obbligatorio);
 - **Incluso nel contratto**, proposto dal tipo di attività.
 
@@ -113,6 +116,8 @@ Nella scheda di un'attività dell'azienda compare la sezione **Antares
 - Se modifichi un'attività già inviata, la sincronizzazione successiva la
   aggiorna (senza sovrascrivere modifiche fatte nel frattempo in Antares);
   se un blocco sparisce, viene cancellato in Antares.
+- Se **elimini** un'attività già inviata, l'app lo segnala e la cancella
+  anche in Antares alla sincronizzazione successiva.
 
 ## 8. Problemi frequenti
 
@@ -122,5 +127,5 @@ Nella scheda di un'attività dell'azienda compare la sezione **Antares
 | "Accesso non riuscito" | controlla gli indirizzi e il Client ID |
 | Il browser non torna all'app dopo il login | il client di Saidea non conosce l'indirizzo di ritorno dell'app: segnalalo a Saidea |
 | Nessun ticket | i ticket arrivano solo se sei tecnico o richiedente |
-| Attività "non inviate" nel resoconto | scegli il tipo di attività (e il servizio, se non nasce da un ticket) e risincronizza |
+| Attività "non inviate" nel resoconto | scegli il tipo di attività (e servizio e sede, se non nasce da un ticket) e risincronizza |
 | Gli aggiornamenti arrivano in ritardo | Android rinvia i lavori periodici in standby; **Sincronizza ora** li scarica subito |
