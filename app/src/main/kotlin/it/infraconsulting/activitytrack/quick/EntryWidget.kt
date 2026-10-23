@@ -27,6 +27,7 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
@@ -147,14 +148,16 @@ class EntryWidget : GlanceAppWidget() {
 				.background(GlanceTheme.colors.widgetBackground).padding(12.dp),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
+			/* defaultWeight only: fillMaxSize here would take the whole height and clip the buttons out */
 			Row(
-				modifier = GlanceModifier.defaultWeight().fillMaxSize().clickable(open),
+				modifier = GlanceModifier.defaultWeight().fillMaxWidth().clickable(open),
 				verticalAlignment = Alignment.CenterVertically,
 			) {
 				Column(modifier = GlanceModifier.defaultWeight()) {
 					s.company?.let { Text(it, maxLines = 1, style = TextStyle(color = dim, fontSize = 11.sp)) }
 					Text(s.title, maxLines = 1, style = TextStyle(color = text, fontWeight = FontWeight.Bold, fontSize = 16.sp))
 					s.activity?.let { Text(it, maxLines = 1, style = TextStyle(color = dim, fontSize = 12.sp)) }
+				if (s.entryId != null) {
 					val state = when (s.status) {
 						EntryStatus.ACTIVE -> context.getString(
 							R.string.widget_since,
@@ -177,7 +180,8 @@ class EntryWidget : GlanceAppWidget() {
 						maxLines = 1, style = TextStyle(color = dim, fontSize = 11.sp),
 					)
 				}
-				s.runningMs?.let {
+			}
+			s.runningMs?.let {
 					Spacer(GlanceModifier.width(8.dp))
 					Text(hm(it), style = TextStyle(color = text, fontWeight = FontWeight.Bold, fontSize = 24.sp))
 				}
@@ -186,19 +190,19 @@ class EntryWidget : GlanceAppWidget() {
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				if (s.entryId == null) {
 					/* the empty card of the Home: start (start screen) and travel (at once) */
-					CommandCircle(EntryCommand.WORK, 48, context.getString(R.string.start_action), widgetOpenScreen(context, Screen.Start))
-					Spacer(GlanceModifier.width(10.dp))
-					CommandCircle(EntryCommand.TRAVEL, 48, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
+					CommandCircle(EntryCommand.WORK, 40, context.getString(R.string.start_action), widgetOpenScreen(context, Screen.Start))
+					Spacer(GlanceModifier.width(8.dp))
+					CommandCircle(EntryCommand.TRAVEL, 40, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
 				} else {
 					for ((i, cmd) in widgetCommands(s.status, s.mode).withIndex()) {
-						if (i > 0) Spacer(GlanceModifier.width(10.dp))
+						if (i > 0) Spacer(GlanceModifier.width(8.dp))
 						CommandCircle(
-							cmd, 48, context.getString(commandLabel(cmd, s.mode)),
+							cmd, 40, context.getString(commandLabel(cmd, s.mode)),
 							actionRunCallback<WidgetCommandAction>(actionParametersOf(ENTRY to s.entryId, COMMAND to cmd.name)),
 						)
 					}
 					if (s.status == EntryStatus.TO_COMPLETE) {
-						Spacer(GlanceModifier.width(10.dp))
+						Spacer(GlanceModifier.width(8.dp))
 						Box(
 							modifier = GlanceModifier.cornerRadius(24.dp).background(ColorProvider(commandStyle(EntryCommand.WORK)!!.container))
 								.padding(horizontal = 14.dp, vertical = 10.dp).clickable(open),

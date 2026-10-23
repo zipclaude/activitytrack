@@ -18,6 +18,8 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -25,7 +27,7 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.height
+import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
@@ -42,6 +44,7 @@ import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.Screen
+import it.infraconsulting.activitytrack.ui.common.RED
 import it.infraconsulting.activitytrack.ui.home.plannedSplit
 import it.infraconsulting.activitytrack.ui.todo.overdue
 import java.time.Instant
@@ -150,17 +153,19 @@ class TodoWidget : GlanceAppWidget() {
 				}
 				return@Column
 			}
-			/* a taller widget shows the rows below; at most MAX_ROWS */
-			Column(modifier = GlanceModifier.fillMaxSize()) {
-				for ((i, r) in rows.withIndex()) {
-					if (i > 0) Spacer(GlanceModifier.height(6.dp))
-					Row(modifier = GlanceModifier.fillMaxSize().clickable(widgetOpenScreen(context, Screen.Todo(r.todo.id)))) {
+			/* the rows scroll when they do not fit; at most MAX_ROWS */
+			LazyColumn {
+				items(rows, itemId = { it.todo.id }) { r ->
+					Row(
+						modifier = GlanceModifier.fillMaxWidth().padding(vertical = 3.dp)
+							.clickable(widgetOpenScreen(context, Screen.Todo(r.todo.id))),
+					) {
 						Column(modifier = GlanceModifier.defaultWeight()) {
 							Row {
 								Text(
 									r.time, maxLines = 1,
 									style = TextStyle(
-										color = if (r.late) ColorProvider(android.graphics.Color.RED) else dim, fontSize = 11.sp,
+										color = if (r.late) ColorProvider(RED) else dim, fontSize = 11.sp,
 									),
 								)
 								if (r.late) Spacer(GlanceModifier.width(4.dp))
