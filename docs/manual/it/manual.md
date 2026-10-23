@@ -1,7 +1,16 @@
-Versione 0.7.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.7.2 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.7.2** (provata sul telefono di debug)
+- **Tempi** colorati per tipo: lavoro verde, pausa gialla, viaggio blu; del
+  tratto **in corso** si possono cambiare data e inizio (§6).
+- **Integrazioni**: un'attività eliminata dopo l'invio viene cancellata
+  anche nel gestionale alla sincronizzazione successiva; Antares chiede la
+  **Sede** del cliente per le attività su un servizio (senza, il gestionale
+  le rifiutava).
+- Guida per scrivere un plugin (`plugins/GUIDE.it.md` nel repository).
 
 **Novità della 0.7.1** (pianificazione non provata sul telefono)
 - **Pianificazione** delle *Da fare*: solo la data, data e inizio (un
