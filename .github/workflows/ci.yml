@@ -125,7 +125,9 @@ jobs:
       - name: Manual PDF
         env:
           TAG: ${{ github.ref_name }}
-        run: scripts/build-manual.sh "${TAG#v}"
+        # a release without manual changes builds the PDFs of the manual's own version
+        run: |
+          if grep -qx "${TAG#v}" scripts/manual-unchanged; then scripts/build-manual.sh; else scripts/build-manual.sh "${TAG#v}"; fi
 
       - name: Manual PDF check
         run: |

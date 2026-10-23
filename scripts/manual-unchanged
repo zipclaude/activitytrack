@@ -1,0 +1,4 @@
+# Versions released without changes to the manual (owner's choice): the
+# release carries the manual of the previous version, PDFs included. One
+# version per line; read by scripts/check-manual.sh and the release job.
+0.7.3
