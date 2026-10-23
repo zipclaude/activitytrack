@@ -189,7 +189,7 @@ plugin fields in the entry; fixes: ICU regex in Expr (crash), plugin
 fields item loaded outside the lazy list, field spacing. B6 done 2026-10-22 on the demo (client "activitytrack", PascalCase
 claims, tickets where the person is technician OR applicant, ticket
 CustomerId + CustomerPremisId kept as to-do fields and sent, else HTTP 500;
-POST and PUT 200); PR #29 closed. Issue #52 done in 0.7.1 (not device-tested). Not yet tested: deleting a sent activity, sending an
+POST and PUT 200); PR #29 closed. Issue #52 done in 0.7.1 (not device-tested). Issue #57 (branch `issue-57-segments`): segment kind badges (work green, pause yellow, travel blue) and the running segment's start editable (EntryRepository.moveRunningStart, overlap confirm); instrumented test runningSegmentStartMoves not run yet, not device-tested. Not yet tested: deleting a sent activity, sending an
 activity on a service (premises?).
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
