@@ -89,6 +89,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val todoNext24h = booleanPreferencesKey("todo_today_only")
 		val todoWindow = intPreferencesKey("todo_window_hours")
 		val homeTodoWindow = intPreferencesKey("home_todo_window_hours")
+		val homeTab = stringPreferencesKey("home_tab")
+		val homeClosedWindow = intPreferencesKey("home_closed_window_hours")
 		val agendaView = stringPreferencesKey("agenda_view")
 		val todoShowIgnored = booleanPreferencesKey("todo_show_ignored")
 		val callsIncoming = booleanPreferencesKey("calls_incoming")
@@ -141,6 +143,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			todoCompanyFilter = p[K.todoCompany],
 			todoWindowHours = p[K.todoWindow] ?: if (p[K.todoNext24h] == true) 24 else d.todoWindowHours,
 			homeTodoWindowHours = p[K.homeTodoWindow] ?: d.homeTodoWindowHours,
+			homeTab = p[K.homeTab] ?: d.homeTab,
+			homeClosedWindow = p[K.homeClosedWindow] ?: d.homeClosedWindow,
 			agendaView = p[K.agendaView] ?: d.agendaView,
 			todoShowIgnored = p[K.todoShowIgnored] ?: d.todoShowIgnored,
 			listOrders = OrderedList.entries.fold(d.listOrders) { o, l -> o.with(l, enumOr(p[K.order(l)], d.listOrders.of(l))) },
@@ -190,6 +194,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		s.todoCompanyFilter?.let { p[K.todoCompany] = it } ?: p.remove(K.todoCompany)
 		p[K.todoWindow] = s.todoWindowHours
 		p[K.homeTodoWindow] = s.homeTodoWindowHours
+		p[K.homeTab] = s.homeTab
+		p[K.homeClosedWindow] = s.homeClosedWindow
 		p[K.agendaView] = s.agendaView
 		p.remove(K.todoNext24h)
 		p[K.todoShowIgnored] = s.todoShowIgnored

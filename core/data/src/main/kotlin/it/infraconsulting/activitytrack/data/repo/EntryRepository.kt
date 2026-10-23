@@ -99,6 +99,11 @@ class EntryRepository(
 	val recentClosedSegments = dao.observeRecentClosedSegments(RECENT_CLOSED)
 	val clientLastUse = dao.observeClientLastUse()
 
+	/* the Home "Chiuse" tab (issue #59): entries ended after [fromUtcMs], newest end first */
+	fun closedEntriesSince(fromUtcMs: Long, limit: Int) = dao.observeClosedSince(fromUtcMs, limit)
+	fun closedSegmentsSince(fromUtcMs: Long, limit: Int) = dao.observeClosedSegmentsSince(fromUtcMs, limit)
+	fun closedTagsSince(fromUtcMs: Long, limit: Int) = dao.observeClosedTagsSince(fromUtcMs, limit)
+
 	fun entry(id: Long) = dao.observeEntry(id)
 	suspend fun find(id: Long): TimeEntryEntity? = dao.entry(id)
 	fun segments(entryId: Long) = dao.observeSegments(entryId)
