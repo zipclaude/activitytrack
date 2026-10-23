@@ -159,6 +159,7 @@ are written back at every read, so they cannot drift.
 | `backupHour` | hour | 0–23 |
 | `todoWindowHours` | hours | 0 (all), 24, 168, 720 |
 | `homeTodoWindowHours` | hours | 0 (all), 24, 168, 720 |
+| `widgetTodoWindowHours` | hours | 24, 72, 168, 720 |
 | `roundingWorkMin` | minutes | 1, 5, 15, 30, 60 |
 | `roundingTravelMin` | minutes | 1, 5, 15, 30, 60 |
 | `roundingPauseMin` | minutes | 1, 5, 15, 30, 60 |

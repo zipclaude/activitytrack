@@ -173,9 +173,18 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
 - Glance widgets: 4×1 (running entry with its commands and €, or recent
   clients), 1×1 WORK/PAUSE toggle; Quick Settings tile with the same toggle
   (added from Settings: some launchers do not list it).
+- Glance widgets 4×2 (issue #62): current activity (the latest open entry
+  as on the Home card: company, client, activity, state, work/travel totals,
+  elapsed once a minute while it runs, its command buttons with STOP at
+  once; without an open entry Start opens the start screen and Travel starts
+  headlessly; resizable) and planned to-dos (window a setting, default 24 h
+  + overdue; a row with a client starts directly, without one the start
+  screen asks; the started row shows Pause and Stop; done rows leave).
 - Launcher shortcuts: the 4 most recent clients and "Expense".
 - Nothing that needs a confirmation starts outside the app: widgets and
-  shortcuts open the start screen with the client picked.
+  shortcuts open the start screen with the client picked. One exception
+  (owner, 2026-10-23): the planned-to-dos widget starts directly, the
+  to-do carrying client, company and title.
 - Client fields are searchable combo boxes (case and accents ignored).
 - Dictation of the activity text through the system speech recognizer; its
   language is a setting (default Italian).

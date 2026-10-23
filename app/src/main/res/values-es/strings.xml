@@ -38,6 +38,11 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="widget_status_description">Actividad en curso con sus órdenes, o clientes recientes</string>
   <string name="widget_toggle_name">Pausa / reanudar</string>
   <string name="widget_toggle_description">Pausa o reanuda la actividad en curso</string>
+  <string name="widget_entry_name">Actividad en curso 4×2</string>
+  <string name="widget_entry_description">La actividad en curso como en la tarjeta de Inicio, con sus comandos</string>
+  <string name="widget_todo_name">Tareas planificadas 4×2</string>
+  <string name="widget_todo_description">Las próximas tareas planificadas, cada una con botón Iniciar</string>
+  <string name="widget_todo_empty">Nada planificado</string>
   <string name="status_suspended">Suspendida</string>
   <string name="status_to_complete">Por completar</string>
   <string name="status_closed">Cerrada</string>
@@ -404,6 +409,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualización</string>
   <string name="set_display">Aspecto</string>
+  <string name="set_widget_todo_window">Widget de tareas planificadas: periodo</string>
   <string name="display_normal">Normal</string>
   <string name="display_compact">Compacta</string>
   <string name="quick_company">Nueva empresa</string>

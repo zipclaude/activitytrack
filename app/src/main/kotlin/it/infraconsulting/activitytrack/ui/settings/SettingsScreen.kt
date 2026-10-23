@@ -70,7 +70,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* data folder, calendars and gestures change through their own rows, not this form */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, homeTab = cur.homeTab, homeClosedWindow = cur.homeClosedWindow, homeFilterEntries = cur.homeFilterEntries, todoShowIgnored = cur.todoShowIgnored, listOrders = cur.listOrders) }
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, homeTab = cur.homeTab, homeClosedWindow = cur.homeClosedWindow, widgetTodoWindowHours = cur.widgetTodoWindowHours, homeFilterEntries = cur.homeFilterEntries, todoShowIgnored = cur.todoShowIgnored, listOrders = cur.listOrders) }
 			onDone()
 		}
 	}
@@ -156,6 +156,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var callsAlways by remember { mutableStateOf(initial.callsAlways) }
 	var backupEvery by remember { mutableStateOf(initial.backupEveryHours) }
 	var backupHour by remember { mutableStateOf(initial.backupHour) }
+	var widgetTodoWindow by remember { mutableStateOf(initial.widgetTodoWindowHours) }
 	/* recognition needs the phone state and the call log: asked when switched on */
 	val callPermissions = androidx.activity.compose.rememberLauncherForActivityResult(
 		androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
@@ -201,6 +202,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		callsAlways = callsAlways,
 		backupEveryHours = backupEvery,
 		backupHour = backupHour,
+		widgetTodoWindowHours = widgetTodoWindow,
 		rounding = ReportRounding(
 			work.copy(minimum = minutes(F.WORK_MIN, work.minimum)),
 			travel.copy(minimum = minutes(F.TRAVEL_MIN, travel.minimum)),
@@ -220,12 +222,27 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			when (section) {
-				SettingsSection.DISPLAY -> PolicySetting("compactDisplay") {
-					ChoiceField(
-						stringResource(R.string.set_display),
-						listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
-						compact,
-					) { compact = it }
+				SettingsSection.DISPLAY -> {
+					PolicySetting("compactDisplay") {
+						ChoiceField(
+							stringResource(R.string.set_display),
+							listOf(false to stringResource(R.string.display_normal), true to stringResource(R.string.display_compact)),
+							compact,
+						) { compact = it }
+					}
+					/* how far the planned-to-dos widget looks ahead (issue #62) */
+					PolicySetting("widgetTodoWindowHours") {
+						ChoiceField(
+							stringResource(R.string.set_widget_todo_window),
+							listOf(
+								24 to stringResource(R.string.todo_window_24h),
+								72 to stringResource(R.string.todo_window_3d),
+								168 to stringResource(R.string.todo_window_7d),
+								720 to stringResource(R.string.todo_window_30d),
+							),
+							widgetTodoWindow,
+						) { widgetTodoWindow = it }
+					}
 				}
 				SettingsSection.TIMES -> {
 					PolicySetting("editableTimes") {

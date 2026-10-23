@@ -38,6 +38,11 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="widget_status_description">Attività in corso con i comandi, o clienti recenti</string>
   <string name="widget_toggle_name">Pausa / riprendi</string>
   <string name="widget_toggle_description">Mette in pausa o riprende l\'attività in corso</string>
+  <string name="widget_entry_name">Attività in corso 4×2</string>
+  <string name="widget_entry_description">L\'attività in corso come nella scheda della Home, con i suoi comandi</string>
+  <string name="widget_todo_name">Attività pianificate 4×2</string>
+  <string name="widget_todo_description">Le prossime attività pianificate, ognuna con il pulsante Avvia</string>
+  <string name="widget_todo_empty">Niente di pianificato</string>
   <string name="status_suspended">Sospesa</string>
   <string name="status_to_complete">Da completare</string>
   <string name="status_closed">Chiusa</string>
@@ -404,6 +409,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualizzazione</string>
   <string name="set_display">Aspetto</string>
+  <string name="set_widget_todo_window">Widget attività pianificate: intervallo</string>
   <string name="display_normal">Normale</string>
   <string name="display_compact">Compatta</string>
   <string name="quick_company">Nuova azienda</string>
