@@ -53,4 +53,15 @@ class AppSettingsTest {
 		assertEquals(1L, s.calendarFor(8))
 		assertEquals(1L, s.calendarFor(null))
 	}
+
+	@Test
+	fun homeTabAndWindowsValidated() {
+		/* the 3-day planned window (issue #59) is accepted, on the Home and the To-dos screen */
+		assertEquals(72, AppSettings(homeTodoWindowHours = 72).validated().homeTodoWindowHours)
+		assertEquals("CLOSED", AppSettings(homeTab = "CLOSED").validated().homeTab)
+		assertEquals("PLANNED", AppSettings(homeTab = "BOH").validated().homeTab)
+		/* "Chiuse": today (0) or the last 24 h / 7 d / 30 d; anything else falls back to today */
+		assertEquals(168, AppSettings(homeClosedWindow = 168).validated().homeClosedWindow)
+		assertEquals(0, AppSettings(homeClosedWindow = 72).validated().homeClosedWindow)
+	}
 }

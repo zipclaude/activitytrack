@@ -72,6 +72,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M14 fields | **done** (PR #16, on `main`, v0.5.0): field importance borders, drop-down colours (backlog 14), 24-hour to-dos, ignored filter, recent completed entries on Home |
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
 | 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
+| Issue #59 Home tabs | **implemented** (branch `issue-59-home`): top unchanged, bottom Pianificate/Chiuse with swipe-on-header switch, remembered tab, windows 24/72/168/720 h + all (def. 24 h) and today/24 h/7/30 d (def. today, 06:00 boundary), Chiuse = closed/to-complete entries + done to-dos, no-date section; device-tested 2026-10-23 on the Xiaomi (upgrade with data, tabs, windows, swipe, restart memory) |
 | Issue #28 calls | **done** (PR #32, #33, on `main`): contacts, call recognition, call pauses, client calls, on-call option (schema v10); instrumented 53/53 and device-tested 2026-10-20 (real incoming call: pause, proposal, client calls, pause note with editable times off) |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
@@ -144,6 +145,16 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 ```
 
 ## 5. Next steps (review with the owner, 2026-10-19)
+
+Issue #62 widgets (branch `issue-62-widgets`, next): 4×2 current-activity
+widget (stop immediate, only the latest open entry, per-minute elapsed,
+Avvia opens the start screen, resizable) and 4×2 planned to-dos widget
+(direct Start — approved exception to the 2026-10-17 "no direct start"
+rule; days visible a setting, default 24 h + overdue; Pause/Stop on the
+started row; done rows leave). Issue #59 done on `issue-59-home`
+(2026-10-23, device-tested on the Xiaomi, see §3); #60 closed as covered
+by #59 (done to-dos in the Chiuse tab). Not device-tested yet: done to-dos
+in Chiuse (sample DB has none), 3-day window chip, tag filter on Chiuse.
 
 Issue #48 (policy.json + declarative plugins), branch `issue-48-policy`
 (no PR yet, 2026-10-21): order A1–A2 → B1–B6 (0.7.0 = Antares as the first
@@ -405,6 +416,8 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 | 2026-10-18 | Calendar target stays the local "ActivityTrack" calendar (green, this phone only) for now |
 | 2026-10-18 | "Overdue" also for a passed due date (after the due time; date only: from the next day), not only for a planned block that is over |
 | 2026-10-18 | M9 planned to-dos: manual add also from the agenda; planned slot separate from the due date; optional duration, else 1 h growing hourly; in agenda and calendar, tags per kind of time; states open → planned (date+time) → done, overdue highlighted on Home; reminder lead and postpone step configurable (advanced, defaults 15 / 30 min); plan in the interchange format; own PR |
+| 2026-10-23 | #59 Home tabs (owner answers in the issue): top of the Home unchanged; bottom = Pianificate/Chiuse switched by tap or a swipe on the header (card swipes untouched); planned windows 24 h/3 d/7 d/30 d/all (def. 24 h, overdue first, no-date to-dos at the bottom under a separator, ignored-today last); Chiuse windows today/24 h/7 d/30 d (def. today, from the 06:00 carry-over boundary as in the reports), entries closed or to complete + to-dos marked done, newest end first; company filter on the list shown (the "also the entries above" checkbox stays), tag filter only on Chiuse (to-dos carry no tags, as in the agenda); the last tab is remembered (setting `home_tab`) |
+| 2026-10-23 | #62 widgets (owner answers): current-activity 4×2 — stop immediate like the notification, only the latest open entry, elapsed counter per minute, Avvia opens the start screen, resizable from 4×2; planned to-dos 4×2 — direct Start from the widget (approved exception to the 2026-10-17 "no start outside the app" rule), days visible a setting (def. 24 h + overdue), started row shows Pause/Stop, done rows leave |
 
 ## 7. Pitfalls to remember
 
@@ -469,4 +482,8 @@ End commit messages with:
 ```
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ```
-plus the session link line provided by the environment.
+plus the session link line provided by the environment. OpenCode/GLM-5.3
+sessions (owner, 2026-10-23) use instead:
+```
+Co-Authored-By: GLM-5.3 <spam@zipman.it>
+```
