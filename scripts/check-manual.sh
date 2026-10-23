@@ -6,6 +6,8 @@
 #   - a manual does not carry the version of the tag,
 #   - the documentation did not change since the previous tag,
 #   - an image the documents reference is missing.
+# A version listed in scripts/manual-unchanged skips the checks: the owner
+# chose to release it with the previous manual.
 #
 #   scripts/check-manual.sh v0.6.0
 
@@ -15,6 +17,12 @@ cd "$(dirname "$0")/.."
 TAG=$1
 VERSION=${TAG#v}
 fail=0
+
+# a release listed in scripts/manual-unchanged keeps the previous manual (owner, 2026-10-23)
+if grep -qx "$VERSION" scripts/manual-unchanged 2>/dev/null; then
+	echo "manual left unchanged for $VERSION (scripts/manual-unchanged)"
+	exit 0
+fi
 
 for f in docs/manual/it/manual.md docs/manual/it/quickstart.md docs/manual/en/manual.md docs/manual/en/quickstart.md \
 	docs/manual/*/connectors/*.md; do
