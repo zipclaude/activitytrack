@@ -690,6 +690,21 @@ class RepositoryTest {
 		assertEquals(listOf(m(0) to m(30), m(30) to m(40), m(40) to null), segs.map { it.startUtcMs to it.endUtcMs })
 	}
 
+	/* issue #48: deleting an entry a plugin sent keeps its remote id for the next sync */
+	@Test
+	fun deletedEntryKeepsItsRemoteIds() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		entries.apply(id, EntryCommand.STOP)
+		val plugins = db.pluginDao()
+		plugins.recordSent(it.infraconsulting.activitytrack.data.db.RemoteRecordEntity(id, "antares", "2026-10-23#0", "r-1", "h", clock.millis()))
+		assertEquals(true, entries.deletion(id).sent)
+		entries.deleteEntry(id)
+		assertEquals(listOf("r-1"), plugins.deleted(acme, "antares").map { it.remoteId })
+		plugins.forgetDeleted("antares", "r-1")
+		assertEquals(emptyList<Any>(), plugins.deleted(acme, "antares"))
+	}
+
 	/* issue #40: deleting an entry; attachments first; a ticket's to-do opens again; hand-made to-dos deletable */
 	@Test
 	fun deleteEntryAndTodos() = runBlocking<Unit> {

@@ -405,9 +405,11 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				onDismissRequest = vm::cancelDelete,
 				title = { Text(stringResource(R.string.entry_delete_title)) },
 				text = {
-					Text(
-						d.ticket?.let { stringResource(R.string.entry_delete_ticket, it) } ?: stringResource(R.string.entry_delete_text),
-					)
+					Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+						Text(d.ticket?.let { stringResource(R.string.entry_delete_ticket, it) } ?: stringResource(R.string.entry_delete_text))
+						if (d.sent)
+							Text(stringResource(R.string.entry_delete_sent))
+					}
 				},
 				confirmButton = {
 					TextButton(onClick = { vm.deleteEntry(onBack) }) {

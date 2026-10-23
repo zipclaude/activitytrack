@@ -189,7 +189,7 @@ plugin fields in the entry; fixes: ICU regex in Expr (crash), plugin
 fields item loaded outside the lazy list, field spacing. B6 done 2026-10-22 on the demo (client "activitytrack", PascalCase
 claims, tickets where the person is technician OR applicant, ticket
 CustomerId + CustomerPremisId kept as to-do fields and sent, else HTTP 500;
-POST and PUT 200); PR #29 closed. Issue #52 done in 0.7.1 (not device-tested). Issue #57 (branch `issue-57-segments`): segment kind badges (work green, pause yellow, travel blue) and the running segment's start editable (EntryRepository.moveRunningStart, overlap confirm); instrumented test runningSegmentStartMoves not run yet, not device-tested. Not yet tested: deleting a sent activity, sending an
+POST and PUT 200); PR #29 closed. Issue #52 done in 0.7.1 (not device-tested). Issue #57 (branch `issue-57-segments`): segment kind badges (work green, pause yellow, travel blue) and the running segment's start editable (EntryRepository.moveRunningStart, overlap confirm); device-tested 2026-10-23 (badge, running start, future start refused). Device tests 2026-10-23 on the Xiaomi: #34 done (in-app question, background notification with Send, offline queue sent on reconnect, scope All, periodic fetch, new-ticket notification); #48 signed policy (applied, CN pinned, unsigned and other-CN refused, plugin refused until signed with the same CN). Bugs fixed on branch `issue-48-remote-delete` (schema **v14**: remote_deleted keeps the remote ids of a deleted entry for the next sync; Antares list `premises` + entry field Sede, list sources `when`, else HTTP 500 on service activities); B7 guide plugins/GUIDE.{it,en}.md with docs/samples/plugins/timesheet-example.json checked by a test. Not tested: close modes Always/Never. Not yet tested: deleting a sent activity, sending an
 activity on a service (premises?).
 Released v0.6.6 (2026-10-21, NOT device-tested): #44 done (Home filter on
 the entries, Date in New activity: future day plans, past day records with
@@ -456,6 +456,9 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
   on request (e.g. the entry screen's add row) live outside the lazy list.
 - USB adb on Debian needs a udev rule for vendor 22d9 (OnePlus/OPPO); the
   owner added it 2026-10-20, USB is steadier than wireless debugging.
+- MIUI (Xiaomi debug phone) refuses test-only APKs over USB at once
+  (`INSTALL_FAILED_USER_RESTRICTED`, no prompt): instrumented tests cannot
+  run there; check behaviour from the UI and a copy of the DB instead.
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 

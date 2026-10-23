@@ -63,9 +63,12 @@ object PluginImport {
 			val parents: List<RemoteItem?> = if (list.parent == null) listOf(null) else out.filter { it.list == list.parent && it.active }
 			for (parent in parents) {
 				val penv = if (parent == null) env else env.with { r -> if (r.root == "parent") PluginEnv.dig(parent.asJson(), r.path) else null }
-				for (source in list.sources)
+				for (source in list.sources) {
+					if (source.whenExpr != null && !truthy(source.whenExpr.eval(null, penv)))
+						continue
 					for (row in client.list(source.request, penv))
 						item(name, parent?.id.orEmpty(), source.map, row, penv)?.let { out += it }
+				}
 			}
 		}
 		return out

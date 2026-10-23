@@ -271,7 +271,7 @@ object PluginParser {
 				val sources = (lo["sources"] as? JsonArray)?.mapIndexedNotNull { i, s ->
 					val sp = "$p.sources.$i"
 					val so = obj(s, sp) ?: return@mapIndexedNotNull null
-					keys(so, sp, setOf("request", "map"))
+					keys(so, sp, setOf("request", "map", "when"))
 					val req = request(so["request"], "$sp.request", roots) ?: return@mapIndexedNotNull null
 					val mo = obj(so["map"], "$sp.map") ?: return@mapIndexedNotNull null.also { error("$sp.map", "required") }
 					keys(mo, "$sp.map", LIST_PROPS + "extra")
@@ -279,7 +279,7 @@ object PluginParser {
 						error("$sp.map", "needs \"id\" and \"name\"")
 					val map = mo.filterKeys { it != "extra" }.mapNotNull { (k, x) -> expr(x, "$sp.map.$k", R_RECORD, selector = true)?.let { k to it } }.toMap() +
 						exprMap(mo["extra"], "$sp.map.extra", R_RECORD, selector = true).mapKeys { "extra.${it.key}" }
-					ListSource(req, map)
+					ListSource(req, map, so["when"]?.let { expr(it, "$sp.when", roots) })
 				} ?: emptyList<ListSource>().also { error("$p.sources", "required, a list") }
 				name to RemoteList(parent, sources)
 			}.toMap()
