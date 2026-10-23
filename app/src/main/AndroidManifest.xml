@@ -148,6 +148,33 @@
           android:name="android.appwidget.provider"
           android:resource="@xml/widget_toggle_info" />
     </receiver>
+    <receiver
+        android:name=".quick.EntryWidgetReceiver"
+        android:exported="true"
+        android:label="@string/widget_entry_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_entry_info" />
+    </receiver>
+    <receiver
+        android:name=".quick.TodoWidgetReceiver"
+        android:exported="true"
+        android:label="@string/widget_todo_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_todo_info" />
+    </receiver>
+
+    <!-- Minute refresh of the widgets while an entry runs (issue #62). -->
+    <receiver
+        android:name=".quick.WidgetTickReceiver"
+        android:exported="false" />
 
     <!-- Single reminder alarm (DESIGN §6.1). -->
     <receiver

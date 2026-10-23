@@ -3,6 +3,7 @@ package it.infraconsulting.activitytrack.domain.policy
 
 import it.infraconsulting.activitytrack.domain.settings.AppSettings
 import it.infraconsulting.activitytrack.domain.settings.TODO_WINDOWS
+import it.infraconsulting.activitytrack.domain.settings.WIDGET_WINDOWS
 import java.time.Duration
 
 /*
@@ -132,6 +133,7 @@ object SettingsCatalog {
 		int("backupHour", 0..23) { s, v -> s.copy(backupHour = v) },
 		oneOf("todoWindowHours", TODO_WINDOWS) { s, v -> s.copy(todoWindowHours = v) },
 		oneOf("homeTodoWindowHours", TODO_WINDOWS) { s, v -> s.copy(homeTodoWindowHours = v) },
+		oneOf("widgetTodoWindowHours", WIDGET_WINDOWS) { s, v -> s.copy(widgetTodoWindowHours = v) },
 		oneOf("roundingWorkMin", quanta) { s, v -> s.copy(rounding = s.rounding.copy(work = s.rounding.work.copy(quantum = Duration.ofMinutes(v.toLong())))) },
 		oneOf("roundingTravelMin", quanta) { s, v -> s.copy(rounding = s.rounding.copy(travel = s.rounding.travel.copy(quantum = Duration.ofMinutes(v.toLong())))) },
 		oneOf("roundingPauseMin", quanta) { s, v -> s.copy(rounding = s.rounding.copy(pause = s.rounding.pause.copy(quantum = Duration.ofMinutes(v.toLong())))) },
