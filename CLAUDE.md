@@ -73,7 +73,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | M19 tag filters | **done** (PR #22, on `main`, v0.5.0): agenda, day report, export; device-tested 2026-10-19 |
 | 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
 | Issue #59 Home tabs | **implemented** (PR #67, open): top unchanged, bottom Pianificate/Chiuse with swipe-on-header switch, remembered tab, windows 24/72/168/720 h + all (def. 24 h) and today/24 h/7/30 d (def. today, 06:00 boundary), Chiuse = closed/to-complete entries + done to-dos, no-date section; device-tested 2026-10-23 on the Xiaomi (upgrade with data, tabs, windows, swipe, restart memory) |
-| Issue #62 widgets | **implemented** (branch `issue-62-widgets`, stacked on PR #67, 2026-10-23): 4×2 current-activity widget (latest open entry as the Home big card, elapsed per minute, stop at once, Avvia → start screen, Travel headless, resizable) and 4×2 planned to-dos (direct Start from a to-do with a client, else the start screen; Pause/Stop on the running row; done rows leave; window setting def. 24 h + overdue, policy `widgetTodoWindowHours`); WidgetTicker minute alarm re-armed by BootReceiver; local build green, NOT device-tested |
+| Issue #62 widgets | **done** (PR #68): 4×2 current-activity widget (latest open entry as the Home big card, elapsed per minute, stop at once, Avvia → start screen, Travel headless, resizable) and 4×2 planned to-dos (direct Start from a to-do with a client, else the start screen; Pause/Stop on the started row; done rows leave; window setting def. 24 h + overdue, policy `widgetTodoWindowHours`); WidgetTicker minute alarm re-armed by BootReceiver; device-tested 2026-10-24 on the Xiaomi (render, ticker, stop, direct start, row pause/stop; fixes: launcher crash from ColorProvider(Int), button clipping, 40dp circles, LazyColumn rows) |
 | Issue #28 calls | **done** (PR #32, #33, on `main`): contacts, call recognition, call pauses, client calls, on-call option (schema v10); instrumented 53/53 and device-tested 2026-10-20 (real incoming call: pause, proposal, client calls, pause note with editable times off) |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
@@ -147,22 +147,25 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-23)
 
-Issue #62 widgets **implemented** on `issue-62-widgets` (stacked on #59 =
-PR #67, 2026-10-23; local build green, NOT device-tested): 4×2
-current-activity widget (only the latest open entry as the Home big card,
-elapsed per minute via WidgetTicker, stop at once like the notification,
-Avvia opens the start screen, Travel starts headlessly, resizable) and
-4×2 planned to-dos (direct Start from a to-do with a client — approved
-exception to the 2026-10-17 "no direct start" rule; without a client the
-start screen asks; Pause/Stop on the started row; done rows leave; window
-a setting, default 24 h + overdue, policy key `widgetTodoWindowHours`).
-BootReceiver re-arms the ticker after reboot/clock changes. To do: device
-test (add both widgets, elapsed moves each minute, start from a to-do row,
-pause/stop on the running row, policy locks the window setting). Issue
-#59 on PR #67 (device-tested on the Xiaomi, see §3); #60 closed as
-covered by #59 (done to-dos in the Chiuse tab). Not device-tested yet:
-done to-dos in Chiuse (sample DB has none), 3-day window chip, tag filter
-on Chiuse.
+Issue #62 widgets **done** on `issue-62-widgets` (PR #68, 2026-10-24,
+device-tested on the Xiaomi): 4×2 current-activity widget (only the
+latest open entry as the Home big card, elapsed per minute via
+WidgetTicker, stop at once like the notification, Avvia opens the start
+screen, Travel starts headlessly, resizable) and 4×2 planned to-dos
+(direct Start from a to-do with a client — approved exception to the
+2026-10-17 "no direct start" rule; without a client the start screen
+asks; Pause/Stop on the started row; done rows leave; window a setting,
+default 24 h + overdue, policy key `widgetTodoWindowHours`). BootReceiver
+re-arms the ticker after reboot/clock changes. Device test 2026-10-24:
+render, ticker, stop, empty state, direct start, row pause/stop; four
+fixes found (see §7 pitfall on ColorProvider(Int) — it crashed the MIUI
+launcher; buttons need defaultWeight+fillMaxWidth, not fillMaxSize;
+40dp circles; LazyColumn rows). MIUI throttles the widget refresh of a
+cached app by up to ~3 min (app-standby buckets); on the OnePlus it
+should be immediate. Not tested: policy lock of the window setting.
+Issue #59 merged (PR #67); #60 closed as covered by #59 (done to-dos in
+the Chiuse tab). Not device-tested yet: done to-dos in Chiuse (sample
+DB has none), 3-day window chip, tag filter on Chiuse.
 
 Issue #48 (policy.json + declarative plugins), branch `issue-48-policy`
 (no PR yet, 2026-10-21): order A1–A2 → B1–B6 (0.7.0 = Antares as the first
@@ -481,6 +484,18 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
 - MIUI (Xiaomi debug phone) refuses test-only APKs over USB at once
   (`INSTALL_FAILED_USER_RESTRICTED`, no prompt): instrumented tests cannot
   run there; check behaviour from the UI and a copy of the DB instead.
+- Glance widgets: never `ColorProvider(Int)` with a raw ARGB/`android.graphics.Color`
+  value — RemoteViews serialises it as a **resource id** and the launcher
+  crashes at inflation (`Resources$NotFoundException`, crash loop; found on
+  MIUI 2026-10-24). Use a Compose `Color` or a theme ColorProvider.
+- Glance widgets: a child with `fillMaxSize()` inside a Column takes the whole
+  height and clips the siblings below (the 4×2 buttons vanished); give the
+  stretchy child `defaultWeight().fillMaxWidth()` only. Command circles of
+  48 dp overflow a 4×2 at MIUI large-font densities (~3.7 px/dp): 40 dp as
+  the 4×1. Lists of rows: LazyColumn (scrolls, fixed items clip).
+- MIUI throttles widget/alarms updates of a cached app (app-standby buckets,
+  ~45 s deferrals, up to ~3 min): a widget action applies at once but the
+  widget redraws when the process next runs. Launching the app forces it.
 - The worktree guard rejects complex shell lines that mention git or run
   interpreters on inline text: write scripts to `$CLAUDE_JOB_DIR/tmp` and run them.
 
