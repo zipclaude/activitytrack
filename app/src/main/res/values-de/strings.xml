@@ -38,6 +38,11 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="widget_status_description">Laufende Tätigkeit mit Befehlen oder letzte Kunden</string>
   <string name="widget_toggle_name">Pause / fortsetzen</string>
   <string name="widget_toggle_description">Pausiert die laufende Tätigkeit oder setzt sie fort</string>
+  <string name="widget_entry_name">Aktuelle Tätigkeit 4×2</string>
+  <string name="widget_entry_description">Die aktuelle Tätigkeit wie auf der Home-Karte, mit ihren Befehlen</string>
+  <string name="widget_todo_name">Geplante Aufgaben 4×2</string>
+  <string name="widget_todo_description">Die nächsten geplanten Aufgaben, jeweils mit Start-Taste</string>
+  <string name="widget_todo_empty">Nichts geplant</string>
   <string name="status_suspended">Unterbrochen</string>
   <string name="status_to_complete">Zu vervollständigen</string>
   <string name="status_closed">Abgeschlossen</string>
@@ -403,6 +408,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Anzeige</string>
   <string name="set_display">Darstellung</string>
+  <string name="set_widget_todo_window">Widget geplante Aufgaben: Zeitraum</string>
   <string name="display_normal">Normal</string>
   <string name="display_compact">Kompakt</string>
   <string name="quick_company">Neue Firma</string>

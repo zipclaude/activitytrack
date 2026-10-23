@@ -48,6 +48,8 @@ class BootReceiver : BroadcastReceiver() {
 		scope.launch {
 			try {
 				app.reminders.reschedule()
+				/* widgets lost their minute ticker with the alarms: redraw and re-arm (issue #62) */
+				it.infraconsulting.activitytrack.quick.QuickWidgets.refresh(context)
 			} finally {
 				pending.finish()
 			}

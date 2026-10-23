@@ -64,4 +64,11 @@ class AppSettingsTest {
 		assertEquals(168, AppSettings(homeClosedWindow = 168).validated().homeClosedWindow)
 		assertEquals(0, AppSettings(homeClosedWindow = 72).validated().homeClosedWindow)
 	}
+
+	@Test
+	fun widgetTodoWindowValidated() {
+		/* the planned-to-dos widget (issue #62): 24 h / 3 d / 7 d / 30 d, default 24 h */
+		assertEquals(72, AppSettings(widgetTodoWindowHours = 72).validated().widgetTodoWindowHours)
+		assertEquals(24, AppSettings(widgetTodoWindowHours = 48).validated().widgetTodoWindowHours)
+	}
 }
