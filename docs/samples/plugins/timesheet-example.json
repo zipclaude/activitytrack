@@ -1,0 +1,90 @@
+{
+	"format": "activitytrack-plugin",
+	"schema": 1,
+	"id": "timesheet-example",
+	"name": "Timesheet (example)",
+	"version": "1",
+
+	"options": [
+		{ "key": "apiUrl", "type": "url", "required": true, "default": "https://timesheet.example.com/api",
+		  "label": { "it": "URL API", "en": "API URL" } },
+		{ "key": "apiKey", "type": "secret", "required": true,
+		  "label": { "it": "Chiave API", "en": "API key" } },
+		{ "key": "closeMode", "type": "choice", "default": "ask",
+		  "choices": { "ask": { "it": "Chiedi", "en": "Ask" }, "always": { "it": "Sempre", "en": "Always" }, "off": { "it": "Mai", "en": "Never" } },
+		  "label": { "it": "Invio alla chiusura", "en": "Send on close" } }
+	],
+
+	"auth": { "type": "apiKey", "header": "X-Api-Key", "key": "@option.apiKey" },
+
+	"http": {
+		"baseUrl": "@option.apiUrl",
+		"headers": { "Accept": "application/json" },
+		"timeoutSec": 30,
+		"paging": { "style": "page", "pageParam": "page", "sizeParam": "size", "firstPage": 1, "pageSize": 100 }
+	},
+
+	"identity": {
+		"request": { "path": "/me" },
+		"values": { "userId": "$.id" }
+	},
+
+	"lists": {
+		"project": {
+			"sources": [
+				{ "request": { "path": "/projects", "query": { "status": "open" }, "paged": true, "items": "$.items" },
+				  "map": { "id": "$.id", "name": "$.name", "clientCode": "$.customerId" } }
+			]
+		}
+	},
+
+	"import": {
+		"clients": {
+			"request": { "path": "/customers", "paged": true, "items": "$.items" },
+			"key": "$.id",
+			"map": { "name": "$.name", "code": "$.id" }
+		},
+		"todos": {
+			"request": { "path": "/tasks", "query": { "assignee": "${identity.userId}" }, "paged": true, "items": "$.items" },
+			"key": "$.id",
+			"skipNew": { "eq": ["$.status", "closed"] },
+			"map": {
+				"title": "$.title",
+				"notes": { "plainText": "$.description" },
+				"refs": "$.number",
+				"clientCode": "$.customerId",
+				"done": { "eq": ["$.status", "closed"] },
+				"fields": { "project": "$.projectId" }
+			}
+		}
+	},
+
+	"entryFields": [
+		{ "key": "project", "list": "project", "required": true, "filter": { "clientCode": "@entry.client.code" },
+		  "label": { "it": "Progetto", "en": "Project" } },
+		{ "key": "billable", "type": "bool", "default": true,
+		  "label": { "it": "Fatturabile", "en": "Billable" } }
+	],
+
+	"export": {
+		"entries": "closed",
+		"group": { "by": "day", "travel": "nearestBlock", "round": "work" },
+		"body": {
+			"projectId": "@field.project",
+			"taskId": "@todo.externalKey",
+			"date": { "date": "@block.from", "format": "isoDate" },
+			"minutes": "@block.workMinutes",
+			"billable": "@field.billable",
+			"description": { "concat": ["@entry.activity", { "materials": "text" }], "separator": "\n\n" },
+			"travelMinutes": "@block.travelMinutes"
+		},
+		"create": { "method": "POST", "path": "/timesheets", "id": "$.id" },
+		"update": { "method": "PUT", "path": "/timesheets/${remote.id}" },
+		"delete": { "method": "DELETE", "path": "/timesheets/${remote.id}" }
+	},
+
+	"schedule": {
+		"onClose": { "mode": "@option.closeMode" },
+		"fetchEveryMin": 60
+	}
+}

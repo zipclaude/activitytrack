@@ -27,14 +27,23 @@ class PluginParserTest {
 
 	private fun errors(text: String) = assertIs<PluginResult.Invalid>(PluginParser.parse(text)).errors
 
+	/* the example of the plugin guide (plugins/GUIDE.*.md) must stay valid */
+	@Test
+	fun guideExampleIsValid() {
+		val r = PluginParser.parse(File("../../docs/samples/plugins/timesheet-example.json").readText(), "timesheet-example")
+		val p = assertIs<PluginResult.Valid>(r, (r as? PluginResult.Invalid)?.errors?.joinToString("\n").orEmpty()).plugin
+		assertEquals(setOf("project"), p.lists.keys)
+		assertEquals(GroupBy.DAY, p.export!!.group.by)
+	}
+
 	@Test
 	fun antaresDescriptorIsValid() {
 		val r = PluginParser.parse(antares, "antares")
 		val p = assertIs<PluginResult.Valid>(r, (r as? PluginResult.Invalid)?.errors?.joinToString("\n").orEmpty()).plugin
 		assertEquals("antares", p.id)
-		assertEquals(setOf("portfolio", "activityType"), p.lists.keys)
+		assertEquals(setOf("portfolio", "activityType", "premises"), p.lists.keys)
 		assertEquals("portfolio", p.lists.getValue("activityType").parent)
-		assertEquals(listOf("portfolio", "activityType", "included"), p.entryFields.map { it.key })
+		assertEquals(listOf("portfolio", "premises", "activityType", "included"), p.entryFields.map { it.key })
 		assertEquals(GroupBy.DAY_BLOCK, p.export!!.group.by)
 		assertTrue(p.export.update!!.fetchFirst)
 		assertIs<Auth.OAuth2Pkce>(p.auth)

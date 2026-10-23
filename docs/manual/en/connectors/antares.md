@@ -1,5 +1,5 @@
 <!-- title: Antares (Saidea) integration -->
-Version 0.7.1 · how to connect ActivityTrack with Saidea's Antares
+Version 0.7.2 · how to connect ActivityTrack with Saidea's Antares
 management system. General use of the app is in the *User manual*.
 
 ## 1. What it does
@@ -95,6 +95,9 @@ The activity screen of the company shows the **Antares (Saidea)** section:
 
 - **Service or project**, filtered on the activity's client (hidden when the
   activity comes from a ticket: the ticket's one counts);
+- **Premises** of the client where you worked, among those linked to the
+  service (required for a service; hidden when the activity comes from a
+  ticket: the ticket's premises count);
 - **Activity type**, among those of the service or project (required);
 - **Included in the contract**, proposed by the activity type.
 
@@ -113,6 +116,8 @@ The activity screen of the company shows the **Antares (Saidea)** section:
 - If you change an activity already sent, the next sync updates it (without
   overwriting changes made meanwhile in Antares); a block that vanishes is
   deleted in Antares.
+- If you **delete** an activity already sent, the app says so and deletes
+  it in Antares too at the next sync.
 
 ## 8. Troubleshooting
 
@@ -122,5 +127,5 @@ The activity screen of the company shows the **Antares (Saidea)** section:
 | "Login failed" | check the addresses and the Client ID |
 | The browser does not come back to the app after the login | Saidea's client does not know the app's return address: tell Saidea |
 | No tickets | tickets arrive only where you are the technician or the applicant |
-| Activities "not sent" in the report | pick the activity type (and the service, unless it comes from a ticket) and sync again |
+| Activities "not sent" in the report | pick the activity type (and service and premises, unless it comes from a ticket) and sync again |
 | Updates arrive late | Android defers periodic work in standby; **Sync now** downloads at once |
