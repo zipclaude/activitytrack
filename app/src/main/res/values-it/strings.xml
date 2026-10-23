@@ -268,6 +268,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="field_date">Data</string>
   <string name="field_km">km</string>
   <string name="segment_hint">Una fine precedente all\'inizio cade il giorno dopo.</string>
+  <string name="segment_running_hint">Il tratto è in corso: la fine si registra con il prossimo comando.</string>
   <string name="ref_ticket">Ticket</string>
   <string name="ref_url">Link</string>
   <string name="ref_uuid">UUID</string>

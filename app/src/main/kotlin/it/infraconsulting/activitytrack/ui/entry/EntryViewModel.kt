@@ -152,6 +152,10 @@ class EntryViewModel(
 			note?.let { entries.setSegmentNote(segmentId, it) }
 		}
 
+	/* The running segment: only its start moves (issue #57). */
+	fun moveRunningStart(segmentId: Long, startMs: Long, done: () -> Unit) =
+		saveOrAsk(segmentId, startMs, EntryRepository.RUNNING_END, done) { resolve -> entries.moveRunningStart(segmentId, startMs, resolve) }
+
 	/* Deleting the whole entry (issue #40): what it involves, asked first. */
 	private val _deletion = MutableStateFlow<EntryRepository.Deletion?>(null)
 	val deletion = _deletion.asStateFlow()

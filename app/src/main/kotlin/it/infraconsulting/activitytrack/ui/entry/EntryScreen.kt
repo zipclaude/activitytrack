@@ -58,6 +58,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SuggestionChip
@@ -98,6 +101,7 @@ import it.infraconsulting.activitytrack.ui.common.reasonText
 import it.infraconsulting.activitytrack.ui.common.DateField
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.home.statusText
+import it.infraconsulting.activitytrack.domain.time.atMinute
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -281,11 +285,12 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					s.note,
 				).joinToString(" · ")
 				/*
-				 * closed segments can be edited or deleted with editable times on
-				 * (backlog 11, M17); the description of a pause always (issue #28)
+				 * segments can be edited or deleted with editable times on
+				 * (backlog 11, M17), the running one too, its start only (issue
+				 * #57); the description of a pause always (issue #28)
 				 */
-				ClickableRow("${kindLabel(s.kind)}  $range", extra) {
-					if (end != null && editableTimes) {
+				ClickableRow("${kindLabel(s.kind)}  $range", extra, leading = { SegmentBadge(s.kind) }) {
+					if (editableTimes) {
 						vm.clearError()
 						editingSegment = s
 					} else if (s.kind == SegmentKind.PAUSE) {
@@ -442,12 +447,32 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	}
 }
 
+/* Colour and icon of a segment kind, as the command that starts it (issue #57): work green, pause yellow, travel blue. */
+@Composable
+private fun SegmentBadge(kind: SegmentKind) {
+	val style = commandStyle(
+		when (kind) {
+			SegmentKind.WORK -> EntryCommand.WORK
+			SegmentKind.PAUSE -> EntryCommand.PAUSE
+			SegmentKind.TRAVEL -> EntryCommand.TRAVEL
+		},
+	) ?: return
+	Box(Modifier.size(32.dp).background(style.container, CircleShape), contentAlignment = Alignment.Center) {
+		Icon(painterResource(style.icon), contentDescription = null, tint = style.content, modifier = Modifier.size(20.dp))
+	}
+}
+
 /*
  * Edit or delete a closed segment (backlog 11): date, start, end, km of a
- * travel; the new values replace the recorded ones.
+ * travel; the new values replace the recorded ones. The running segment
+ * (issue #57) moves its start only and cannot be deleted.
  */
 @Composable
 private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, onClose: () -> Unit) {
+	if (s.endUtcMs == null) {
+		RunningSegmentDialog(s, zone, vm, onClose)
+		return
+	}
 	val error by vm.error.collectAsState()
 	val startAt = Instant.ofEpochMilli(s.startUtcMs).atZone(zone)
 	var date by remember { mutableStateOf(startAt.toLocalDate().toString()) }
@@ -492,6 +517,34 @@ private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, on
 			deleting = false
 			vm.deleteSegment(s.id, onClose)
 		}
+}
+
+@Composable
+private fun RunningSegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, onClose: () -> Unit) {
+	val error by vm.error.collectAsState()
+	var date by remember { mutableStateOf(Instant.ofEpochMilli(s.startUtcMs).atZone(zone).toLocalDate().toString()) }
+	var start by remember { mutableStateOf(clockOf(s.startUtcMs, zone)) }
+	var note by remember { mutableStateOf(s.note.orEmpty()) }
+	EditDialog(
+		title = stringResource(R.string.segment_edit),
+		error = error,
+		onDismiss = { vm.clearError(); onClose() },
+		onConfirm = {
+			val d = parseDate(date)
+			val a = parseHhMm(start)?.takeIf { it < 1440 }
+			/* a missing value is reported by the repository as an invalid segment */
+			val from = if (d == null || a == null) Long.MAX_VALUE - 1 else d.atMinute(a, zone).toEpochMilli()
+			vm.moveRunningStart(s.id, from) {
+				if (s.kind == SegmentKind.PAUSE) vm.setSegmentNote(s.id, note, onClose) else onClose()
+			}
+		},
+	) {
+		DateField(stringResource(R.string.field_date), date, { date = it }, importance = Importance.REQUIRED)
+		TimeField(stringResource(R.string.field_start), start, { start = it }, importance = Importance.REQUIRED)
+		if (s.kind == SegmentKind.PAUSE)
+			TextInput(stringResource(R.string.segment_note), note, { note = it }, importance = Importance.OPTIONAL)
+		Text(stringResource(R.string.segment_running_hint), style = MaterialTheme.typography.bodySmall)
+	}
 }
 
 /*

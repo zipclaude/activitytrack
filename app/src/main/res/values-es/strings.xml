@@ -268,6 +268,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="field_date">Fecha</string>
   <string name="field_km">km</string>
   <string name="segment_hint">Un fin anterior al inicio cae al día siguiente.</string>
+  <string name="segment_running_hint">El tramo está en curso: su fin se registra con la próxima orden.</string>
   <string name="ref_ticket">Ticket</string>
   <string name="ref_url">Enlace</string>
   <string name="ref_uuid">UUID</string>
