@@ -65,6 +65,16 @@ data class AppSettings(
 	val homeTodoWindowHours: Int = 24,
 	/* the agenda reopens on the last view picked (issue #44): LIST, DAY, WEEK, MONTH */
 	val agendaView: String = "LIST",
+	/*
+	 * Home bottom tabs (issue #59): PLANNED (to-dos ahead) or CLOSED
+	 * (entries and done to-dos behind); the last choice is remembered.
+	 */
+	val homeTab: String = "PLANNED",
+	/*
+	 * The "Chiuse" tab window (issue #59): today (0, from the day-attribution
+	 * carry-over boundary), or the last 24 h / 7 d / 30 d.
+	 */
+	val homeClosedWindow: Int = 0,
 	/* ignored to-dos listed (struck through) or hidden */
 	val todoShowIgnored: Boolean = true,
 	/* order of the master-data lists and drop-downs (M16) */
@@ -97,6 +107,8 @@ data class AppSettings(
 		planSnoozeMin = planSnoozeMin.coerceIn(10, 240),
 		todoWindowHours = todoWindowHours.takeIf { it in TODO_WINDOWS } ?: 0,
 		homeTodoWindowHours = homeTodoWindowHours.takeIf { it in TODO_WINDOWS } ?: 24,
+		homeTab = homeTab.takeIf { it in HOME_TABS } ?: "PLANNED",
+		homeClosedWindow = homeClosedWindow.takeIf { it in CLOSED_WINDOWS } ?: 0,
 		movementThresholdM = movementThresholdM.coerceIn(50, 5_000),
 		stationaryRadiusM = stationaryRadiusM.coerceIn(25, 1_000),
 		stationaryMin = stationaryMin.coerceIn(5, 120),
@@ -127,4 +139,10 @@ data class AppSettings(
 }
 
 /* the to-do windows offered (hours; 0 = all) */
-val TODO_WINDOWS = setOf(0, 24, 168, 720)
+val TODO_WINDOWS = setOf(0, 24, 72, 168, 720)
+
+/* the Home tabs (issue #59), as persisted in [AppSettings.homeTab] */
+val HOME_TABS = setOf("PLANNED", "CLOSED")
+
+/* the "Chiuse" windows offered (issue #59; hours; 0 = today) */
+val CLOSED_WINDOWS = setOf(0, 24, 168, 720)

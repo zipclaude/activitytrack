@@ -113,6 +113,39 @@ interface EntryDao {
 	@Query("SELECT * FROM time_entry WHERE status = 'CLOSED' ORDER BY updated_utc_ms DESC LIMIT :n")
 	fun observeRecentClosed(n: Int): Flow<List<TimeEntryEntity>>
 
+	/*
+	 * The "Chiuse" tab of the Home (issue #59): entries that stopped being
+	 * worked on (CLOSED or TO_COMPLETE) with their last segment ending after
+	 * [fromUtcMs], newest end first.
+	 */
+	@Query(
+		"SELECT time_entry.* FROM time_entry JOIN segment ON segment.entry_id = time_entry.id " +
+			"WHERE time_entry.status IN ('CLOSED', 'TO_COMPLETE') " +
+			"GROUP BY time_entry.id HAVING MAX(segment.end_utc_ms) > :fromUtcMs " +
+			"ORDER BY MAX(segment.end_utc_ms) DESC LIMIT :limit",
+	)
+	fun observeClosedSince(fromUtcMs: Long, limit: Int): Flow<List<TimeEntryEntity>>
+
+	@Query(
+		"SELECT segment.* FROM segment WHERE segment.entry_id IN (" +
+			"SELECT time_entry.id FROM time_entry JOIN segment s2 ON s2.entry_id = time_entry.id " +
+			"WHERE time_entry.status IN ('CLOSED', 'TO_COMPLETE') " +
+			"GROUP BY time_entry.id HAVING MAX(s2.end_utc_ms) > :fromUtcMs " +
+			"ORDER BY MAX(s2.end_utc_ms) DESC LIMIT :limit) " +
+			"ORDER BY segment.entry_id, segment.start_utc_ms",
+	)
+	fun observeClosedSegmentsSince(fromUtcMs: Long, limit: Int): Flow<List<SegmentEntity>>
+
+	@Query(
+		"SELECT entry_tag.* FROM entry_tag WHERE entry_tag.entry_id IN (" +
+			"SELECT time_entry.id FROM time_entry JOIN segment ON segment.entry_id = time_entry.id " +
+			"WHERE time_entry.status IN ('CLOSED', 'TO_COMPLETE') " +
+			"GROUP BY time_entry.id HAVING MAX(segment.end_utc_ms) > :fromUtcMs " +
+			"ORDER BY MAX(segment.end_utc_ms) DESC LIMIT :limit)",
+	)
+	fun observeClosedTagsSince(fromUtcMs: Long, limit: Int): Flow<List<EntryTagEntity>>
+
+
 	@Query(
 		"SELECT * FROM segment WHERE entry_id IN " +
 			"(SELECT id FROM time_entry WHERE status = 'CLOSED' ORDER BY updated_utc_ms DESC LIMIT :n) " +

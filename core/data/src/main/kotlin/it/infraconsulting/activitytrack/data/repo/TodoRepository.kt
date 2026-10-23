@@ -23,6 +23,9 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 	val ignored = dao.observeIgnored()
 	val all = dao.observeAll()
 
+	/* the done ones, most recently marked first (Home "Chiuse", issue #59) */
+	fun done(limit: Int) = dao.observeDone(limit)
+
 	fun observe(id: Long) = dao.observe(id)
 	suspend fun find(id: Long): TodoEntity? = dao.byId(id)
 

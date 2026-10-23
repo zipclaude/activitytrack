@@ -122,6 +122,8 @@ class TodosViewModel(
 	val open = todos.open.state(emptyList())
 	val ignored = todos.ignored.state(emptyList())
 	val all = todos.all.state(emptyList())
+	/* the done ones, most recently marked first (Home "Chiuse", issue #59) */
+	val done = todos.done(100).state(emptyList())
 	val clients = master.clients.state(emptyList())
 	val companies = master.companies.state(emptyList())
 	val settings = settingsRepo.settings.state(null)
@@ -322,32 +324,6 @@ fun TodoSwipeCard(
 	) { TodoCard(t, clientName, band, onClick) }
 }
 
-/* "To do · 24 h ▾ —— n [company filter]" (M10 separator, M12 filter, issue #37 window). */
-@Composable
-private fun TodoHeader(count: Int, window: Int, vm: TodosViewModel) {
-	var open by remember { mutableStateOf(false) }
-	val labels = mapOf(
-		24 to stringResource(R.string.todo_window_24h), 168 to stringResource(R.string.todo_window_7d),
-		720 to stringResource(R.string.todo_window_30d), 0 to stringResource(R.string.todo_window_all),
-	)
-	Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-		Box {
-			Text(
-				stringResource(R.string.todo_home_title, labels[window].orEmpty()),
-				style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-				modifier = Modifier.clickable { open = true }.padding(vertical = 6.dp),
-			)
-			DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-				for ((h, label) in labels)
-					DropdownMenuItem(text = { Text(label) }, onClick = { open = false; vm.setHomeWindow(h) })
-			}
-		}
-		HorizontalDivider(Modifier.weight(1f))
-		Text(count.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-		CompanyFilter(vm, onHome = true)
-	}
-}
-
 /* To-dos screen window: 24 h, 7 days, 30 days or all (owner, 2026-10-19); overdue always shown. */
 @Composable
 private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
@@ -370,7 +346,7 @@ private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
  * the ✕ removes it. Shared by Home and the To-dos screen.
  */
 @Composable
-private fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false) {
+internal fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false) {
 	val settings by vm.settings.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val current = companies.firstOrNull { it.id == settings?.todoCompanyFilter }
@@ -411,54 +387,11 @@ private fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false) {
  * The band of each to-do (owner, 2026-10-18): the company colour, or the
  * client colour when the list shows a single company.
  */
-private fun bands(list: List<TodoEntity>, companies: List<CompanyEntity>, clients: List<ClientEntity>): Map<Long, Int?> {
+internal fun bands(list: List<TodoEntity>, companies: List<CompanyEntity>, clients: List<ClientEntity>): Map<Long, Int?> {
 	val one = list.map { it.companyId }.distinct().size == 1
 	val co = companies.associate { it.id to it.color }
 	val cl = clients.associate { it.id to it.color }
 	return list.associate { t -> t.id to if (one) t.clientId?.let { cl[it] } else companyColor(t.companyId, co[t.companyId]) }
-}
-
-/*
- * Home section: open to-dos due or planned today, or overdue, one card
- * each; the ones ignored today at the bottom (owner, 2026-10-18).
- */
-@Composable
-fun TodoTodaySection(onStart: (Long) -> Unit) {
-	val vm = todosViewModel()
-	val open by vm.open.collectAsState()
-	val ignored by vm.ignored.collectAsState()
-	val clients by vm.clients.collectAsState()
-	val companies by vm.companies.collectAsState()
-	val settings by vm.settings.collectAsState()
-	val filter = settings?.todoCompanyFilter
-	val today = LocalDate.now()
-	val zone = ZoneId.systemDefault()
-	val now = Instant.now()
-	/* the next 24 hours by default, overdue included (owner, 2026-10-19); other windows from the header (issue #37) */
-	val window = settings?.homeTodoWindowHours ?: 24
-	val due = open.filter { t ->
-		(filter == null || t.companyId == filter) && (window == 0 || withinHours(moment(t, zone), now, window.toLong()))
-	}
-		.sortedBy { moment(it, zone) }
-	val ignoredToday = if (settings?.todoShowIgnored == false) emptyList() else ignored.filter { t ->
-		(filter == null || t.companyId == filter) && t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == today
-	}
-	/* with a filter the header stays, so the filter can be removed */
-	if (due.isEmpty() && ignoredToday.isEmpty() && filter == null)
-		return
-	val band = bands(due + ignoredToday, companies, clients)
-	var selected by remember { mutableStateOf<TodoEntity?>(null) }
-	var editing by remember { mutableStateOf<TodoEntity?>(null) }
-	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 10.dp)) {
-		TodoHeader(due.size, window, vm)
-		for (t in due + ignoredToday)
-			TodoSwipeCard(
-				t, clients.firstOrNull { it.id == t.clientId }?.name, vm, onStart,
-				onReplan = { vm.clearError(); editing = it }, band = band[t.id],
-			) { selected = t }
-	}
-	selected?.let { t -> TodoActions(t, vm, onStart = { onStart(t.id) }, onEdit = { vm.clearError(); editing = t }) { selected = null } }
-	editing?.let { t -> TodoEditDialog(t, vm) { editing = null } }
 }
 
 /* Start / postpone / done / ignore / edit (re-plan) for one to-do. */
