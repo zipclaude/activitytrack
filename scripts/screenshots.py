@@ -28,10 +28,10 @@ DBS = ["activitytrack.db", "activitytrack.db-wal", "activitytrack.db-shm"]
 LABELS = {
 	"it": dict(new="Nuova attività", end="^Fine$", agenda="Agenda", day="Giorno", report="Report", more="Altro",
 		todos="Da fare", md="Anagrafiche", clients="Clienti", manual="Manuale", settings="Impostazioni", running="Farmacia Centrale",
-		contacts="Contatti", calls="Chiamate"),
+		contacts="Contatti", calls="Chiamate", planned="Pianificate", closed="Chiuse"),
 	"en": dict(new="New activity", end="^End$", agenda="Agenda", day="Day", report="Report", more="More",
 		todos="To-dos", md="Master data", clients="Clients", manual="Manual", settings="Settings", running="Farmacia Centrale",
-		contacts="Contacts", calls="Calls"),
+		contacts="Contacts", calls="Calls", planned="Planned", closed="Closed"),
 }
 
 
@@ -61,11 +61,24 @@ def nodes():
 			yield n, b
 
 
+def dismiss_shade():
+	# MIUI: the notification shade may cover the app (uiautomator then sees
+	# nothing); close it with BACK, never by coordinates (pitfall, 2026-10-17).
+	# grep for the FOCUS line only: the window LIST always mentions the shade.
+	focus = sh("dumpsys", "window", "|", "grep", "mCurrentFocus")
+	if "NotificationShade" in focus:
+		sh("input", "keyevent", "4")
+		time.sleep(1.5)
+
+
 def find(pattern, index=0):
 	pat = re.compile(pattern)
 	hits = [b for n, b in nodes() if pat.search(n.get("text") or n.get("content-desc") or "")]
 	if len(hits) <= index:
-		raise SystemExit(f"not on screen: {pattern}")
+		dismiss_shade()
+		hits = [b for n, b in nodes() if pat.search(n.get("text") or n.get("content-desc") or "")]
+		if len(hits) <= index:
+			raise SystemExit(f"not on screen: {pattern}")
 	return hits[index]
 
 
@@ -111,6 +124,7 @@ def restart():
 	sh("am", "force-stop", PKG)
 	sh("am", "start", "-n", MAIN)
 	time.sleep(4)
+	dismiss_shade()
 
 
 def put_db(local):
@@ -126,6 +140,10 @@ def capture(lang):
 	sh("cmd", "locale", "set-app-locales", PKG, "--locales", {"it": "it-IT", "en": "en-US"}[lang])
 	restart()
 	shot(lang, "home")
+	# the bottom tabs of the Home (issue #59): the Chiuse tab, then back
+	tap(f"^{t['closed']}$", wait=2.5)
+	shot(lang, "home-closed")
+	tap(f"^{t['planned']}$", wait=2)
 	tap(t["new"])
 	shot(lang, "start")
 	tap(t["end"])
@@ -169,6 +187,13 @@ def capture(lang):
 	tap(f"^{t['settings']}$")
 	shot(lang, "settings")
 	back()
+	# the two 4×2 widgets on the launcher (issue #62): the app has just run,
+	# so they show the sample data in the current language
+	sh("input", "keyevent", "3")
+	time.sleep(2)
+	sh("input", "swipe", "900", "1000", "200", "1000", "300")
+	time.sleep(3)
+	shot(lang, "widgets")
 
 
 def main():
@@ -176,6 +201,10 @@ def main():
 	# no phone: stop before anything, or every screenshot would be written empty
 	if adb("get-state").stdout.decode().strip() != "device":
 		raise SystemExit("no phone connected (adb get-state)")
+	# the screen must stay on and unlocked for the whole run: a locked phone
+	# gives black screenshots and uiautomator sees nothing (MIUI keyguard)
+	sh("input", "keyevent", "224")
+	sh("svc", "power", "stayon", "true")
 	with tempfile.TemporaryDirectory() as tmp:
 		# the phone's own data, kept outside /tmp: a lost connection must not lose it
 		saved = os.path.expanduser(time.strftime("~/activitytrack-device-backups/screenshots-%Y%m%d-%H%M%S"))
@@ -194,6 +223,10 @@ def main():
 		finally:
 			if adb("get-state").stdout.decode().strip() != "device":
 				raise SystemExit(f"phone offline: debug data NOT restored; the copy is in {saved}")
+			# locale reset and stay-off first: both restart or poke the app,
+			# which would touch the database files being restored
+			sh("svc", "power", "stayon", "false")
+			sh("cmd", "locale", "set-app-locales", PKG, "--locales", "")
 			sh("am", "force-stop", PKG)
 			sh("run-as", PKG, "rm", "-f", *[f"databases/{d}" for d in DBS])
 			for d in DBS:
@@ -202,7 +235,6 @@ def main():
 					adb("push", p, f"/data/local/tmp/{d}")
 					sh(f"run-as {PKG} cp /data/local/tmp/{d} databases/{d}")
 					sh("rm", f"/data/local/tmp/{d}")
-			sh("cmd", "locale", "set-app-locales", PKG, "--locales", "")
 			# the restore must be what was saved, byte for byte
 			for d in DBS:
 				p = os.path.join(saved, d)

@@ -1,4 +1,4 @@
-Versione 0.7.2 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.7.4 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
@@ -128,7 +128,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre, ultime completate, "Da fare · 24 h ▾" |
+| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre; sotto, le schede **Pianificate** e **Chiuse** |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
 | **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Impostazioni" (con "Gesti") |
@@ -148,17 +148,26 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   (es. "11:00–11:45 (0:45)"), e un pulsante per riprenderla (o metterla in
   pausa, o completarla). Toccandolo, l'attività passa nel
   riquadro grande.
-- Restano visibili anche le **ultime attività completate** (2, o 3 in
-  visualizzazione compatta), più tenui e con lo stato "Chiusa" in grigio:
-  toccandole si apre la scheda. Le
-  attività aperte in background prendono il loro posto.
-- Sotto il separatore **"Da fare · 24 h ▾"** un riquadro per ogni voce
-  pianificata o in scadenza nelle prossime 24 ore (comprese quelle in
-  ritardo); in fondo, barrate, quelle ignorate oggi. Toccando il titolo scegli
-  il periodo della Home: 24 h, 7 giorni, 30 giorni o tutte (separato da
-  quello della schermata "Da fare").
+- In basso le due **schede** (0.7.4): **Pianificate** e **Chiuse**. Si
+  cambia toccando il titolo o trascinando orizzontalmente l'intestazione
+  (i gesti sui riquadri restano); la scheda scelta è ricordata al
+  riavvio.
+- **Pianificate**: le voci da fare pianificate o in scadenza nel periodo
+  scelto, quelle in ritardo per prime (con l'orario in rosso); sotto un
+  separatore **"Senza data"** le voci senza pianificazione né scadenza; in
+  fondo, barrate, quelle ignorate oggi. Il periodo accanto al titolo:
+  **24 h** (predefinito), **3 gg**, **7 gg**, **30 gg** o **Tutti** —
+  separato da quello della schermata "Da fare". Accanto, **"Tutte le
+  aziende"** filtra le voci per azienda.
+- **Chiuse**: le attività chiuse o da completare e le voci da fare
+  completate, dalla fine più recente; qui c'è anche il filtro
+  **etichette** (le voci da fare non le hanno). Il periodo: **Oggi**
+  (predefinito, dal confine delle 06:00 come nei report), **24 h**,
+  **7 gg**, **30 gg**.
 
-![Home: un'attività in corso, le altre sotto, le ultime completate e i Da fare](img/home.png)
+![Home: un'attività in corso, le altre sotto, le schede Pianificate e Chiuse](img/home.png)
+
+![Home, scheda Chiuse](img/home-closed.png)
 
 ### Gesti (trascinare i riquadri)
 Ogni riquadro si trascina a sinistra o a destra (Home, lista dell'Agenda,
@@ -518,9 +527,8 @@ cambia la scadenza del gestionale.
   (apre la voce). Arriva anche fuori orario e nei giorni liberi; sparisce se
   la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
   passato (per un momento senza durata, un'ora dopo l'inizio).
-- In Home, **"Da fare · 24 h ▾"** mostra quelle in scadenza o pianificate
-  nelle prossime 24 ore (o nel periodo scelto toccando il titolo: 7 giorni,
-  30 giorni, tutte), comprese quelle in ritardo; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
+- In Home, la scheda **Pianificate** mostra quelle in scadenza o pianificate
+  nel periodo scelto (predefinito 24 h, vedi sopra), comprese quelle in ritardo; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
   pianificato o dopo la scadenza (dopo l'ora di scadenza, o dal giorno dopo
   se la scadenza non ha ora).
 - **Ignorare** una voce (gesto o azione "Ignora") invece di cancellarla: resta
@@ -695,10 +703,27 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
   senza attività, i clienti recenti e il pulsante di avvio.
 - **Widget "Pausa / riprendi" (1×1)** — mette in pausa o riprende l'attività
   più recente; senza attività apre l'avvio.
+- **Widget "Attività in corso" (4×2, 0.7.4)** — l'attività aperta più recente
+  come nel riquadro grande della Home: azienda, cliente, attività, stato
+  ("In lavoro dalle 09:06"), totali di lavoro e viaggio e tempo trascorso
+  che avanza al minuto; sotto, i comandi dello stato attuale (lo **Stop**
+  ferma subito, come dalla notifica). Senza attività aperte: **▶ Avvia**
+  (apre "Nuova attività") e **🚗 Viaggio** (parte subito). Si ridimensiona
+  oltre il 4×2.
+- **Widget "Attività pianificate" (4×2, 0.7.4)** — le prossime voci da fare
+  (per prima quella in ritardo, con l'orario in rosso), ognuna con **▶**:
+  se la voce ha un cliente l'attività parte subito con i suoi dati, senza
+  aprire l'app; se non ce l'ha, ▶ apre "Nuova attività" per sceglierlo. La
+  riga avviata mostra **Pausa** e **Stop**; le voci completate lasciano il
+  widget; se le righe non bastano, il widget scorre. Quanto guardare avanti
+  (24 h predefinite, 3, 7 o 30 giorni; i ritardi sempre) è in
+  Impostazioni → "Visualizzazione" → "Widget attività pianificate".
 - **Riquadro delle Impostazioni rapide** — stessa funzione del widget 1×1. Su
   OxygenOS si aggiunge da Impostazioni → "Riquadro Impostazioni rapide" →
   "Aggiungi".
 - **Scorciatoie** (pressione lunga sull'icona) — i 4 clienti più recenti e "Spesa".
+
+![I widget 4×2 sullo schermo home: attività in corso e attività pianificate](img/widgets.png)
 
 ---
 
@@ -713,6 +738,7 @@ spiegato nella Parte II, §17.
 | Sezione | Voce | Predefinito |
 |---|---|---|
 | Visualizzazione | Normale / Compatta | Normale |
+| | Widget attività pianificate: intervallo | 24 h |
 | Orari | Orari modificabili liberamente: inizio e fine scelti all'avvio e allo stop, tratti modificabili ed eliminabili (spento: orari come registrati; "+ Viaggio" e "+ Pausa" restano) | acceso |
 | Chiamate | Riconosci le chiamate in entrata / in uscita | spenti |
 | | Metti in pausa l'attività di un altro cliente / Proponi un'attività | accesi |
@@ -779,6 +805,7 @@ riportati al limite più vicino.
 | Voce | Effetto | Predefinito |
 |---|---|---|
 | Normale / Compatta | Compatta: testo all'88 %, riquadri e pulsanti più stretti; nella scheda attività i dettagli facoltativi vuoti (località, dove, note) si richiudono in "Altri dettagli ▾". | Normale |
+| Widget attività pianificate: intervallo | Quanto guardare avanti nel widget omonimo: 24 h, 3, 7 o 30 giorni; le voci in ritardo sono sempre incluse. Una policy può fissarla (con lucchetto). | 24 h |
 
 ### Orari
 
