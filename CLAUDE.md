@@ -74,6 +74,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | 0.6.0 batch | **done** (PR #23-#26, on `main`, v0.6.0): owner notes 2026-10-19, user docs it/en + PDF; device-tested 2026-10-19 |
 | Issue #59 Home tabs | **implemented** (PR #67, open): top unchanged, bottom Pianificate/Chiuse with swipe-on-header switch, remembered tab, windows 24/72/168/720 h + all (def. 24 h) and today/24 h/7/30 d (def. today, 06:00 boundary), Chiuse = closed/to-complete entries + done to-dos, no-date section; device-tested 2026-10-23 on the Xiaomi (upgrade with data, tabs, windows, swipe, restart memory) |
 | Issue #62 widgets | **done** (PR #68): 4×2 current-activity widget (latest open entry as the Home big card, elapsed per minute, stop at once, Avvia → start screen, Travel headless, resizable) and 4×2 planned to-dos (direct Start from a to-do with a client, else the start screen; Pause/Stop on the started row; done rows leave; window setting def. 24 h + overdue, policy `widgetTodoWindowHours`); WidgetTicker minute alarm re-armed by BootReceiver; device-tested 2026-10-24 on the Xiaomi (render, ticker, stop, direct start, row pause/stop; fixes: launcher crash from ColorProvider(Int), button clipping, 40dp circles, LazyColumn rows) |
+| Issues #71/#72 | **done** (PR #73, #74, 2026-10-25, device-tested on the Xiaomi): #71 saving a to-do planned after its due asks to align the due date ("Allinea la scadenza"/"Mantieni"; #70 closed wont-fix — overdue correctly follows a passed due date); #72 the Home header's text titles became a Material 3 TabRow (count beside the active label), swipe kept through an Initial-pass tracker + rememberUpdatedState |
 | Issue #28 calls | **done** (PR #32, #33, on `main`): contacts, call recognition, call pauses, client calls, on-call option (schema v10); instrumented 53/53 and device-tested 2026-10-20 (real incoming call: pause, proposal, client calls, pause note with editable times off) |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
@@ -145,17 +146,23 @@ app/src/test/…                  UiParsingTest, TimeInputTest, OngoingActionsTe
 app/src/main/res/               strings en/it/de/es, locales_config, data_extraction_rules, adaptive icon
 ```
 
-## 5. Next steps (review with the owner, 2026-10-24)
+## 5. Next steps (review with the owner, 2026-10-25)
 
 Released v0.7.4 (2026-10-24): #59 Home tabs (PR #67) and #62 widgets 4×2
 (PR #68), both device-tested on the Xiaomi; manual 0.7.4 it/en with new
-screenshots (home-closed, widgets). Remaining from the tests: policy lock
-of `widgetTodoWindowHours` not exercised; done to-dos in Chiuse (sample
-DB has none), 3-day window chip, tag filter on Chiuse still to try on a
-device. The debug phone (Xiaomi) keeps the two 4×2 widgets on its home
-screen and my test to-dos in the debug DB (backup of the pre-test data in
-~/activitytrack-device-backups/ and /tmp/user/1000/opencode/dbbackup); a
-stray Firefox shortcut from a drag attempt may sit on its second page.
+screenshots (home-closed, widgets). 2026-10-25: #71 (align the due date
+when the plan passes it, PR #73) and #72 (Material TabRow on the Home
+header, PR #74) merged and device-tested; #70 closed wont-fix (overdue
+correctly follows a passed due date). Not released yet: everything since
+v0.7.4 waits for the next release (manual: the header screenshot shows
+the text titles — retake at the next manual update, or note it).
+Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
+done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
+filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on
+its home screen and my test to-dos in the debug DB ("Report trimestrale"
+now planned and due 27/10 from the #71 test; backups of earlier states
+in ~/activitytrack-device-backups/); a stray Firefox shortcut from a
+drag attempt may sit on its second page.
 
 Issue #48 (policy.json + declarative plugins), branch `issue-48-policy`
 (no PR yet, 2026-10-21): order A1–A2 → B1–B6 (0.7.0 = Antares as the first
@@ -483,6 +490,11 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
   stretchy child `defaultWeight().fillMaxWidth()` only. Command circles of
   48 dp overflow a 4×2 at MIUI large-font densities (~3.7 px/dp): 40 dp as
   the 4×1. Lists of rows: LazyColumn (scrolls, fixed items clip).
+- Compose `pointerInput` blocks capture their variables stale across
+  recompositions (the key list decides restarts): read changing values
+  through `rememberUpdatedState` inside the block. Material3 tabs take
+  their events in the Main pass: a drag detector over them must watch
+  the Initial pass and consume nothing (HomeTabs, issue #72).
 - MIUI throttles widget/alarms updates of a cached app (app-standby buckets,
   ~45 s deferrals, up to ~3 min): a widget action applies at once but the
   widget redraws when the process next runs. Launching the app forces it.
