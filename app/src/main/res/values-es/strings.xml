@@ -311,6 +311,9 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_title">Pendientes</string>
   <string name="todo_due_today">Pendientes · próximas 24 h</string>
   <string name="todo_today">hoy</string>
+  <string name="todo_align_due">La fecha planificada es posterior al vencimiento. ¿Alinear el vencimiento con la fecha planificada (%1$s)?</string>
+  <string name="todo_align_due_yes">Alinear el vencimiento</string>
+  <string name="todo_align_due_no">Mantener</string>
   <string name="todo_start">Iniciar actividad</string>
   <string name="todo_mark_done">Marcar como hecha</string>
   <string name="todo_reopen">Marcar como pendiente</string>

@@ -311,6 +311,9 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_title">Da fare</string>
   <string name="todo_due_today">Da fare · prossime 24 h</string>
   <string name="todo_today">oggi</string>
+  <string name="todo_align_due">La data pianificata è successiva alla scadenza. Allineare la scadenza alla data pianificata (%1$s)?</string>
+  <string name="todo_align_due_yes">Allinea la scadenza</string>
+  <string name="todo_align_due_no">Mantieni</string>
   <string name="todo_start">Avvia attività</string>
   <string name="todo_mark_done">Segna come fatta</string>
   <string name="todo_reopen">Segna come da fare</string>

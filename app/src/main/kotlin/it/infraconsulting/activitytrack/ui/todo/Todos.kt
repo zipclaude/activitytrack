@@ -637,6 +637,33 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	var refs by remember { mutableStateOf(initial.refs) }
 	/* a plan needs both day and time: the missing one is flagged on its field after Save (M13) */
 	var tried by remember { mutableStateOf(false) }
+	/* the plan is after the due date: offer to align it before saving (issue #71) */
+	var alignDue by remember { mutableStateOf<TodoEntity?>(null) }
+	alignDue?.let { pending ->
+		AlertDialog(
+			/* outside or No: save as it is — the plan stays separate from the due date */
+			onDismissRequest = { vm.save(pending, onClose); alignDue = null },
+			text = {
+				Text(
+					stringResource(
+						R.string.todo_align_due,
+						LocalDate.ofEpochDay(pending.planEpochDay!!).format(DateTimeFormatter.ofPattern("EEE d/MM", LocalConfiguration.current.locales[0])),
+					),
+				)
+			},
+			confirmButton = {
+				TextButton(onClick = { vm.save(pending.copy(dueEpochDay = pending.planEpochDay), onClose); alignDue = null }) {
+					Text(stringResource(R.string.todo_align_due_yes))
+				}
+			},
+			dismissButton = {
+				TextButton(onClick = { vm.save(pending, onClose); alignDue = null }) {
+					Text(stringResource(R.string.todo_align_due_no))
+				}
+			},
+		)
+		return
+	}
 	/* the time is optional (issue #52): only a time without its date is missing something */
 	val planTimeMissing = false
 	val planDayMissing = tried && planTime.isNotBlank() && planDay.isBlank()
@@ -674,15 +701,19 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				vm.invalid(ValidationException.Reason.INVALID_TIME_RANGE)
 				return@EditDialog
 			}
-			vm.save(
-				initial.copy(
-					title = title, companyId = company, clientId = clientId,
-					planEpochDay = pd.getOrNull(), planStartMin = pt.getOrNull(), durationMin = dur.getOrNull(),
-					dueEpochDay = dd.getOrNull(), dueTimeMin = dt.getOrNull(),
-					priority = priority.trim().toIntOrNull(), notes = notes, refs = refs,
-				),
-				onClose,
+			val todo = initial.copy(
+				title = title, companyId = company, clientId = clientId,
+				planEpochDay = pd.getOrNull(), planStartMin = pt.getOrNull(), durationMin = dur.getOrNull(),
+				dueEpochDay = dd.getOrNull(), dueTimeMin = dt.getOrNull(),
+				priority = priority.trim().toIntOrNull(), notes = notes, refs = refs,
 			)
+			/* the plan after the due date: ask before saving (issue #71) */
+			val pDay = todo.planEpochDay
+			if (pDay != null && todo.dueEpochDay != null && pDay > todo.dueEpochDay!!) {
+				alignDue = todo
+				return@EditDialog
+			}
+			vm.save(todo, onClose)
 		},
 	) {
 		/* order and fields of the approved mockup (owner, issue #47) */
