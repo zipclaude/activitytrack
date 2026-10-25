@@ -46,7 +46,7 @@ Tap the green play button below to start one.</string>
   <string name="widget_toggle_description">Pauses or resumes the running activity</string>
   <string name="widget_entry_name">Current activity 4×2</string>
   <string name="widget_entry_description">The current activity as on the Home card, with its commands</string>
-  <string name="widget_todo_name">Planned to-dos 4×2</string>
+  <string name="widget_todo_name">To-dos 4×2</string>
   <string name="widget_todo_description">The next planned to-dos, each with a Start button</string>
   <string name="widget_todo_empty">Nothing planned</string>
   <string name="status_suspended">Suspended</string>
@@ -396,7 +396,7 @@ Tap the green play button below to start one.</string>
   <string name="action_clear">Clear</string>
   <string name="home_none">No activity running</string>
   <string name="home_none_hint">Tap the green button below to start one.</string>
-  <string name="home_tab_planned">Planned</string>
+  <string name="home_tab_planned">To-dos</string>
   <string name="home_tab_closed">Closed</string>
   <string name="home_no_date">Without a date</string>
   <string name="home_window_today">Today</string>
@@ -423,7 +423,7 @@ Tap the green play button below to start one.</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Display</string>
   <string name="set_display">Layout</string>
-  <string name="set_widget_todo_window">Planned to-dos widget: window</string>
+  <string name="set_widget_todo_window">To-dos widget: window</string>
   <string name="display_normal">Normal</string>
   <string name="display_compact">Compact</string>
   <string name="quick_company">New company</string>

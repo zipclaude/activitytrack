@@ -128,7 +128,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre; sotto, le schede **Pianificate** e **Chiuse** |
+| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre; sotto, le schede **Da fare** e **Chiuse** |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
 | **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Impostazioni" (con "Gesti") |
@@ -149,11 +149,11 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   pausa, o completarla). Toccandolo, l'attività passa nel
   riquadro grande.
 - In basso le due **schede** (0.7.4; tab in stile browser dalla 0.7.5):
-  **Pianificate** e **Chiuse**. Si
+  **Da fare** e **Chiuse**. Si
   cambia toccando la scheda o trascinando orizzontalmente l'intestazione
   (i gesti sui riquadri restano); la scheda scelta è ricordata al
   riavvio.
-- **Pianificate**: le voci da fare pianificate o in scadenza nel periodo
+- **Da fare**: le voci pianificate o in scadenza nel periodo
   scelto, quelle in ritardo per prime (con l'orario in rosso); sotto un
   separatore **"Senza data"** le voci senza pianificazione né scadenza; in
   fondo, barrate, quelle ignorate oggi. Il periodo accanto al titolo:
@@ -166,7 +166,7 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   (predefinito, dal confine delle 06:00 come nei report), **24 h**,
   **7 gg**, **30 gg**.
 
-![Home: un'attività in corso, le altre sotto, le schede Pianificate e Chiuse](img/home.png)
+![Home: un'attività in corso, le altre sotto, le schede Da fare e Chiuse](img/home.png)
 
 ![Home, scheda Chiuse](img/home-closed.png)
 
@@ -530,7 +530,7 @@ la scadenza" copia il giorno pianificato, "Mantieni" lascia tutto com'è.
   (apre la voce). Arriva anche fuori orario e nei giorni liberi; sparisce se
   la voce viene avviata, segnata come fatta, ripianificata o se il blocco è
   passato (per un momento senza durata, un'ora dopo l'inizio).
-- In Home, la scheda **Pianificate** mostra quelle in scadenza o pianificate
+- In Home, la scheda **Da fare** mostra quelle in scadenza o pianificate
   nel periodo scelto (predefinito 24 h, vedi sopra), comprese quelle in ritardo; sono segnate "in ritardo" quelle ancora aperte dopo il loro blocco
   pianificato o dopo la scadenza (dopo l'ora di scadenza, o dal giorno dopo
   se la scadenza non ha ora).
@@ -713,20 +713,20 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
   ferma subito, come dalla notifica). Senza attività aperte: **▶ Avvia**
   (apre "Nuova attività") e **🚗 Viaggio** (parte subito). Si ridimensiona
   oltre il 4×2.
-- **Widget "Attività pianificate" (4×2, 0.7.4)** — le prossime voci da fare
+- **Widget "Da fare" (4×2, 0.7.4)** — le prossime voci pianificate
   (per prima quella in ritardo, con l'orario in rosso), ognuna con **▶**:
   se la voce ha un cliente l'attività parte subito con i suoi dati, senza
   aprire l'app; se non ce l'ha, ▶ apre "Nuova attività" per sceglierlo. La
   riga avviata mostra **Pausa** e **Stop**; le voci completate lasciano il
   widget; se le righe non bastano, il widget scorre. Quanto guardare avanti
   (24 h predefinite, 3, 7 o 30 giorni; i ritardi sempre) è in
-  Impostazioni → "Visualizzazione" → "Widget attività pianificate".
+  Impostazioni → "Visualizzazione" → "Widget «Da fare»".
 - **Riquadro delle Impostazioni rapide** — stessa funzione del widget 1×1. Su
   OxygenOS si aggiunge da Impostazioni → "Riquadro Impostazioni rapide" →
   "Aggiungi".
 - **Scorciatoie** (pressione lunga sull'icona) — i 4 clienti più recenti e "Spesa".
 
-![I widget 4×2 sullo schermo home: attività in corso e attività pianificate](img/widgets.png)
+![I widget 4×2 sullo schermo home: attività in corso e Da fare](img/widgets.png)
 
 ---
 
@@ -741,7 +741,7 @@ spiegato nella Parte II, §17.
 | Sezione | Voce | Predefinito |
 |---|---|---|
 | Visualizzazione | Normale / Compatta | Normale |
-| | Widget attività pianificate: intervallo | 24 h |
+| | Widget «Da fare»: intervallo | 24 h |
 | Orari | Orari modificabili liberamente: inizio e fine scelti all'avvio e allo stop, tratti modificabili ed eliminabili (spento: orari come registrati; "+ Viaggio" e "+ Pausa" restano) | acceso |
 | Chiamate | Riconosci le chiamate in entrata / in uscita | spenti |
 | | Metti in pausa l'attività di un altro cliente / Proponi un'attività | accesi |
@@ -761,7 +761,7 @@ spiegato nella Parte II, §17.
 | | arrotondamenti lavoro / viaggio / pausa | §1 |
 | Servizi online | Nominatim, OSRM, mappe OpenStreetMap (attivabili e con endpoint) | attivi |
 | Archiviazione | cartella dati, backup conservati, backup ora | 14 |
-| Avanzate | Promemoria attività pianificate (min prima) | 15 |
+| Avanzate | Promemoria Da fare pianificati (min prima) | 15 |
 | | Posticipo (min) | 30 |
 
 I valori fuori intervallo vengono corretti al salvataggio.
@@ -808,7 +808,7 @@ riportati al limite più vicino.
 | Voce | Effetto | Predefinito |
 |---|---|---|
 | Normale / Compatta | Compatta: testo all'88 %, riquadri e pulsanti più stretti; nella scheda attività i dettagli facoltativi vuoti (località, dove, note) si richiudono in "Altri dettagli ▾". | Normale |
-| Widget attività pianificate: intervallo | Quanto guardare avanti nel widget omonimo: 24 h, 3, 7 o 30 giorni; le voci in ritardo sono sempre incluse. Una policy può fissarla (con lucchetto). | 24 h |
+| Widget «Da fare»: intervallo | Quanto guardare avanti nel widget omonimo: 24 h, 3, 7 o 30 giorni; le voci in ritardo sono sempre incluse. Una policy può fissarla (con lucchetto). | 24 h |
 
 ### Orari
 
@@ -890,7 +890,7 @@ Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14)
 
 | Voce | Intervallo | Predefinito |
 |---|---|---|
-| Promemoria attività pianificate (minuti prima) | 0–240 | 15 |
+| Promemoria Da fare pianificati (minuti prima) | 0–240 | 15 |
 | Posticipo (minuti) | 10–240 | 30 |
 
 ### Gesti
