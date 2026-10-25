@@ -754,6 +754,22 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		TextInput(stringResource(R.string.todo_field_title), title, { title = it }, singleLine = false, minLines = 3, importance = Importance.REQUIRED)
 		PolicyField(Field.TODO_DUE) {
 			DateTimeField(fieldLabel(Field.TODO_DUE, R.string.todo_field_due), due, time, { d, t -> due = d; time = t }, importance = fieldImportance(Field.TODO_DUE, Importance.OPTIONAL))
+			/* planned after the due date: it would come out overdue — say it now
+			 * and offer to align the two dates right here (issue #76) */
+			val pd = parseDate(planDay)?.toEpochDay()
+			val dd = parseDate(due)?.toEpochDay()
+			if (pd != null && dd != null && pd > dd) {
+				Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+					Text(
+						stringResource(R.string.todo_will_overdue),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.error,
+					)
+					TextButton(onClick = { due = planDay }) {
+						Text(stringResource(R.string.todo_align_due_yes))
+					}
+				}
+			}
 		}
 		PolicyField(Field.TODO_PRIORITY) {
 			TextInput(fieldLabel(Field.TODO_PRIORITY, R.string.todo_field_priority), priority, { priority = it }, importance = fieldImportance(Field.TODO_PRIORITY, Importance.OPTIONAL))
