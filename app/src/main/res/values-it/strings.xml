@@ -121,6 +121,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
 
   <string name="settings_title">Impostazioni</string>
   <string name="settings_saved">Impostazioni salvate</string>
+  <string name="settings_unsaved">Ci sono modifiche non salvate in questa sezione.</string>
+  <string name="settings_unsaved_leave">Esci senza salvare</string>
   <string name="settings_note">I valori fuori dall\'intervallo ammesso vengono corretti al salvataggio.</string>
   <string name="sec_reminders">Promemoria</string>
   <string name="set_confirm_interval">Intervallo di conferma (min)</string>

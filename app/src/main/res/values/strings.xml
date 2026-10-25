@@ -132,6 +132,8 @@ Tap the green play button below to start one.</string>
   <!-- settings -->
   <string name="settings_title">Settings</string>
   <string name="settings_saved">Settings saved</string>
+  <string name="settings_unsaved">There are unsaved changes in this section.</string>
+  <string name="settings_unsaved_leave">Leave without saving</string>
   <string name="settings_note">Values outside the allowed range are adjusted when saving.</string>
   <string name="sec_reminders">Reminders</string>
   <string name="set_confirm_interval">Confirmation interval (min)</string>
