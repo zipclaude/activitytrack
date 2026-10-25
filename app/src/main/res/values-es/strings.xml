@@ -121,6 +121,8 @@ Toca el botón verde de abajo para iniciar una.</string>
 
   <string name="settings_title">Ajustes</string>
   <string name="settings_saved">Ajustes guardados</string>
+  <string name="settings_unsaved">Hay cambios sin guardar en esta sección.</string>
+  <string name="settings_unsaved_leave">Salir sin guardar</string>
   <string name="settings_note">Los valores fuera del rango permitido se ajustan al guardar.</string>
   <string name="sec_reminders">Recordatorios</string>
   <string name="set_confirm_interval">Intervalo de confirmación (min)</string>
