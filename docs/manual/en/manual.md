@@ -128,7 +128,7 @@ test build installed from the PC: a separate app with its own data and folder
 
 | Tab | Content |
 |---|---|
-| **Home** | the running activity's card (or ▶ Start / 🚗 Travel), small cards of the others; below, the **Planned** and **Closed** tabs |
+| **Home** | the running activity's card (or ▶ Start / 🚗 Travel), small cards of the others; below, the **To-dos** and **Closed** tabs |
 | **Agenda** | consultation: list, day, week, month |
 | **Report** | one day's report: solar, reported, one line per activity, export |
 | **More** | "To-dos", "Import / export", "Master data", "Settings" (with "Gestures") |
@@ -148,10 +148,10 @@ From a tab other than Home, Back returns to Home.
   "11:00–11:45 (0:45)"), and a button to resume it (or pause it, or complete
   it). Tapping it brings the activity to the big card.
 - At the bottom the two **tabs** (0.7.4; browser-like tabs since 0.7.5):
-  **Planned** and **Closed**. Switch
+  **To-dos** and **Closed**. Switch
   by tapping the tab or dragging the header horizontally (the card
   gestures stay); the chosen tab is remembered across restarts.
-- **Planned**: the to-dos planned or due within the chosen period, the
+- **To-dos**: those planned or due within the chosen period, the
   overdue ones first (their time in red); under a **"No date"** separator
   those without a plan and without a due date; at the bottom, struck
   through, those ignored today. The period next to the title: **24 h**
@@ -163,7 +163,7 @@ From a tab other than Home, Back returns to Home.
   The period: **Today** (default, from the 06:00 carry-over boundary as in
   the reports), **24 h**, **7 d**, **30 d**.
 
-![Home: a running activity, the others below, the Planned and Closed tabs](img/home.png)
+![Home: a running activity, the others below, the To-dos and Closed tabs](img/home.png)
 
 ![Home, the Closed tab](img/home-closed.png)
 
@@ -519,7 +519,7 @@ align them (0.7.5): "Align the due date" copies the planned day,
   It also comes outside working hours and on days off; it goes away when the
   to-do is started, done, re-planned or its block is over (for a moment
   without length, an hour after its start).
-- On Home, the **Planned** tab shows those due or planned within the chosen
+- On Home, the **To-dos** tab shows those due or planned within the chosen
   period (24 h by default, see above), overdue ones included; "overdue" marks those still open after their
   planned block or after the due date (after the due time, or from the next
   day when the due date has no time).
@@ -694,14 +694,14 @@ days" goes further back.
   minute; below, the commands of the current state (**Stop** stops at once,
   as from the notification). With no open activity: **▶ Start** (opens "New
   activity") and **🚗 Travel** (starts at once). Resizable beyond 4×2.
-- **"Planned to-dos" widget (4×2, 0.7.4)** — the next to-dos (the overdue
+- **"To-dos" widget (4×2, 0.7.4)** — the next planned to-dos (the overdue
   one first, its time in red), each with **▶**: when the to-do has a client
   the activity starts at once with its data, without opening the app;
   otherwise ▶ opens "New activity" to pick one. The started row shows
   **Pause** and **Stop**; done to-dos leave the widget; when the rows do not
   fit, the widget scrolls. How far to look ahead (24 h default, 3, 7 or 30
-  days; the overdue always in) is in Settings → "Display" → "Planned
-  to-dos widget".
+  days; the overdue always in) is in Settings → "Display" → "To-dos
+  widget".
 - **Quick Settings tile** — same as the 1×1 widget. On OxygenOS add it from
   Settings → "Quick Settings tile" → "Add".
 - **Shortcuts** (long press on the icon) — the 4 most recent clients and
@@ -722,7 +722,7 @@ Settings are split into sections, each with its own page and "Save";
 | Section | Item | Default |
 |---|---|---|
 | Display | Normal / Compact | Normal |
-| | Planned to-dos widget: window | 24 h |
+| | To-dos widget: window | 24 h |
 | Times | Times freely editable: start and end chosen when starting and stopping, segments editable and deletable (off: times as recorded; "+ Travel" and "+ Pause" stay) | on |
 | Calls | Recognise incoming / outgoing calls | off |
 | | Pause the activity of another client / Propose an activity | on |
@@ -789,7 +789,7 @@ to the nearest limit.
 | Item | Effect | Default |
 |---|---|---|
 | Normal / Compact | Compact: text at 88 %, tighter cards and buttons; in the activity screen the empty optional details (locality, place, notes) fold under "More details ▾". | Normal |
-| Planned to-dos widget: window | How far the like-named widget looks ahead: 24 h, 3, 7 or 30 days; overdue to-dos are always included. A policy can lock it (padlock). | 24 h |
+| To-dos widget: window | How far the like-named widget looks ahead: 24 h, 3, 7 or 30 days; overdue to-dos are always included. A policy can lock it (padlock). | 24 h |
 
 ### Times
 
