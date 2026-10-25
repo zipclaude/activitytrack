@@ -40,8 +40,8 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="widget_toggle_description">Mette in pausa o riprende l\'attività in corso</string>
   <string name="widget_entry_name">Attività in corso 4×2</string>
   <string name="widget_entry_description">L\'attività in corso come nella scheda della Home, con i suoi comandi</string>
-  <string name="widget_todo_name">Attività pianificate 4×2</string>
-  <string name="widget_todo_description">Le prossime attività pianificate, ognuna con il pulsante Avvia</string>
+  <string name="widget_todo_name">Da fare 4×2</string>
+  <string name="widget_todo_description">I prossimi Da fare pianificati, ognuno con il pulsante Avvia</string>
   <string name="widget_todo_empty">Niente di pianificato</string>
   <string name="status_suspended">Sospesa</string>
   <string name="status_to_complete">Da completare</string>
@@ -378,14 +378,14 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_overdue">in ritardo</string>
   <string name="todo_new">Nuova attività da fare</string>
   <string name="sec_advanced">Avanzate</string>
-  <string name="set_plan_lead">Promemoria attività pianificate (min prima)</string>
+  <string name="set_plan_lead">Promemoria Da fare pianificati (min prima)</string>
   <string name="set_plan_snooze">Posticipo (min)</string>
   <!-- M10 pickers, home cards, gestures -->
   <string name="action_ok">OK</string>
   <string name="action_clear">Cancella</string>
   <string name="home_none">Nessuna attività in corso</string>
   <string name="home_none_hint">Tocca il pulsante verde qui sotto per iniziarne una.</string>
-  <string name="home_tab_planned">Pianificate</string>
+  <string name="home_tab_planned">Da fare</string>
   <string name="home_tab_closed">Chiuse</string>
   <string name="home_no_date">Senza data</string>
   <string name="home_window_today">Oggi</string>
@@ -412,7 +412,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualizzazione</string>
   <string name="set_display">Aspetto</string>
-  <string name="set_widget_todo_window">Widget attività pianificate: intervallo</string>
+  <string name="set_widget_todo_window">Widget «Da fare»: intervallo</string>
   <string name="display_normal">Normale</string>
   <string name="display_compact">Compatta</string>
   <string name="quick_company">Nuova azienda</string>
