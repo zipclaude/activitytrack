@@ -323,6 +323,9 @@ Tap the green play button below to start one.</string>
   <string name="todo_title">To-dos</string>
   <string name="todo_due_today">To do · next 24 h</string>
   <string name="todo_today">today</string>
+  <string name="todo_align_due">The planned date is after the due date. Align the due date to the planned one (%1$s)?</string>
+  <string name="todo_align_due_yes">Align the due date</string>
+  <string name="todo_align_due_no">Keep it</string>
   <string name="todo_start">Start activity</string>
   <string name="todo_mark_done">Mark as done</string>
   <string name="todo_reopen">Mark as not done</string>
