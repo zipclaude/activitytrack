@@ -315,6 +315,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_today">heute</string>
   <string name="todo_align_due">Das Planungsdatum liegt nach dem Fälligkeitsdatum. Fälligkeitsdatum auf das Planungsdatum (%1$s) setzen?</string>
   <string name="todo_align_due_yes">Fälligkeitsdatum angleichen</string>
+  <string name="todo_will_overdue">Wird als überfällig erscheinen: das Planungsdatum liegt nach dem Fälligkeitsdatum.</string>
   <string name="todo_align_due_no">Beibehalten</string>
   <string name="todo_start">Tätigkeit starten</string>
   <string name="todo_mark_done">Als erledigt markieren</string>
