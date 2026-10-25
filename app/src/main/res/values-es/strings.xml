@@ -315,6 +315,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_today">hoy</string>
   <string name="todo_align_due">La fecha planificada es posterior al vencimiento. ¿Alinear el vencimiento con la fecha planificada (%1$s)?</string>
   <string name="todo_align_due_yes">Alinear el vencimiento</string>
+  <string name="todo_will_overdue">Aparecerá como vencida: la fecha planificada es posterior al vencimiento.</string>
   <string name="todo_align_due_no">Mantener</string>
   <string name="todo_start">Iniciar actividad</string>
   <string name="todo_mark_done">Marcar como hecha</string>
