@@ -75,6 +75,7 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
 | Issue #59 Home tabs | **implemented** (PR #67, open): top unchanged, bottom Pianificate/Chiuse with swipe-on-header switch, remembered tab, windows 24/72/168/720 h + all (def. 24 h) and today/24 h/7/30 d (def. today, 06:00 boundary), Chiuse = closed/to-complete entries + done to-dos, no-date section; device-tested 2026-10-23 on the Xiaomi (upgrade with data, tabs, windows, swipe, restart memory) |
 | Issue #62 widgets | **done** (PR #68): 4×2 current-activity widget (latest open entry as the Home big card, elapsed per minute, stop at once, Avvia → start screen, Travel headless, resizable) and 4×2 planned to-dos (direct Start from a to-do with a client, else the start screen; Pause/Stop on the started row; done rows leave; window setting def. 24 h + overdue, policy `widgetTodoWindowHours`); WidgetTicker minute alarm re-armed by BootReceiver; device-tested 2026-10-24 on the Xiaomi (render, ticker, stop, direct start, row pause/stop; fixes: launcher crash from ColorProvider(Int), button clipping, 40dp circles, LazyColumn rows) |
 | Issues #71/#72 | **done** (PR #73, #74, 2026-10-25, device-tested on the Xiaomi): #71 saving a to-do planned after its due asks to align the due date ("Allinea la scadenza"/"Mantieni"; #70 closed wont-fix — overdue correctly follows a passed due date); #72 the Home header's text titles became a Material 3 TabRow (count beside the active label), swipe kept through an Initial-pass tracker + rememberUpdatedState |
+| Usability batch #76/#78/#80 | **done** (PR #81, #82, #83, 2026-10-25, from the usability review; build green, NOT device-verified — adb went offline): #80 one term for to-dos (tab "Da fare", widget "Da fare 4×2", settings labels; "planned" stays an adjective), #78 settings sections show a dot when dirty and ask before leaving (arrow/Back/gesture), #76 live red hint under Scadenza when plan > due with inline "Allinea la scadenza" |
 | Issue #28 calls | **done** (PR #32, #33, on `main`): contacts, call recognition, call pauses, client calls, on-call option (schema v10); instrumented 53/53 and device-tested 2026-10-20 (real incoming call: pause, proposal, client calls, pause note with editable times off) |
 | M18 time grid | **done** (PR #21, on `main`, v0.5.0): backlog 3, grid mockup B; device-tested 2026-10-19 |
 | M17 editable times | **done** (PR #20, on `main`, v0.5.0): setting (default on), start/end time when starting/stopping, segments editable only when on; device-tested 2026-10-19 |
@@ -152,13 +153,19 @@ Released v0.7.5 (2026-10-25): #71 (align the due date when the plan
 passes it) and #72 (Material TabRow on the Home header), both
 device-tested on the Xiaomi; manual 0.7.5 with retaken Home screenshots
 (the new tabs). #70 closed wont-fix (overdue correctly follows a passed
-due date). Remaining untried on a device: policy lock of
-`widgetTodoWindowHours`; done to-dos in Chiuse (sample DB has none),
-3-day window chip, tag filter on Chiuse. The debug phone (Xiaomi) keeps
-the two 4×2 widgets on its home screen and my test to-dos in the debug
-DB ("Report trimestrale" now planned and due 27/10 from the #71 test;
-backups of earlier states in ~/activitytrack-device-backups/); a stray
-Firefox shortcut from a drag attempt may sit on its second page.
+due date). Usability review 2026-10-25 → issues #76–#80; #76, #78, #80
+done (PR #81–#83) but **not device-verified yet** (adb went offline
+mid-session): pending check — tab "Da fare", the settings dot and leave
+confirm, the live overdue hint; then the next release retakes the Home
+screenshots (tab renamed) and documents #76/#78 in the manual. Open
+issues: #77 (gesture discoverability hints), #79 ("Stop rapido").
+Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
+done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
+filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on
+its home screen and my test to-dos in the debug DB ("Report trimestrale"
+now planned and due 27/10 from the #71 test; backups of earlier states
+in ~/activitytrack-device-backups/); a stray Firefox shortcut from a
+drag attempt may sit on its second page.
 
 Issue #48 (policy.json + declarative plugins), branch `issue-48-policy`
 (no PR yet, 2026-10-21): order A1–A2 → B1–B6 (0.7.0 = Antares as the first
