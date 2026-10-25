@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.settings
 
+import androidx.activity.compose.BackHandler
+
 import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.ui.common.PolicySetting
 import it.infraconsulting.activitytrack.domain.policy.Feature
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -104,7 +108,28 @@ fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen:
 	val vm = appViewModel { SettingsViewModel(it.settings) }
 	val s = vm.settings.collectAsState().value
 	val policy = LocalPolicy.current
-	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title), onBack = onBack) { padding ->
+	/* unsaved edits in the open section (issue #78): a dot in the title and a
+	 * confirmation before leaving — the arrow, the system Back and the gesture */
+	var dirty by remember { mutableStateOf(false) }
+	var confirmLeave by remember { mutableStateOf(false) }
+	fun guardedBack() {
+		if (dirty && section?.form == true) confirmLeave = true else onBack()
+	}
+	BackHandler { guardedBack() }
+	if (confirmLeave) {
+		AlertDialog(
+			onDismissRequest = { confirmLeave = false },
+			text = { Text(stringResource(R.string.settings_unsaved)) },
+			confirmButton = {
+				TextButton(onClick = onBack) { Text(stringResource(R.string.settings_unsaved_leave)) }
+			},
+			dismissButton = {
+				TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.action_cancel)) }
+			},
+		)
+	}
+	val dots = if (dirty && section?.form == true) " •" else ""
+	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title) + dots, onBack = ::guardedBack) { padding ->
 		if (section == null)
 			LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 				/* sections of features the policy switched off are not offered (issue #48) */
@@ -115,12 +140,12 @@ fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen:
 					item { ClickableRow(stringResource(R.string.gestures_title), icon = R.drawable.ic_menu_touch) { onOpen(Screen.Gestures) } }
 			}
 		else if (s != null)
-			SettingsForm(s, vm, section, Modifier.padding(padding))
+			SettingsForm(s, vm, section, Modifier.padding(padding), onDirty = { dirty = it })
 	}
 }
 
 @Composable
-private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: SettingsSection, modifier: Modifier) {
+private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: SettingsSection, modifier: Modifier, onDirty: (Boolean) -> Unit = {}) {
 	val text = remember {
 		mutableStateMapOf(
 			F.CONFIRM to initial.confirmIntervalMin.toString(),
@@ -209,6 +234,11 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 			pause.copy(minimum = minutes(F.PAUSE_MIN, pause.minimum)),
 		),
 	)
+
+	/* unsaved edits: the built settings differ from the loaded ones (issue #78);
+	 * after Save the flow re-emits and initial catches up with build() */
+	val dirtyNow = build() != initial
+	LaunchedEffect(dirtyNow) { onDirty(dirtyNow) }
 
 	@Composable
 	fun field(f: F, label: Int, type: KeyboardType = KeyboardType.Number, key: String? = null) =

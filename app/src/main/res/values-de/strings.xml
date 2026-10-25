@@ -121,6 +121,8 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
 
   <string name="settings_title">Einstellungen</string>
   <string name="settings_saved">Einstellungen gespeichert</string>
+  <string name="settings_unsaved">In diesem Abschnitt gibt es ungespeicherte Änderungen.</string>
+  <string name="settings_unsaved_leave">Ohne Speichern verlassen</string>
   <string name="settings_note">Werte außerhalb des zulässigen Bereichs werden beim Speichern angepasst.</string>
   <string name="sec_reminders">Erinnerungen</string>
   <string name="set_confirm_interval">Bestätigungsintervall (min)</string>
