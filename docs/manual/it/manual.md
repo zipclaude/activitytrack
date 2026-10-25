@@ -1,4 +1,4 @@
-Versione 0.7.4 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.7.5 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
@@ -148,8 +148,9 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   (es. "11:00–11:45 (0:45)"), e un pulsante per riprenderla (o metterla in
   pausa, o completarla). Toccandolo, l'attività passa nel
   riquadro grande.
-- In basso le due **schede** (0.7.4): **Pianificate** e **Chiuse**. Si
-  cambia toccando il titolo o trascinando orizzontalmente l'intestazione
+- In basso le due **schede** (0.7.4; tab in stile browser dalla 0.7.5):
+  **Pianificate** e **Chiuse**. Si
+  cambia toccando la scheda o trascinando orizzontalmente l'intestazione
   (i gesti sui riquadri restano); la scheda scelta è ricordata al
   riavvio.
 - **Pianificate**: le voci da fare pianificate o in scadenza nel periodo
@@ -509,7 +510,9 @@ Attività da fare, importate da un gestionale o create a mano ("Altro" →
 
 Stati: **aperta** (senza pianificazione) → **pianificata** (una data) →
 **fatta**. La pianificazione è separata dalla scadenza: ripianificare non
-cambia la scadenza del gestionale.
+cambia la scadenza del gestionale; se però si salva una pianificazione
+successiva alla scadenza, l'app chiede se allinearle (0.7.5): "Allinea
+la scadenza" copia il giorno pianificato, "Mantieni" lascia tutto com'è.
 - **Solo la data**: la voce vale per tutto il giorno; in Agenda sta nella
   fascia sopra la griglia, nel calendario è un evento di tutto il giorno,
   non ha promemoria ed è "in ritardo" dal giorno dopo.
