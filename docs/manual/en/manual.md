@@ -1,4 +1,4 @@
-Version 0.7.4 (October 2026). Please report any difference between this
+Version 0.7.5 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
@@ -147,8 +147,9 @@ From a tab other than Home, Back returns to Home.
   to complete): state and times as "from–to (length)" (e.g.
   "11:00–11:45 (0:45)"), and a button to resume it (or pause it, or complete
   it). Tapping it brings the activity to the big card.
-- At the bottom the two **tabs** (0.7.4): **Planned** and **Closed**. Switch
-  by tapping the title or dragging the header horizontally (the card
+- At the bottom the two **tabs** (0.7.4; browser-like tabs since 0.7.5):
+  **Planned** and **Closed**. Switch
+  by tapping the tab or dragging the header horizontally (the card
   gestures stay); the chosen tab is remembered across restarts.
 - **Planned**: the to-dos planned or due within the chosen period, the
   overdue ones first (their time in red); under a **"No date"** separator
@@ -498,7 +499,9 @@ notes, references (one per line).
 
 States: **open** (no plan) → **planned** (a date) → **done**. The plan is
 separate from the due date: re-planning does not change the management
-system's due date.
+system's due date; but saving a plan after the due date asks whether to
+align them (0.7.5): "Align the due date" copies the planned day,
+"Keep it" leaves both as they are.
 - **Date only**: the to-do counts for the whole day; in the Agenda it sits in
   the strip above the grid, in the calendar it is an all-day event, it has no
   reminder and is "overdue" from the next day.
