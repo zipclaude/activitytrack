@@ -159,6 +159,16 @@ mid-session): pending check — tab "Da fare", the settings dot and leave
 confirm, the live overdue hint; then the next release retakes the Home
 screenshots (tab renamed) and documents #76/#78 in the manual. Open
 issues: #77 (gesture discoverability hints), #79 ("Stop rapido").
+Review 2026-10-26 of the work since v0.7.3 (branch `review-fixes-0-7-6`):
+the to-dos widget did not follow the to-dos (QuickWidgets.refresh ran only
+on open-entry changes, boot and the ticker) → QuickWidgets.start observes
+to-dos, clients and the widget window; "Chiuse · Oggi" before 06:00 put its
+boundary in the future (test codified it) → yesterday 06:00. Noted, not
+changed: the align-due dialog saves on an outside tap; same-day plan after
+the due time gets no warning; the widget Start leaves other running entries
+running; local `lintDebug` crashes in ExperimentalDetector (CI runs no lint).
+Manual 0.7.6 text done; home.png still shows the old tab label (needs the
+phone).
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on

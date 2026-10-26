@@ -1,5 +1,5 @@
 <!-- title: Integrazione Antares (Saidea) -->
-Versione 0.7.5 · guida al collegamento tra ActivityTrack e il gestionale
+Versione 0.7.6 · guida al collegamento tra ActivityTrack e il gestionale
 Antares di Saidea. L'uso generale dell'app è nel *Manuale*.
 
 ## 1. Cosa fa
