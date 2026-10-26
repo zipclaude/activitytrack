@@ -28,10 +28,10 @@ DBS = ["activitytrack.db", "activitytrack.db-wal", "activitytrack.db-shm"]
 LABELS = {
 	"it": dict(new="Nuova attività", end="^Fine$", agenda="Agenda", day="Giorno", report="Report", more="Altro",
 		todos="Da fare", md="Anagrafiche", clients="Clienti", manual="Manuale", settings="Impostazioni", running="Farmacia Centrale",
-		contacts="Contatti", calls="Chiamate", planned="Pianificate", closed="Chiuse"),
+		contacts="Contatti", calls="Chiamate", planned="Da fare", closed="Chiuse"),
 	"en": dict(new="New activity", end="^End$", agenda="Agenda", day="Day", report="Report", more="More",
 		todos="To-dos", md="Master data", clients="Clients", manual="Manual", settings="Settings", running="Farmacia Centrale",
-		contacts="Contacts", calls="Calls", planned="Planned", closed="Closed"),
+		contacts="Contacts", calls="Calls", planned="To-dos", closed="Closed"),
 }
 
 
@@ -139,6 +139,8 @@ def capture(lang):
 	t = LABELS[lang]
 	sh("cmd", "locale", "set-app-locales", PKG, "--locales", {"it": "it-IT", "en": "en-US"}[lang])
 	restart()
+	# the Home remembers its last tab (issue #59): the picture shows "Da fare"
+	tap(f"^{t['planned']}$", wait=2)
 	shot(lang, "home")
 	# the bottom tabs of the Home (issue #59): the Chiuse tab, then back
 	tap(f"^{t['closed']}$", wait=2.5)
@@ -191,8 +193,17 @@ def capture(lang):
 	# so they show the sample data in the current language
 	sh("input", "keyevent", "3")
 	time.sleep(2)
-	sh("input", "swipe", "900", "1000", "200", "1000", "300")
-	time.sleep(3)
+	# the launcher page holding them: the widget label ("... 4×2") tells, else
+	# try the pages on either side (they moved to the left one, 2026-10-26)
+	for swipe in ([], ["150", "1000", "900", "1000"], ["900", "1000", "150", "1000"], ["900", "1000", "150", "1000"]):
+		if swipe:
+			sh("input", "swipe", *swipe, "300")
+			time.sleep(2)
+		if any("4×2" in (n.get("text") or n.get("content-desc") or "") for n, b in nodes()):
+			break
+	else:
+		raise SystemExit("4×2 widgets not found on the launcher")
+	time.sleep(2)
 	shot(lang, "widgets")
 
 
