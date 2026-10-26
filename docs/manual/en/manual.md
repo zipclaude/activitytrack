@@ -1,7 +1,18 @@
-Version 0.7.5 (October 2026). Please report any difference between this
+Version 0.7.6 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.7.6**
+- One name for the to-dos: the Home tab and the widget are called
+  **To-dos**.
+- Settings: a dot in the title flags unsaved changes and leaving asks first
+  (§14).
+- To-do editor: a live warning when the plan passes the due date, with
+  "Align the due date" (§8).
+- Fixes: the to-dos widget follows the to-dos (a done one no longer stays
+  on it); at night, before 06:00, "Closed · Today" shows the working day
+  begun yesterday at 06:00, as the reports do.
 
 **New in 0.7.2** (tested on the debug phone)
 - **Times** coloured by kind: work green, pause yellow, travel blue; the
@@ -501,7 +512,8 @@ States: **open** (no plan) → **planned** (a date) → **done**. The plan is
 separate from the due date: re-planning does not change the management
 system's due date; but saving a plan after the due date asks whether to
 align them (0.7.5): "Align the due date" copies the planned day,
-"Keep it" leaves both as they are.
+"Keep it" leaves both as they are. Already while editing (0.7.6), a red
+"It will show as overdue…" under the due date offers "Align the due date".
 - **Date only**: the to-do counts for the whole day; in the Agenda it sits in
   the strip above the grid, in the calendar it is an all-day event, it has no
   reminder and is "overdue" from the next day.
@@ -714,7 +726,9 @@ days" goes further back.
 ## 14. Settings
 
 Settings are split into sections, each with its own page and "Save";
-**"Gestures"** is at the end of the list. Every item is explained in Part II,
+**"Gestures"** is at the end of the list. With unsaved changes the section
+title shows a dot (•) and leaving asks first ("Leave without saving",
+0.7.6). Every item is explained in Part II,
 §17.
 
 ![Settings](img/settings.png)
