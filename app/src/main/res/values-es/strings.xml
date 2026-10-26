@@ -194,6 +194,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="stop_title">Parar \"%1$s\"</string>
   <string name="stop_now">Parar ahora</string>
   <string name="stop_return">Iniciar regreso</string>
+  <string name="stop_quick">Parada rápida</string>
   <string name="resume_title">¿Reanudar \"%1$s\"?</string>
   <string name="action_yes">Sí</string>
   <string name="action_no">No</string>
@@ -313,9 +314,9 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_title">Pendientes</string>
   <string name="todo_due_today">Pendientes · próximas 24 h</string>
   <string name="todo_today">hoy</string>
-  <string name="todo_align_due">La fecha planificada es posterior al vencimiento. ¿Alinear el vencimiento con la fecha planificada (%1$s)?</string>
+  <string name="todo_align_due">La planificación empieza después del vencimiento. ¿Alinear el vencimiento con el día planificado (%1$s)?</string>
   <string name="todo_align_due_yes">Alinear el vencimiento</string>
-  <string name="todo_will_overdue">Aparecerá como vencida: la fecha planificada es posterior al vencimiento.</string>
+  <string name="todo_will_overdue">Aparecerá como vencida: la planificación empieza después del vencimiento.</string>
   <string name="todo_align_due_no">Mantener</string>
   <string name="todo_start">Iniciar actividad</string>
   <string name="todo_mark_done">Marcar como hecha</string>
@@ -404,6 +405,9 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="swipe_pause_resume">Pausa / reanudar</string>
   <string name="swipe_stop_or_suspend">Terminar o suspender</string>
   <string name="gestures_title">Gestos</string>
+  <string name="gesture_hint_text">Consejo: arrastra una tarjeta de lado para sus órdenes — un deslizamiento corto muestra los botones (pausa, parar, iniciar…), uno largo ejecuta el primero.</string>
+  <string name="gesture_hint_ok">Entendido</string>
+  <string name="gesture_hints_again">Mostrar de nuevo los consejos de gestos</string>
   <string name="gestures_entries">Actividades en curso</string>
   <string name="gestures_todos">Pendientes</string>
   <string name="gestures_to_start">Deslizar a la izquierda</string>
