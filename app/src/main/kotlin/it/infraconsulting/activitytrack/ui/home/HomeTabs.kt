@@ -80,12 +80,17 @@ internal fun plannedSplit(open: List<TodoEntity>, company: Long?, window: Int, n
 /*
  * Where the "Chiuse" window starts (issue #59): "today" begins at the
  * day-attribution carry-over boundary (06:00 by default), so an entry closed
- * at night belongs to the previous day as in the reports; the other windows
- * count back from [now].
+ * at night belongs to the previous day as in the reports — before 06:00 the
+ * working day began yesterday at 06:00; the other windows count back from
+ * [now].
  */
-internal fun closedBoundary(window: Int, carryOverMin: Int, now: Instant, zone: ZoneId): Instant =
-	if (window == 0) now.atZone(zone).toLocalDate().atMinute(carryOverMin, zone)
-	else now.minus(Duration.ofHours(window.toLong()))
+internal fun closedBoundary(window: Int, carryOverMin: Int, now: Instant, zone: ZoneId): Instant {
+	if (window != 0)
+		return now.minus(Duration.ofHours(window.toLong()))
+	val today = now.atZone(zone).toLocalDate()
+	val start = today.atMinute(carryOverMin, zone)
+	return if (start.isAfter(now)) today.minusDays(1).atMinute(carryOverMin, zone) else start
+}
 
 /* One row of the "Chiuse" tab: an entry that stopped being worked on, or a done to-do. */
 internal sealed interface ClosedRow {

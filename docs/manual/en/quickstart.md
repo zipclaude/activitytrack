@@ -1,4 +1,4 @@
-Version 0.7.5 · for everyday use; the *User manual* explains everything else.
+Version 0.7.6 · for everyday use; the *User manual* explains everything else.
 
 ## 1. First time
 1. Install `ActivityTrack-<version>.apk` from the GitHub *Releases*.
