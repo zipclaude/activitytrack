@@ -82,6 +82,13 @@ data class AppSettings(
 	val widgetTodoWindowHours: Int = 24,
 	/* ignored to-dos listed (struck through) or hidden */
 	val todoShowIgnored: Boolean = true,
+	/*
+	 * Gesture discoverability (issue #77): the one-off hint on the Home was
+	 * dismissed; a first swipe was made (the cards then drop their ‹ ›).
+	 * Both shown again from Settings → Gestures.
+	 */
+	val gestureHintSeen: Boolean = false,
+	val swipeLearned: Boolean = false,
 	/* order of the master-data lists and drop-downs (M16) */
 	val listOrders: ListOrders = ListOrders(),
 	/*

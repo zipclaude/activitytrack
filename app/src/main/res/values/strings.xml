@@ -206,6 +206,7 @@ Tap the green play button below to start one.</string>
   <string name="stop_title">Stop \"%1$s\"</string>
   <string name="stop_now">Stop now</string>
   <string name="stop_return">Start return travel</string>
+  <string name="stop_quick">Quick stop</string>
   <string name="resume_title">Resume \"%1$s\"?</string>
   <string name="action_yes">Yes</string>
   <string name="action_no">No</string>
@@ -325,9 +326,9 @@ Tap the green play button below to start one.</string>
   <string name="todo_title">To-dos</string>
   <string name="todo_due_today">To do · next 24 h</string>
   <string name="todo_today">today</string>
-  <string name="todo_align_due">The planned date is after the due date. Align the due date to the planned one (%1$s)?</string>
+  <string name="todo_align_due">The plan starts after the due date. Align the due date to the planned day (%1$s)?</string>
   <string name="todo_align_due_yes">Align the due date</string>
-  <string name="todo_will_overdue">It will show as overdue: the planned date is after the due date.</string>
+  <string name="todo_will_overdue">It will show as overdue: the plan starts after the due date.</string>
   <string name="todo_align_due_no">Keep it</string>
   <string name="todo_start">Start activity</string>
   <string name="todo_mark_done">Mark as done</string>
@@ -415,6 +416,9 @@ Tap the green play button below to start one.</string>
   <string name="swipe_pause_resume">Pause / resume</string>
   <string name="swipe_stop_or_suspend">Stop or suspend</string>
   <string name="gestures_title">Gestures</string>
+  <string name="gesture_hint_text">Tip: drag a card sideways for its commands — a short swipe shows the buttons (pause, stop, start…), a long one runs the first.</string>
+  <string name="gesture_hint_ok">Got it</string>
+  <string name="gesture_hints_again">Show the gesture hints again</string>
   <string name="gestures_entries">Running activities</string>
   <string name="gestures_todos">To-dos</string>
   <string name="gestures_to_start">Swipe left</string>

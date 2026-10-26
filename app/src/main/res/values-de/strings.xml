@@ -194,6 +194,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="stop_title">\"%1$s\" stoppen</string>
   <string name="stop_now">Jetzt stoppen</string>
   <string name="stop_return">Rückreise starten</string>
+  <string name="stop_quick">Schnellstopp</string>
   <string name="resume_title">\"%1$s\" fortsetzen?</string>
   <string name="action_yes">Ja</string>
   <string name="action_no">Nein</string>
@@ -313,9 +314,9 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_title">Aufgaben</string>
   <string name="todo_due_today">Zu tun · nächste 24 Std.</string>
   <string name="todo_today">heute</string>
-  <string name="todo_align_due">Das Planungsdatum liegt nach dem Fälligkeitsdatum. Fälligkeitsdatum auf das Planungsdatum (%1$s) setzen?</string>
+  <string name="todo_align_due">Die Planung beginnt nach der Fälligkeit. Fälligkeit auf den geplanten Tag (%1$s) setzen?</string>
   <string name="todo_align_due_yes">Fälligkeitsdatum angleichen</string>
-  <string name="todo_will_overdue">Wird als überfällig erscheinen: das Planungsdatum liegt nach dem Fälligkeitsdatum.</string>
+  <string name="todo_will_overdue">Wird als überfällig erscheinen: die Planung beginnt nach der Fälligkeit.</string>
   <string name="todo_align_due_no">Beibehalten</string>
   <string name="todo_start">Tätigkeit starten</string>
   <string name="todo_mark_done">Als erledigt markieren</string>
@@ -403,6 +404,9 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="swipe_pause_resume">Pause / fortsetzen</string>
   <string name="swipe_stop_or_suspend">Beenden oder aussetzen</string>
   <string name="gestures_title">Gesten</string>
+  <string name="gesture_hint_text">Tipp: Karte seitlich ziehen für ihre Befehle — kurz wischen zeigt die Schaltflächen (Pause, Stopp, Start…), lang wischen führt die erste aus.</string>
+  <string name="gesture_hint_ok">Verstanden</string>
+  <string name="gesture_hints_again">Gesten-Hinweise erneut zeigen</string>
   <string name="gestures_entries">Laufende Tätigkeiten</string>
   <string name="gestures_todos">Aufgaben</string>
   <string name="gestures_to_start">Nach links wischen</string>

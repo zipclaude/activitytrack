@@ -94,6 +94,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val widgetTodoWindow = intPreferencesKey("widget_todo_window_hours")
 		val agendaView = stringPreferencesKey("agenda_view")
 		val todoShowIgnored = booleanPreferencesKey("todo_show_ignored")
+		val gestureHintSeen = booleanPreferencesKey("gesture_hint_seen")
+		val swipeLearned = booleanPreferencesKey("swipe_learned")
 		val callsIncoming = booleanPreferencesKey("calls_incoming")
 		val callsOutgoing = booleanPreferencesKey("calls_outgoing")
 		val callAutoPause = booleanPreferencesKey("call_auto_pause")
@@ -149,6 +151,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			widgetTodoWindowHours = p[K.widgetTodoWindow] ?: d.widgetTodoWindowHours,
 			agendaView = p[K.agendaView] ?: d.agendaView,
 			todoShowIgnored = p[K.todoShowIgnored] ?: d.todoShowIgnored,
+			gestureHintSeen = p[K.gestureHintSeen] ?: d.gestureHintSeen,
+			swipeLearned = p[K.swipeLearned] ?: d.swipeLearned,
 			listOrders = OrderedList.entries.fold(d.listOrders) { o, l -> o.with(l, enumOr(p[K.order(l)], d.listOrders.of(l))) },
 			editableTimes = p[K.editableTimes] ?: d.editableTimes,
 			callsIncoming = p[K.callsIncoming] ?: d.callsIncoming,
@@ -202,6 +206,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		p[K.agendaView] = s.agendaView
 		p.remove(K.todoNext24h)
 		p[K.todoShowIgnored] = s.todoShowIgnored
+		p[K.gestureHintSeen] = s.gestureHintSeen
+		p[K.swipeLearned] = s.swipeLearned
 		OrderedList.entries.forEach { p[K.order(it)] = s.listOrders.of(it).name }
 		p[K.editableTimes] = s.editableTimes
 		p[K.callsIncoming] = s.callsIncoming

@@ -76,9 +76,28 @@ data class TodoPlan(val day: LocalDate, val startMin: Int? = null, val durationM
  */
 fun dueOverdue(dueDay: LocalDate?, dueMin: Int?, now: Instant, zone: ZoneId): Boolean {
 	dueDay ?: return false
-	val limit = if (dueMin != null) dueDay.atMinute(dueMin.coerceIn(0, 1440), zone) else dueDay.plusDays(1).atStartOfDay(zone).toInstant()
-	return now.isAfter(limit)
+	return now.isAfter(dueLimit(dueDay, dueMin, zone))
 }
+
+/* the due time, or the end of the due day when no time is given */
+private fun dueLimit(dueDay: LocalDate, dueMin: Int?, zone: ZoneId): Instant =
+	if (dueMin != null) dueDay.atMinute(dueMin.coerceIn(0, 1440), zone) else dueDay.plusDays(1).atStartOfDay(zone).toInstant()
+
+/*
+ * The plan starts with the due date already passed (issues #71, #76): the
+ * to-do will come out overdue — a later day, or the same day after the due
+ * time. A plan without time starts at the beginning of its day.
+ */
+fun startsAfterDue(plan: TodoPlan?, dueDay: LocalDate?, dueMin: Int?, zone: ZoneId): Boolean =
+	/* a whole-day plan the day after starts right at the limit: already late */
+	plan != null && dueDay != null && !plan.start(zone).isBefore(dueLimit(dueDay, dueMin, zone))
+
+/*
+ * The due date aligned to the plan: its day, and the due time dropped when
+ * the plan would still start after it.
+ */
+fun alignedDue(plan: TodoPlan, dueMin: Int?, zone: ZoneId): Pair<LocalDate, Int?> =
+	plan.day to dueMin?.takeIf { !startsAfterDue(plan, plan.day, it, zone) }
 
 /*
  * When a to-do next asks for attention: its planned start, else its due
