@@ -1,5 +1,5 @@
 <!-- title: Antares (Saidea) integration -->
-Version 0.7.5 · how to connect ActivityTrack with Saidea's Antares
+Version 0.7.6 · how to connect ActivityTrack with Saidea's Antares
 management system. General use of the app is in the *User manual*.
 
 ## 1. What it does

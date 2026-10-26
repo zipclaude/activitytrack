@@ -1,7 +1,18 @@
-Versione 0.7.5 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.7.6 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.7.6**
+- Un solo nome per le voci da fare: la scheda della Home e il widget si
+  chiamano **Da fare**.
+- Impostazioni: un pallino nel titolo segnala le modifiche non salvate e
+  uscire chiede conferma (§14).
+- Editor delle *Da fare*: avviso in tempo reale se la pianificazione
+  supera la scadenza, con "Allinea la scadenza" (§8).
+- Correzioni: il widget "Da fare" si aggiorna quando cambiano le voci (una
+  voce fatta non vi resta più); di notte, prima delle 06:00, "Chiuse ·
+  Oggi" mostra la giornata iniziata ieri alle 06:00, come i report.
 
 **Novità della 0.7.2** (provata sul telefono di debug)
 - **Tempi** colorati per tipo: lavoro verde, pausa gialla, viaggio blu; del
@@ -513,6 +524,8 @@ Stati: **aperta** (senza pianificazione) → **pianificata** (una data) →
 cambia la scadenza del gestionale; se però si salva una pianificazione
 successiva alla scadenza, l'app chiede se allinearle (0.7.5): "Allinea
 la scadenza" copia il giorno pianificato, "Mantieni" lascia tutto com'è.
+Già mentre si compila (0.7.6), sotto la scadenza compare in rosso
+"Risulterà in ritardo…" con il pulsante "Allinea la scadenza".
 - **Solo la data**: la voce vale per tutto il giorno; in Agenda sta nella
   fascia sopra la griglia, nel calendario è un evento di tutto il giorno,
   non ha promemoria ed è "in ritardo" dal giorno dopo.
@@ -733,7 +746,9 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 ## 14. Impostazioni
 
 Le impostazioni sono divise in sezioni, ognuna con la sua pagina e il suo
-"Salva"; in fondo all'elenco c'è **"Gesti"**. Il significato di ogni voce è
+"Salva"; in fondo all'elenco c'è **"Gesti"**. Con modifiche non salvate il
+titolo della sezione mostra un pallino (•) e uscire chiede conferma
+("Esci senza salvare", 0.7.6). Il significato di ogni voce è
 spiegato nella Parte II, §17.
 
 ![Impostazioni](img/settings.png)

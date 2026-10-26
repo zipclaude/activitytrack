@@ -54,7 +54,11 @@ import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.common.commandStyle
 import java.time.Instant
 import java.time.ZoneId
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 /*
  * Home-screen widgets (DESIGN §10, Glance). Nothing that needs a dialog runs
@@ -290,5 +294,23 @@ object QuickWidgets {
 		TodoWidget().updateAll(context)
 		val c = (context.applicationContext as ActivityTrackApp).container
 		WidgetTicker.arm(context, c.entries.openEntries.first().any { e -> e.status == EntryStatus.ACTIVE })
+	}
+
+	/*
+	 * The planned-to-dos widget also follows the to-dos themselves (added,
+	 * done, ignored, re-planned, imported), their clients and its window
+	 * setting: the open entries alone do not tell (a to-do marked done after
+	 * its entry closed stayed on the widget).
+	 */
+	fun start(context: Context, container: it.infraconsulting.activitytrack.AppContainer, scope: kotlinx.coroutines.CoroutineScope) {
+		scope.launch {
+			kotlinx.coroutines.flow.combine(
+				container.todos.all,
+				container.masterData.clients,
+				container.settings.settings.map { it.widgetTodoWindowHours }.distinctUntilChanged(),
+			) { _, _, _ -> }.conflate().collect {
+				runCatching { TodoWidget().updateAll(context) }
+			}
+		}
 	}
 }

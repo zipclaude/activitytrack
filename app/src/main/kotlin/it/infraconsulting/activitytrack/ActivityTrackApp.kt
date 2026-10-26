@@ -53,6 +53,7 @@ class ActivityTrackApp : Application() {
 		reminders = ReminderScheduler(this, container).also { it.start(appScope) }
 		tracking = TrackingMonitor(this, container)
 		ClientShortcuts(this, container).start(appScope)
+		it.infraconsulting.activitytrack.quick.QuickWidgets.start(this, container, appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
 		pluginWatcher = it.infraconsulting.activitytrack.connect.plugin.PluginWatcher(this).also { it.start(appScope) }
 		/* a UI language forced by the policy (ui.language, issue #48) */

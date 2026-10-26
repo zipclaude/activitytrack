@@ -90,7 +90,10 @@ class HomeTabsTest {
 		/* 2026-10-25 02:00: still yesterday's working day */
 		val night = LocalDate.of(2026, 10, 25).atTime(2, 0).atZone(zone).toInstant()
 		val b = closedBoundary(0, 6 * 60, night, zone)
-		assertEquals(LocalDate.of(2026, 10, 25).atTime(6, 0).atZone(zone).toInstant(), b)
+		assertEquals(LocalDate.of(2026, 10, 24).atTime(6, 0).atZone(zone).toInstant(), b)
+		/* after 06:00 the working day is today's */
+		val morning = LocalDate.of(2026, 10, 25).atTime(9, 0).atZone(zone).toInstant()
+		assertEquals(LocalDate.of(2026, 10, 25).atTime(6, 0).atZone(zone).toInstant(), closedBoundary(0, 6 * 60, morning, zone))
 		/* the 24 h window counts back from now */
 		val h = closedBoundary(24, 6 * 60, night, zone)
 		assertEquals(night.minusSeconds(24 * 3600), h)
