@@ -21,6 +21,26 @@ class TodoPlanTest {
 
 	private fun at(d: LocalDate, hh: Int, mm: Int, ss: Int = 0): Instant = d.atTime(LocalTime.of(hh, mm, ss)).atZone(zone).toInstant()
 
+	/* issues #71/#76: the plan starts with the due date passed */
+	@Test
+	fun startsAfterDueAndAlignment() {
+		val dueDay = day
+		/* a later day, with or without due time */
+		assertTrue(startsAfterDue(TodoPlan(day.plusDays(1)), dueDay, null, zone))
+		assertTrue(startsAfterDue(TodoPlan(day.plusDays(1), 9 * 60), dueDay, 18 * 60, zone))
+		/* the same day: only a start after the due time */
+		assertEquals(false, startsAfterDue(TodoPlan(day, 15 * 60), dueDay, null, zone))
+		assertTrue(startsAfterDue(TodoPlan(day, 15 * 60), dueDay, 10 * 60, zone))
+		assertEquals(false, startsAfterDue(TodoPlan(day, 9 * 60), dueDay, 10 * 60, zone))
+		assertEquals(false, startsAfterDue(TodoPlan(day.minusDays(1)), dueDay, null, zone))
+		assertEquals(false, startsAfterDue(null, dueDay, null, zone))
+		assertEquals(false, startsAfterDue(TodoPlan(day.plusDays(1)), null, null, zone))
+		/* aligning takes the plan's day; a due time still before the start goes */
+		assertEquals(day.plusDays(2) to 18 * 60, alignedDue(TodoPlan(day.plusDays(2), 9 * 60), 18 * 60, zone))
+		assertEquals(day to null, alignedDue(TodoPlan(day, 15 * 60), 10 * 60, zone))
+		assertEquals(day.plusDays(1) to null, alignedDue(TodoPlan(day.plusDays(1)), null, zone))
+	}
+
 	@Test
 	fun blockPointAndWholeDay() {
 		/* a duration: a block */

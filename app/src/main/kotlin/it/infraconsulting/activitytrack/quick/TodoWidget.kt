@@ -114,12 +114,22 @@ private suspend fun loadTodoState(context: Context): List<TodoRowState> {
 /*
  * Start from the widget, at once (owner-approved exception): the to-do's
  * client, company, title. A to-do without a client cannot start headlessly
- * (the start screen asks for it) and never offers this action.
+ * (the start screen asks for it) and never offers this action. The app
+ * asks what to do with the activities running; a widget cannot ask, so
+ * they are suspended (owner, 2026-10-26: resumable with one tap, no time
+ * counted twice); paused ones stay as they are.
  */
 class WidgetTodoStartAction : ActionCallback {
 	override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
 		val c = (context.applicationContext as ActivityTrackApp).container
 		val t = c.todos.find(parameters[TODO] ?: return) ?: return
+		for (e in c.entries.openEntries.first())
+			if (e.status == EntryStatus.ACTIVE && e.mode != SegmentKind.PAUSE)
+				try {
+					c.entries.apply(e.id, EntryCommand.SUSPEND)
+				} catch (x: Exception) {
+					Log.i("Widget", "entry ${e.id} not suspended: ${x.message}")
+				}
 		try {
 			c.entries.start(StartRequest(SegmentKind.WORK, clientId = t.clientId, companyId = t.companyId, activity = t.title, todoId = t.id), emptyMap())
 		} catch (e: ValidationException) {

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import it.infraconsulting.activitytrack.policy.PolicyLoader
 import it.infraconsulting.activitytrack.ui.start.CallPrefill
@@ -78,12 +79,22 @@ class MainActivity : ComponentActivity() {
 		enableEdgeToEdge()
 		if (savedInstanceState == null)
 			deepLink.value = EntryLinks.screenOf(intent)
-		val compactFlow = (application as ActivityTrackApp).container.settings.settings.map { it.compactDisplay }
+		val settingsRepo = (application as ActivityTrackApp).container.settings
+		val compactFlow = settingsRepo.settings.map { it.compactDisplay }
+		val learnedFlow = settingsRepo.settings.map { it.swipeLearned }
+		/* the first swipe drops the cards' ‹ › for good (issue #77) */
+		val hints = it.infraconsulting.activitytrack.ui.common.SwipeHints(show = true) {
+			lifecycleScope.launch { settingsRepo.update { s -> if (s.swipeLearned) s else s.copy(swipeLearned = true) } }
+		}
 		setContent {
 			val compact by compactFlow.collectAsState(initial = false)
+			val learned by learnedFlow.collectAsState(initial = true)
 			val policy by (application as ActivityTrackApp).container.policies.current.collectAsState()
 			ActivityTrackTheme(compact) {
-				androidx.compose.runtime.CompositionLocalProvider(it.infraconsulting.activitytrack.ui.common.LocalPolicy provides policy) {
+				androidx.compose.runtime.CompositionLocalProvider(
+					it.infraconsulting.activitytrack.ui.common.LocalPolicy provides policy,
+					it.infraconsulting.activitytrack.ui.common.LocalSwipeHints provides hints.copy(show = !learned),
+				) {
 					Root(deepLink.value) { deepLink.value = null }
 				}
 				it.infraconsulting.activitytrack.connect.plugin.PluginCloseDialog((application as ActivityTrackApp).pluginWatcher)
@@ -208,6 +219,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 			onStartTravel = { open(Screen.StartTravel) },
 			onOpenEntry = { open(Screen.Entry(it)) },
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
+			onOpenGestures = { open(Screen.Gestures) },
 		)
 		Screen.Agenda -> AgendaScreen(onOpenEntry = { open(Screen.Entry(it)) }, onStartTodo = { open(Screen.StartFromTodo(it)) })
 		Screen.More -> MoreScreen(open)
