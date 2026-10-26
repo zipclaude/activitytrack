@@ -765,13 +765,15 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			val livePlan = TodoPlan.of(parseDate(planDay)?.toEpochDay(), parseHhMm(planTime)?.takeIf { it < 1440 }, null)
 			val zone = ZoneId.systemDefault()
 			if (startsAfterDue(livePlan, parseDate(due), parseHhMm(time), zone)) {
-				Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+				/* text above the button: side by side the long text squeezed the button
+				 * to no width, its label wrapped letter by letter and grew very tall */
+				Column(Modifier.fillMaxWidth()) {
 					Text(
 						stringResource(R.string.todo_will_overdue),
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.error,
 					)
-					TextButton(onClick = {
+					TextButton(modifier = Modifier.align(Alignment.End), onClick = {
 						val (day, min) = alignedDue(livePlan!!, parseHhMm(time), zone)
 						due = day.toString()
 						time = min?.let(::formatMin).orEmpty()

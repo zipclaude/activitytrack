@@ -3,7 +3,7 @@ e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.7.6**
+**Novità della 0.7.6** (provata sul telefono di debug)
 - Un solo nome per le voci da fare: la scheda della Home e il widget si
   chiamano **Da fare**.
 - Impostazioni: un pallino nel titolo segnala le modifiche non salvate e
@@ -13,8 +13,8 @@ manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 - **Stop rapido** nella domanda di Stop (§5); **suggerimenti sui gesti** al
   primo uso (§3, "Gesti").
 - Il widget "Da fare", avviando una voce, sospende le attività in corso.
-- Correzioni: il widget "Da fare" si aggiorna quando cambiano le voci (una
-  voce fatta non vi resta più); di notte, prima delle 06:00, "Chiuse ·
+- Correzioni: i widget si aggiornano subito (una voce fatta non resta nel
+  widget "Da fare", il tempo dell'attività in corso avanza); di notte, prima delle 06:00, "Chiuse ·
   Oggi" mostra la giornata iniziata ieri alle 06:00, come i report.
 
 **Novità della 0.7.2** (provata sul telefono di debug)

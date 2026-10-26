@@ -44,6 +44,14 @@ import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.common.commandStyle
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import it.infraconsulting.activitytrack.data.db.ClientEntity
+import it.infraconsulting.activitytrack.data.db.CompanyEntity
+import it.infraconsulting.activitytrack.data.db.SegmentEntity
+import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 
 /*
@@ -71,15 +79,31 @@ private data class EntryWidgetState(
 	val travelMs: Long,
 )
 
-private suspend fun loadEntryState(context: Context): EntryWidgetState {
+/*
+ * The state shown, from the database flows and the minute ticks: read
+ * inside the composition (issue #62 device test, 2026-10-26) — an update
+ * that reaches a Glance session still open recomposes without calling
+ * provideGlance again, so data loaded before provideContent stayed stale.
+ */
+private fun entryStates(context: Context): Flow<EntryWidgetState> {
 	val c = (context.applicationContext as ActivityTrackApp).container
-	val clients = c.masterData.clients.first().associateBy { it.id }
-	val companies = c.masterData.companies.first().associateBy { it.id }
+	return combine(c.entries.openEntries, c.entries.openEntrySegments, c.masterData.clients, c.masterData.companies, minuteTicks()) { entries, segs, clients, companies, now ->
+		entryState(context, entries, segs, clients.associateBy { it.id }, companies.associateBy { it.id }, now)
+	}
+}
+
+private fun entryState(
+	context: Context,
+	openEntries: List<TimeEntryEntity>,
+	allSegs: List<SegmentEntity>,
+	clients: Map<Long, ClientEntity>,
+	companies: Map<Long, CompanyEntity>,
+	now: Long,
+): EntryWidgetState {
 	/* the entry the Home would show in its big card: the most recent open one */
-	val e = c.entries.openEntries.first().firstOrNull()
+	val e = openEntries.firstOrNull()
 		?: return EntryWidgetState(null, null, context.getString(R.string.home_none), null, EntryStatus.CLOSED, null, null, null, 0, 0)
-	val segs = c.entries.segments(e.id).first()
-	val now = System.currentTimeMillis()
+	val segs = allSegs.filter { it.entryId == e.id }.sortedBy { it.startUtcMs }
 	val open = segs.lastOrNull { it.endUtcMs == null }
 	val since = when (e.status) {
 		EntryStatus.ACTIVE -> open?.startUtcMs
@@ -134,8 +158,12 @@ class EntryWidget : GlanceAppWidget() {
 	override suspend fun provideGlance(context: Context, id: GlanceId) {
 		if (!widgetsAllowed(context))
 			return provideContent { GlanceTheme { DisabledWidget(context) } }
-		val s = loadEntryState(context)
-		provideContent { GlanceTheme { EntryContent(context, s) } }
+		val states = entryStates(context)
+		val first = states.first()
+		provideContent {
+			val s by states.collectAsState(first)
+			GlanceTheme { EntryContent(context, s) }
+		}
 	}
 
 	@Composable

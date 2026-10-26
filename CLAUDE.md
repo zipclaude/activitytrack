@@ -179,6 +179,13 @@ Stop dialogs (EntryCommander.quickStop: no end time, no resume prompt);
 first swipe (swipeLearned, LocalSwipeHints from MainActivity), reset in
 Gestures. Manual 0.7.6 documents all of it. NOT device-tested; the
 release waits for the phone (checks + screenshots, home.png tab label).
+Device test 2026-10-26 on the Xiaomi (all of #76/#77/#78/#79/#80 and the
+review fixes): found and fixed the tip sitting above the visible list, the
+overdue hint's squeezed button, the stale Glance sessions (both widgets
+now read flows) and the missing space after the widget time;
+screenshots.py taps the "Da fare" tab first and finds the widgets' launcher
+page. The launcher now shows the to-dos 4×2 and the 4×1 status widget, not
+the current-activity 4×2 the caption names.
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on
@@ -518,6 +525,11 @@ deleted, local calendar empty; samples left in Download). Still open: item 7 (ma
   through `rememberUpdatedState` inside the block. Material3 tabs take
   their events in the Main pass: a drag detector over them must watch
   the Initial pass and consume nothing (HomeTabs, issue #72).
+- Glance: `update()`/`updateAll()` reaching a session still open (about 45 s
+  after its start) recomposes without calling `provideGlance` again, so data
+  loaded before `provideContent` stays stale (a done to-do stayed on the
+  widget, 2026-10-26). Read the widget data from flows inside the
+  composition (`collectAsState`), with a minute-ticks flow for times.
 - MIUI throttles widget/alarms updates of a cached app (app-standby buckets,
   ~45 s deferrals, up to ~3 min): a widget action applies at once but the
   widget redraws when the process next runs. Launching the app forces it.
