@@ -3,7 +3,7 @@ manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**New in 0.7.6**
+**New in 0.7.6** (tested on the debug phone)
 - One name for the to-dos: the Home tab and the widget are called
   **To-dos**.
 - Settings: a dot in the title flags unsaved changes and leaving asks first
@@ -13,8 +13,8 @@ reference (settings, entities, states, flows).
 - **Quick stop** in the Stop question (§5); **gesture tips** at first use
   (§3, "Gestures").
 - The to-dos widget suspends the running activities when it starts one.
-- Fixes: the to-dos widget follows the to-dos (a done one no longer stays
-  on it); at night, before 06:00, "Closed · Today" shows the working day
+- Fixes: the widgets update at once (a done to-do no longer stays on the
+  to-dos widget, the running activity's time moves on); at night, before 06:00, "Closed · Today" shows the working day
   begun yesterday at 06:00, as the reports do.
 
 **New in 0.7.2** (tested on the debug phone)
