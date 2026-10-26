@@ -52,7 +52,15 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import it.infraconsulting.activitytrack.data.db.ClientEntity
+import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 /*
  * 4×2 widget with the planned to-dos (issue #62): the next ones (window a
@@ -91,21 +99,31 @@ private fun todoTime(t: TodoEntity, zone: ZoneId): String {
 		(t.dueTimeMin?.let { "%02d:%02d".format(it / 60, it % 60) } ?: "")
 }
 
-private suspend fun loadTodoState(context: Context): List<TodoRowState> {
+/*
+ * The rows, from the database flows (and the minute ticks for the window
+ * and the overdue colour): read inside the composition, since an update
+ * reaching a Glance session still open does not call provideGlance again
+ * (device test 2026-10-26: a to-do marked done stayed on the widget).
+ */
+private fun todoStates(context: Context): Flow<List<TodoRowState>> {
 	val c = (context.applicationContext as ActivityTrackApp).container
+	return combine(
+		c.todos.open, c.entries.openEntries, c.masterData.clients,
+		c.settings.settings.map { it.widgetTodoWindowHours }.distinctUntilChanged(), minuteTicks(),
+	) { open, entries, clients, window, now -> todoRows(open, entries, clients.associateBy { it.id }, window, Instant.ofEpochMilli(now)) }
+}
+
+private fun todoRows(open: List<TodoEntity>, entries: List<TimeEntryEntity>, clients: Map<Long, ClientEntity>, window: Int, now: Instant): List<TodoRowState> {
 	val zone = ZoneId.systemDefault()
-	val settings = c.settings.current()
-	val open = c.todos.open.first()
-	val clients = c.masterData.clients.first().associateBy { it.id }
-	val running = c.entries.openEntries.first()
+	val running = entries
 		.filter { it.status == EntryStatus.ACTIVE && it.todoId != null }
 		.associate { it.todoId!! to it.id }
 	/* the same split as the Home Pianificate tab: overdue first, by moment */
-	return plannedSplit(open, null, settings.widgetTodoWindowHours, Instant.now(), zone).dated
+	return plannedSplit(open, null, window, now, zone).dated
 		.take(MAX_ROWS)
 		.map { t ->
 			TodoRowState(
-				t, todoTime(t, zone), t.clientId?.let { clients[it]?.name }, overdue(t),
+				t, todoTime(t, zone), t.clientId?.let { clients[it]?.name }, overdue(t, now),
 				running[t.id], t.clientId != null,
 			)
 		}
@@ -142,8 +160,12 @@ class TodoWidget : GlanceAppWidget() {
 	override suspend fun provideGlance(context: Context, id: GlanceId) {
 		if (!widgetsAllowed(context))
 			return provideContent { GlanceTheme { DisabledWidget(context) } }
-		val rows = loadTodoState(context)
-		provideContent { GlanceTheme { TodoContent(context, rows) } }
+		val states = todoStates(context)
+		val first = states.first()
+		provideContent {
+			val rows by states.collectAsState(first)
+			GlanceTheme { TodoContent(context, rows) }
+		}
 	}
 
 	@Composable
@@ -178,7 +200,7 @@ class TodoWidget : GlanceAppWidget() {
 										color = if (r.late) ColorProvider(RED) else dim, fontSize = 11.sp,
 									),
 								)
-								if (r.late) Spacer(GlanceModifier.width(4.dp))
+								if (r.time.isNotBlank()) Spacer(GlanceModifier.width(4.dp))
 								Text(
 									r.todo.title, maxLines = 1,
 									style = TextStyle(color = text, fontWeight = FontWeight.Medium, fontSize = 13.sp),

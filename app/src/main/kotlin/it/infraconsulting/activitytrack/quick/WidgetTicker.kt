@@ -8,6 +8,9 @@ import android.content.Context
 import android.content.Intent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 /*
@@ -33,6 +36,19 @@ object WidgetTicker {
 			return
 		}
 		am.setAndAllowWhileIdle(AlarmManager.RTC, System.currentTimeMillis() / 60_000 * 60_000 + 60_000, pi)
+	}
+}
+
+/*
+ * The current time, at once and then at every whole minute: the widgets
+ * read their data from flows inside the Glance composition, and a session
+ * left open would otherwise keep the elapsed time of its first frame.
+ */
+internal fun minuteTicks(): Flow<Long> = flow {
+	while (true) {
+		val now = System.currentTimeMillis()
+		emit(now)
+		delay(60_000 - now % 60_000)
 	}
 }
 

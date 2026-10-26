@@ -299,24 +299,26 @@ fun HomeScreen(
 		},
 	) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+			/*
+			 * How the cards move, once (issue #77); Settings → Gestures shows it
+			 * again. Above the list, not in it: the settings load after the first
+			 * frame and an item inserted on top would land above the scrolled view.
+			 */
+			if (settings?.gestureHintSeen == false && policy.enabled(Feature.GESTURES))
+				OutlinedCard(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).fillMaxWidth()) {
+					Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
+						Text(stringResource(R.string.gesture_hint_text), style = MaterialTheme.typography.bodyMedium)
+						Row(Modifier.align(Alignment.End)) {
+							TextButton(onClick = onOpenGestures) { Text(stringResource(R.string.gestures_title)) }
+							TextButton(onClick = vm::dismissGestureHint) { Text(stringResource(R.string.gesture_hint_ok)) }
+						}
+					}
+				}
 			LazyColumn(
 				modifier = Modifier.weight(1f).fillMaxWidth(),
 				verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 10.dp),
 				contentPadding = PaddingValues(vertical = 8.dp),
 			) {
-				/* how the cards move, once (issue #77); Settings → Gestures shows it again */
-				if (settings?.gestureHintSeen == false && policy.enabled(Feature.GESTURES))
-					item(key = "gesture-hint") {
-						OutlinedCard(Modifier.padding(horizontal = 16.dp).fillMaxWidth()) {
-							Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
-								Text(stringResource(R.string.gesture_hint_text), style = MaterialTheme.typography.bodyMedium)
-								Row(Modifier.align(Alignment.End)) {
-									TextButton(onClick = onOpenGestures) { Text(stringResource(R.string.gestures_title)) }
-									TextButton(onClick = vm::dismissGestureHint) { Text(stringResource(R.string.gesture_hint_ok)) }
-								}
-							}
-						}
-					}
 				item(key = "big") {
 					if (big == null)
 						EmptyEntryCard(gestures.fullSwipe, onStart.takeIf { canStart }, vm::startTravel.takeIf { canStart && canTravel }, Modifier.padding(horizontal = 16.dp))
