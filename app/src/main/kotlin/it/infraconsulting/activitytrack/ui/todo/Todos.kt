@@ -85,7 +85,10 @@ import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.domain.settings.Gestures
 import it.infraconsulting.activitytrack.domain.settings.TodoAction
 import it.infraconsulting.activitytrack.domain.settings.TodoSwipe
+import it.infraconsulting.activitytrack.domain.todo.TodoPlan
+import it.infraconsulting.activitytrack.domain.todo.alignedDue
 import it.infraconsulting.activitytrack.domain.todo.dueOverdue
+import it.infraconsulting.activitytrack.domain.todo.startsAfterDue
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.appViewModel
@@ -641,8 +644,8 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	var alignDue by remember { mutableStateOf<TodoEntity?>(null) }
 	alignDue?.let { pending ->
 		AlertDialog(
-			/* outside or No: save as it is — the plan stays separate from the due date */
-			onDismissRequest = { vm.save(pending, onClose); alignDue = null },
+			/* outside: back to the editor, nothing saved; No: save as it is */
+			onDismissRequest = { alignDue = null },
 			text = {
 				Text(
 					stringResource(
@@ -652,7 +655,11 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				)
 			},
 			confirmButton = {
-				TextButton(onClick = { vm.save(pending.copy(dueEpochDay = pending.planEpochDay), onClose); alignDue = null }) {
+				TextButton(onClick = {
+					val (day, min) = alignedDue(pending.plan()!!, pending.dueTimeMin, ZoneId.systemDefault())
+					vm.save(pending.copy(dueEpochDay = day.toEpochDay(), dueTimeMin = min), onClose)
+					alignDue = null
+				}) {
 					Text(stringResource(R.string.todo_align_due_yes))
 				}
 			},
@@ -707,9 +714,8 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				dueEpochDay = dd.getOrNull(), dueTimeMin = dt.getOrNull(),
 				priority = priority.trim().toIntOrNull(), notes = notes, refs = refs,
 			)
-			/* the plan after the due date: ask before saving (issue #71) */
-			val pDay = todo.planEpochDay
-			if (pDay != null && todo.dueEpochDay != null && pDay > todo.dueEpochDay!!) {
+			/* the plan starts past the due date (also later the same day): ask before saving (issue #71) */
+			if (startsAfterDue(todo.plan(), todo.dueEpochDay?.let(LocalDate::ofEpochDay), todo.dueTimeMin, ZoneId.systemDefault())) {
 				alignDue = todo
 				return@EditDialog
 			}
@@ -756,16 +762,20 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			DateTimeField(fieldLabel(Field.TODO_DUE, R.string.todo_field_due), due, time, { d, t -> due = d; time = t }, importance = fieldImportance(Field.TODO_DUE, Importance.OPTIONAL))
 			/* planned after the due date: it would come out overdue — say it now
 			 * and offer to align the two dates right here (issue #76) */
-			val pd = parseDate(planDay)?.toEpochDay()
-			val dd = parseDate(due)?.toEpochDay()
-			if (pd != null && dd != null && pd > dd) {
+			val livePlan = TodoPlan.of(parseDate(planDay)?.toEpochDay(), parseHhMm(planTime)?.takeIf { it < 1440 }, null)
+			val zone = ZoneId.systemDefault()
+			if (startsAfterDue(livePlan, parseDate(due), parseHhMm(time), zone)) {
 				Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 					Text(
 						stringResource(R.string.todo_will_overdue),
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.error,
 					)
-					TextButton(onClick = { due = planDay }) {
+					TextButton(onClick = {
+						val (day, min) = alignedDue(livePlan!!, parseHhMm(time), zone)
+						due = day.toString()
+						time = min?.let(::formatMin).orEmpty()
+					}) {
 						Text(stringResource(R.string.todo_align_due_yes))
 					}
 				}

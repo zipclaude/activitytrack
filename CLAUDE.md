@@ -169,6 +169,16 @@ the due time gets no warning; the widget Start leaves other running entries
 running; local `lintDebug` crashes in ExperimentalDetector (CI runs no lint).
 Manual 0.7.6 text done; home.png still shows the old tab label (needs the
 phone).
+Owner 2026-10-26 ("sistema i bug, lavora alle due mancanti"), branch
+`usability-77-79`: the align-due dialog's outside tap goes back to the
+editor; startsAfterDue/alignedDue (TodoPlan.kt) also catch a same-day start
+after the due time (aligning drops that due time); the to-dos widget's
+Start suspends the running (not paused) entries; #79 "Stop rapido" in both
+Stop dialogs (EntryCommander.quickStop: no end time, no resume prompt);
+#77 one-off Home tip (gestureHintSeen) + faint ‹ › on SwipeCard until the
+first swipe (swipeLearned, LocalSwipeHints from MainActivity), reset in
+Gestures. Manual 0.7.6 documents all of it. NOT device-tested; the
+release waits for the phone (checks + screenshots, home.png tab label).
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on

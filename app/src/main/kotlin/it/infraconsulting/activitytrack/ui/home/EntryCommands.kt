@@ -12,6 +12,7 @@ import it.infraconsulting.activitytrack.data.repo.ValidationException
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -57,6 +58,12 @@ open class EntryCommander(private val entries: EntryRepository) : ActionViewMode
 		if (cmd == EntryCommand.STOP)
 			_resume.value = entries.suspendedToResume(id)
 	}
+
+	/*
+	 * "Stop rapido" (issue #79): stops now with no further question, as the
+	 * notification does; completing stays possible from "to complete".
+	 */
+	fun quickStop(id: Long, done: () -> Unit = {}) = run(done) { entries.apply(id, EntryCommand.STOP) }
 
 	fun invalidTime() = fail(ValidationException.Reason.INVALID_TIME)
 
@@ -117,7 +124,10 @@ fun rememberEntryCommands(vm: EntryCommander, editableTimes: Boolean = false, ti
 				TextButton(onClick = { stopping = null; vm.command(e.id, EntryCommand.STOP) }) { Text(stringResource(R.string.stop_now)) }
 			},
 			dismissButton = {
-				TextButton(onClick = { stopping = null; vm.command(e.id, EntryCommand.TRAVEL) }) { Text(stringResource(R.string.stop_return)) }
+				Row {
+					TextButton(onClick = { stopping = null; vm.quickStop(e.id) }) { Text(stringResource(R.string.stop_quick)) }
+					TextButton(onClick = { stopping = null; vm.command(e.id, EntryCommand.TRAVEL) }) { Text(stringResource(R.string.stop_return)) }
+				}
 			},
 		)
 	}
@@ -166,9 +176,14 @@ private fun StopAtDialog(e: TimeEntryEntity, vm: EntryCommander, title: String, 
 			}
 		},
 		confirmButton = { TextButton(onClick = { go(EntryCommand.STOP) }) { Text(stringResource(R.string.cmd_stop)) } },
-		dismissButton = if (e.mode == SegmentKind.TRAVEL) null else ({
-			TextButton(onClick = { go(EntryCommand.TRAVEL) }) { Text(stringResource(R.string.stop_return)) }
-		}),
+		dismissButton = {
+			Row {
+				/* now, no end time and no further question (issue #79) */
+				TextButton(onClick = { vm.clearError(); vm.quickStop(e.id, onClose) }) { Text(stringResource(R.string.stop_quick)) }
+				if (e.mode != SegmentKind.TRAVEL)
+					TextButton(onClick = { go(EntryCommand.TRAVEL) }) { Text(stringResource(R.string.stop_return)) }
+			}
+		},
 	)
 }
 

@@ -194,6 +194,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="stop_title">Fermare \"%1$s\"</string>
   <string name="stop_now">Ferma ora</string>
   <string name="stop_return">Avvia rientro</string>
+  <string name="stop_quick">Stop rapido</string>
   <string name="resume_title">Riprendere \"%1$s\"?</string>
   <string name="action_yes">Sì</string>
   <string name="action_no">No</string>
@@ -313,9 +314,9 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_title">Da fare</string>
   <string name="todo_due_today">Da fare · prossime 24 h</string>
   <string name="todo_today">oggi</string>
-  <string name="todo_align_due">La data pianificata è successiva alla scadenza. Allineare la scadenza alla data pianificata (%1$s)?</string>
+  <string name="todo_align_due">La pianificazione inizia dopo la scadenza. Allineare la scadenza al giorno pianificato (%1$s)?</string>
   <string name="todo_align_due_yes">Allinea la scadenza</string>
-  <string name="todo_will_overdue">Risulterà in ritardo: la data pianificata è successiva alla scadenza.</string>
+  <string name="todo_will_overdue">Risulterà in ritardo: la pianificazione inizia dopo la scadenza.</string>
   <string name="todo_align_due_no">Mantieni</string>
   <string name="todo_start">Avvia attività</string>
   <string name="todo_mark_done">Segna come fatta</string>
@@ -404,6 +405,9 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="swipe_pause_resume">Pausa / riprendi</string>
   <string name="swipe_stop_or_suspend">Termina o sospendi</string>
   <string name="gestures_title">Gesti</string>
+  <string name="gesture_hint_text">Suggerimento: trascina una scheda di lato per i suoi comandi — uno scorrimento breve mostra i pulsanti (pausa, stop, avvia…), uno lungo esegue il primo.</string>
+  <string name="gesture_hint_ok">Ho capito</string>
+  <string name="gesture_hints_again">Mostra di nuovo i suggerimenti sui gesti</string>
   <string name="gestures_entries">Attività in corso</string>
   <string name="gestures_todos">Attività da fare</string>
   <string name="gestures_to_start">Trascina a sinistra</string>

@@ -10,6 +10,9 @@ manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
   uscire chiede conferma (§14).
 - Editor delle *Da fare*: avviso in tempo reale se la pianificazione
   supera la scadenza, con "Allinea la scadenza" (§8).
+- **Stop rapido** nella domanda di Stop (§5); **suggerimenti sui gesti** al
+  primo uso (§3, "Gesti").
+- Il widget "Da fare", avviando una voce, sospende le attività in corso.
 - Correzioni: il widget "Da fare" si aggiorna quando cambiano le voci (una
   voce fatta non vi resta più); di notte, prima delle 06:00, "Chiuse ·
   Oggi" mostra la giornata iniziata ieri alle 06:00, come i report.
@@ -194,6 +197,10 @@ uno lungo esegue subito il primo.
 
 Si cambiano in "Impostazioni" → **"Gesti"**: per ogni direzione cosa proporre
 (anche nessuna azione), e se il trascinamento lungo esegue subito la prima.
+Al primo uso la Home mostra un **suggerimento** sui gesti ("Ho capito" lo
+chiude) e i riquadri hanno ai lati una piccola ‹ › finché non se ne trascina
+uno; "Gesti" → **"Mostra di nuovo i suggerimenti sui gesti"** li ripropone
+(0.7.6).
 
 ### Colori di aziende e clienti
 Nella scheda di un'azienda o di un cliente ("Altro" → "Anagrafiche") scegli
@@ -327,8 +334,10 @@ un'etichetta colorata. "Stop" mentre lavori chiede **"Ferma ora"** oppure
 Con **"Orari modificabili"** la domanda compare sempre, anche in viaggio, con
 il campo **Fine**: vuoto = adesso, altrimenti l'attività si ferma (o il
 rientro parte) a quell'ora; non può essere nel futuro né prima dell'inizio del
-tratto in corso. Lo Stop dalla notifica, dal widget o dal riquadro ferma
-sempre subito.
+tratto in corso. **"Stop rapido"** (0.7.6), nella stessa domanda, ferma
+subito senza altre domande, come la notifica: il completamento resta da
+fare dallo stato "Da completare". Lo Stop dalla notifica, dal widget o dal
+riquadro ferma sempre subito.
 
 ### Notifica fissa
 Una notifica per attività in corso, con cronometro e comandi. Mentre la
@@ -525,7 +534,10 @@ cambia la scadenza del gestionale; se però si salva una pianificazione
 successiva alla scadenza, l'app chiede se allinearle (0.7.5): "Allinea
 la scadenza" copia il giorno pianificato, "Mantieni" lascia tutto com'è.
 Già mentre si compila (0.7.6), sotto la scadenza compare in rosso
-"Risulterà in ritardo…" con il pulsante "Allinea la scadenza".
+"Risulterà in ritardo…" con il pulsante "Allinea la scadenza". Vale anche
+nello stesso giorno, se l'inizio pianificato è dopo l'ora di scadenza:
+allineando, l'ora di scadenza si toglie. Toccare fuori dalla domanda torna
+alla voce senza salvare.
 - **Solo la data**: la voce vale per tutto il giorno; in Agenda sta nella
   fascia sopra la griglia, nel calendario è un evento di tutto il giorno,
   non ha promemoria ed è "in ritardo" dal giorno dopo.
@@ -729,7 +741,9 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 - **Widget "Da fare" (4×2, 0.7.4)** — le prossime voci pianificate
   (per prima quella in ritardo, con l'orario in rosso), ognuna con **▶**:
   se la voce ha un cliente l'attività parte subito con i suoi dati, senza
-  aprire l'app; se non ce l'ha, ▶ apre "Nuova attività" per sceglierlo. La
+  aprire l'app, e le attività in corso vengono sospese (riprendibili con un
+  tocco; quelle in pausa restano come sono); se non ce l'ha, ▶ apre "Nuova
+  attività" per sceglierlo. La
   riga avviata mostra **Pausa** e **Stop**; le voci completate lasciano il
   widget; se le righe non bastano, il widget scorre. Quanto guardare avanti
   (24 h predefinite, 3, 7 o 30 giorni; i ritardi sempre) è in

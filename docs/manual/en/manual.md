@@ -10,6 +10,9 @@ reference (settings, entities, states, flows).
   (§14).
 - To-do editor: a live warning when the plan passes the due date, with
   "Align the due date" (§8).
+- **Quick stop** in the Stop question (§5); **gesture tips** at first use
+  (§3, "Gestures").
+- The to-dos widget suspends the running activities when it starts one.
 - Fixes: the to-dos widget follows the to-dos (a done one no longer stays
   on it); at night, before 06:00, "Closed · Today" shows the working day
   begun yesterday at 06:00, as the reports do.
@@ -190,7 +193,10 @@ one at once.
 | Ignored to-do | Restore | Restore |
 
 They are changed in "Settings" → **"Gestures"**: what each direction offers
-(also nothing), and whether a long drag runs the first action.
+(also nothing), and whether a long drag runs the first action. At first the
+Home shows a **tip** about the gestures ("Got it" closes it) and the cards
+carry a faint ‹ › on their sides until one is dragged; "Gestures" → **"Show
+the gesture hints again"** brings both back (0.7.6).
 
 ### Company and client colours
 In a company or client screen ("More" → "Master data") pick a **colour** out
@@ -320,8 +326,10 @@ return travel"** (the return travel belongs to the same activity). With
 **"Times freely editable"** the question always comes, also when travelling,
 with an **End** field: empty = now, otherwise the activity stops (or the
 return travel starts) at that time; it cannot be in the future nor before the
-start of the current segment. Stop from the notification, the widget or the
-tile always stops at once.
+start of the current segment. **"Quick stop"** (0.7.6), in the same
+question, stops at once with no further question, as the notification does:
+completing stays to do from "To complete". Stop from the notification, the
+widget or the tile always stops at once.
 
 ### Ongoing notification
 One notification per running activity, with a chronometer and commands.
@@ -514,6 +522,9 @@ system's due date; but saving a plan after the due date asks whether to
 align them (0.7.5): "Align the due date" copies the planned day,
 "Keep it" leaves both as they are. Already while editing (0.7.6), a red
 "It will show as overdue…" under the due date offers "Align the due date".
+It also holds on the same day when the planned start is after the due time:
+aligning then drops the due time. A tap outside the question goes back to
+the to-do without saving.
 - **Date only**: the to-do counts for the whole day; in the Agenda it sits in
   the strip above the grid, in the calendar it is an all-day event, it has no
   reminder and is "overdue" from the next day.
@@ -708,8 +719,9 @@ days" goes further back.
   activity") and **🚗 Travel** (starts at once). Resizable beyond 4×2.
 - **"To-dos" widget (4×2, 0.7.4)** — the next planned to-dos (the overdue
   one first, its time in red), each with **▶**: when the to-do has a client
-  the activity starts at once with its data, without opening the app;
-  otherwise ▶ opens "New activity" to pick one. The started row shows
+  the activity starts at once with its data, without opening the app, and
+  the activities running are suspended (resumable with one tap; paused ones
+  stay as they are); otherwise ▶ opens "New activity" to pick one. The started row shows
   **Pause** and **Stop**; done to-dos leave the widget; when the rows do not
   fit, the widget scrolls. How far to look ahead (24 h default, 3, 7 or 30
   days; the overdue always in) is in Settings → "Display" → "To-dos

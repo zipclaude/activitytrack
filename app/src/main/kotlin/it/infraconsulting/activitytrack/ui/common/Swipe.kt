@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
@@ -81,6 +82,15 @@ fun settle(towardEnd: Float, velocity: Float, width: Float, revealEnd: Float, re
 private val ACTION_WIDTH = 88.dp
 
 /*
+ * Gesture discoverability (issue #77): until the first swipe the cards
+ * show a faint ‹ › on the sides that move; the first swipe that opens or
+ * runs something reports it. Provided by MainActivity from the settings.
+ */
+data class SwipeHints(val show: Boolean = false, val onSwiped: () -> Unit = {})
+
+val LocalSwipeHints = androidx.compose.runtime.compositionLocalOf { SwipeHints() }
+
+/*
  * Swipeable card (M10, owner decisions 2026-10-18). Dragging toward the
  * start edge reveals [toStart] at the end edge, toward the end reveals
  * [toEnd] at the start edge (left / right in left-to-right languages); a
@@ -108,6 +118,7 @@ fun SwipeCard(
 	val scope = rememberCoroutineScope()
 	suspend fun animateTo(target: Float) = animate(offset, target) { v, _ -> offset = v }
 	val actionPx = with(density) { ACTION_WIDTH.toPx() }
+	val hints = LocalSwipeHints.current
 
 	BoxWithConstraints(modifier.clip(shape)) {
 		val width = constraints.maxWidth.toFloat()
@@ -149,15 +160,29 @@ fun SwipeCard(
 						val s = settle(offset * dir, velocity * dir, width, toEnd.size * actionPx, toStart.size * actionPx, fullSwipe)
 						when (s) {
 							Settle.Closed -> animateTo(0f)
-							is Settle.Open -> animateTo((if (s.towardEnd) toEnd.size else -toStart.size) * actionPx * dir)
+							is Settle.Open -> {
+								if (hints.show) hints.onSwiped()
+								animateTo((if (s.towardEnd) toEnd.size else -toStart.size) * actionPx * dir)
+							}
 							is Settle.Run -> {
+								if (hints.show) hints.onSwiped()
 								animateTo(0f)
 								(if (s.towardEnd) toEnd else toStart).firstOrNull()?.run?.invoke()
 							}
 						}
 					},
 				),
-		) { content() }
+		) {
+			content()
+			/* a faint ‹ › where the card moves, until the first swipe (issue #77) */
+			if (hints.show) {
+				val tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+				if (toEnd.isNotEmpty())
+					Text("›", color = tint, style = MaterialTheme.typography.titleMedium, modifier = Modifier.align(Alignment.CenterStart).padding(start = 2.dp))
+				if (toStart.isNotEmpty())
+					Text("‹", color = tint, style = MaterialTheme.typography.titleMedium, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 2.dp))
+			}
+		}
 	}
 }
 

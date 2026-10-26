@@ -36,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -159,6 +160,9 @@ class HomeViewModel(
 	fun setTab(tab: HomeTab) = run { settingsRepo.update { it.copy(homeTab = tab.name) } }
 	fun setClosedWindow(hours: Int) = run { settingsRepo.update { it.copy(homeClosedWindow = hours) } }
 
+	/* the one-off gesture hint was read (issue #77) */
+	fun dismissGestureHint() = run { settingsRepo.update { it.copy(gestureHintSeen = true) } }
+
 	/* the entry shown in the big card; null = the most recent one */
 	private val _selected = MutableStateFlow<Long?>(null)
 	val selected = _selected.asStateFlow()
@@ -194,6 +198,7 @@ fun HomeScreen(
 	onStartTravel: () -> Unit,
 	onOpenEntry: (Long) -> Unit,
 	onStartTodo: (Long) -> Unit,
+	onOpenGestures: () -> Unit = {},
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
 	val allCards by vm.cards.collectAsState()
@@ -299,6 +304,19 @@ fun HomeScreen(
 				verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 10.dp),
 				contentPadding = PaddingValues(vertical = 8.dp),
 			) {
+				/* how the cards move, once (issue #77); Settings → Gestures shows it again */
+				if (settings?.gestureHintSeen == false && policy.enabled(Feature.GESTURES))
+					item(key = "gesture-hint") {
+						OutlinedCard(Modifier.padding(horizontal = 16.dp).fillMaxWidth()) {
+							Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
+								Text(stringResource(R.string.gesture_hint_text), style = MaterialTheme.typography.bodyMedium)
+								Row(Modifier.align(Alignment.End)) {
+									TextButton(onClick = onOpenGestures) { Text(stringResource(R.string.gestures_title)) }
+									TextButton(onClick = vm::dismissGestureHint) { Text(stringResource(R.string.gesture_hint_ok)) }
+								}
+							}
+						}
+					}
 				item(key = "big") {
 					if (big == null)
 						EmptyEntryCard(gestures.fullSwipe, onStart.takeIf { canStart }, vm::startTravel.takeIf { canStart && canTravel }, Modifier.padding(horizontal = 16.dp))

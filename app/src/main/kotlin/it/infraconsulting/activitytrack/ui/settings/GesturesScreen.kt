@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -35,6 +37,11 @@ class GesturesViewModel(private val repo: SettingsRepository) : ViewModel() {
 	/* each choice is saved at once: there is no form to confirm */
 	fun set(transform: (GestureSettings) -> GestureSettings) {
 		viewModelScope.launch { repo.update { it.copy(gestures = transform(it.gestures)) } }
+	}
+
+	/* the Home hint and the cards' ‹ › again (issue #77) */
+	fun showHints() {
+		viewModelScope.launch { repo.update { it.copy(gestureHintSeen = false, swipeLearned = false) } }
 	}
 }
 
@@ -67,6 +74,7 @@ fun GesturesScreen(onBack: () -> Unit) {
 
 			SectionHeader(stringResource(R.string.gestures_behaviour))
 			SwitchRow(stringResource(R.string.gestures_full), g.fullSwipe) { v -> vm.set { it.copy(fullSwipe = v) } }
+			TextButton(onClick = vm::showHints) { Text(stringResource(R.string.gesture_hints_again)) }
 		}
 	}
 }
