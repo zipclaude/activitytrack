@@ -239,6 +239,8 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="notif_summary_title">Hoy</string>
   <string name="notif_summary_text">Total %1$s</string>
   <string name="entry_title">Actividad</string>
+  <string name="entry_add_section">Gastos y adjuntos</string>
+  <string name="entry_summary_totals">Trabajo %1$s · Viaje %2$s · Pausa %3$s</string>
   <string name="field_locality">Localidad</string>
   <string name="field_location_kind">Dónde</string>
   <string name="segments">Tiempos</string>

@@ -251,6 +251,8 @@ Tap the green play button below to start one.</string>
   <string name="notif_summary_title">Today</string>
   <string name="notif_summary_text">Total %1$s</string>
   <string name="entry_title">Activity</string>
+  <string name="entry_add_section">Expenses and attachments</string>
+  <string name="entry_summary_totals">Work %1$s · Travel %2$s · Pause %3$s</string>
   <string name="field_locality">Locality</string>
   <string name="field_location_kind">Where</string>
   <string name="segments">Times</string>
