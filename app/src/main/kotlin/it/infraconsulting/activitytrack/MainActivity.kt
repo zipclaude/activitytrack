@@ -194,7 +194,7 @@ private fun UndoHost(modifier: Modifier) {
 			val result = host.showSnackbar(
 				message = context.getString(e.message, e.arg),
 				actionLabel = context.getString(R.string.action_undo),
-				duration = SnackbarDuration.Short,
+				duration = SnackbarDuration.Long,
 			)
 			if (result == SnackbarResult.ActionPerformed)
 				scope.launch { e.undo() }
