@@ -131,6 +131,7 @@ Tap the green play button below to start one.</string>
 
   <!-- settings -->
   <string name="settings_title">Settings</string>
+  <string name="settings_more">Other settings</string>
   <string name="settings_saved">Settings saved</string>
   <string name="settings_unsaved">There are unsaved changes in this section.</string>
   <string name="settings_unsaved_leave">Leave without saving</string>
@@ -244,7 +245,7 @@ Tap the green play button below to start one.</string>
   <string name="notif_still_travelling">Still travelling</string>
   <string name="notif_pause_title">Still on pause?</string>
   <string name="notif_summary_title">Today</string>
-  <string name="notif_summary_text">Solar %1$s · reported %2$s</string>
+  <string name="notif_summary_text">Total %1$s</string>
   <string name="entry_title">Activity</string>
   <string name="field_locality">Locality</string>
   <string name="field_location_kind">Where</string>
@@ -303,8 +304,7 @@ Tap the green play button below to start one.</string>
   <string name="err_overlapping_segments">The segment overlaps time already recorded.</string>
   <string name="day_title">Day</string>
   <string name="day_today">Today</string>
-  <string name="day_solar">Solar</string>
-  <string name="day_reported">Reported</string>
+  <string name="day_reported">Total</string>
   <string name="day_empty">No time recorded on this day.</string>
   <string name="day_line_fmt">Work %1$s → %2$s · Travel %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / export</string>

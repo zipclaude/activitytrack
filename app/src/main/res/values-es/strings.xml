@@ -120,6 +120,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="err_generic">Operación no posible.</string>
 
   <string name="settings_title">Ajustes</string>
+  <string name="settings_more">Otros ajustes</string>
   <string name="settings_saved">Ajustes guardados</string>
   <string name="settings_unsaved">Hay cambios sin guardar en esta sección.</string>
   <string name="settings_unsaved_leave">Salir sin guardar</string>
@@ -232,7 +233,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="notif_still_travelling">Sigo de viaje</string>
   <string name="notif_pause_title">¿Sigues en pausa?</string>
   <string name="notif_summary_title">Hoy</string>
-  <string name="notif_summary_text">Real %1$s · declarado %2$s</string>
+  <string name="notif_summary_text">Total %1$s</string>
   <string name="entry_title">Actividad</string>
   <string name="field_locality">Localidad</string>
   <string name="field_location_kind">Dónde</string>
@@ -291,8 +292,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="err_overlapping_segments">El tramo se solapa con tiempo ya registrado.</string>
   <string name="day_title">Día</string>
   <string name="day_today">Hoy</string>
-  <string name="day_solar">Real</string>
-  <string name="day_reported">Declarado</string>
+  <string name="day_reported">Total</string>
   <string name="day_empty">No hay tiempo registrado este día.</string>
   <string name="day_line_fmt">Trabajo %1$s → %2$s · Viaje %3$s → %4$s · Pausa %5$s → %6$s</string>
   <string name="export_title">Importar / exportar</string>

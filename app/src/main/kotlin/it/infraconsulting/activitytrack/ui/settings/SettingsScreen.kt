@@ -87,13 +87,14 @@ private enum class F {
 }
 
 /* Settings grouped in sub-screens (backlog 2, 2026-10-18). */
-enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = true, val feature: Feature? = null) {
-	DISPLAY(R.string.sec_display, R.drawable.ic_menu_phone_android),
-	TIMES(R.string.sec_times, R.drawable.ic_clock),
+/* [essential]: listed first; the others under "Altre impostazioni" (issue #99) */
+enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = true, val feature: Feature? = null, val essential: Boolean = false) {
+	DISPLAY(R.string.sec_display, R.drawable.ic_menu_phone_android, essential = true),
+	TIMES(R.string.sec_times, R.drawable.ic_clock, essential = true),
 	CALLS(R.string.sec_calls, R.drawable.ic_menu_phone, feature = Feature.CALLS),
-	REMINDERS(R.string.sec_reminders, R.drawable.ic_menu_alarm),
+	REMINDERS(R.string.sec_reminders, R.drawable.ic_menu_alarm, essential = true),
 	NOTIFICATIONS(R.string.sec_notifications, R.drawable.ic_menu_bell, form = false),
-	LOCATION(R.string.sec_location, R.drawable.ic_menu_place, feature = Feature.LOCATION),
+	LOCATION(R.string.sec_location, R.drawable.ic_menu_place, feature = Feature.LOCATION, essential = true),
 	CALENDAR(R.string.sec_calendar, R.drawable.ic_calendar, form = false, feature = Feature.CALENDAR),
 	DICTATION(R.string.sec_dictation, R.drawable.ic_mic, feature = Feature.DICTATION),
 	REPORTS(R.string.sec_reports, R.drawable.ic_nav_report),
@@ -129,15 +130,25 @@ fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen:
 		)
 	}
 	val dots = if (dirty && section?.form == true) " •" else ""
+	var showAll by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title) + dots, onBack = ::guardedBack) { padding ->
 		if (section == null)
 			LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 				/* sections of features the policy switched off are not offered (issue #48) */
-				items(SettingsSection.entries.filter { it.feature?.let(policy::enabled) ?: true }) { sec ->
+				val offered = SettingsSection.entries.filter { it.feature?.let(policy::enabled) ?: true }
+				items(offered.filter { it.essential }) { sec ->
 					ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) }
 				}
 				if (policy.enabled(Feature.GESTURES))
 					item { ClickableRow(stringResource(R.string.gestures_title), icon = R.drawable.ic_menu_touch) { onOpen(Screen.Gestures) } }
+				/* the rest, folded (issue #99) */
+				item {
+					ClickableRow(stringResource(R.string.settings_more) + if (showAll) " ▴" else " ▾", icon = R.drawable.ic_menu_tune) { showAll = !showAll }
+				}
+				if (showAll)
+					items(offered.filter { !it.essential }) { sec ->
+						ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) }
+					}
 			}
 		else if (s != null)
 			SettingsForm(s, vm, section, Modifier.padding(padding), onDirty = { dirty = it })

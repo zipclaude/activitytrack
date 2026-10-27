@@ -132,11 +132,11 @@ object ReminderNotifications {
 			.build()
 	}
 
-	fun daySummary(context: Context, solar: Duration, reported: Duration): Notification =
+	fun daySummary(context: Context, reported: Duration): Notification =
 		Notification.Builder(context, NotificationChannels.DAY_SUMMARY)
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(context.getString(R.string.notif_summary_title))
-			.setContentText(context.getString(R.string.notif_summary_text, hm(solar), hm(reported)))
+			.setContentText(context.getString(R.string.notif_summary_text, hm(reported)))
 			.setContentIntent(EntryNotifications.openAppIntent(context, 1))
 			.setAutoCancel(true)
 			.build()
