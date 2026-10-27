@@ -197,6 +197,10 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="stop_now">Parar ahora</string>
   <string name="stop_return">Iniciar regreso</string>
   <string name="stop_quick">Parada rápida</string>
+  <string name="stop_end_work">Fin del trabajo</string>
+  <string name="stop_close">Cerrar</string>
+  <string name="stop_no_activity_hint">Sin descripción queda «faltan detalles».</string>
+  <string name="stop_todo_done">Pendiente hecha</string>
   <string name="resume_title">¿Reanudar \"%1$s\"?</string>
   <string name="action_yes">Sí</string>
   <string name="action_no">No</string>

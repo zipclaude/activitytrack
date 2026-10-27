@@ -114,7 +114,8 @@ class HomeViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
-) : EntryCommander(entries) {
+	todos: it.infraconsulting.activitytrack.data.repo.TodoRepository? = null,
+) : EntryCommander(entries, todos) {
 	val cards = combine(
 		entries.openEntries, entries.openEntrySegments, master.clients, master.companies,
 	) { list, segs, clients, companies ->
@@ -206,7 +207,7 @@ fun HomeScreen(
 	onOpenGestures: () -> Unit = {},
 	onOpenTodos: (() -> Unit)? = null,
 ) {
-	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
+	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings, it.todos) }
 	val allCards by vm.cards.collectAsState()
 	val selected by vm.selected.collectAsState()
 	val settings by vm.settings.collectAsState()

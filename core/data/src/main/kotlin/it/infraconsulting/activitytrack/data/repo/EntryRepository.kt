@@ -443,6 +443,26 @@ class EntryRepository(
 		verify(entryId)
 	}
 
+	/* The description typed in the stop sheet (issue #93); the rest of the details stays. */
+	suspend fun setActivity(entryId: Long, activity: String) = db.withTransaction {
+		val e = load(entryId)
+		dao.updateEntry(e.copy(activity = activity.trim().ifEmpty { null }, updatedUtcMs = clock.millis()))
+		verify(entryId)
+	}
+
+	/*
+	 * After the stop sheet (issue #93): an entry left to complete only for the
+	 * to-do question is closed when it has a client and a description.
+	 */
+	suspend fun closeIfComplete(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (e.status != EntryStatus.TO_COMPLETE || e.clientId == null || e.activity.isNullOrBlank())
+			return@withTransaction
+		val t = EntryStateMachine.apply(EntryState(e.status, e.mode), EntryCommand.COMPLETE)
+		dao.updateEntry(e.copy(status = t.next.status, mode = t.next.mode, updatedUtcMs = clock.millis()))
+		verify(entryId)
+	}
+
 	/* Manual TRAVEL or PAUSE segment added afterwards; must lie in the past and not overlap. */
 	suspend fun addManualSegment(
 		entryId: Long,

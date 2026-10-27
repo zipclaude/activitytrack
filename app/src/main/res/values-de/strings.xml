@@ -197,6 +197,10 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="stop_now">Jetzt stoppen</string>
   <string name="stop_return">Rückreise starten</string>
   <string name="stop_quick">Schnellstopp</string>
+  <string name="stop_end_work">Arbeitsende</string>
+  <string name="stop_close">Beenden</string>
+  <string name="stop_no_activity_hint">Ohne Beschreibung bleibt sie „Angaben fehlen“.</string>
+  <string name="stop_todo_done">Aufgabe erledigt</string>
   <string name="resume_title">\"%1$s\" fortsetzen?</string>
   <string name="action_yes">Ja</string>
   <string name="action_no">Nein</string>
