@@ -90,6 +90,14 @@ interface PluginDao {
 	@Query("DELETE FROM remote_record WHERE entry_id = :entryId AND plugin_id = :pluginId AND block_key = :key")
 	suspend fun forgetSent(entryId: Long, pluginId: String, key: String)
 
+	/* the plugin's to-dos marked done (export.todoDone closes them on the remote side once) */
+	@Query("SELECT * FROM todo WHERE company_id = :companyId AND external_key IS NOT NULL AND done != 0")
+	suspend fun doneImportedTodos(companyId: Long): List<TodoEntity>
+
+	/* what was done for a to-do: its entries' descriptions, oldest first */
+	@Query("SELECT activity FROM time_entry WHERE todo_id = :todoId AND activity IS NOT NULL AND activity != '' ORDER BY created_utc_ms")
+	suspend fun activitiesOfTodo(todoId: Long): List<String>
+
 	@Query("SELECT * FROM remote_record WHERE entry_id = :entryId")
 	suspend fun sentAll(entryId: Long): List<RemoteRecordEntity>
 
