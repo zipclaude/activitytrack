@@ -405,6 +405,10 @@ Tap the green play button below to start one.</string>
   <string name="action_ok">OK</string>
   <string name="action_clear">Clear</string>
   <string name="home_none">No activity running</string>
+  <string name="first_title">Getting started</string>
+  <string name="first_text">Create the client you work for, with its company: then ▶ starts your first activity.</string>
+  <string name="first_client">Create the first client</string>
+  <string name="first_import">Import from a file or a management system</string>
   <string name="home_none_hint">Tap the green button below to start one.</string>
   <string name="home_tab_planned">To-dos</string>
   <string name="home_tab_closed">Done</string>
