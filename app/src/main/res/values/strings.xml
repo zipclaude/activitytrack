@@ -12,7 +12,7 @@
   <string name="ch_arrival">Arrival prompts</string>
   <string name="ch_day_start">Start of day</string>
   <string name="ch_day_summary">Daily summary</string>
-  <string name="ch_to_complete">Activities to complete</string>
+  <string name="ch_to_complete">Activities with details missing</string>
 
   <!-- actions -->
   <string name="action_save">Save</string>
@@ -50,7 +50,7 @@ Tap the green play button below to start one.</string>
   <string name="widget_todo_description">The next planned to-dos, each with a Start button</string>
   <string name="widget_todo_empty">Nothing planned</string>
   <string name="status_suspended">Suspended</string>
-  <string name="status_to_complete">To complete</string>
+  <string name="status_to_complete">Details missing</string>
   <string name="status_closed">Closed</string>
 
   <!-- data folder -->
@@ -194,6 +194,7 @@ Tap the green play button below to start one.</string>
   <string name="cmd_pause">Pause</string>
   <string name="cmd_suspend">Suspend</string>
   <string name="cmd_stop">Stop</string>
+  <string name="suspend_hint_text">Suspend leaves the activity to resume it later, for example to work on another one; the time in between is not counted. Pause is a break inside the activity and is counted as a pause.</string>
   <string name="cmd_complete">Complete</string>
   <string name="empty_activity_title">No activity description</string>
   <string name="empty_activity_text">Complete with the client only?</string>
@@ -228,7 +229,7 @@ Tap the green play button below to start one.</string>
   <string name="travel_suspend">Suspend travel</string>
   <string name="err_completion_incomplete">Describe the activity.</string>
   <string name="err_client_required">Choose a client.</string>
-  <string name="notif_to_complete_title">Activity to complete</string>
+  <string name="notif_to_complete_title">Activity: details missing</string>
   <string name="notif_confirm_title">Still on %1$s?</string>
   <string name="notif_confirm_text">Last confirmation at %1$s</string>
   <string name="notif_stop_at">Stop at %1$s</string>
@@ -400,11 +401,11 @@ Tap the green play button below to start one.</string>
   <string name="home_none">No activity running</string>
   <string name="home_none_hint">Tap the green button below to start one.</string>
   <string name="home_tab_planned">To-dos</string>
-  <string name="home_tab_closed">Closed</string>
+  <string name="home_tab_closed">Done</string>
   <string name="home_no_date">Without a date</string>
   <string name="home_window_today">Today</string>
   <string name="home_planned_empty">Nothing planned in this window</string>
-  <string name="home_closed_empty">Nothing closed in this window</string>
+  <string name="home_closed_empty">Nothing done in this window</string>
   <string name="todo_ignored">ignored</string>
   <string name="swipe_start">Start</string>
   <string name="swipe_ignore">Ignore</string>

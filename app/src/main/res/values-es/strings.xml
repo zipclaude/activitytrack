@@ -7,7 +7,7 @@
   <string name="ch_arrival">Avisos de llegada</string>
   <string name="ch_day_start">Inicio de jornada</string>
   <string name="ch_day_summary">Resumen diario</string>
-  <string name="ch_to_complete">Actividades por completar</string>
+  <string name="ch_to_complete">Actividades con detalles pendientes</string>
 
   <string name="action_save">Guardar</string>
   <string name="action_cancel">Cancelar</string>
@@ -44,7 +44,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="widget_todo_description">Las próximas tareas planificadas, cada una con botón Iniciar</string>
   <string name="widget_todo_empty">Nada planificado</string>
   <string name="status_suspended">Suspendida</string>
-  <string name="status_to_complete">Por completar</string>
+  <string name="status_to_complete">Faltan detalles</string>
   <string name="status_closed">Cerrada</string>
 
   <string name="setup_title">Carpeta de datos</string>
@@ -182,6 +182,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="cmd_pause">Pausa</string>
   <string name="cmd_suspend">Suspender</string>
   <string name="cmd_stop">Parar</string>
+  <string name="suspend_hint_text">Suspender deja la actividad para retomarla más tarde, por ejemplo para trabajar en otra; el tiempo intermedio no cuenta. Pausa es una interrupción dentro de la actividad y cuenta como pausa.</string>
   <string name="cmd_complete">Completar</string>
   <string name="empty_activity_title">Actividad sin descripción</string>
   <string name="empty_activity_text">¿Completar solo con el cliente?</string>
@@ -216,7 +217,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="travel_suspend">Suspender viaje</string>
   <string name="err_completion_incomplete">Describe la actividad.</string>
   <string name="err_client_required">Elige un cliente.</string>
-  <string name="notif_to_complete_title">Actividad por completar</string>
+  <string name="notif_to_complete_title">Actividad: faltan detalles</string>
   <string name="notif_confirm_title">¿Sigues con %1$s?</string>
   <string name="notif_confirm_text">Última confirmación a las %1$s</string>
   <string name="notif_stop_at">Parar a las %1$s</string>
@@ -389,11 +390,11 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="home_none">Ninguna actividad en curso</string>
   <string name="home_none_hint">Toca el botón verde de abajo para iniciar una.</string>
   <string name="home_tab_planned">Tareas</string>
-  <string name="home_tab_closed">Cerradas</string>
+  <string name="home_tab_closed">Hechas</string>
   <string name="home_no_date">Sin fecha</string>
   <string name="home_window_today">Hoy</string>
   <string name="home_planned_empty">Nada planificado en este periodo</string>
-  <string name="home_closed_empty">Nada cerrado en este periodo</string>
+  <string name="home_closed_empty">Nada hecho en este periodo</string>
   <string name="todo_ignored">ignorada</string>
   <string name="swipe_start">Iniciar</string>
   <string name="swipe_ignore">Ignorar</string>
