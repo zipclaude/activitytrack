@@ -257,6 +257,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, s
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
 			onOpenGestures = { open(Screen.Gestures) },
 			onOpenTodos = { selectTab(Screen.Todos) },
+			onOpenImport = { open(Screen.Export) },
 		)
 		Screen.Agenda -> AgendaScreen(onOpenEntry = { open(Screen.Entry(it)) }, onStartTodo = { open(Screen.StartFromTodo(it)) })
 		Screen.More -> MoreScreen(open)

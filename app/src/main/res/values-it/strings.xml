@@ -394,6 +394,10 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="action_ok">OK</string>
   <string name="action_clear">Cancella</string>
   <string name="home_none">Nessuna attività in corso</string>
+  <string name="first_title">Per iniziare</string>
+  <string name="first_text">Crea il cliente per cui lavori, con la sua azienda: poi ▶ avvia la prima attività.</string>
+  <string name="first_client">Crea il primo cliente</string>
+  <string name="first_import">Importa da un file o da un gestionale</string>
   <string name="home_none_hint">Tocca il pulsante verde qui sotto per iniziarne una.</string>
   <string name="home_tab_planned">Da fare</string>
   <string name="home_tab_closed">Fatte</string>

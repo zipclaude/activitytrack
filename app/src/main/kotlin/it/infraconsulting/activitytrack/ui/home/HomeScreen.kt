@@ -90,6 +90,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 /* An open entry with display names and its segments. */
 data class EntryCard(
@@ -156,6 +157,9 @@ class HomeViewModel(
 		}
 	}.state(emptyList())
 
+	/* no client yet (issue #98): the Home shows how to begin; null while loading */
+	val hasClients = master.clients.map { l -> l.any { !it.archived } }.state(null)
+
 	/* every tag in use, for the "Chiuse" filter */
 	val tags = entries.allTags.state(emptyList())
 
@@ -206,6 +210,7 @@ fun HomeScreen(
 	onStartTodo: (Long) -> Unit,
 	onOpenGestures: () -> Unit = {},
 	onOpenTodos: (() -> Unit)? = null,
+	onOpenImport: (() -> Unit)? = null,
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings, it.todos) }
 	val allCards by vm.cards.collectAsState()
@@ -327,7 +332,21 @@ fun HomeScreen(
 			 * again. Above the list, not in it: the settings load after the first
 			 * frame and an item inserted on top would land above the scrolled view.
 			 */
-			if (settings?.gestureHintSeen == false && policy.enabled(Feature.GESTURES))
+			val hasClients by vm.hasClients.collectAsState()
+			var addClient by remember { mutableStateOf(false) }
+			/* the first steps (issue #98): folder and permissions are asked before; then the first client */
+			if (hasClients == false && allCards.isEmpty())
+				androidx.compose.material3.Card(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).fillMaxWidth()) {
+					Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+						Text(stringResource(R.string.first_title), style = MaterialTheme.typography.titleLarge)
+						Text(stringResource(R.string.first_text), style = MaterialTheme.typography.bodyMedium)
+						Button(onClick = { addClient = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.first_client)) }
+						onOpenImport?.let { TextButton(onClick = it, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(stringResource(R.string.first_import)) } }
+					}
+				}
+			if (addClient)
+				it.infraconsulting.activitytrack.ui.common.QuickClientDialog(null, onDone = { _, _ -> addClient = false }, onDismiss = { addClient = false })
+			if (hasClients == true && settings?.gestureHintSeen == false && policy.enabled(Feature.GESTURES))
 				OutlinedCard(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).fillMaxWidth()) {
 					Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
 						Text(stringResource(R.string.gesture_hint_text), style = MaterialTheme.typography.bodyMedium)

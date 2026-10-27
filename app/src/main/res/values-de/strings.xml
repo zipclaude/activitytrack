@@ -393,6 +393,10 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="action_ok">OK</string>
   <string name="action_clear">Löschen</string>
   <string name="home_none">Keine laufende Tätigkeit</string>
+  <string name="first_title">Erste Schritte</string>
+  <string name="first_text">Lege den Kunden an, für den du arbeitest, mit seiner Firma: dann startet ▶ die erste Tätigkeit.</string>
+  <string name="first_client">Ersten Kunden anlegen</string>
+  <string name="first_import">Aus einer Datei oder einem Verwaltungssystem importieren</string>
   <string name="home_none_hint">Tippe unten auf die grüne Taste, um eine zu starten.</string>
   <string name="home_tab_planned">Aufgaben</string>
   <string name="home_tab_closed">Erledigt</string>
