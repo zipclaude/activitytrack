@@ -79,8 +79,26 @@ or hide an option like a setting: `"integrations": { "antares": { "plugin": "ant
 
 Paging styles: `none`, `odata` (`$top`/`$skip`), `page` (`pageParam`,
 `sizeParam`, first page 0 or 1), `cursor` (`cursorParam`, `next`: selector
-of the next cursor in the response), `link` (RFC 8288 `Link: rel=next`).
-A response is the list itself or `items`: a selector of the list in it.
+of the next cursor in the response), `link` (RFC 8288 `Link: rel=next`),
+`jsonParam` (the page inside a JSON query parameter: `param`, the object
+`inside` it, `start` and `size` fields, `firstStart` 0 or 1, `pageSize`,
+`more`: a selector telling whether another page follows — only `true`
+counts). A response is the list itself or `items`: a selector of the list in it.
+
+A query value that is an object or a list goes as its JSON text. With
+`"bodyForm": "input_data"` the body of create, update and the other calls
+goes as that single form field (`application/x-www-form-urlencoded`)
+instead of a JSON body. ServiceDesk Plus wants both:
+
+```json
+"http": {
+	"baseUrl": "@option.serverUrl",
+	"headers": { "Accept": "application/vnd.manageengine.sdp.v3+json" },
+	"bodyForm": "input_data",
+	"paging": { "style": "jsonParam", "param": "input_data", "inside": "list_info", "start": "start_index",
+	            "size": "row_count", "firstStart": 1, "pageSize": 100, "more": "$.list_info.has_more_rows" }
+}
+```
 
 ## 5. Values: selectors and transforms
 
@@ -112,6 +130,9 @@ Wherever a value is expected the descriptor may write:
 | `{"date": a, "format": "isoOffset" \| "isoLocal" \| "isoDate" \| "epochMs" \| "<pattern>"}` | dates in the entry's time zone |
 | `{"minutes": a, "round": "work" \| "travel" \| "pause" \| "none"}` | a length rounded by the report rule |
 | `{"materials": "text" \| "lines"}` | the entry's materials, as text after the description or as a list of lines |
+| `{"object": {"key": value, …}}` | a JSON object (nested bodies, a JSON query parameter); keys whose value is `null` are left out |
+
+`date` reads milliseconds as a number or as text of digits, or an ISO date-time.
 
 ## 6. Lookups and lists
 
@@ -174,6 +195,11 @@ PR #29 with one generic table.
 	"clients": { "request": { "path": "/v3/Customers", "paged": true }, "key": "$.Id", "map": { "name": "$.Name", "code": "$.Id" } }
 }
 ```
+
+A target may also be a **list of sources**, each with an optional `"when"`
+on the options (ServiceDesk Plus: the requests, and the tasks only when
+the option asks for them); their keys must not clash (`request-…`,
+`task-…`).
 
 Targets: `clients`, `contacts`, `todos`. Matching is by `key`
 (external code), idempotent as in the generic import; the app's own
@@ -240,6 +266,20 @@ service activity). Each record sent keeps its remote id and the hash of its body
 `remote_deleted`, with the company) until the next sync of that company
 deletes them; a `404` there counts as already deleted. `fetchFirst` reads the current remote record before the update
 (Antares' `Timestamp` guards against overwriting someone else's change).
+
+The create path may use `@todo` (`"/api/v3/${todo.fields.path}/worklogs"`)
+and its `id` may build the remote id with it
+(`{"concat": ["@todo.fields.path", "/worklogs/", "$.worklog.id"], "separator": ""}`):
+the update and the delete then need only `${remote.id}`, also for an entry
+already deleted in the app.
+
+`todoDone` (optional) closes on the remote side, once, a to-do imported by
+the plugin and marked done in the app, after the entries went:
+`{ "method": "PUT", "path": "/api/v3/${todo.fields.path}", "body": { … } }`,
+with `@todo` (`id`, `externalKey`, `title`, `refs`, `fields`, `activities`:
+the descriptions of its entries, oldest first). The to-do's plugin fields
+then carry `"_closed": true`; a to-do the remote reports closed gets it
+at the import, so it is never closed twice.
 
 ## 10. Schedule
 

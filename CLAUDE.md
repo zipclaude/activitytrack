@@ -167,6 +167,28 @@ app/src/main/res/               strings en/it/de/es, locales_config, data_extrac
 
 ## 5. Next steps (review with the owner, 2026-10-25)
 
+Issue #102 (owner 2026-10-27): plugin for ManageEngine ServiceDesk Plus
+**on-premises** (API v3, `authtoken`), branch `issue-102-sdp`, draft
+`plugins/servicedesk-plus.json` 0.1, NOT tried on an instance (the owner
+may get one the week of 2026-11-02). Owner answers: requests (tasks
+optional by an option) → to-dos; clients from the requester's department
+or the requester; one worklog per day block only for entries from a
+request/task; worklog type from a list; owner = the logged-in technician
+(taken from the imported request's technician.id / task owner.id, no
+identity call); a to-do marked done closes the request (status
+"Resolved", resolution = the entries' descriptions). Engine extensions (no
+schema change, no UI change, the owner reworks the UI for 0.8 on
+`usability-0-8` with schema v15): `object` transform, JSON query values,
+`http.bodyForm` (form field input_data), paging `jsonParam`, import
+targets as lists of sources with `when`, create path/id with `@todo` (the
+remote id = the whole worklog path), `export.todoDone` (+ `_closed` mark
+in the to-do's plugin fields, `@todo.activities`), `date` reading
+milliseconds as text. To verify on the instance: worklog_types endpoint,
+`filter_by` view names (My_Open_Requests, My_Open_Tasks), requester
+department in the request JSON, resolution through the request edit,
+general tasks endpoint, owner defaulting, https/self-signed certificate
+(the engine accepts https only).
+
 Released v0.7.5 (2026-10-25): #71 (align the due date when the plan
 passes it) and #72 (Material TabRow on the Home header), both
 device-tested on the Xiaomi; manual 0.7.5 with retaken Home screenshots

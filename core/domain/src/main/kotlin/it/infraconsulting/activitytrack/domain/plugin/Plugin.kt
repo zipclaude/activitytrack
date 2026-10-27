@@ -18,7 +18,8 @@ data class Plugin(
 	val identity: Identity?,
 	val lookups: Map<String, Lookup>,
 	val lists: Map<String, RemoteList>,
-	val imports: Map<ImportTarget, ImportSpec>,
+	/* one or more sources per target (e.g. ServiceDesk Plus requests and tasks) */
+	val imports: Map<ImportTarget, List<ImportSpec>>,
 	val entryFields: List<EntryField>,
 	val export: ExportSpec?,
 	val schedule: Schedule?,
@@ -61,13 +62,22 @@ sealed interface Paging {
 	data class Page(val pageParam: String, val sizeParam: String, val firstPage: Int, val pageSize: Int) : Paging
 	data class Cursor(val cursorParam: String, val next: Expr) : Paging
 	data object Link : Paging
+	/*
+	 * Paging inside a JSON query parameter (ServiceDesk Plus: input_data =
+	 * {"list_info": {"start_index": 1, "row_count": 100, …}}): [start] and
+	 * [size] are set in the object [inside] of [param] (null = its top level);
+	 * [more] tells whether another page follows.
+	 */
+	data class JsonParam(val param: String, val inside: String?, val start: String, val size: String, val firstStart: Int, val pageSize: Int, val more: Expr) : Paging
 }
 
+/* [bodyForm]: the JSON body sent as one form field of that name (application/x-www-form-urlencoded) */
 data class Http(
 	val baseUrl: Expr,
 	val headers: Map<String, Expr>,
 	val timeoutSec: Int,
 	val paging: Paging,
+	val bodyForm: String? = null,
 )
 
 /* One call; [items] selects the list in a wrapped response, null = the response is the list. */
@@ -99,13 +109,18 @@ enum class ImportTarget(val key: String, val fields: Set<String>) {
 	}
 }
 
-/* [fields] pre-fill the entry fields (§8) of entries started from an imported to-do. */
+/*
+ * [fields] pre-fill the entry fields (§8) of entries started from an
+ * imported to-do; [whenExpr] on the options reads this source or not (an
+ * optional one, like ServiceDesk Plus tasks).
+ */
 data class ImportSpec(
 	val request: Request,
 	val key: Expr,
 	val skipNew: Expr?,
 	val map: Map<String, Expr>,
 	val fields: Map<String, Expr>,
+	val whenExpr: Expr? = null,
 )
 
 enum class FieldType(val key: String) {
@@ -163,6 +178,14 @@ data class ExportSpec(
 	val create: Call,
 	val update: Call?,
 	val delete: Call?,
+	val todoDone: TodoDone? = null,
 )
+
+/*
+ * A to-do imported by the plugin and marked done in the app: closed on the
+ * remote side once (ServiceDesk Plus: the request resolved, its resolution
+ * the activities' descriptions). [body] may use @todo, with @todo.activities.
+ */
+data class TodoDone(val method: String, val path: Expr, val body: Map<String, Expr>)
 
 data class Schedule(val onCloseMode: Expr?, val onCloseScope: Expr?, val onCloseSync: Expr?, val fetchEveryMin: Expr?)
