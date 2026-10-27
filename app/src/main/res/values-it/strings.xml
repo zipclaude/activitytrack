@@ -120,6 +120,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_generic">Operazione non possibile.</string>
 
   <string name="settings_title">Impostazioni</string>
+  <string name="settings_more">Altre impostazioni</string>
   <string name="settings_saved">Impostazioni salvate</string>
   <string name="settings_unsaved">Ci sono modifiche non salvate in questa sezione.</string>
   <string name="settings_unsaved_leave">Esci senza salvare</string>
@@ -232,7 +233,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="notif_still_travelling">Sono ancora in viaggio</string>
   <string name="notif_pause_title">Ancora in pausa?</string>
   <string name="notif_summary_title">Oggi</string>
-  <string name="notif_summary_text">Solare %1$s · rendicontato %2$s</string>
+  <string name="notif_summary_text">Totale %1$s</string>
   <string name="entry_title">Attività</string>
   <string name="field_locality">Località</string>
   <string name="field_location_kind">Dove</string>
@@ -291,8 +292,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_overlapping_segments">Il segmento si sovrappone a tempo già registrato.</string>
   <string name="day_title">Giorno</string>
   <string name="day_today">Oggi</string>
-  <string name="day_solar">Solare</string>
-  <string name="day_reported">Rendicontato</string>
+  <string name="day_reported">Totale</string>
   <string name="day_empty">Nessun tempo registrato in questo giorno.</string>
   <string name="day_line_fmt">Lavoro %1$s → %2$s · Viaggio %3$s → %4$s · Pausa %5$s → %6$s</string>
   <string name="export_title">Importa / esporta</string>

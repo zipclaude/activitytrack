@@ -120,6 +120,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="err_generic">Vorgang nicht möglich.</string>
 
   <string name="settings_title">Einstellungen</string>
+  <string name="settings_more">Weitere Einstellungen</string>
   <string name="settings_saved">Einstellungen gespeichert</string>
   <string name="settings_unsaved">In diesem Abschnitt gibt es ungespeicherte Änderungen.</string>
   <string name="settings_unsaved_leave">Ohne Speichern verlassen</string>
@@ -232,7 +233,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="notif_still_travelling">Noch unterwegs</string>
   <string name="notif_pause_title">Noch in Pause?</string>
   <string name="notif_summary_title">Heute</string>
-  <string name="notif_summary_text">Tatsächlich %1$s · gemeldet %2$s</string>
+  <string name="notif_summary_text">Gesamt %1$s</string>
   <string name="entry_title">Tätigkeit</string>
   <string name="field_locality">Ort</string>
   <string name="field_location_kind">Wo</string>
@@ -291,8 +292,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="err_overlapping_segments">Der Abschnitt überschneidet sich mit bereits erfasster Zeit.</string>
   <string name="day_title">Tag</string>
   <string name="day_today">Heute</string>
-  <string name="day_solar">Tatsächlich</string>
-  <string name="day_reported">Gemeldet</string>
+  <string name="day_reported">Gesamt</string>
   <string name="day_empty">An diesem Tag wurde keine Zeit erfasst.</string>
   <string name="day_line_fmt">Arbeit %1$s → %2$s · Reise %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / Export</string>
