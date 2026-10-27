@@ -1,0 +1,159 @@
+{
+	"format": "activitytrack-plugin",
+	"schema": 1,
+	"id": "servicedesk-plus",
+	"name": "ServiceDesk Plus (ManageEngine)",
+	"version": "0.1",
+
+	"options": [
+		{ "key": "serverUrl", "type": "url", "required": true,
+		  "label": { "it": "Indirizzo del server", "en": "Server address" } },
+		{ "key": "apiKey", "type": "secret", "required": true,
+		  "label": { "it": "Chiave API (authtoken)", "en": "API key (authtoken)" } },
+		{ "key": "requestView", "type": "string", "default": "My_Open_Requests",
+		  "label": { "it": "Vista delle richieste", "en": "Requests view" } },
+		{ "key": "includeTasks", "type": "bool", "default": false,
+		  "label": { "it": "Anche i task", "en": "Tasks too" } },
+		{ "key": "taskView", "type": "string", "default": "My_Open_Tasks",
+		  "label": { "it": "Vista dei task", "en": "Tasks view" } },
+		{ "key": "clientFrom", "type": "choice", "default": "department",
+		  "choices": { "department": { "it": "Reparto del richiedente", "en": "Requester's department" }, "requester": { "it": "Richiedente", "en": "Requester" } },
+		  "label": { "it": "Clienti da", "en": "Clients from" } },
+		{ "key": "resolvedStatus", "type": "string", "default": "Resolved",
+		  "label": { "it": "Stato della richiesta conclusa", "en": "Status of a request done" } },
+		{ "key": "taskDoneStatus", "type": "string", "default": "Closed",
+		  "label": { "it": "Stato del task concluso", "en": "Status of a task done" } },
+		{ "key": "closeMode", "type": "choice", "default": "ask",
+		  "choices": { "ask": { "it": "Chiedi", "en": "Ask" }, "always": { "it": "Sempre", "en": "Always" }, "off": { "it": "Mai", "en": "Never" } },
+		  "label": { "it": "Invio alla chiusura", "en": "Send on close" } },
+		{ "key": "closeSync", "type": "choice", "default": "full",
+		  "choices": { "full": { "it": "Sincronizzazione completa", "en": "Full sync" }, "entry": { "it": "Solo l'attività", "en": "The entry only" } },
+		  "label": { "it": "Alla chiusura", "en": "On close" } },
+		{ "key": "fetchMin", "type": "choice", "default": "60",
+		  "choices": { "15": { "en": "15 min" }, "30": { "en": "30 min" }, "60": { "it": "1 ora", "en": "1 hour" }, "120": { "it": "2 ore", "en": "2 hours" },
+		               "240": { "it": "4 ore", "en": "4 hours" }, "480": { "it": "8 ore", "en": "8 hours" }, "1440": { "it": "1 giorno", "en": "1 day" } },
+		  "label": { "it": "Aggiornamento in background", "en": "Background download" } }
+	],
+
+	"auth": { "type": "apiKey", "header": "authtoken", "key": "@option.apiKey" },
+
+	"http": {
+		"baseUrl": "@option.serverUrl",
+		"headers": { "Accept": "application/vnd.manageengine.sdp.v3+json" },
+		"timeoutSec": 60,
+		"bodyForm": "input_data",
+		"paging": { "style": "jsonParam", "param": "input_data", "inside": "list_info", "start": "start_index", "size": "row_count",
+		            "firstStart": 1, "pageSize": 100, "more": "$.list_info.has_more_rows" }
+	},
+
+	"lists": {
+		"worklogType": {
+			"sources": [
+				{ "request": { "path": "/api/v3/worklog_types", "query": { "input_data": { "object": { "list_info": { "object": { "sort_field": "name" } } } } },
+				               "paged": true, "items": "$.worklog_types" },
+				  "map": { "id": "$.id", "name": "$.name" } }
+			]
+		}
+	},
+
+	"import": {
+		"clients": {
+			"request": { "path": "/api/v3/requests",
+			             "query": { "input_data": { "object": { "list_info": { "object": { "filter_by": { "object": { "name": "@option.requestView" } } } } } } },
+			             "paged": true, "items": "$.requests" },
+			"key": { "if": { "eq": ["@option.clientFrom", "requester"] },
+			         "then": { "concat": ["requester-", "$.requester.id"], "separator": "" },
+			         "else": { "if": { "ne": ["$.requester.department.id", null] },
+			                   "then": { "concat": ["department-", "$.requester.department.id"], "separator": "" },
+			                   "else": { "concat": ["requester-", "$.requester.id"], "separator": "" } } },
+			"map": {
+				"name": { "if": { "eq": ["@option.clientFrom", "requester"] }, "then": "$.requester.name",
+				          "else": { "coalesce": ["$.requester.department.name", "$.requester.name"] } },
+				"code": { "if": { "eq": ["@option.clientFrom", "requester"] },
+				          "then": { "concat": ["requester-", "$.requester.id"], "separator": "" },
+				          "else": { "if": { "ne": ["$.requester.department.id", null] },
+				                    "then": { "concat": ["department-", "$.requester.department.id"], "separator": "" },
+				                    "else": { "concat": ["requester-", "$.requester.id"], "separator": "" } } }
+			}
+		},
+		"todos": [
+			{
+				"request": { "path": "/api/v3/requests",
+				             "query": { "input_data": { "object": { "list_info": { "object": { "filter_by": { "object": { "name": "@option.requestView" } } } } } } },
+				             "paged": true, "items": "$.requests" },
+				"key": { "concat": ["request-", "$.id"], "separator": "" },
+				"skipNew": { "or": [ { "in": ["$.status.name", ["Resolved", "Closed"]] }, { "eq": ["$.status.name", "@option.resolvedStatus"] } ] },
+				"map": {
+					"title": { "coalesce": ["$.subject", "$.display_id", "$.id"] },
+					"notes": { "plainText": "$.description" },
+					"refs": { "coalesce": ["$.display_id", "$.id"] },
+					"clientCode": { "if": { "eq": ["@option.clientFrom", "requester"] },
+					                "then": { "concat": ["requester-", "$.requester.id"], "separator": "" },
+					                "else": { "if": { "ne": ["$.requester.department.id", null] },
+					                          "then": { "concat": ["department-", "$.requester.department.id"], "separator": "" },
+					                          "else": { "concat": ["requester-", "$.requester.id"], "separator": "" } } },
+					"priority": { "map": "$.priority.name", "cases": { "Urgent": 1, "High": 1, "Medium": 2, "Normal": 2, "Low": 3 } },
+					"due": { "date": "$.due_by_time.value", "format": "isoOffset" },
+					"done": { "or": [ { "in": ["$.status.name", ["Resolved", "Closed"]] }, { "eq": ["$.status.name", "@option.resolvedStatus"] } ] },
+					"fields": { "path": { "concat": ["requests/", "$.id"], "separator": "" }, "kind": "request", "owner": "$.technician.id" }
+				}
+			},
+			{
+				"when": "@option.includeTasks",
+				"request": { "path": "/api/v3/tasks",
+				             "query": { "input_data": { "object": { "list_info": { "object": { "filter_by": { "object": { "name": "@option.taskView" } } } } } } },
+				             "paged": true, "items": "$.tasks" },
+				"key": { "concat": ["task-", "$.id"], "separator": "" },
+				"skipNew": { "or": [ { "in": ["$.status.name", ["Closed", "Completed"]] }, { "eq": ["$.status.name", "@option.taskDoneStatus"] } ] },
+				"map": {
+					"title": "$.title",
+					"notes": { "plainText": "$.description" },
+					"priority": { "map": "$.priority.name", "cases": { "Urgent": 1, "High": 1, "Medium": 2, "Normal": 2, "Low": 3 } },
+					"due": { "date": "$.scheduled_end_time.value", "format": "isoOffset" },
+					"done": { "or": [ { "in": ["$.status.name", ["Closed", "Completed"]] }, { "eq": ["$.status.name", "@option.taskDoneStatus"] } ] },
+					"fields": { "path": { "concat": ["tasks/", "$.id"], "separator": "" }, "kind": "task", "owner": "$.owner.id" }
+				}
+			}
+		]
+	},
+
+	"entryFields": [
+		{ "key": "worklogType", "list": "worklogType", "required": true, "hidden": { "eq": ["@todo", null] },
+		  "label": { "it": "Tipo di worklog", "en": "Worklog type" } }
+	],
+
+	"export": {
+		"entries": "closed",
+		"group": { "by": "dayBlock", "splitPauseMin": 60, "travel": "nearestBlock", "round": "work" },
+		"body": {
+			"worklog": { "object": {
+				"owner": { "object": { "id": "@todo.fields.owner" } },
+				"description": { "concat": ["@entry.activity", { "materials": "text" }, "@entry.notes"], "separator": "\n\n" },
+				"start_time": { "object": { "value": { "date": "@block.from", "format": "epochMs" } } },
+				"end_time": { "object": { "value": { "date": "@block.to", "format": "epochMs" } } },
+				"worklog_type": { "object": { "id": "@field.worklogType" } }
+			} }
+		},
+		"create": { "method": "POST", "path": "/api/v3/${todo.fields.path}/worklogs",
+		            "id": { "concat": ["@todo.fields.path", "/worklogs/", "$.worklog.id"], "separator": "" } },
+		"update": { "method": "PUT", "path": "/api/v3/${remote.id}" },
+		"delete": { "method": "DELETE", "path": "/api/v3/${remote.id}" },
+		"todoDone": {
+			"method": "PUT", "path": "/api/v3/${todo.fields.path}",
+			"body": {
+				"request": { "if": { "eq": ["@todo.fields.kind", "request"] }, "then": { "object": {
+					"status": { "object": { "name": "@option.resolvedStatus" } },
+					"resolution": { "object": { "content": { "coalesce": ["@todo.activities", "@todo.title"] } } }
+				} } },
+				"task": { "if": { "eq": ["@todo.fields.kind", "task"] }, "then": { "object": {
+					"status": { "object": { "name": "@option.taskDoneStatus" } }
+				} } }
+			}
+		}
+	},
+
+	"schedule": {
+		"onClose": { "mode": "@option.closeMode", "scope": "todos", "sync": "@option.closeSync" },
+		"fetchEveryMin": "@option.fetchMin"
+	}
+}

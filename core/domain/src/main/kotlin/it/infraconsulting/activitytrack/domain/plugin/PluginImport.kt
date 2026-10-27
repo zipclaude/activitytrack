@@ -76,16 +76,21 @@ object PluginImport {
 
 	/* The records of [target]; rows without a key are skipped. */
 	suspend fun records(plugin: Plugin, target: ImportTarget, client: PluginClient, env: PluginEnv): List<ImportedRecord> {
-		val spec = plugin.imports[target] ?: return emptyList()
-		return client.list(spec.request, env).mapNotNull { row ->
-			val key = text(spec.key.eval(row, env).first())?.trim()?.ifEmpty { null } ?: return@mapNotNull null
-			ImportedRecord(
-				key,
-				spec.map.mapValues { (_, x) -> x.eval(row, env).first() },
-				spec.fields.mapValues { (_, x) -> x.eval(row, env).first() },
-				spec.skipNew?.let { truthy(it.eval(row, env)) } ?: false,
-			)
+		val out = ArrayList<ImportedRecord>()
+		for (spec in plugin.imports[target].orEmpty()) {
+			if (spec.whenExpr != null && !truthy(spec.whenExpr.eval(null, env)))
+				continue
+			client.list(spec.request, env).mapNotNullTo(out) { row ->
+				val key = text(spec.key.eval(row, env).first())?.trim()?.ifEmpty { null } ?: return@mapNotNullTo null
+				ImportedRecord(
+					key,
+					spec.map.mapValues { (_, x) -> x.eval(row, env).first() },
+					spec.fields.mapValues { (_, x) -> x.eval(row, env).first() },
+					spec.skipNew?.let { truthy(it.eval(row, env)) } ?: false,
+				)
+			}
 		}
+		return out
 	}
 
 	private fun item(list: String, parentId: String, map: Map<String, Expr>, row: JsonElement, env: PluginEnv): RemoteItem? {

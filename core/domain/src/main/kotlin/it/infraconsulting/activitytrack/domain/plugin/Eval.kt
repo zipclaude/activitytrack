@@ -99,6 +99,9 @@ private object Ops {
 				else -> JsonNull
 			}
 			"if" -> if (truthy(arg(0))) param("then") ?: JsonNull else param("else") ?: JsonNull
+			"object" -> JsonObject(
+				op.params.entries.mapNotNull { (k, x) -> x.eval(item, env).takeIf { it !is JsonNull }?.let { k.removePrefix("key:") to it } }.toMap(LinkedHashMap()),
+			)
 			"map" -> {
 				val key = text(arg(0))
 				(key?.let { op.params["case:$it"] }?.eval(item, env)) ?: param("default") ?: JsonNull
@@ -120,6 +123,8 @@ private object Ops {
 		val instant = when {
 			p is JsonNull -> return JsonNull
 			!p.isString -> p.longOrNull?.let(Instant::ofEpochMilli)
+			/* milliseconds also as text (ServiceDesk Plus: "value": "1482208200805") */
+			p.content.all(Char::isDigit) && p.content.isNotEmpty() -> p.content.toLongOrNull()?.let(Instant::ofEpochMilli)
 			else -> runCatching { OffsetDateTime.parse(p.content).toInstant() }.getOrNull()
 				?: runCatching { Instant.parse(p.content) }.getOrNull()
 		} ?: return JsonNull

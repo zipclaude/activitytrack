@@ -9,6 +9,7 @@ them per company (company screen → Management system) or through
 | File | Service |
 |---|---|
 | `antares.json` | Antares (Saidea), Public API v3 |
+| `servicedesk-plus.json` | ManageEngine ServiceDesk Plus on-premises, API v3 — **draft 0.1, not yet tried on an instance** (issue #102) |
 
 Writing a plugin: [`GUIDE.en.md`](GUIDE.en.md) (Italian: [`GUIDE.it.md`](GUIDE.it.md)).
 
