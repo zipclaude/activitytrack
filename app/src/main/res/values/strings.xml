@@ -433,6 +433,12 @@ Tap the green play button below to start one.</string>
   <string name="todo_state_done">Done</string>
   <string name="todo_state_ignored">Ignored</string>
   <string name="todo_clear_plan">Remove the plan</string>
+  <string name="action_undo">Undo</string>
+  <string name="undo_todo_done">“%1$s” marked done</string>
+  <string name="undo_todo_open">“%1$s” open again</string>
+  <string name="undo_todo_ignored">“%1$s” ignored</string>
+  <string name="undo_todo_postponed">“%1$s” postponed</string>
+  <string name="undo_todo_unplanned">Plan removed from “%1$s”</string>
   <string name="gestures_behaviour">Behaviour</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Display</string>

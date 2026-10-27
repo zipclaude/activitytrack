@@ -422,6 +422,12 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_state_done">Fatta</string>
   <string name="todo_state_ignored">Ignorata</string>
   <string name="todo_clear_plan">Togli pianificazione</string>
+  <string name="action_undo">Annulla</string>
+  <string name="undo_todo_done">«%1$s» segnata come fatta</string>
+  <string name="undo_todo_open">«%1$s» riaperta</string>
+  <string name="undo_todo_ignored">«%1$s» ignorata</string>
+  <string name="undo_todo_postponed">«%1$s» posticipata</string>
+  <string name="undo_todo_unplanned">Pianificazione tolta da «%1$s»</string>
   <string name="gestures_behaviour">Comportamento</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualizzazione</string>

@@ -421,6 +421,12 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_state_done">Erledigt</string>
   <string name="todo_state_ignored">Ignoriert</string>
   <string name="todo_clear_plan">Planung entfernen</string>
+  <string name="action_undo">Rückgängig</string>
+  <string name="undo_todo_done">„%1$s“ erledigt</string>
+  <string name="undo_todo_open">„%1$s“ wieder offen</string>
+  <string name="undo_todo_ignored">„%1$s“ ignoriert</string>
+  <string name="undo_todo_postponed">„%1$s“ verschoben</string>
+  <string name="undo_todo_unplanned">Planung von „%1$s“ entfernt</string>
   <string name="gestures_behaviour">Verhalten</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Anzeige</string>
