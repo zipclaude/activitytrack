@@ -5,10 +5,29 @@ manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 
 **Novità della 0.7.8** (non ancora provata sul telefono)
 - Le voci da fare completate mostrano **"fatta"** e quando sono state
-  fatte, non più "pianificata" con l'orario previsto; in "Chiuse" sono
+  fatte, non più "pianificata" con l'orario previsto; in "Fatte" sono
   ordinate per quel momento e appaiono attenuate come le attività chiuse.
 - Toccando una voce, **Stato**: "Aperta", "Fatta" o "Ignorata", qualunque
   fosse prima; **"Togli pianificazione"** toglie data e orario (§8).
+- Nomi più chiari: lo stato "Da completare" ora si chiama **"Dettagli
+  mancanti"**, la scheda "Chiuse" della Home **"Fatte"**.
+- I pulsanti del riquadro grande hanno il **nome sotto l'icona**; il primo
+  **Sospendi** spiega una volta la differenza con la Pausa (§5).
+- **Nuova attività**: due selettori, **Lavoro / Viaggio** e **Adesso / Già
+  iniziata / Passata**; il pulsante verde dice cosa succede ("Avvia
+  adesso", "Avvia dalle 09:15", "Registra 09:15–10:40") (§4).
+- **Stop**: un solo foglio di chiusura con fine, rientro, descrizione
+  mancante e voce *Da fare* completata, al posto delle domande in fila (§6).
+- **Scheda attività**: riepilogo in cima (stato, totale, barra dei tratti),
+  spese e allegati più in basso, Elimina nel menu ⋮, Salva in evidenza (§6).
+- **Da fare** è una scheda della barra in basso; la scheda "Da fare" della
+  Home finisce con "Tutte le Da fare →" (§3).
+- **Annulla** per qualche secondo dopo "fatta", "ignora", "posticipa",
+  "togli pianificazione" o un cambio di stato di una voce (§8).
+- **Primo avvio**: senza clienti la Home mostra **"Per iniziare"** (§2).
+- Il Report e il riepilogo serale mostrano un solo **totale** (il tempo
+  rendicontato); le Impostazioni mostrano prima le sezioni essenziali,
+  le altre sotto **"Altre impostazioni"** (§14).
 
 **Novità della 0.7.6** (provata sul telefono di debug)
 - Un solo nome per le voci da fare: la scheda della Home e il widget si
@@ -99,16 +118,14 @@ note, riferimenti esterni (ticket, URL, codici), spese e allegati.
 |---|---|
 | In corso (lavoro / trasferta / pausa) | il tempo scorre |
 | Sospesa (arancione) | interrotta, da riprendere più tardi |
-| Da completare (rosso) | fermata, mancano i dettagli |
+| Dettagli mancanti (rosso) | fermata, mancano cliente o descrizione |
 | Chiusa | completata |
 
 Più attività possono essere in corso insieme (es. un viaggio e una telefonata
 di lavoro per un altro cliente).
 
-**Solare e rendicontato**
-- *Solare*: il tempo di orologio coperto da lavoro o viaggio di qualsiasi
-  attività (le sovrapposizioni contano una volta).
-- *Rendicontato*: la somma di lavoro e viaggio arrotondati di tutte le attività.
+**Totale** — il tempo del Report e del riepilogo serale: la somma di lavoro e
+viaggio arrotondati di tutte le attività, secondo le regole seguenti.
 
 **Regole del report** (modificabili in Impostazioni → "Rendicontazione")
 - Lavoro: arrotondato al quarto d'ora per eccesso, con tolleranza di 5 minuti
@@ -138,8 +155,10 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
      tracciamento riparta anche dopo un riavvio o da una notifica;
    - "Ottimizzazione batteria" → **"Consenti"**: su OxygenOS evita che il
      sistema interrompa il tracciamento.
-3. **Anagrafiche minime** (scheda "Altro" → "Anagrafiche"): almeno un'azienda
-   e un cliente. Utili anche "Orario di lavoro e pausa pranzo" (per l'avviso
+3. **Anagrafiche minime**: senza clienti la Home mostra **"Per iniziare"**
+   con **"Crea il primo cliente"** (nome, azienda con il suo "+", colore) e
+   **"Importa da un file o da un gestionale"**; oppure "Altro" →
+   "Anagrafiche": almeno un'azienda e un cliente. Utili anche "Orario di lavoro e pausa pranzo" (per l'avviso
    di inizio giornata e il riepilogo serale) e una sede per i clienti
    frequenti (proposta automatica del cliente).
 
@@ -149,28 +168,29 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre; sotto, le schede **Da fare** e **Chiuse** |
+| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre; sotto, le schede **Da fare** e **Fatte** |
+| **Da fare** | tutte le voci da fare, con filtri (§8) |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
-| **Report** | il report di un giorno: solare, rendicontato, righe per attività, esportazione |
-| **Altro** | "Da fare", "Importa / esporta", "Anagrafiche", "Impostazioni" (con "Gesti") |
+| **Report** | il report di un giorno: totale, righe per attività, esportazione |
+| **Altro** | "Importa / esporta", "Anagrafiche", "Impostazioni" (con "Gesti") |
 
 Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
 
 ### La Home a riquadri
 - In alto il **riquadro grande**: l'attività aperta più recente, con tempo,
-  stato e comandi. Senza attività aperte mostra "Nessuna attività in corso"
+  stato e comandi (con il nome sotto ogni pulsante). Senza attività aperte mostra "Nessuna attività in corso"
   con i pulsanti **▶ Avvia** (apre "Nuova attività") e **🚗 Viaggio** (il
   viaggio parte subito, la destinazione si indica dopo o arriva con
   l'arrivo); trascinandolo a sinistra si avvia, a destra parte il viaggio.
 - Con attività aperte, ▶ e 🚗 sono nella barra in alto (🚗 apre "Nuova
   attività" con Viaggio già scelto, perché chiede cosa fare delle altre).
 - Sotto, un **riquadro piccolo** per ogni altra attività aperta (in pausa,
-  sospesa, da completare): stato e orari nella forma "dalle–alle (durata)"
+  sospesa, con dettagli mancanti): stato e orari nella forma "dalle–alle (durata)"
   (es. "11:00–11:45 (0:45)"), e un pulsante per riprenderla (o metterla in
   pausa, o completarla). Toccandolo, l'attività passa nel
   riquadro grande.
 - In basso le due **schede** (0.7.4; tab in stile browser dalla 0.7.5):
-  **Da fare** e **Chiuse**. Si
+  **Da fare** e **Fatte** (fino alla 0.7.7 "Chiuse"). Si
   cambia toccando la scheda o trascinando orizzontalmente l'intestazione
   (i gesti sui riquadri restano); la scheda scelta è ricordata al
   riavvio.
@@ -179,18 +199,19 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   separatore **"Senza data"** le voci senza pianificazione né scadenza; in
   fondo, barrate, quelle ignorate oggi. Il periodo accanto al titolo:
   **24 h** (predefinito), **3 gg**, **7 gg**, **30 gg** o **Tutti** —
-  separato da quello della schermata "Da fare". Accanto, **"Tutte le
-  aziende"** filtra le voci per azienda.
-- **Chiuse**: le attività chiuse o da completare e le voci da fare
+  separato da quello della scheda "Da fare". Accanto, **"Tutte le
+  aziende"** filtra le voci per azienda. In fondo **"Tutte le Da fare →"**
+  apre la scheda "Da fare" della barra in basso.
+- **Fatte**: le attività chiuse o con dettagli mancanti e le voci da fare
   completate ("fatta" e il momento in cui l'hai segnata), dalla fine più
   recente; qui c'è anche il filtro
   **etichette** (le voci da fare non le hanno). Il periodo: **Oggi**
   (predefinito, dal confine delle 06:00 come nei report), **24 h**,
   **7 gg**, **30 gg**.
 
-![Home: un'attività in corso, le altre sotto, le schede Da fare e Chiuse](img/home.png)
+![Home: un'attività in corso, le altre sotto, le schede Da fare e Fatte](img/home.png)
 
-![Home, scheda Chiuse](img/home-closed.png)
+![Home, scheda Fatte](img/home-closed.png)
 
 ### Gesti (trascinare i riquadri)
 Ogni riquadro si trascina a sinistra o a destra (Home, lista dell'Agenda,
@@ -208,7 +229,7 @@ Si cambiano in "Impostazioni" → **"Gesti"**: per ogni direzione cosa proporre
 Al primo uso la Home mostra un **suggerimento** sui gesti ("Ho capito" lo
 chiude) e i riquadri hanno ai lati una piccola ‹ › finché non se ne trascina
 uno; "Gesti" → **"Mostra di nuovo i suggerimenti sui gesti"** li ripropone
-(0.7.6).
+(0.7.6), insieme alla spiegazione del primo Sospendi (§5).
 
 ### Colori di aziende e clienti
 Nella scheda di un'azienda o di un cliente ("Altro" → "Anagrafiche") scegli
@@ -218,10 +239,11 @@ colore dell'azienda; quando la lista mostra una sola azienda, la banda ha il
 colore del **cliente**. Senza un colore scelto non c'è banda; in Agenda i
 blocchi di quelle aziende sono grigi.
 
-Accanto a "Da fare · 24 h ▾" (e nella schermata "Da fare") il pulsante **"Tutte
+Accanto a "Da fare · 24 h ▾" (e nella scheda "Da fare") il pulsante **"Tutte
 le aziende"** filtra le voci da fare per azienda: il filtro resta finché non
-lo togli con la ✕. Le attività in corso non vengono filtrate. Nella schermata
-"Da fare" il filtro del periodo (**24 h**, **7 gg**, **30 gg**, **Tutti**)
+lo togli con la ✕. Le attività in corso non vengono filtrate. Nella scheda
+"Da fare" il filtro del periodo (**24 h**, **3 gg**, **7 gg**, **30 gg**,
+**Tutti**, gli stessi della Home)
 mostra le voci pianificate o in scadenza entro quel tempo (quelle in ritardo
 sempre), **"Ignorate"** mostra o nasconde le voci ignorate. **"Filtri"** apre
 i filtri avanzati: cliente, priorità, stato (aperta, pianificata, in ritardo),
@@ -233,19 +255,24 @@ riquadri e pulsanti più stretti, per vedere più attività e voci insieme.
 
 ### Nuova azienda o cliente al volo
 Il **+** accanto a un campo di anagrafica crea il nuovo elemento senza
-uscire, che risulta già scelto (la predefinita riempie la descrizione):
-Azienda, Cliente, Predefinita e Ruolo in "Nuova attività" e nella scheda
+uscire, che risulta già scelto (la scelta rapida riempie la descrizione):
+Azienda, Cliente, Scelta rapida e Ruolo in "Nuova attività" e nella scheda
 attività; Azienda e Cliente nell'editor delle voci da fare; il cliente nel
 contatto (anche importato dalla rubrica); l'azienda nel cliente e nella
-predefinita, con il ruolo proposto.
+scelta rapida, con il ruolo proposto.
 
 ### Campi obbligatori e facoltativi
-Il bordo dei campi dice quanto contano: **rosso** se obbligatorio e ancora
-vuoto, **verde** quando è compilato (azienda, cliente, attività o
-predefinita, titolo della voce da fare, importo e descrizione della spesa);
-**giallo** se importante ma non obbligatorio (ruolo, data e ora pianificate);
-**blu** se accessorio (note, riferimenti, località, durata, scadenza,
-priorità). Nei menu di aziende e clienti compare il loro colore. In "Nuova
+Il colore del bordo dice quanto conta un campo:
+
+| Bordo | Significato | Esempi |
+|---|---|---|
+| **rosso** | obbligatorio, ancora vuoto | cliente, descrizione, titolo della voce da fare |
+| **verde** | obbligatorio, compilato | gli stessi, una volta riempiti; importo e descrizione della spesa |
+| **giallo** | importante, non obbligatorio | ruolo, data e ora pianificate, inizio e fine |
+| **blu** | accessorio | note, riferimenti, località, durata, scadenza, priorità |
+
+Il campo in cui stai scrivendo ha il bordo più spesso, del colore del tema:
+non confonderlo con il blu degli accessori. Nei menu di aziende e clienti compare il loro colore. In "Nuova
 attività" l'azienda è solo un filtro dei clienti: con "Tutte le aziende" il
 bordo è neutro, diventa verde quando un'azienda è scelta o viene dal cliente.
 
@@ -281,34 +308,34 @@ non ne scegli un altro.
 In Home: **▶ Avvia** nel riquadro "Nessuna attività in corso" (o trascinalo a
 sinistra), oppure **▶** nella barra in alto quando altre attività sono aperte.
 
-Nella schermata "Nuova attività":
-- **Lavoro / Viaggio** in alto: un viaggio può partire senza cliente.
+Nella schermata "Nuova attività" (0.7.8):
+- in alto due selettori: **Lavoro / Viaggio** (un viaggio può partire senza
+  cliente) e, con "Orari modificabili" (acceso all'inizio), **Adesso / Già
+  iniziata / Passata**, che decide quali orari chiedere;
 - **Azienda** filtra i clienti; **Cliente** è una casella in cui scrivere per
   cercare (maiuscole e accenti non contano) oppure scegliere dall'elenco,
   nell'ordine scelto in Anagrafiche (all'inizio i più recenti in cima).
 - Se ti trovi entro il raggio di una sede, cliente e azienda sono già proposti;
   altrimenti l'app propone l'azienda dell'ultima attività di oggi.
-- **Descrizione** e **ruolo** vengono proposti dall'ultima attività sullo
-  stesso cliente negli ultimi 30 giorni. Il microfono nel campo detta il testo.
-- **Inizio** (con "Orari modificabili", attivo all'inizio): vuoto = adesso;
-  toccandolo quando è vuoto si apre la griglia a intervallo, che imposta inizio
-  e fine insieme; se è già compilato si apre il selettore dell'orario;
-  un orario già passato fa partire l'attività da lì. Un orario che oggi deve
-  ancora arrivare fa chiedere **"Inizio alle HH:MM"**: **"Pianifica oggi alle
-  HH:MM"** crea una voce *Da fare* pianificata (cliente, titolo = descrizione,
-  da inizio a fine), **"Avvia adesso"** parte subito, **"Avviata ieri alle
-  HH:MM"** la registra da ieri.
-- **Fine**, sulla stessa riga dell'Inizio: toccandola, la griglia sceglie
-  inizio e fine insieme.
-  - Fine già passata (per registrare un'attività passata): l'app chiede
-    **"L'attività è conclusa?"**. "Sì" la registra ferma a quell'ora, come con
-    Stop, senza chiedere delle attività in corso; "No" la avvia aperta.
-  - Fine nel futuro: è la **fine prevista**, scritta sul riquadro. A quell'ora
-    arriva la notifica **"… finita?"**: "Sì, stop alle HH:MM" la ferma lì,
-    "No, continua" (o nessuna risposta) la lascia andare.
-- Il pulsante verde in basso avvia (blu con l'auto se è un viaggio).
+- poi **Scelta rapida** e **Descrizione**, quindi il **ruolo**: descrizione e
+  ruolo vengono proposti dall'ultima attività sullo stesso cliente negli
+  ultimi 30 giorni. Il microfono nel campo detta il testo.
+- **Adesso**: nessun orario, l'attività parte subito.
+- **Già iniziata**: solo **"Iniziata alle"**, con le scorciatoie **15 / 30 /
+  60 min fa**; l'attività resta aperta e la fermi con Stop. Un orario che
+  oggi deve ancora arrivare fa chiedere **"Inizio alle HH:MM"**:
+  **"Pianifica oggi alle HH:MM"** crea una voce *Da fare* pianificata
+  (cliente, titolo = descrizione), **"Avvia adesso"** parte subito,
+  **"Avviata ieri alle HH:MM"** la registra da ieri.
+- **Passata**: **Data** (vuota = oggi) e **Inizio / Fine** sulla stessa riga;
+  toccandoli, la griglia sceglie inizio e fine insieme. L'attività è
+  registrata già ferma a quell'ora, senza altre domande né sulle attività in
+  corso. Una data futura propone di pianificarla come *Da fare*.
+- Il pulsante verde in basso (blu con l'auto se è un viaggio) dice cosa
+  succede: **"Avvia adesso"**, **"Avvia dalle HH:MM"** o **"Registra
+  HH:MM–HH:MM"**.
 
-![Nuova attività con inizio e fine](img/start.png)
+![Nuova attività](img/start.png)
 
 **Se un'altra attività è già in corso**, l'app chiede cosa farne:
 - in lavoro: chiudere, sospendere o lasciarla andare;
@@ -319,7 +346,9 @@ Nella schermata "Nuova attività":
 - dalla notifica dell'avviso di inizio giornata ("Avvia attività");
 - da una voce **Da fare** (cliente, descrizione e riferimenti già compilati);
 - dal **widget** 4×1 o dalle **scorciatoie** dell'icona (clienti recenti): si apre
-  la schermata di avvio con il cliente già scelto.
+  la schermata di avvio con il cliente già scelto;
+- da una **chiamata** riconosciuta: la schermata si apre in modo **Passata**
+  con gli orari della telefonata.
 
 ---
 
@@ -337,15 +366,14 @@ Nella card della Home e nella notifica:
 | ⏹ rosso | Stop |
 
 La card mostra il tempo del tratto in corso in grande e lo stato in
-un'etichetta colorata. "Stop" mentre lavori chiede **"Ferma ora"** oppure
-**"Avvia rientro"** (il viaggio di ritorno fa parte della stessa attività).
-Con **"Orari modificabili"** la domanda compare sempre, anche in viaggio, con
-il campo **Fine**: vuoto = adesso, altrimenti l'attività si ferma (o il
-rientro parte) a quell'ora; non può essere nel futuro né prima dell'inizio del
-tratto in corso. **"Stop rapido"** (0.7.6), nella stessa domanda, ferma
-subito senza altre domande, come la notifica: il completamento resta da
-fare dallo stato "Da completare". Lo Stop dalla notifica, dal widget o dal
-riquadro ferma sempre subito.
+un'etichetta colorata; sotto ogni pulsante c'è il suo nome. **Pausa** è
+un'interruzione dentro l'attività, conteggiata come pausa; **Sospendi**
+lascia l'attività per riprenderla più tardi (per esempio per lavorare a
+un'altra), e il tempo nel frattempo non conta. Il primo Sospendi lo spiega
+una volta, prima di eseguirlo.
+
+**"Stop"** apre il foglio di chiusura (§6). Lo Stop dalla notifica, dal
+widget o dal riquadro rapido ferma sempre subito.
 
 ### Notifica fissa
 Una notifica per attività in corso, con cronometro e comandi. Mentre la
@@ -357,7 +385,7 @@ ricompare quando riapri l'app.
   "Sì", "Pausa" o "Stop alle hh:mm" (ferma all'ultima conferma, se te ne eri
   dimenticato). Se non rispondi l'attività continua.
 - **Pausa** ogni 15 minuti ("Ancora in pausa?"), muto durante la pausa pranzo.
-- **Riepilogo** a fine orario di lavoro: solare e rendicontato del giorno.
+- **Riepilogo** a fine orario di lavoro: il totale del giorno.
 
 ### Posizione (automatica)
 - Un punto ogni 5 minuti, più uno quando il telefono si muove; mai esportati.
@@ -428,17 +456,39 @@ Le chiamate con numeri sconosciuti vengono ignorate.
 
 ## 6. Fermare e completare
 
-Se fermi dall'app un'attività durata **meno di un minuto** (senza allegati né
-spese), l'app la considera un errore e chiede se **scartarla** o tenerla e
-fermarla come sempre.
+**Stop** dall'app (pulsante o trascinamento) apre un unico **foglio di
+chiusura** (0.7.8):
+- **Fine lavoro / Avvia rientro** (il viaggio di ritorno fa parte della
+  stessa attività; non compare se sei già in viaggio);
+- **Fine**, con "Orari modificabili": vuoto = adesso, altrimenti l'attività
+  si ferma (o il rientro parte) a quell'ora; non può essere nel futuro né
+  prima dell'inizio del tratto in corso;
+- la **descrizione**, se manca, con **"Copia l'ultima: …"** (l'ultima sullo
+  stesso cliente); senza descrizione l'attività resta **"dettagli
+  mancanti"**;
+- **"Voce Da fare completata"**, se l'attività è partita da una voce *Da
+  fare* (spuntata all'inizio): togli la spunta se ci tornerai;
+- se l'attività è durata **meno di un minuto** (senza allegati né spese),
+  un avviso con **"Scarta"**: probabilmente era partita per errore;
+- **"Chiudi"** ferma l'attività; **"Stop rapido"** ferma subito senza
+  guardare il resto del foglio; **"Annulla"** lascia tutto com'era.
 
-Dopo lo Stop, se cliente e descrizione sono già compilati l'attività è subito
-**chiusa**; altrimenti è **da completare** (notifica persistente e card
-rossa). Quelle partite da una voce *Da fare* passano sempre da "da
-completare", per la domanda sulla voce.
-Nella schermata dell'attività:
-- controlla cliente, descrizione (dettabile), ruolo, località, luogo, note;
-  il campo **Contatto** (facoltativo, se il cliente ha contatti) lega
+Un viaggio senza nulla da chiedere (orari non modificabili, descrizione
+presente, nessuna voce *Da fare*) si ferma subito, senza foglio.
+
+Dopo lo Stop, se cliente e descrizione ci sono l'attività è **chiusa**;
+altrimenti ha **dettagli mancanti** (notifica persistente e card rossa).
+
+![Scheda di un'attività](img/entry.png)
+
+Nella scheda dell'attività (0.7.8):
+- in cima il **riepilogo**: stato, totale di lavoro e viaggio, una **barra
+  colorata** con i tratti nel loro ordine (toccala, o "Tempi ›", per andare
+  ai tratti), i totali di lavoro, viaggio e pausa e i pulsanti **+ Viaggio**
+  e **+ Pausa**;
+- poi cliente, scelta rapida, descrizione (dettabile), contatto, ruolo;
+  località, dove e note restano chiusi in **"Altri dettagli ▾"** finché sono
+  vuoti. Il campo **Contatto** (facoltativo, se il cliente ha contatti) lega
   l'attività alla persona per cui hai lavorato;
 - "Tempi": ogni tratto ha l'icona colorata del suo tipo (lavoro verde,
   pausa gialla, viaggio blu). I pulsanti colorati **Viaggio** e **Pausa** aggiungono tratti
@@ -453,7 +503,7 @@ Nella schermata dell'attività:
   salvato vince e gli altri vengono accorciati, divisi in due o eliminati
   dove li copre. Con tratti di altre attività nessun controllo: restano
   attività contemporanee;
-- **"Elimina"** in alto elimina l'**intera attività** con tratti, spese,
+- **"Elimina"** nel menu **⋮** in alto elimina l'**intera attività** con tratti, spese,
   riferimenti e tag. Se ha allegati, prima vanno eliminati a mano dalla
   sezione "Allegati". Un'attività nata da un **ticket** del gestionale
   elimina solo il tempo registrato: la voce *Da fare* torna aperta (poi puoi
@@ -465,19 +515,19 @@ Nella schermata dell'attività:
 - **Tag**: etichette libere (es. `#remoto`, `#urgente`); scrivine uno o più
   nel campo e tocca "+", oppure tocca un suggerimento tra quelli già usati;
   la ✕ su un tag lo toglie. Si aggiungono anche dopo la chiusura;
-- allegati (**Foto**, **Nota vocale**, **File**) e **Spesa** hanno pulsanti
-  colorati con icona;
+- **Spese e allegati**: una riga di pulsanti colorati (**Spesa**, **Foto**,
+  **Nota voc.**, **File**, **Materiale**) sopra le loro sezioni;
 - "Riferimenti esterni": ticket, URL o codici (riconosciuti automaticamente);
-- **"Completa"** (verde).
+- in basso il pulsante principale occupa la riga: **"Completa"** (verde) se
+  mancano dettagli, altrimenti **"Salva"**.
 
-![Scheda di un'attività](img/entry.png)
+Completando senza descrizione l'app chiede: **"Lascia vuoto"**, **"Copia
+l'ultima: …"** o **"Torna a modificare"**; per un'attività partita da una voce
+*Da fare* ancora aperta chiede **"L'attività da fare è conclusa?"** ("Sì" la
+segna come fatta, "No, ci tornerò" la lascia aperta).
 
-Se manca la descrizione l'app chiede: **"Lascia vuoto"**, **"Copia l'ultima: …"**
-(l'ultima descrizione sullo stesso cliente) o **"Torna a modificare"**.
-Se l'attività era partita da una voce *Da fare*, chiede **"L'attività da fare è
-conclusa?"** ("Sì" la segna come fatta, "No, ci tornerò" la lascia aperta).
-
-"Riapri" riporta un'attività chiusa o da completare allo stato sospeso.
+"Riapri" riporta un'attività chiusa o con dettagli mancanti allo stato
+sospeso.
 
 ---
 
@@ -518,10 +568,10 @@ prossima mezz'ora; altri giorni: le 09:00).
 ### Report
 ![Report del giorno](img/report.png)
 
-Il report di un giorno: totale solare e rendicontato, una riga per attività
-con lavoro, viaggio e pausa reali → arrotondati; da qui anche l'esportazione.
-Con il filtro per tag restano le attività con quel tag: il rendicontato è la
-loro somma, il "solare" la somma di lavoro e viaggio esatti. Anche
+Il report di un giorno: il **totale** (lavoro e viaggio arrotondati), una
+riga per attività con lavoro, viaggio e pausa reali → arrotondati; da qui
+anche l'esportazione. Con il filtro per tag restano le attività con quel tag
+e il totale è la loro somma. Anche
 l'esportazione ha il campo **Tag** (solo le attività con quel tag; le altre
 sezioni dell'interscambio non sono filtrate).
 
@@ -529,8 +579,8 @@ sezioni dell'interscambio non sono filtrate).
 
 ## 8. Da fare
 
-Attività da fare, importate da un gestionale o create a mano ("Altro" →
-"Da fare" → "Aggiungi", oppure dall'Agenda): titolo, cliente (o azienda),
+Attività da fare, importate da un gestionale o create a mano (scheda **"Da
+fare"** della barra in basso → "Aggiungi", oppure dall'Agenda): titolo, cliente (o azienda),
 **data pianificata** con un **orario** facoltativo, scadenza e ora, priorità
 (1 = massima), note, riferimenti (uno per riga).
 
@@ -577,6 +627,10 @@ alla voce senza salvare.
   **"Modifica"** (anche per ripianificarla) e,
   per le voci create a mano, **"Elimina"** (quelle importate si ignorano,
   altrimenti il prossimo import le riporterebbe).
+- Dopo "fatta", "riaperta", "ignorata", "ripristinata", "posticipata",
+  "Togli pianificazione" o un cambio di **Stato**, in basso compare per
+  qualche secondo un messaggio con **"Annulla"**, che rimette la voce com'era
+  (0.7.8; non vale per i comandi delle attività).
 - Una voce può avere più attività (es. un lavoro su più giorni).
 
 ---
@@ -605,10 +659,10 @@ alla voce senza salvare.
 - **Sedi** — etichetta, coordinate, raggio, indirizzo. Coordinate da
   "Posizione attuale" o da "Mappa" (sposta la mappa sotto il mirino e "Usa
   questo punto").
-- **Ruoli**, **Attività predefinite** (testi ricorrenti, con ruolo proposto).
-- **Ordine degli elenchi** — in cima ad Aziende, Clienti, Ruoli e Attività
-  predefinite scegli **A–Z**, **Ultimo uso** (prima quelli usati più di
-  recente; per le predefinite, l'ultima volta che le hai scelte) o
+- **Ruoli**, **Scelte rapide** (testi ricorrenti, con ruolo proposto).
+- **Ordine degli elenchi** — in cima ad Aziende, Clienti, Ruoli e Scelte
+  rapide scegli **A–Z**, **Ultimo uso** (prima quelli usati più di
+  recente; per le scelte rapide, l'ultima volta che le hai scelte) o
   **Manuale**: in manuale ogni riga ha la maniglia ≡ a destra; tienila e
   trascina la riga dove vuoi (i clienti si spostano dentro la loro azienda).
   Le nuove voci vanno in fondo. L'ordine scelto vale anche nei menu a tendina
@@ -770,7 +824,9 @@ calendario vengono sovrascritte. Gli ultimi 14 giorni si aggiornano da soli;
 ## 14. Impostazioni
 
 Le impostazioni sono divise in sezioni, ognuna con la sua pagina e il suo
-"Salva"; in fondo all'elenco c'è **"Gesti"**. Con modifiche non salvate il
+"Salva". L'elenco mostra prima le sezioni essenziali (**Visualizzazione**,
+**Orari**, **Promemoria**, **Posizione**) e **"Gesti"**; le altre sono sotto
+**"Altre impostazioni ▾"** (0.7.8). Con modifiche non salvate il
 titolo della sezione mostra un pallino (•) e uscire chiede conferma
 ("Esci senza salvare", 0.7.6). Il significato di ogni voce è
 spiegato nella Parte II, §17.
@@ -789,7 +845,7 @@ spiegato nella Parte II, §17.
 | | Numero massimo di conferme | 0 (illimitato) |
 | | Intervallo promemoria pausa | 15 min |
 | | Ritardo avviso inizio giornata | 15 min |
-| Notifiche | per ogni tipo (conferma, pausa, pianificate, spostamento, arrivo, inizio giornata, riepilogo, da completare, in corso) apre la pagina di Android per banner, suono e vibrazione | — |
+| Notifiche | per ogni tipo (conferma, pausa, pianificate, spostamento, arrivo, inizio giornata, riepilogo, dettagli mancanti, in corso) apre la pagina di Android per banner, suono e vibrazione | — |
 | Posizione | accesso, batteria, riquadro rapido | — |
 | | Soglia avviso spostamento | 100 m |
 | | Raggio / tempo di arrivo | 100 m / 15 min |
@@ -846,7 +902,7 @@ riportati al limite più vicino.
 
 | Voce | Effetto | Predefinito |
 |---|---|---|
-| Normale / Compatta | Compatta: testo all'88 %, riquadri e pulsanti più stretti; nella scheda attività i dettagli facoltativi vuoti (località, dove, note) si richiudono in "Altri dettagli ▾". | Normale |
+| Normale / Compatta | Compatta: testo all'88 %, riquadri e pulsanti più stretti. | Normale |
 | Widget «Da fare»: intervallo | Quanto guardare avanti nel widget omonimo: 24 h, 3, 7 o 30 giorni; le voci in ritardo sono sempre incluse. Una policy può fissarla (con lucchetto). | 24 h |
 
 ### Orari
@@ -876,7 +932,7 @@ riportati al limite più vicino.
 
 ### Notifiche
 Per ogni tipo di notifica (conferma, pausa, pianificate, spostamento, arrivo,
-inizio giornata, riepilogo, da completare, in corso) apre la pagina di Android
+inizio giornata, riepilogo, dettagli mancanti, in corso) apre la pagina di Android
 dove scegliere banner, suono e vibrazione.
 
 ### Posizione
@@ -950,11 +1006,11 @@ schermate stesse e restano finché non li cambi.
 
 | Entità | Contenuto | Relazioni |
 |---|---|---|
-| Azienda | nome, colore, codice nel gestionale, connettore, calendario | ha clienti, sedi, *Da fare*, attività predefinite |
+| Azienda | nome, colore, codice nel gestionale, connettore, calendario | ha clienti, sedi, *Da fare*, scelte rapide |
 | Cliente | nome, colore, codice | appartiene a un'azienda (fissa dopo la prima attività); ha sedi |
 | Sede | etichetta, coordinate, raggio, indirizzo | di un'azienda o di un cliente; serve a proporre cliente e azienda e a riconoscere l'arrivo |
-| Ruolo | nome | proposto dalle attività predefinite, scelto sull'attività |
-| Attività predefinita | testo, ruolo proposto, azienda (facoltativa) | riempie la descrizione |
+| Ruolo | nome | proposto dalle scelte rapide, scelto sull'attività |
+| Scelta rapida | testo, ruolo proposto, azienda (facoltativa) | riempie la descrizione |
 | Attività | cliente, azienda, ruolo, descrizione, località, dove, note, stato, fine prevista | ha tratti, spese, allegati, riferimenti, tag; può nascere da un *Da fare* |
 | Tratto | tipo (lavoro, viaggio, pausa), inizio, fine, km, origine (registrato o a mano), descrizione (pause) | di un'attività; i punti di posizione appartengono ai tratti |
 | Spesa | importo, descrizione, scontrino | di un'attività |
@@ -977,7 +1033,7 @@ schermate stesse e restano finché non li cambi.
 |---|---|---|
 | In corso | avvio; Lavoro o Viaggio da sospesa | Sospendi, Stop, cambio di modalità |
 | Sospesa | Sospendi (non dalla pausa); Riapri | Lavoro / Viaggio (riprende), Stop |
-| Da completare | Stop (dettagli mancanti, o partita da un *Da fare*) | Completa, Riapri |
+| Dettagli mancanti | Stop senza cliente o descrizione (o partita da un *Da fare* e lasciata senza risposta) | Completa, Riapri |
 | Chiusa | Completa; Stop con cliente e descrizione | Riapri |
 
 Mentre è in corso l'attività ha una **modalità**: ogni cambio chiude il tratto
@@ -1015,19 +1071,20 @@ calendario e un import non la ripristina.
    widget, da una scorciatoia o da un *Da fare* prevale.
 2. Descrizione e ruolo: dall'ultima attività sullo stesso cliente negli ultimi
    30 giorni, finché non li modifichi.
-3. Con "Orari modificabili": Inizio (vuoto = adesso) e Fine facoltativa. Fine
-   già passata → "L'attività è conclusa?"; fine futura → fine prevista con
-   notifica "… finita?" a quell'ora.
+3. Con "Orari modificabili": **Adesso** (nessun orario), **Già iniziata**
+   (solo l'inizio; un orario ancora da venire chiede se pianificare, avviare
+   adesso o da ieri) o **Passata** (data, inizio e fine: registrata ferma).
 4. Le attività già in corso: per ognuna l'app chiede cosa farne (chiudi,
-   sospendi, lascia; in viaggio "il viaggio è finito?"). Una attività passata
-   registrata con Fine non chiede nulla.
+   sospendi, lascia; in viaggio "il viaggio è finito?"). Un'attività
+   **Passata** non chiede nulla.
 
 ### Stop e completamento
 
 ![Stop e completamento](diagrams/stop-flow.svg)
 
-Lo Stop dalla notifica, dal widget o dal riquadro rapido ferma subito, senza
-domande; gli stessi controlli (chiusa o da completare) valgono anche lì.
+Dall'app lo Stop apre il foglio di chiusura (§6). Lo Stop dalla notifica,
+dal widget o dal riquadro rapido ferma subito, senza domande; gli stessi
+controlli (chiusa o con dettagli mancanti) valgono anche lì.
 
 ### Promemoria
 Un solo allarme alla volta, puntato sul promemoria più vicino; i promemoria
@@ -1055,9 +1112,8 @@ allarmi in Doze).
   Nominatim. Le coordinate non escono mai dal telefono.
 
 ### Report ed esportazione
-- *Solare*: il tempo coperto da lavoro o viaggio di qualsiasi attività
-  (sovrapposizioni contate una volta); *rendicontato*: somma di lavoro e
-  viaggio arrotondati.
+- *Totale*: somma di lavoro e viaggio arrotondati (Report e riepilogo
+  serale).
 - Un'attività che passa la mezzanotte va sul giorno di inizio se finisce
   entro le *attività notturne fino alle*, altrimenti si divide a mezzanotte.
 - CSV: una riga per attività e giorno, con inizio, fine, ore di lavoro, pausa

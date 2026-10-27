@@ -218,6 +218,20 @@ updated_utc_ms), "fatta <when>" on the card and in "Chiuse" order/window,
 done cards dimmed, dialog "Stato" chips Aperta/Fatta/Ignorata + "Togli
 pianificazione"; manual 0.7.8 text. Build and unit tests green locally, NOT
 device-tested. Mockups for #92 (start) and #93 (stop sheet) requested.
+Owner 2026-10-27 (after the mockups): keep the Home "Da fare" tab with its
+own period and company filters; rendicontato is the only total; closing
+without description from the stop sheet is fine. Branch `usability-0-8`
+(on top of `issue-89-todo-status`, draft PR #101): #90 Dettagli mancanti /
+Fatte; #91 labels under commands + one-off suspend hint (suspendHintSeen);
+#92 StartWhen NOW/STARTED/PAST (StartForm.start), segmented selectors,
+labelled start button; #93 StopSheet (ModalBottomSheet) replaces the stop
+dialogs, EntryCommander.close + EntryRepository.setActivity/closeIfComplete;
+#94 EntrySummary card, add row moved, ⋮ Elimina; #96 Screen.Todos is a tab,
+selectTab in MainActivity; #97 Undo bus + UndoHost snackbar, to-dos only;
+#98 "Per iniziare" card (HomeViewModel.hasClients); #99 solar dropped from
+the Report and the summary notification, SettingsSection.essential. Build
+and unit tests green, NOT device-tested; the local debug APK is signed with
+~/.android/debug.keystore (CI artifacts use another key).
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on
