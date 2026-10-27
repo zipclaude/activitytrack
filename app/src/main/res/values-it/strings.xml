@@ -197,6 +197,10 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="stop_now">Ferma ora</string>
   <string name="stop_return">Avvia rientro</string>
   <string name="stop_quick">Stop rapido</string>
+  <string name="stop_end_work">Fine lavoro</string>
+  <string name="stop_close">Chiudi</string>
+  <string name="stop_no_activity_hint">Senza descrizione resta «dettagli mancanti».</string>
+  <string name="stop_todo_done">Voce Da fare completata</string>
   <string name="resume_title">Riprendere \"%1$s\"?</string>
   <string name="action_yes">Sì</string>
   <string name="action_no">No</string>

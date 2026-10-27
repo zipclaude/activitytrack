@@ -292,7 +292,7 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val plan: (LocalDate, Int) -> Unit = { day, min -> if (canPlan) { todosVm.clearError(); editing = newTodo(day, min) } }
 	val onTodo: (TodoEntity) -> Unit = { selected = it }
 	/* swipes on open entries run the commands like Home (owner, 2026-10-18: gestures everywhere) */
-	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries) }
+	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries, it.todos) }
 	val settings by todosVm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
