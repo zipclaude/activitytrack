@@ -3,6 +3,13 @@ manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
+**New in 0.7.8** (not yet tested on the phone)
+- Done to-dos show **"done"** and when they were done, no longer
+  "planned" with the planned time; in "Closed" they are sorted by that
+  moment and dimmed like the closed activities.
+- Tapping a to-do, **State**: "Open", "Done" or "Ignored", whatever it was
+  before; **"Remove the plan"** removes its date and time (§8).
+
 **New in 0.7.6** (tested on the debug phone)
 - One name for the to-dos: the Home tab and the widget are called
   **To-dos**.
@@ -172,8 +179,8 @@ From a tab other than Home, Back returns to Home.
   (default), **3 d**, **7 d**, **30 d** or **All** — separate from the
   "To-dos" screen's. Next to it, **"All companies"** filters the to-dos by
   company.
-- **Closed**: activities closed or to complete and to-dos marked done, the
-  most recent end first; the tag filter lives here (to-dos carry no tags).
+- **Closed**: activities closed or to complete and to-dos marked done
+  ("done" and when you marked it), the most recent end first; the tag filter lives here (to-dos carry no tags).
   The period: **Today** (default, from the 06:00 carry-over boundary as in
   the reports), **24 h**, **7 d**, **30 d**.
 
@@ -550,8 +557,10 @@ the to-do without saving.
   the bottom of the "To-dos" list, struck through, without reminders or
   calendar event; on Home it shows only on the day you ignored it. Another
   drag restores it. An import never restores it.
-- Tapping a to-do: "Start activity", "Postpone", "Mark as done" / "Mark as to
-  do", **"Edit"** (also to re-plan it) and, for to-dos created by
+- Tapping a to-do: its **State** ("Open", "Done", "Ignored": tap the one
+  you want), "Start activity", "Postpone", **"Remove the plan"** (the
+  to-do stays, with no date and no reminder), **"Edit"** (also to re-plan
+  it) and, for to-dos created by
   hand, **"Delete"** (imported ones are ignored, or the next import would
   bring them back).
 - A to-do may have several activities (e.g. a job over several days).
@@ -962,6 +971,10 @@ Rules:
 ## 20. To-do states
 
 ![To-do states](diagrams/todo-states.svg)
+
+Each to-do shows one state, in this order: **done**, **ignored** (chosen by
+hand on the to-do), **overdue**, **planned** (from its dates), **open**. A
+done to-do is no longer "planned" or "overdue", even with a date.
 
 A to-do is **overdue** when its planned block is over or its due date has
 passed (after the due time, or from the next day when the due date has no

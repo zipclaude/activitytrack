@@ -320,7 +320,6 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_align_due_no">Mantener</string>
   <string name="todo_start">Iniciar actividad</string>
   <string name="todo_mark_done">Marcar como hecha</string>
-  <string name="todo_reopen">Marcar como pendiente</string>
   <string name="todo_edit">Editar pendiente</string>
   <string name="todo_show_done">Mostrar las hechas</string>
   <string name="todo_field_title">Descripción</string>
@@ -415,6 +414,12 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="gestures_full">Deslizar largo ejecuta la primera acción al instante</string>
   <string name="todo_due_at">vence %1$s</string>
   <string name="todo_planned_chip">planificada</string>
+  <string name="todo_done_chip">hecha</string>
+  <string name="todo_done_at">hecha %1$s</string>
+  <string name="todo_state">Estado</string>
+  <string name="todo_state_done">Hecha</string>
+  <string name="todo_state_ignored">Ignorada</string>
+  <string name="todo_clear_plan">Quitar la planificación</string>
   <string name="gestures_behaviour">Comportamiento</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualización</string>

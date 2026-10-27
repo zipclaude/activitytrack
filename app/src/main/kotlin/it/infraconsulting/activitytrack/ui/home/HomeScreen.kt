@@ -260,7 +260,7 @@ fun HomeScreen(
 			)
 				add(ClosedRow.Entry(c))
 		for (t in doneTodos)
-			if ((todoCompany == null || t.companyId == todoCompany) && Instant.ofEpochMilli(t.updatedUtcMs).isAfter(boundary))
+			if ((todoCompany == null || t.companyId == todoCompany) && Instant.ofEpochMilli(t.doneUtcMs ?: t.updatedUtcMs).isAfter(boundary))
 				add(ClosedRow.Todo(t, todoClients.firstOrNull { it.id == t.clientId }?.name))
 	}.sortedByDescending { it.sortMs }
 	/* the ones ignored today stay at the bottom of the planned list (owner, 2026-10-18) */

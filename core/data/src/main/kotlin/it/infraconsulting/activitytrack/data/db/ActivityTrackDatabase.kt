@@ -56,6 +56,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		AutoMigration(from = 12, to = 13),	/* issue #48: clients and to-dos without a company */
 		AutoMigration(from = 11, to = 12),	/* issue #48 policy history; plugin lists and sent records, entry and to-do plugin fields, contact key */
 		AutoMigration(from = 13, to = 14),	/* issue #48: remote records of deleted entries */
+		AutoMigration(from = 14, to = 15, spec = ActivityTrackDatabase.FillDoneTimes::class),	/* issue #89: when a to-do was done */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
@@ -73,7 +74,7 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 14
+		const val VERSION = 15
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =
@@ -87,6 +88,13 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 	class FillEntryUids : AutoMigrationSpec {
 		override fun onPostMigrate(db: SupportSQLiteDatabase) {
 			db.execSQL("UPDATE time_entry SET uid = lower(hex(randomblob(16))) WHERE uid IS NULL")
+		}
+	}
+
+	/* 14 -> 15: the done to-dos take their last update as the time they were done (the best guess). */
+	class FillDoneTimes : AutoMigrationSpec {
+		override fun onPostMigrate(db: SupportSQLiteDatabase) {
+			db.execSQL("UPDATE todo SET done_utc_ms = updated_utc_ms WHERE done != 0")
 		}
 	}
 

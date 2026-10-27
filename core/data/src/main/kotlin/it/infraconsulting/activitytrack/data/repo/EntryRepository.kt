@@ -629,7 +629,7 @@ class EntryRepository(
 		if (dao.attachmentCount(entryId) > 0)
 			throw ValidationException(Reason.HAS_ATTACHMENTS)
 		e.todoId?.let { db.todoDao().byId(it) }?.takeIf { it.externalKey != null }?.let {
-			db.todoDao().update(it.copy(done = false, updatedUtcMs = clock.millis()))
+			db.todoDao().update(it.markedDone(false, clock.millis()))
 		}
 		keepRemoteIds(e)
 		dao.deleteEntry(entryId)

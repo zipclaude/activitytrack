@@ -101,7 +101,8 @@ internal sealed interface ClosedRow {
 	}
 
 	data class Todo(val todo: TodoEntity, val client: String?) : ClosedRow {
-		override val sortMs: Long get() = todo.updatedUtcMs
+		/* when it was done (issue #89), not its last edit */
+		override val sortMs: Long get() = todo.doneUtcMs ?: todo.updatedUtcMs
 	}
 }
 

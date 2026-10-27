@@ -79,7 +79,25 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 
 	suspend fun setDone(id: Long, done: Boolean) = db.withTransaction {
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
-		dao.update(t.copy(done = done, updatedUtcMs = clock.millis()))
+		dao.update(t.markedDone(done, clock.millis()))
+	}
+
+	/*
+	 * The state chosen by hand in the to-do dialog (issue #89): open, done or
+	 * ignored, whatever it was before. Planned and overdue follow the dates.
+	 */
+	suspend fun setState(id: Long, done: Boolean, ignored: Boolean) = db.withTransaction {
+		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
+		val now = clock.millis()
+		dao.update(t.markedDone(done, now).copy(ignoredUtcMs = if (ignored) t.ignoredUtcMs ?: now else null))
+	}
+
+	/* The plan removed (issue #89): the to-do stays, with no day and no reminder. */
+	suspend fun clearPlan(id: Long) = db.withTransaction {
+		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
+		dao.update(
+			t.copy(planEpochDay = null, planStartMin = null, durationMin = null, planRemindedUtcMs = null, updatedUtcMs = clock.millis()),
+		)
 	}
 
 	/* Ignore (struck through, at the bottom, no reminders or calendar event) or restore. */
@@ -118,6 +136,10 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 
 	suspend fun entriesOf(id: Long): Int = dao.entriesOf(id)
 }
+
+/* Done or open again at [now]: an already done one keeps its time (issue #89). */
+fun TodoEntity.markedDone(done: Boolean, now: Long): TodoEntity =
+	copy(done = done, doneUtcMs = if (done) doneUtcMs ?: now else null, updatedUtcMs = now)
 
 /* Neither done nor ignored. */
 fun TodoEntity.isOpen(): Boolean = !done && ignoredUtcMs == null

@@ -214,6 +214,12 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
   the block lasts one hour and grows hour by hour while the to-do stays open,
   up to the end of the planned day. Created by hand (To-dos, agenda) or
   imported (`plannedDate`, `plannedTime`, `durationMin`).
+- **To-do state shown (issue #89)**: one state per to-do, in this order:
+  done, ignored (set by hand: the to-do dialog offers Open / Done / Ignored
+  whatever the state before), overdue, planned (from the dates), open. A done
+  to-do keeps the time it was done (`done_utc_ms`, schema v15): it is shown
+  and sorted by it, never as planned or overdue. "Remove the plan" clears
+  the planned day, time and duration.
 - **Backup restore**: a daily backup replaces all data after a safety backup.
 
 ### 8.1 Calendar sync
