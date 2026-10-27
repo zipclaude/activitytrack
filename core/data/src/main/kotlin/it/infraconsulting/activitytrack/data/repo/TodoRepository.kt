@@ -92,6 +92,12 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 		dao.update(t.markedDone(done, now).copy(ignoredUtcMs = if (ignored) t.ignoredUtcMs ?: now else null))
 	}
 
+	/* A to-do put back as it was before a change ("Annulla", issue #97). */
+	suspend fun restore(t: TodoEntity) = db.withTransaction {
+		if (dao.byId(t.id) != null)
+			dao.update(t)
+	}
+
 	/* The plan removed (issue #89): the to-do stays, with no day and no reminder. */
 	suspend fun clearPlan(id: Long) = db.withTransaction {
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")

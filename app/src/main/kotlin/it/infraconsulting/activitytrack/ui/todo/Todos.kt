@@ -106,6 +106,8 @@ import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.ui.common.SwitchRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.TimeField
+import it.infraconsulting.activitytrack.ui.common.Undo
+import it.infraconsulting.activitytrack.ui.common.UndoEvent
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseDate
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
@@ -142,12 +144,25 @@ class TodosViewModel(
 	/* ignored to-dos listed or hidden (owner, 2026-10-19) */
 	fun setShowIgnored(on: Boolean) = run { settingsRepo.update { it.copy(todoShowIgnored = on) } }
 
-	fun setDone(t: TodoEntity, done: Boolean) = run { todos.setDone(t.id, done) }
+	/* the change, then "Annulla" puts [t] back as it was (issue #97) */
+	private fun undoable(t: TodoEntity, @androidx.annotation.StringRes message: Int, action: suspend () -> Unit) =
+		run({ Undo.post(UndoEvent(message, t.title) { todos.restore(t) }) }, action)
+
+	fun setDone(t: TodoEntity, done: Boolean) =
+		undoable(t, if (done) R.string.undo_todo_done else R.string.undo_todo_open) { todos.setDone(t.id, done) }
 	fun delete(t: TodoEntity) = run { todos.delete(t.id) }
-	fun setIgnored(t: TodoEntity, ignored: Boolean) = run { todos.setIgnored(t.id, ignored) }
+	fun setIgnored(t: TodoEntity, ignored: Boolean) =
+		undoable(t, if (ignored) R.string.undo_todo_ignored else R.string.undo_todo_open) { todos.setIgnored(t.id, ignored) }
 	/* the state chosen by hand (issue #89) */
-	fun setState(t: TodoEntity, state: TodoState) = run { todos.setState(t.id, done = state == TodoState.DONE, ignored = state == TodoState.IGNORED) }
-	fun clearPlan(t: TodoEntity) = run { todos.clearPlan(t.id) }
+	fun setState(t: TodoEntity, state: TodoState) = undoable(
+		t,
+		when (state) {
+			TodoState.DONE -> R.string.undo_todo_done
+			TodoState.IGNORED -> R.string.undo_todo_ignored
+			else -> R.string.undo_todo_open
+		},
+	) { todos.setState(t.id, done = state == TodoState.DONE, ignored = state == TodoState.IGNORED) }
+	fun clearPlan(t: TodoEntity) = undoable(t, R.string.undo_todo_unplanned) { todos.clearPlan(t.id) }
 	fun save(t: TodoEntity, done: () -> Unit) {
 		policy().missingRequired(
 			mapOf(
@@ -157,7 +172,7 @@ class TodosViewModel(
 		)?.let { _ -> return fail(it.infraconsulting.activitytrack.data.repo.ValidationException.Reason.POLICY_REQUIRED) }
 		run(done) { todos.save(t) }
 	}
-	fun postpone(t: TodoEntity, minutes: Int) = run { todos.postpone(t.id, minutes) }
+	fun postpone(t: TodoEntity, minutes: Int) = undoable(t, R.string.undo_todo_postponed) { todos.postpone(t.id, minutes) }
 
 	/* a to-do belongs to a company: through its client or chosen directly */
 	fun missingCompany() = fail(ValidationException.Reason.CLIENT_REQUIRED)

@@ -3,6 +3,17 @@ package it.infraconsulting.activitytrack
 
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import it.infraconsulting.activitytrack.ui.common.Undo
+import kotlinx.coroutines.flow.collectLatest
 import it.infraconsulting.activitytrack.policy.PolicyLoader
 import it.infraconsulting.activitytrack.ui.start.CallPrefill
 import android.Manifest
@@ -165,10 +176,31 @@ private fun Navigator(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 			CompositionLocalProvider(LocalBottomBar provides tab) {
 				ScopedEntry(stack) { t -> Destination(t, back, open, selectTab) }
 			}
+			UndoHost(Modifier.align(Alignment.BottomCenter).then(if (tab) Modifier else Modifier.navigationBarsPadding()))
 		}
 		if (tab)
 			BottomBar(top, selectTab)
 	}
+}
+
+/* The "Annulla" snackbar of every screen (issue #97), above the bottom bar. */
+@Composable
+private fun UndoHost(modifier: Modifier) {
+	val host = remember { SnackbarHostState() }
+	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
+	LaunchedEffect(Unit) {
+		Undo.events.collectLatest { e ->
+			val result = host.showSnackbar(
+				message = context.getString(e.message, e.arg),
+				actionLabel = context.getString(R.string.action_undo),
+				duration = SnackbarDuration.Short,
+			)
+			if (result == SnackbarResult.ActionPerformed)
+				scope.launch { e.undo() }
+		}
+	}
+	SnackbarHost(host, modifier.padding(bottom = 8.dp))
 }
 
 @Composable

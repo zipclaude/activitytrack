@@ -422,6 +422,12 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="todo_state_done">Hecha</string>
   <string name="todo_state_ignored">Ignorada</string>
   <string name="todo_clear_plan">Quitar la planificación</string>
+  <string name="action_undo">Deshacer</string>
+  <string name="undo_todo_done">«%1$s» marcada como hecha</string>
+  <string name="undo_todo_open">«%1$s» abierta de nuevo</string>
+  <string name="undo_todo_ignored">«%1$s» ignorada</string>
+  <string name="undo_todo_postponed">«%1$s» pospuesta</string>
+  <string name="undo_todo_unplanned">Planificación quitada de «%1$s»</string>
   <string name="gestures_behaviour">Comportamiento</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualización</string>
