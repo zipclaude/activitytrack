@@ -41,7 +41,7 @@ class GesturesViewModel(private val repo: SettingsRepository) : ViewModel() {
 
 	/* the Home hint and the cards' ‹ › again (issue #77) */
 	fun showHints() {
-		viewModelScope.launch { repo.update { it.copy(gestureHintSeen = false, swipeLearned = false) } }
+		viewModelScope.launch { repo.update { it.copy(gestureHintSeen = false, swipeLearned = false, suspendHintSeen = false) } }
 	}
 }
 

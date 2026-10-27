@@ -165,6 +165,9 @@ class HomeViewModel(
 	/* the one-off gesture hint was read (issue #77) */
 	fun dismissGestureHint() = run { settingsRepo.update { it.copy(gestureHintSeen = true) } }
 
+	/* the one-off Suspend explanation was read (issue #91) */
+	fun dismissSuspendHint() = run { settingsRepo.update { it.copy(suspendHintSeen = true) } }
+
 	/* the entry shown in the big card; null = the most recent one */
 	private val _selected = MutableStateFlow<Long?>(null)
 	val selected = _selected.asStateFlow()
@@ -208,7 +211,23 @@ fun HomeScreen(
 	val settings by vm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
-	val run = rememberEntryCommands(vm, settings?.editableTimes == true) { id -> allCards.firstOrNull { it.entry.id == id }?.title ?: fallback }
+	val runNow = rememberEntryCommands(vm, settings?.editableTimes == true) { id -> allCards.firstOrNull { it.entry.id == id }?.title ?: fallback }
+	/* the first Suspend explains how it differs from Pause, once (issue #91) */
+	var suspending by remember { mutableStateOf<TimeEntryEntity?>(null) }
+	val run: (TimeEntryEntity, EntryCommand) -> Unit = { e, cmd ->
+		if (cmd == EntryCommand.SUSPEND && settings?.suspendHintSeen == false) suspending = e else runNow(e, cmd)
+	}
+	suspending?.let { e ->
+		AlertDialog(
+			onDismissRequest = { suspending = null },
+			title = { Text(stringResource(R.string.cmd_suspend)) },
+			text = { Text(stringResource(R.string.suspend_hint_text)) },
+			confirmButton = {
+				TextButton(onClick = { suspending = null; vm.dismissSuspendHint(); runNow(e, EntryCommand.SUSPEND) }) { Text(stringResource(R.string.cmd_suspend)) }
+			},
+			dismissButton = { TextButton(onClick = { suspending = null }) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
 
 	/* elapsed times refresh every 30 s; the DB keeps exact timestamps */
 	val now by produceState(System.currentTimeMillis()) {
@@ -462,8 +481,8 @@ private fun EmptyEntryCard(fullSwipe: Boolean, onStart: (() -> Unit)?, onTravel:
 				Text(stringResource(R.string.home_none), style = MaterialTheme.typography.titleLarge)
 				Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
 					val size = if (compact) 48.dp else 64.dp
-					onStart?.let { CommandIconButton(start, startLabel, it, Modifier.size(size)) }
-					onTravel?.let { CommandIconButton(travel, stringResource(R.string.start_travel), it, Modifier.size(size)) }
+					onStart?.let { LabeledCommand(startLabel) { CommandIconButton(start, startLabel, it, Modifier.size(size)) } }
+					onTravel?.let { LabeledCommand(travelLabel) { CommandIconButton(travel, stringResource(R.string.start_travel), it, Modifier.size(size)) } }
 				}
 			}
 		}
@@ -590,7 +609,10 @@ private fun EntryCardView(
 					for ((cmd, label) in commands(e.status, e.mode)) {
 						val style = commandStyle(cmd)
 						if (style != null)
-							CommandIconButton(style, stringResource(label), { onCommand(cmd) }, if (compact) Modifier.size(44.dp) else Modifier)
+							/* the label under each button: the moon alone did not say "suspend" (issue #91) */
+							LabeledCommand(stringResource(label)) {
+								CommandIconButton(style, stringResource(label), { onCommand(cmd) }, if (compact) Modifier.size(44.dp) else Modifier)
+							}
 						else
 							OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
 					}
@@ -599,6 +621,15 @@ private fun EntryCardView(
 				}
 			}
 		}
+	}
+}
+
+/* A command button with its name under it (issue #91). */
+@Composable
+private fun LabeledCommand(label: String, button: @Composable () -> Unit) {
+	Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+		button()
+		Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
 	}
 }
 

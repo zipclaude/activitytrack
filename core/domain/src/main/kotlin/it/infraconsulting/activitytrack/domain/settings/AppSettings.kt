@@ -89,6 +89,8 @@ data class AppSettings(
 	 */
 	val gestureHintSeen: Boolean = false,
 	val swipeLearned: Boolean = false,
+	/* the one-off "Suspend vs Pause" explanation was read (issue #91) */
+	val suspendHintSeen: Boolean = false,
 	/* order of the master-data lists and drop-downs (M16) */
 	val listOrders: ListOrders = ListOrders(),
 	/*
