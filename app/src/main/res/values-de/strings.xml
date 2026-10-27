@@ -320,7 +320,6 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="todo_align_due_no">Beibehalten</string>
   <string name="todo_start">Tätigkeit starten</string>
   <string name="todo_mark_done">Als erledigt markieren</string>
-  <string name="todo_reopen">Als offen markieren</string>
   <string name="todo_edit">Aufgabe bearbeiten</string>
   <string name="todo_show_done">Erledigte anzeigen</string>
   <string name="todo_field_title">Beschreibung</string>
@@ -414,6 +413,12 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="gestures_full">Langes Wischen führt die erste Aktion sofort aus</string>
   <string name="todo_due_at">fällig %1$s</string>
   <string name="todo_planned_chip">geplant</string>
+  <string name="todo_done_chip">erledigt</string>
+  <string name="todo_done_at">erledigt %1$s</string>
+  <string name="todo_state">Status</string>
+  <string name="todo_state_done">Erledigt</string>
+  <string name="todo_state_ignored">Ignoriert</string>
+  <string name="todo_clear_plan">Planung entfernen</string>
   <string name="gestures_behaviour">Verhalten</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Anzeige</string>

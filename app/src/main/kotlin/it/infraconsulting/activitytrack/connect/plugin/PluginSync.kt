@@ -137,6 +137,7 @@ class PluginSync(private val app: ActivityTrackApp) {
 				planStartMin = plan?.let { it.hour * 60 + it.minute } ?: base.planStartMin,
 				/* the remote closes a to-do; it never reopens one the user marked done */
 				done = base.done || r.bool("done") == true,
+				doneUtcMs = base.doneUtcMs ?: now.takeIf { r.bool("done") == true },
 				pluginFields = r.fields.takeIf { it.isNotEmpty() }?.let { JsonObject(it).toString() } ?: base.pluginFields,
 				updatedUtcMs = if (existing == null) now else base.updatedUtcMs,
 			)

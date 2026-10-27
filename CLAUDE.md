@@ -208,6 +208,16 @@ launcher page; widgets.png retaken (screenshots.py finds the page by the
 widgets' size, MIUI labels them "<app>null"). #87 (owner 2026-10-27, no
 manual change): the Chiuse rows start with the day; released as v0.7.7
 with the 0.7.6 manual (scripts/manual-unchanged).
+Owner 2026-10-27: usability review → issues #90–#99 (F: the field border
+colours stay, only explained in the manual; J: drop Solare/Rendicontato from
+the UI, details to agree). #89 (branch `issue-89-todo-status`, PR open): done
+to-dos showed "pianificata" (the chip ignored `done`); one `todoState()`
+(done, ignored, overdue, planned, open; the filters' TodoState enum
+extended), `done_utc_ms` (schema v15, migration fills it from
+updated_utc_ms), "fatta <when>" on the card and in "Chiuse" order/window,
+done cards dimmed, dialog "Stato" chips Aperta/Fatta/Ignorata + "Togli
+pianificazione"; manual 0.7.8 text. Build and unit tests green locally, NOT
+device-tested. Mockups for #92 (start) and #93 (stop sheet) requested.
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on

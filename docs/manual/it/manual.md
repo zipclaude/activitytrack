@@ -3,6 +3,13 @@ e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
+**Novità della 0.7.8** (non ancora provata sul telefono)
+- Le voci da fare completate mostrano **"fatta"** e quando sono state
+  fatte, non più "pianificata" con l'orario previsto; in "Chiuse" sono
+  ordinate per quel momento e appaiono attenuate come le attività chiuse.
+- Toccando una voce, **Stato**: "Aperta", "Fatta" o "Ignorata", qualunque
+  fosse prima; **"Togli pianificazione"** toglie data e orario (§8).
+
 **Novità della 0.7.6** (provata sul telefono di debug)
 - Un solo nome per le voci da fare: la scheda della Home e il widget si
   chiamano **Da fare**.
@@ -175,7 +182,8 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   separato da quello della schermata "Da fare". Accanto, **"Tutte le
   aziende"** filtra le voci per azienda.
 - **Chiuse**: le attività chiuse o da completare e le voci da fare
-  completate, dalla fine più recente; qui c'è anche il filtro
+  completate ("fatta" e il momento in cui l'hai segnata), dalla fine più
+  recente; qui c'è anche il filtro
   **etichette** (le voci da fare non le hanno). Il periodo: **Oggi**
   (predefinito, dal confine delle 06:00 come nei report), **24 h**,
   **7 gg**, **30 gg**.
@@ -563,8 +571,10 @@ alla voce senza salvare.
   in fondo alla lista "Da fare", barrata, senza promemoria né evento in
   calendario; in Home compare solo il giorno in cui l'hai ignorata. Un altro
   trascinamento la ripristina. Un import dal gestionale non la ripristina.
-- Toccando una voce: "Avvia attività", "Posticipa", "Segna come fatta" /
-  "Segna come da fare", **"Modifica"** (anche per ripianificarla) e,
+- Toccando una voce: lo **Stato** ("Aperta", "Fatta", "Ignorata": tocca
+  quello voluto), "Avvia attività", "Posticipa", **"Togli
+  pianificazione"** (la voce resta, senza data né promemoria),
+  **"Modifica"** (anche per ripianificarla) e,
   per le voci create a mano, **"Elimina"** (quelle importate si ignorano,
   altrimenti il prossimo import le riporterebbe).
 - Una voce può avere più attività (es. un lavoro su più giorni).
@@ -986,6 +996,11 @@ Regole:
 ## 20. Stati dei *Da fare*
 
 ![Stati dei Da fare](diagrams/todo-states.svg)
+
+Ogni voce mostra un solo stato, in quest'ordine: **fatta**, **ignorata**
+(scelti a mano dalla voce), **in ritardo**, **pianificata** (dipendono dalle
+date), **aperta**. Una voce fatta non è più "pianificata" né "in ritardo",
+anche se ha una data.
 
 Una voce è **in ritardo** quando il blocco pianificato è passato oppure quando
 la scadenza è passata (dopo l'ora di scadenza, o dal giorno dopo se la

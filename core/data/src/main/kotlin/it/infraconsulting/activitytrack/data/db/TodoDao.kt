@@ -46,8 +46,8 @@ interface TodoDao {
 	@Query("SELECT * FROM todo ORDER BY done, ignored_utc_ms IS NOT NULL, due_epoch_day IS NULL, due_epoch_day, title COLLATE NOCASE")
 	fun observeAll(): Flow<List<TodoEntity>>
 
-	/* the done ones, most recently marked first (Home "Chiuse", issue #59) */
-	@Query("SELECT * FROM todo WHERE done != 0 ORDER BY updated_utc_ms DESC LIMIT :limit")
+	/* the done ones, most recently done first (Home "Chiuse", issues #59 and #89) */
+	@Query("SELECT * FROM todo WHERE done != 0 ORDER BY COALESCE(done_utc_ms, updated_utc_ms) DESC LIMIT :limit")
 	fun observeDone(limit: Int): Flow<List<TodoEntity>>
 
 	@Query("SELECT * FROM todo")

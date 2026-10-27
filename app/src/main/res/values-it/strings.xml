@@ -320,7 +320,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_align_due_no">Mantieni</string>
   <string name="todo_start">Avvia attività</string>
   <string name="todo_mark_done">Segna come fatta</string>
-  <string name="todo_reopen">Segna come da fare</string>
   <string name="todo_edit">Modifica</string>
   <string name="todo_show_done">Mostra anche le fatte</string>
   <string name="todo_field_title">Descrizione</string>
@@ -415,6 +414,12 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="gestures_full">Trascinamento lungo: esegue subito la prima azione</string>
   <string name="todo_due_at">scad. %1$s</string>
   <string name="todo_planned_chip">pianificata</string>
+  <string name="todo_done_chip">fatta</string>
+  <string name="todo_done_at">fatta %1$s</string>
+  <string name="todo_state">Stato</string>
+  <string name="todo_state_done">Fatta</string>
+  <string name="todo_state_ignored">Ignorata</string>
+  <string name="todo_clear_plan">Togli pianificazione</string>
   <string name="gestures_behaviour">Comportamento</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualizzazione</string>

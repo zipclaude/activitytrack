@@ -261,7 +261,8 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 				TodoEntity(
 					uid = UUID.randomUUID().toString(), companyId = companyId, clientId = clientId, externalKey = x.key,
 					title = x.title.trim(), notes = x.notes?.trim()?.ifEmpty { null }, refs = refs, dueEpochDay = due,
-					dueTimeMin = time, priority = x.priority, done = x.done, createdUtcMs = now, updatedUtcMs = now,
+					dueTimeMin = time, priority = x.priority, done = x.done, doneUtcMs = now.takeIf { x.done },
+					createdUtcMs = now, updatedUtcMs = now,
 					planEpochDay = planDay, planStartMin = planTime, durationMin = duration,
 					ignoredUtcMs = now.takeIf { x.ignored },
 				),
