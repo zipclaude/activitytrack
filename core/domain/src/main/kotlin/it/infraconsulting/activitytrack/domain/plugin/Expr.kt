@@ -55,6 +55,8 @@ sealed interface Expr {
 			"date" to (1 to setOf("format")),
 			"minutes" to (1 to setOf("round")),
 			"materials" to (1 to emptySet()),
+			/* {"object": {"key": value, …}}: a JSON object, keys whose value is null left out */
+			"object" to (1 to emptySet()),
 		)
 
 		val DATE_FORMATS = setOf("isoOffset", "isoLocal", "isoDate", "epochMs")
@@ -119,6 +121,13 @@ sealed interface Expr {
 			for (k in o.keys - name - extra)
 				error(k, "unknown key for \"$name\" (allowed: ${extra.joinToString().ifEmpty { "none" }})")
 			val raw = o.getValue(name)
+			if (name == "object") {
+				val fields = raw as? JsonObject ?: return null.also { error(name, "must be an object of key → value") }
+				/* insertion order kept: the body hash must not depend on a map's iteration */
+				val params = LinkedHashMap<String, Expr>()
+				fields.forEach { (k, v) -> parse(v) { p, m -> error(sub(name, k, p), m) }?.let { params["key:$k"] = it } }
+				return Op(name, emptyList(), params)
+			}
 			val args: List<JsonElement> = when {
 				arity == -1 -> (raw as? JsonArray) ?: return null.also { error(name, "must be a list") }
 				arity == 1 -> listOf(raw)
