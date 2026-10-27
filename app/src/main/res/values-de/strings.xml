@@ -393,6 +393,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="home_no_date">Ohne Datum</string>
   <string name="home_window_today">Heute</string>
   <string name="home_planned_empty">Nichts geplant in diesem Zeitraum</string>
+  <string name="home_all_todos">Alle Aufgaben →</string>
   <string name="home_closed_empty">Nichts erledigt in diesem Zeitraum</string>
   <string name="todo_ignored">ignoriert</string>
   <string name="swipe_start">Starten</string>

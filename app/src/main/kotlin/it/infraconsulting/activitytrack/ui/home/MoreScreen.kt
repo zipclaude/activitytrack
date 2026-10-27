@@ -23,7 +23,6 @@ fun MoreScreen(onOpen: (Screen) -> Unit) {
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 			/* what the policy keeps (issue #48) */
 			val rows = listOfNotNull(
-				Triple(Screen.Todos, R.string.todo_title, R.drawable.ic_menu_todo).takeIf { policy.enabled(Feature.TODOS) },
 				Triple(Screen.Export, R.string.export_title, R.drawable.ic_menu_import_export).takeIf { policy.enabled(Feature.IMPORT) || policy.enabled(Feature.EXPORT) || policy.enabled(Feature.RESTORE) },
 				Triple(Screen.MasterData, R.string.md_title, R.drawable.ic_menu_folder),
 				Triple(Screen.Settings, R.string.settings_title, R.drawable.ic_menu_settings),
