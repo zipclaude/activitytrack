@@ -360,7 +360,8 @@ fun TodoSwipeCard(
 private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
 	var open by remember { mutableStateOf(false) }
 	val labels = mapOf(
-		24 to stringResource(R.string.todo_window_24h), 168 to stringResource(R.string.todo_window_7d),
+		/* the same choices as the Home tab (issue #96) */
+		24 to stringResource(R.string.todo_window_24h), 72 to stringResource(R.string.todo_window_3d), 168 to stringResource(R.string.todo_window_7d),
 		720 to stringResource(R.string.todo_window_30d), 0 to stringResource(R.string.todo_window_all),
 	)
 	Box {
@@ -503,7 +504,7 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
  * Open ones first, ignored ones at the bottom, done ones on request.
  */
 @Composable
-fun TodosScreen(onBack: () -> Unit, editId: Long? = null, onStart: (Long) -> Unit) {
+fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> Unit) {
 	val vm = todosViewModel()
 	val open by vm.open.collectAsState()
 	val ignored by vm.ignored.collectAsState()

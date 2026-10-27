@@ -204,6 +204,7 @@ fun HomeScreen(
 	onOpenEntry: (Long) -> Unit,
 	onStartTodo: (Long) -> Unit,
 	onOpenGestures: () -> Unit = {},
+	onOpenTodos: (() -> Unit)? = null,
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
 	val allCards by vm.cards.collectAsState()
@@ -413,6 +414,13 @@ fun HomeScreen(
 							}
 							if (plannedCount == 0)
 								item(key = "planned-empty") { EmptyText(stringResource(R.string.home_planned_empty)) }
+							/* the whole list is a tab of its own (issue #96) */
+							if (onOpenTodos != null && policy.enabled(Feature.TODOS))
+								item(key = "planned-all") {
+									Box(Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = Alignment.CenterEnd) {
+										TextButton(onClick = onOpenTodos) { Text(stringResource(R.string.home_all_todos)) }
+									}
+								}
 						}
 						HomeTab.CLOSED -> {
 							items(
