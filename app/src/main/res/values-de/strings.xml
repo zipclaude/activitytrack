@@ -542,6 +542,16 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="call_propose_action">Tätigkeit anlegen</string>
   <string name="segment_note">Beschreibung</string>
   <string name="start_end_hint">Leerer Beginn = jetzt; leeres Ende = offen; ein vergangenes Ende erfasst die Tätigkeit als abgeschlossen.</string>
+  <string name="start_when_now">Jetzt</string>
+  <string name="start_when_started">Schon begonnen</string>
+  <string name="start_when_past">Vergangen</string>
+  <string name="start_when_now_hint">Beginnt jetzt. Für eine schon begonnene oder nachzutragende Tätigkeit oben den Modus wählen.</string>
+  <string name="start_when_started_hint">Sie bleibt offen: mit Stopp beenden.</string>
+  <string name="start_started_at">Begonnen um</string>
+  <string name="start_minutes_ago">vor %1$d Min.</string>
+  <string name="start_now_action">Jetzt starten</string>
+  <string name="start_from_action">Ab %1$s starten</string>
+  <string name="start_record_action">%1$s–%2$s erfassen</string>
   <!-- issue #37 add row -->
   <string name="short_expense">Ausgabe</string>
   <string name="short_photo">Foto</string>

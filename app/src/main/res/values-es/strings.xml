@@ -543,6 +543,16 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="call_propose_action">Crear actividad</string>
   <string name="segment_note">Descripción</string>
   <string name="start_end_hint">Inicio vacío = ahora; Fin vacío = abierta; un Fin ya pasado registra la actividad como terminada.</string>
+  <string name="start_when_now">Ahora</string>
+  <string name="start_when_started">Ya empezada</string>
+  <string name="start_when_past">Pasada</string>
+  <string name="start_when_now_hint">Empieza ahora. Para una actividad ya empezada o por registrar, elige el modo arriba.</string>
+  <string name="start_when_started_hint">Queda abierta: la paras con Stop.</string>
+  <string name="start_started_at">Empezada a las</string>
+  <string name="start_minutes_ago">hace %1$d min</string>
+  <string name="start_now_action">Empezar ahora</string>
+  <string name="start_from_action">Empezar desde las %1$s</string>
+  <string name="start_record_action">Registrar %1$s–%2$s</string>
   <!-- issue #37 add row -->
   <string name="short_expense">Gasto</string>
   <string name="short_photo">Foto</string>

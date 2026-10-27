@@ -543,6 +543,16 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="call_propose_action">Crea attività</string>
   <string name="segment_note">Descrizione</string>
   <string name="start_end_hint">Inizio vuoto = adesso; Fine vuota = aperta; una Fine già passata registra l\'attività come conclusa.</string>
+  <string name="start_when_now">Adesso</string>
+  <string name="start_when_started">Già iniziata</string>
+  <string name="start_when_past">Passata</string>
+  <string name="start_when_now_hint">Parte adesso. Per un\'attività già iniziata o da registrare, scegli il modo in alto.</string>
+  <string name="start_when_started_hint">Resta aperta: la fermi con Stop.</string>
+  <string name="start_started_at">Iniziata alle</string>
+  <string name="start_minutes_ago">%1$d min fa</string>
+  <string name="start_now_action">Avvia adesso</string>
+  <string name="start_from_action">Avvia dalle %1$s</string>
+  <string name="start_record_action">Registra %1$s–%2$s</string>
   <!-- issue #37 add row -->
   <string name="short_expense">Spesa</string>
   <string name="short_photo">Foto</string>
