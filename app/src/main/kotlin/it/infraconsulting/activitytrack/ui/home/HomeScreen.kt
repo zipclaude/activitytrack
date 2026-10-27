@@ -83,6 +83,8 @@ import it.infraconsulting.activitytrack.ui.todo.bands
 import it.infraconsulting.activitytrack.ui.todo.todosViewModel
 import java.time.Instant
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import androidx.compose.ui.platform.LocalConfiguration
 import java.time.ZoneId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -410,6 +412,7 @@ fun HomeScreen(
 											onSelect = { onOpenEntry(row.card.entry.id) },
 											onCommand = {},
 											onOpen = { onOpenEntry(row.card.entry.id) },
+											showDate = true,
 										)
 									}
 									is ClosedRow.Todo -> Box(Modifier.padding(horizontal = 16.dp)) {
@@ -473,7 +476,15 @@ private fun EmptyEntryCard(fullSwipe: Boolean, onStart: (() -> Unit)?, onTravel:
  * button resumes, pauses or opens it for completion.
  */
 @Composable
-private fun SmallEntryCard(card: EntryCard, now: Long, onSelect: () -> Unit, onCommand: (EntryCommand) -> Unit, onOpen: () -> Unit) {
+private fun SmallEntryCard(
+	card: EntryCard,
+	now: Long,
+	onSelect: () -> Unit,
+	onCommand: (EntryCommand) -> Unit,
+	onOpen: () -> Unit,
+	/* the "Chiuse" rows (issue #87): the day too, "oggi" or "lun 26/10" */
+	showDate: Boolean = false,
+) {
 	val e = card.entry
 	val zone = ZoneId.of(e.zoneId)
 	val compact = LocalCompact.current
@@ -495,7 +506,12 @@ private fun SmallEntryCard(card: EntryCard, now: Long, onSelect: () -> Unit, onC
 					/* "11:00–11:45 (0:45)": from the first start to the last end, work and travel (owner, 2026-10-19) */
 					val from = card.segments.minOfOrNull { it.startUtcMs }
 					val to = card.segments.takeIf { s -> s.all { it.endUtcMs != null } }?.maxOfOrNull { it.endUtcMs!! }
-					val span = from?.let { clock(it, zone) + "–" + (to?.let { t -> clock(t, zone) } ?: "…") }
+					val day = from?.takeIf { showDate }?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+					val dayText = day?.let {
+						if (it == LocalDate.now(zone)) stringResource(R.string.todo_today)
+						else it.format(DateTimeFormatter.ofPattern("EEE d/MM", LocalConfiguration.current.locales[0]))
+					}
+					val span = from?.let { listOfNotNull(dayText, clock(it, zone) + "–" + (to?.let { t -> clock(t, zone) } ?: "…")).joinToString(" ") }
 					val length = hm(total(card.segments, SegmentKind.WORK, now) + total(card.segments, SegmentKind.TRAVEL, now))
 					Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 						val style = stateStyle(e.status, e.mode)
