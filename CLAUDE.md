@@ -46,9 +46,27 @@ Detect where you run (`hostname`, presence of `~/Android/Sdk`).
   updates without reinstalling). Local signed build: `./gradlew :app:assembleRelease`.
 
 ### 2.2 Cloud sandbox (claude.ai session)
-- Maven Central, `dl.google.com`, `services.gradle.org` and Actions log storage
-  are blocked: no local build. Push and read CI; errors are exposed as
-  annotations: `gh api repos/zipclaude/activitytrack/check-runs/<job-id>/annotations`.
+- Since 2026-10-27 the owner copies the build environment into the container
+  (user `claude`, was `fvisentin`): repo `~/src/activitytrack`, keys
+  `~/src/activitytrack-keys/` (`release.properties` points to
+  `/home/claude/...`), debug key `~/.android/debug.keystore`, SDK
+  `~/Android/Sdk` (platform 37, build-tools 36.0.0), `~/.gradle` caches.
+  Network reaches Maven Central and `dl.google.com`: full local build as in
+  §2.1 (`:core:domain:test assembleDebug :app:assembleRelease`); the local
+  release carries the same certificate as the GitHub releases.
+- JDK 21 in `/usr/lib/jvm/java-21-openjdk-amd64` (`JAVA_HOME` set in
+  `~/.bashrc`). No sudo: missing packages are installed by the owner.
+- Build outputs copied from another home path break dexing ("located outside
+  the root directory"): run `./gradlew clean` first.
+- Manual: `scripts/build-manual.sh` looks for `chromium`; the container has
+  only `/usr/bin/chromium-headless-shell` → put a `chromium` symlink to it on
+  PATH. Its graphviz (14.x) rewrites every committed SVG with only layout
+  noise: `git checkout -- docs/manual` unless a diagram really changed.
+- No phone from the cloud: device tests are run by the owner or by his other
+  agent (ask him). The owner's machine and phone stay the reference (§2.1).
+- `gh` is authenticated (account `zipclaude`): push, PRs, CI; errors are
+  exposed as annotations:
+  `gh api repos/zipclaude/activitytrack/check-runs/<job-id>/annotations`.
 - Cross-check algorithms with an independent Python script (`python3 -I`).
 
 ### 2.3 Always
