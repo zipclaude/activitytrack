@@ -193,16 +193,18 @@ def capture(lang):
 	# so they show the sample data in the current language
 	sh("input", "keyevent", "3")
 	time.sleep(2)
-	# the launcher page holding them: the widget label ("... 4×2") tells, else
-	# try the pages on either side (they moved to the left one, 2026-10-26)
-	for swipe in ([], ["150", "1000", "900", "1000"], ["900", "1000", "150", "1000"], ["900", "1000", "150", "1000"]):
+	# the launcher page holding both: two boxes the screen's width and two
+	# launcher rows high (MIUI labels them inconsistently, "... 4×2" or
+	# "<app>null"); the pages right of the home one first, then the left one
+	left, right = ["150", "1000", "900", "1000"], ["900", "1000", "150", "1000"]
+	for swipe in ([], right, right, left, left, left):
 		if swipe:
 			sh("input", "swipe", *swipe, "300")
 			time.sleep(2)
-		if any("4×2" in (n.get("text") or n.get("content-desc") or "") for n, b in nodes()):
+		if len({tuple(b) for n, b in nodes() if b[2] - b[0] > 900 and 400 < b[3] - b[1] < 1000}) >= 2:
 			break
 	else:
-		raise SystemExit("4×2 widgets not found on the launcher")
+		raise SystemExit("the two 4×2 widgets were not found on the launcher")
 	time.sleep(2)
 	shot(lang, "widgets")
 
