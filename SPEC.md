@@ -258,6 +258,19 @@ left = Pause / Resume, right = Stop (same questions as the button) or
 Suspend. A short swipe reveals the buttons, a long one runs the first
 (switchable). **Ignored** to-dos replace deletion: kept struck through at
 the bottom, no reminder nor calendar event, never restored by an import.
+Since 0.8.0 one rule for every row (owner, 2026-10-27; still configurable):
+toward the start the step forward (to-do Start or Done, stopped entry
+Complete), toward the end put off or go back (Postpone or Ignore; Reopen
+on a done to-do or a stopped entry), with Undo for 10 s.
+
+**Home list (0.8.0)**: under the cards one list of to-dos and stopped
+entries instead of the two tabs, grouped Overdue, Details missing, Today,
+Next days, Earlier, No date, Ignored; one row shape (state mark, title,
+client · kind · state, time). Filters on one row: the period (today from
+the carry-over boundary, 24 h, 3/7/30 d, all; ahead for to-dos, behind for
+what was done; details missing always shown), State (to-dos, details
+missing, done, ignored; default the first two), Company, Tag (entries
+only); grey until changed, all remembered and settable by a policy.
 
 **Home start (M11)**: the bottom start button is gone. The empty big card
 holds Start (start screen) and Travel (starts at once, no destination) and
@@ -294,7 +307,7 @@ until removed; entries are not filtered.
 **Pickers (M10)**: every date and time field uses the Material date and time
 pickers (optional ones can be cleared).
 
-Bottom navigation: Home · Agenda · Report · More. The agenda shows the
+Bottom navigation: Home · To-dos · Agenda · Report · More (To-dos a tab since 0.8.0). The agenda shows the
 report lines and the to-dos due as a list (with search), a day or week
 timeline (concurrent entries side by side) and a month grid with reported
 hours; one colour per company; taps open the entry or the day. Planned

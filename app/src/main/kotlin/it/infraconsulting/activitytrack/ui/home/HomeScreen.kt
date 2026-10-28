@@ -627,7 +627,8 @@ private fun total(segments: List<SegmentEntity>, kind: SegmentKind, now: Long): 
 
 /* Duration as H:MM. */
 private fun hm(ms: Long): String {
-	val min = ms / 60_000
+	/* a start a little ahead of the clock (another device, a moved time) reads 0:00, never "-1:-9" */
+	val min = maxOf(0L, ms) / 60_000
 	return "%d:%02d".format(min / 60, min % 60)
 }
 

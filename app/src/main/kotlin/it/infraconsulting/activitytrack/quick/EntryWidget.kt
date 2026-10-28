@@ -137,7 +137,7 @@ private fun widgetCommands(status: EntryStatus, mode: SegmentKind?): List<EntryC
 }
 
 private fun hm(ms: Long): String {
-	val min = ms / 60_000
+	val min = maxOf(0L, ms) / 60_000
 	return "%d:%02d".format(min / 60, min % 60)
 }
 

@@ -1,16 +1,23 @@
-Versione 0.7.6 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.8.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.7.8** (non ancora provata sul telefono)
+**Novità della 0.8.0** (provata sul telefono di debug)
+- La Home ha **una sola lista** per voci da fare e attività fermate, con i
+  filtri **periodo**, **Stato**, **Azienda** e **Tag** su una riga (§3).
+- **Gesti** con una sola regola per tutte le righe: a sinistra il passo
+  avanti, a destra rimandare o tornare indietro; restano configurabili,
+  anche per le attività fermate (§3).
+- Le **policy** possono fissare, bloccare o nascondere ogni opzione, gesti
+  compresi (§11).
 - Le voci da fare completate mostrano **"fatta"** e quando sono state
-  fatte, non più "pianificata" con l'orario previsto; in "Fatte" sono
+  fatte, non più "pianificata" con l'orario previsto; nella lista sono
   ordinate per quel momento e appaiono attenuate come le attività chiuse.
 - Toccando una voce, **Stato**: "Aperta", "Fatta" o "Ignorata", qualunque
   fosse prima; **"Togli pianificazione"** toglie data e orario (§8).
 - Nomi più chiari: lo stato "Da completare" ora si chiama **"Dettagli
-  mancanti"**, la scheda "Chiuse" della Home **"Fatte"**.
+  mancanti"**; ciò che è chiuso o completato si chiama **"Fatte"**.
 - I pulsanti del riquadro grande hanno il **nome sotto l'icona**; il primo
   **Sospendi** spiega una volta la differenza con la Pausa (§5).
 - **Nuova attività**: due selettori, **Lavoro / Viaggio** e **Adesso / Già
@@ -168,7 +175,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 | Scheda | Contenuto |
 |---|---|
-| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre; sotto, le schede **Da fare** e **Fatte** |
+| **Home** | riquadro dell'attività in corso (o ▶ Avvia / 🚗 Viaggio), riquadri piccoli delle altre; sotto, la lista di voci da fare e attività fermate, con i filtri |
 | **Da fare** | tutte le voci da fare, con filtri (§8) |
 | **Agenda** | consultazione: lista, giorno, settimana, mese |
 | **Report** | il report di un giorno: totale, righe per attività, esportazione |
@@ -176,7 +183,7 @@ separata, con dati e cartella propri (`ActivityTrackDbg`).
 
 Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
 
-### La Home a riquadri
+### La Home
 - In alto il **riquadro grande**: l'attività aperta più recente, con tempo,
   stato e comandi (con il nome sotto ogni pulsante). Senza attività aperte mostra "Nessuna attività in corso"
   con i pulsanti **▶ Avvia** (apre "Nuova attività") e **🚗 Viaggio** (il
@@ -184,52 +191,61 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   l'arrivo); trascinandolo a sinistra si avvia, a destra parte il viaggio.
 - Con attività aperte, ▶ e 🚗 sono nella barra in alto (🚗 apre "Nuova
   attività" con Viaggio già scelto, perché chiede cosa fare delle altre).
-- Sotto, un **riquadro piccolo** per ogni altra attività aperta (in pausa,
-  sospesa, con dettagli mancanti): stato e orari nella forma "dalle–alle (durata)"
-  (es. "11:00–11:45 (0:45)"), e un pulsante per riprenderla (o metterla in
-  pausa, o completarla). Toccandolo, l'attività passa nel
-  riquadro grande.
-- In basso le due **schede** (0.7.4; tab in stile browser dalla 0.7.5):
-  **Da fare** e **Fatte** (fino alla 0.7.7 "Chiuse"). Si
-  cambia toccando la scheda o trascinando orizzontalmente l'intestazione
-  (i gesti sui riquadri restano); la scheda scelta è ricordata al
-  riavvio.
-- **Da fare**: le voci pianificate o in scadenza nel periodo
-  scelto, quelle in ritardo per prime (con l'orario in rosso); sotto un
-  separatore **"Senza data"** le voci senza pianificazione né scadenza; in
-  fondo, barrate, quelle ignorate oggi. Il periodo accanto al titolo:
-  **24 h** (predefinito), **3 gg**, **7 gg**, **30 gg** o **Tutti** —
-  separato da quello della scheda "Da fare". Accanto, **"Tutte le
-  aziende"** filtra le voci per azienda. In fondo **"Tutte le Da fare →"**
-  apre la scheda "Da fare" della barra in basso.
-- **Fatte**: le attività chiuse o con dettagli mancanti e le voci da fare
-  completate ("fatta" e il momento in cui l'hai segnata), dalla fine più
-  recente; qui c'è anche il filtro
-  **etichette** (le voci da fare non le hanno). Il periodo: **Oggi**
-  (predefinito, dal confine delle 06:00 come nei report), **24 h**,
-  **7 gg**, **30 gg**.
+- Sotto, un **riquadro piccolo** per ogni altra attività aperta (in pausa o
+  sospesa): stato e orari nella forma "dalle–alle (durata)"
+  (es. "11:00–11:45 (0:45)"), e un pulsante per riprenderla o metterla in
+  pausa. Toccandolo, l'attività passa nel riquadro grande.
+- In basso **una sola lista** (0.8.0, al posto delle schede "Da fare" e
+  "Fatte"): voci *Da fare* e attività fermate, ogni riga con la stessa forma:
+  a sinistra il segno dello stato (**!** in ritardo, orologio pianificata,
+  **✎** dettagli mancanti, **✓** fatta, **■** chiusa, **○** aperta), il
+  titolo, "cliente · tipo · stato" e l'orario a destra; le righe fatte o
+  chiuse sono attenuate. I gruppi: **In ritardo**, **Dettagli mancanti**,
+  **Oggi**, **Prossimi giorni**, **Giorni precedenti**, **Senza data**,
+  **Ignorate**.
+- I filtri, su una riga: il **periodo** con il suo valore (**Oggi**,
+  predefinito, dal confine delle 06:00 come nei report; **24 h**, **3 gg**,
+  **7 gg**, **30 gg**, **Tutti**: in avanti per le voci da fare, che in
+  ritardo restano sempre; all'indietro per ciò che è fatto); poi
+  **Stato**, **Azienda** e **Tag** col loro nome, grigi finché sono quelli
+  di partenza e colorati quando li cambi. **Stato** sceglie con delle
+  caselle *Da fare*, *Dettagli mancanti*, *Fatte*, *Ignorate* (all'inizio
+  le prime due), con le scorciatoie "Solo da fare", "Solo fatte", "Tutti";
+  le attività con dettagli mancanti restano sempre in vista, qualunque sia
+  il periodo, e finché la lista le mostra non hanno più il riquadro
+  piccolo. **Tag** compare quando la lista mostra attività fermate e
+  nasconde le voci da fare (che non hanno tag). Le scelte restano
+  ricordate. In fondo **"Tutte le Da fare →"** apre la scheda "Da fare"
+  della barra in basso.
 
-![Home: un'attività in corso, le altre sotto, le schede Da fare e Fatte](img/home.png)
+![Home: un'attività in corso, le altre sotto, la lista con i filtri](img/home.png)
 
-![Home, scheda Fatte](img/home-closed.png)
+![Home, la lista con anche le Fatte](img/home-closed.png)
 
 ### Gesti (trascinare i riquadri)
 Ogni riquadro si trascina a sinistra o a destra (Home, lista dell'Agenda,
-schermata "Da fare"). Un trascinamento breve mostra i pulsanti, da toccare;
-uno lungo esegue subito il primo.
+scheda "Da fare"). Un trascinamento breve mostra i pulsanti, da toccare;
+uno lungo esegue subito il primo. Una sola regola per tutte le righe
+(0.8.0): **a sinistra il passo avanti**, **a destra rimandare o tornare
+indietro**.
 
 | Riquadro | A sinistra | A destra |
 |---|---|---|
-| Attività in corso | Pausa, o Riprendi se è in pausa o sospesa | Termina (con le stesse domande del pulsante Stop) o Sospendi |
-| Da fare | Avvia | Posticipa (se pianificata) o Ignora |
+| Attività in corso | Pausa, o Riprendi se è in pausa o sospesa | Stop (il foglio di chiusura) o Sospendi |
+| Da fare | Avvia o Fatta | Posticipa (se pianificata) o Ignora |
+| Da fare fatta | — | Riapri |
 | Da fare ignorata | Ripristina | Ripristina |
+| Attività con dettagli mancanti | Completa (apre la scheda) | Riapri |
+| Attività chiusa | — | Riapri (torna sospesa) |
 
-Si cambiano in "Impostazioni" → **"Gesti"**: per ogni direzione cosa proporre
-(anche nessuna azione), e se il trascinamento lungo esegue subito la prima.
-Al primo uso la Home mostra un **suggerimento** sui gesti ("Ho capito" lo
-chiude) e i riquadri hanno ai lati una piccola ‹ › finché non se ne trascina
-uno; "Gesti" → **"Mostra di nuovo i suggerimenti sui gesti"** li ripropone
-(0.7.6), insieme alla spiegazione del primo Sospendi (§5).
+Dopo un gesto su una voce, o dopo Riapri su un'attività, **"Annulla"**
+resta per 10 secondi. Si cambiano in "Impostazioni" → **"Gesti"**: per
+ogni tipo di riquadro e direzione cosa proporre (anche nessuna azione, o
+le direzioni invertite), e se il trascinamento lungo esegue subito la
+prima. Al primo uso la Home mostra un **suggerimento** sui gesti ("Ho
+capito" lo chiude) e i riquadri hanno ai lati una piccola ‹ › finché non
+se ne trascina uno; "Gesti" → **"Mostra di nuovo i suggerimenti sui
+gesti"** li ripropone, insieme alla spiegazione del primo Sospendi (§5).
 
 ### Colori di aziende e clienti
 Nella scheda di un'azienda o di un cliente ("Altro" → "Anagrafiche") scegli
@@ -738,7 +754,12 @@ suoi collaboratori, o per usarla in un altro settore ("Cantiere" al posto di
 - Cosa può fare: spegnere funzioni (pianificazione, viaggi, spese,
   materiali, allegati, gesti, calendario, chiamate, importa / esporta…),
   rinominare, colorare, nascondere o rendere obbligatori i campi (un campo
-  obbligatorio blocca l'avvio e il salvataggio), fissare impostazioni,
+  obbligatorio blocca l'avvio e il salvataggio), fissare impostazioni
+  (dalla 0.8.0 tutte: anche gesti, raggio e minuti di sosta, fattore km,
+  indirizzi dei servizi online, modo e minimo degli arrotondamenti, e le
+  scelte ricordate dalle schermate come periodo e Stato della Home, vista
+  dell'Agenda, ordine delle liste; bloccate restano grigie con il
+  lucchetto, nascoste spariscono anche fuori dalle Impostazioni),
   lasciar partire le attività solo da voci *Da fare*, creare aziende,
   clienti e contatti solo da importazione, imporre la lingua.
 - **Senza aziende**: con il campo azienda nascosto i clienti e le *Da fare*
