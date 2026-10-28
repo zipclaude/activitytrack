@@ -20,7 +20,7 @@ import it.infraconsulting.activitytrack.R
  * shown while there are no tags and none is selected.
  */
 @Composable
-fun TagFilterChip(tags: List<String>, selected: String?, onSelect: (String?) -> Unit) {
+fun TagFilterChip(tags: List<String>, selected: String?, label: String? = null, onSelect: (String?) -> Unit) {
 	if (tags.isEmpty() && selected == null)
 		return
 	var open by remember { mutableStateOf(false) }
@@ -29,7 +29,8 @@ fun TagFilterChip(tags: List<String>, selected: String?, onSelect: (String?) -> 
 		FilterChip(
 			selected = selected != null,
 			onClick = { open = true },
-			label = { Text((selected?.let { "#$it" } ?: all) + " ▾") },
+			/* [label]: a compact chip that names the filter, coloured while one is chosen (Home, owner 2026-10-28) */
+			label = { Text((label ?: selected?.let { "#$it" } ?: all) + " ▾") },
 		)
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
 			DropdownMenuItem(text = { Text(all) }, onClick = { open = false; onSelect(null) })

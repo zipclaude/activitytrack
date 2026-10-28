@@ -167,6 +167,10 @@ class HomeViewModel(
 	fun setTab(tab: HomeTab) = run { settingsRepo.update { it.copy(homeTab = tab.name) } }
 	fun setClosedWindow(hours: Int) = run { settingsRepo.update { it.copy(homeClosedWindow = hours) } }
 
+	/* the Home list's state filter and window (owner, 2026-10-27), remembered */
+	fun setHomeShow(show: Set<HomeShow>) = run { settingsRepo.update { it.copy(homeShow = show.map { s -> s.name }.toSet()) } }
+	fun setHomeWindow(window: Int) = run { settingsRepo.update { it.copy(homeWindow = window) } }
+
 	/* the one-off gesture hint was read (issue #77) */
 	fun dismissGestureHint() = run { settingsRepo.update { it.copy(gestureHintSeen = true) } }
 
@@ -247,7 +251,9 @@ fun HomeScreen(
 	val only = settings?.todoCompanyFilter?.takeIf { settings?.homeFilterEntries == true }
 	val cards = if (only == null) allCards else allCards.filter { it.entry.companyId == only }
 	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
-	val small = cards.filter { it !== big }
+	/* the ones with details missing sit in the list when it shows them (owner, 2026-10-27) */
+	val listsMissing = settings?.homeShow?.contains(HomeShow.MISSING.name) == true
+	val small = cards.filter { it !== big && !(listsMissing && it.entry.status == EntryStatus.TO_COMPLETE) }
 
 	/*
 	 * The bottom tabs (issue #59): planned to-dos ahead, entries and done
@@ -271,46 +277,22 @@ fun HomeScreen(
 	val canStart = policy.entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.FREE
 	val canTravel = policy.enabled(Feature.TRAVEL)
 	val showPlanned = policy.enabled(Feature.TODOS)
-	val tab = if (showPlanned) HomeTab.of(settings?.homeTab) else HomeTab.CLOSED
 	val zone = ZoneId.systemDefault()
 	val todoCompany = settings?.todoCompanyFilter
-	val plannedWindow = settings?.homeTodoWindowHours ?: 24
-	val closedWindow = settings?.homeClosedWindow ?: 0
-	val split = plannedSplit(openTodos, todoCompany, plannedWindow, Instant.now(), zone)
-	val boundary = closedBoundary(closedWindow, settings?.carryOverMin ?: 6 * 60, Instant.now(), zone)
-	val closedRows = buildList {
-		for (c in closedCards)
-			if ((todoCompany == null || c.entry.companyId == todoCompany) &&
-				(closedTag == null || closedTag in c.tags) &&
-				(c.endUtcMs ?: c.entry.updatedUtcMs) > boundary.toEpochMilli()
-			)
-				add(ClosedRow.Entry(c))
-		for (t in doneTodos)
-			if ((todoCompany == null || t.companyId == todoCompany) && Instant.ofEpochMilli(t.doneUtcMs ?: t.updatedUtcMs).isAfter(boundary))
-				add(ClosedRow.Todo(t, todoClients.firstOrNull { it.id == t.clientId }?.name))
-	}.sortedByDescending { it.sortMs }
-	/* the ones ignored today stay at the bottom of the planned list (owner, 2026-10-18) */
-	val ignoredToday = if (settings?.todoShowIgnored == false) emptyList() else ignoredTodos.filter { t ->
-		(todoCompany == null || t.companyId == todoCompany) &&
-			t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == LocalDate.now()
-	}
-	val plannedCount = split.dated.size + split.noDate.size + ignoredToday.size
-	/* with a filter the header stays, so the filter can be removed */
-	val showTabs = plannedCount + closedRows.size > 0 || todoCompany != null || closedTag != null
-	val plannedLabels = listOf(
-		24 to stringResource(R.string.todo_window_24h),
-		72 to stringResource(R.string.todo_window_3d),
-		168 to stringResource(R.string.todo_window_7d),
-		720 to stringResource(R.string.todo_window_30d),
-		0 to stringResource(R.string.todo_window_all),
+	/*
+	 * One list instead of the two tabs (owner, 2026-10-27): to-dos and
+	 * stopped entries alike, with a state filter; no to-do states when the
+	 * policy turns the to-dos off.
+	 */
+	val offered = HomeShow.entries.filter { showPlanned || (it != HomeShow.TODO && it != HomeShow.IGNORED) }
+	val show = settings?.homeShow.orEmpty().mapNotNull { n -> HomeShow.entries.firstOrNull { it.name == n } }.toSet().intersect(offered.toSet())
+	val homeWindow = settings?.homeWindow ?: -1
+	val sections = homeSections(
+		openTodos, ignoredTodos, doneTodos, closedCards, show, todoCompany, closedTag, homeWindow,
+		settings?.carryOverMin ?: 6 * 60, Instant.now(), zone,
 	)
-	val closedLabels = listOf(
-		0 to stringResource(R.string.home_window_today),
-		24 to stringResource(R.string.todo_window_24h),
-		168 to stringResource(R.string.todo_window_7d),
-		720 to stringResource(R.string.todo_window_30d),
-	)
-	val plannedBands = bands(split.dated + split.noDate + ignoredToday, todoCompanies, todoClients)
+	val listed = sections.flatMap { it.second }
+	val todoBands = bands(listed.mapNotNull { (it as? HomeItem.Todo)?.todo }, todoCompanies, todoClients)
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
 		onBack = null,
@@ -386,92 +368,42 @@ fun HomeScreen(
 						SmallEntryCard(c, now, onSelect = { vm.select(c.entry.id) }, onCommand = { run(c.entry, it) }, onOpen = { onOpenEntry(c.entry.id) })
 					}
 				}
-				if (showTabs) {
-					item(key = "tabs") {
-						HomeTabsHeader(
-							tab = tab,
-							showPlanned = showPlanned,
-							count = if (tab == HomeTab.PLANNED) plannedCount else closedRows.size,
-							windowHours = if (tab == HomeTab.PLANNED) plannedWindow else closedWindow,
-							windowLabels = if (tab == HomeTab.PLANNED) plannedLabels else closedLabels,
-							onWindow = { if (tab == HomeTab.PLANNED) todosVm.setHomeWindow(it) else vm.setClosedWindow(it) },
-							todosVm = todosVm,
-							showTagFilter = tab == HomeTab.CLOSED,
-							tag = closedTag,
-							tags = allTags,
-							onTag = { closedTag = it },
-							onTab = { vm.setTab(it) },
+				item(key = "list-header") {
+					HomeListHeader(
+						show = show, offered = offered, onShow = vm::setHomeShow,
+						window = homeWindow, onWindow = vm::setHomeWindow,
+						todosVm = todosVm, tag = closedTag, tags = allTags, onTag = { closedTag = it },
+					)
+				}
+				for ((section, rows) in sections) {
+					item(key = "sec-${section.name}") {
+						Text(
+							sectionLabel(section).uppercase(),
+							style = MaterialTheme.typography.labelMedium,
+							color = if (section == HomeSection.OVERDUE || section == HomeSection.MISSING) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+							modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp),
 						)
 					}
-					when (tab) {
-						HomeTab.PLANNED -> {
-							items(split.dated, key = { "todo-${it.id}" }) { t ->
-								TodoSwipeCard(
-									t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
-									onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
-								) { todoDialog = t }
-							}
-							if (split.noDate.isNotEmpty()) {
-								item(key = "no-date") {
-									Text(
-										stringResource(R.string.home_no_date),
-										style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-										modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
-									)
-								}
-								items(split.noDate, key = { "todo-nodate-${it.id}" }) { t ->
-									TodoSwipeCard(
-										t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
-										onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
-									) { todoDialog = t }
-								}
-							}
-							items(ignoredToday, key = { "todo-ignored-${it.id}" }) { t ->
-								TodoSwipeCard(
-									t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
-									onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
-								) { todoDialog = t }
-							}
-							if (plannedCount == 0)
-								item(key = "planned-empty") { EmptyText(stringResource(R.string.home_planned_empty)) }
-							/* the whole list is a tab of its own (issue #96) */
-							if (onOpenTodos != null && policy.enabled(Feature.TODOS))
-								item(key = "planned-all") {
-									Box(Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = Alignment.CenterEnd) {
-										TextButton(onClick = onOpenTodos) { Text(stringResource(R.string.home_all_todos)) }
-									}
-								}
-						}
-						HomeTab.CLOSED -> {
-							items(
-								closedRows,
-								key = { row ->
-									when (row) {
-										is ClosedRow.Entry -> "closed-entry-${row.card.entry.id}"
-										is ClosedRow.Todo -> "closed-todo-${row.todo.id}"
-									}
-								},
-							) { row ->
-								when (row) {
-									is ClosedRow.Entry -> Box(Modifier.padding(horizontal = 16.dp).alpha(0.75f)) {
-										SmallEntryCard(
-											row.card, now,
-											onSelect = { onOpenEntry(row.card.entry.id) },
-											onCommand = {},
-											onOpen = { onOpenEntry(row.card.entry.id) },
-											showDate = true,
-										)
-									}
-									is ClosedRow.Todo -> Box(Modifier.padding(horizontal = 16.dp)) {
-										TodoCard(row.todo, row.client) { todoDialog = row.todo }
-									}
-								}
-							}
-							if (closedRows.isEmpty())
-								item(key = "closed-empty") { EmptyText(stringResource(R.string.home_closed_empty)) }
-						}
+					items(rows, key = { it.key }) { row ->
+						HomeListRow(
+							row, clientOf = { id -> todoClients.firstOrNull { it.id == id }?.name },
+							band = (row as? HomeItem.Todo)?.let { todoBands[it.todo.id] },
+							gestures = gestures, todosVm = todosVm, onStartTodo = onStartTodo,
+							onReplan = { todosVm.clearError(); todoEditing = it },
+							onTodo = { todoDialog = it }, onEntry = onOpenEntry,
+							onReopen = { c -> vm.reopen(c.entry, c.title ?: fallback) },
+						)
 					}
 				}
+				if (listed.isEmpty())
+					item(key = "list-empty") { EmptyText(stringResource(R.string.home_list_empty)) }
+				/* the whole to-do list is a tab of its own (issue #96) */
+				if (onOpenTodos != null && HomeShow.TODO in show)
+					item(key = "list-all") {
+						Box(Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = Alignment.CenterEnd) {
+							TextButton(onClick = onOpenTodos) { Text(stringResource(R.string.home_all_todos)) }
+						}
+					}
 			}
 		}
 		todoDialog?.let { t ->

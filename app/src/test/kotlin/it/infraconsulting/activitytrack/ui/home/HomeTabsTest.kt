@@ -98,23 +98,4 @@ class HomeTabsTest {
 		val h = closedBoundary(24, 6 * 60, night, zone)
 		assertEquals(night.minusSeconds(24 * 3600), h)
 	}
-
-	@Test
-	fun closedRowSortKeys() {
-		/* an entry without segments falls back to its update time */
-		val e = ClosedRow.Entry(
-			EntryCard(
-				it.infraconsulting.activitytrack.data.db.TimeEntryEntity(
-					id = 5, companyId = null, clientId = null,
-					status = it.infraconsulting.activitytrack.domain.model.EntryStatus.CLOSED,
-					zoneId = "Europe/Rome", createdUtcMs = 0, updatedUtcMs = 200,
-				),
-				"", "", emptyList(),
-			),
-		)
-		assertEquals(200L, e.sortMs)
-		val t = ClosedRow.Todo(undated(1).copy(updatedUtcMs = 300), null)
-		assertEquals(300L, t.sortMs)
-		assertNull(e.card.endUtcMs)
-	}
 }

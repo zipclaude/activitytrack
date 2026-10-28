@@ -99,6 +99,7 @@ import it.infraconsulting.activitytrack.ui.common.DateField
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.GREEN
+import it.infraconsulting.activitytrack.ui.common.ORANGE
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
 import it.infraconsulting.activitytrack.ui.common.SwipeAction
@@ -227,7 +228,7 @@ private fun doneText(t: TodoEntity): String? {
 
 /* "today", else a short local date ("sab 17/10") */
 @Composable
-private fun dayText(epochDay: Long): String {
+internal fun dayText(epochDay: Long): String {
 	val date = LocalDate.ofEpochDay(epochDay)
 	val locale = LocalConfiguration.current.locales[0]
 	return if (date == LocalDate.now()) stringResource(R.string.todo_today) else date.format(DateTimeFormatter.ofPattern("EEE d/MM", locale))
@@ -248,7 +249,7 @@ private fun subtitle(t: TodoEntity, clientName: String?): String {
 
 /* The time shown at the card's top right: when it was done, else the planned block, else the due date. */
 @Composable
-private fun cardTime(t: TodoEntity): String? {
+internal fun cardTime(t: TodoEntity): String? {
 	doneText(t)?.let { return it }
 	val today = LocalDate.now()
 	t.plan()?.let { p ->
@@ -344,6 +345,7 @@ internal fun todoSwipeActions(
 			TodoAction.RESTORE -> SwipeAction(stringResource(R.string.swipe_restore), R.drawable.ic_restore, BLUE, Color.White) { vm.setIgnored(t, false) }
 			TodoAction.DONE -> SwipeAction(stringResource(R.string.todo_mark_done), R.drawable.ic_done, GREEN, Color.White) { vm.setDone(t, true) }
 			TodoAction.REPLAN -> SwipeAction(stringResource(R.string.action_replan), R.drawable.ic_calendar, BLUE, Color.White) { onReplan(t) }
+			TodoAction.REOPEN -> SwipeAction(stringResource(R.string.todo_reopen_short), R.drawable.ic_restore, ORANGE, Color.White) { vm.setDone(t, false) }
 		}
 	}
 }
@@ -393,7 +395,7 @@ private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
  * the ✕ removes it. Shared by Home and the To-dos screen.
  */
 @Composable
-internal fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false) {
+internal fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false, label: String? = null) {
 	val settings by vm.settings.collectAsState()
 	val companies by vm.companies.collectAsState()
 	val current = companies.firstOrNull { it.id == settings?.todoCompanyFilter }
@@ -402,9 +404,10 @@ internal fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false) {
 		FilterChip(
 			selected = current != null,
 			onClick = { open = true },
-			label = { Text(current?.name ?: stringResource(R.string.todo_filter_all), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-			leadingIcon = current?.color?.let { c -> { Box(Modifier.size(10.dp).clip(CircleShape).background(rgb(c))) } },
-			trailingIcon = if (current != null) ({
+			/* [label]: a compact chip naming the filter, coloured while a company is chosen (Home, owner 2026-10-28) */
+			label = { Text(label?.let { "$it ▾" } ?: current?.name ?: stringResource(R.string.todo_filter_all), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+			leadingIcon = current?.color?.takeIf { label == null }?.let { c -> { Box(Modifier.size(10.dp).clip(CircleShape).background(rgb(c))) } },
+			trailingIcon = if (current != null && label == null) ({
 				Icon(
 					painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.todo_filter_all),
 					modifier = Modifier.size(18.dp).clickable { vm.setCompanyFilter(null) },

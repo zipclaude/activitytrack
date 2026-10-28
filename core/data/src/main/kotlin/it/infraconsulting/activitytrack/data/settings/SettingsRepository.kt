@@ -18,6 +18,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import it.infraconsulting.activitytrack.domain.rounding.ReportRounding
 import it.infraconsulting.activitytrack.domain.rounding.RoundingMode
@@ -82,6 +83,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val entryToStart = stringPreferencesKey("swipe_entry_to_start")
 		val entryToEnd = stringPreferencesKey("swipe_entry_to_end")
 		val fullSwipe = booleanPreferencesKey("swipe_full")
+		val pastToStart = stringPreferencesKey("swipe_past_to_start")
+		val pastToEnd = stringPreferencesKey("swipe_past_to_end")
 		val compact = booleanPreferencesKey("display_compact")
 		val todoCompany = longPreferencesKey("todo_company_filter")
 		/* persisted name kept from the former "today only" filter */
@@ -91,6 +94,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val homeTodoWindow = intPreferencesKey("home_todo_window_hours")
 		val homeTab = stringPreferencesKey("home_tab")
 		val homeClosedWindow = intPreferencesKey("home_closed_window_hours")
+		val homeShow = stringSetPreferencesKey("home_show")
+		val homeWindow = intPreferencesKey("home_window")
 		val widgetTodoWindow = intPreferencesKey("widget_todo_window_hours")
 		val agendaView = stringPreferencesKey("agenda_view")
 		val todoShowIgnored = booleanPreferencesKey("todo_show_ignored")
@@ -141,6 +146,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 				todoToEnd = enumOr(p[K.todoToEnd], d.gestures.todoToEnd),
 				entryToStart = enumOr(p[K.entryToStart], d.gestures.entryToStart),
 				entryToEnd = enumOr(p[K.entryToEnd], d.gestures.entryToEnd),
+				pastToStart = enumOr(p[K.pastToStart], d.gestures.pastToStart),
+				pastToEnd = enumOr(p[K.pastToEnd], d.gestures.pastToEnd),
 				fullSwipe = p[K.fullSwipe] ?: d.gestures.fullSwipe,
 			),
 			compactDisplay = p[K.compact] ?: d.compactDisplay,
@@ -149,6 +156,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			homeTodoWindowHours = p[K.homeTodoWindow] ?: d.homeTodoWindowHours,
 			homeTab = p[K.homeTab] ?: d.homeTab,
 			homeClosedWindow = p[K.homeClosedWindow] ?: d.homeClosedWindow,
+			homeShow = p[K.homeShow] ?: d.homeShow,
+			homeWindow = p[K.homeWindow] ?: d.homeWindow,
 			widgetTodoWindowHours = p[K.widgetTodoWindow] ?: d.widgetTodoWindowHours,
 			agendaView = p[K.agendaView] ?: d.agendaView,
 			todoShowIgnored = p[K.todoShowIgnored] ?: d.todoShowIgnored,
@@ -198,12 +207,16 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		p[K.entryToStart] = s.gestures.entryToStart.name
 		p[K.entryToEnd] = s.gestures.entryToEnd.name
 		p[K.fullSwipe] = s.gestures.fullSwipe
+		p[K.pastToStart] = s.gestures.pastToStart.name
+		p[K.pastToEnd] = s.gestures.pastToEnd.name
 		p[K.compact] = s.compactDisplay
 		s.todoCompanyFilter?.let { p[K.todoCompany] = it } ?: p.remove(K.todoCompany)
 		p[K.todoWindow] = s.todoWindowHours
 		p[K.homeTodoWindow] = s.homeTodoWindowHours
 		p[K.homeTab] = s.homeTab
 		p[K.homeClosedWindow] = s.homeClosedWindow
+		p[K.homeShow] = s.homeShow
+		p[K.homeWindow] = s.homeWindow
 		p[K.widgetTodoWindow] = s.widgetTodoWindowHours
 		p[K.agendaView] = s.agendaView
 		p.remove(K.todoNext24h)

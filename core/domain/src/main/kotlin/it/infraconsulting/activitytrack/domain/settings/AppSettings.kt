@@ -76,6 +76,15 @@ data class AppSettings(
 	 */
 	val homeClosedWindow: Int = 0,
 	/*
+	 * The Home list (owner, 2026-10-27: one list instead of the two tabs):
+	 * which states it shows (HOME_STATES; to-dos and details missing by
+	 * default) and its window, ahead for the to-dos and behind for what was
+	 * done: today (-1, from the carry-over boundary), 24 h, 3 / 7 / 30 days,
+	 * or everything (0).
+	 */
+	val homeShow: Set<String> = setOf("TODO", "MISSING"),
+	val homeWindow: Int = -1,
+	/*
 	 * The planned-to-dos widget window (issue #62): how far ahead it lists,
 	 * the overdue always included; 24 h by default (owner answer).
 	 */
@@ -123,6 +132,8 @@ data class AppSettings(
 		homeTodoWindowHours = homeTodoWindowHours.takeIf { it in TODO_WINDOWS } ?: 24,
 		homeTab = homeTab.takeIf { it in HOME_TABS } ?: "PLANNED",
 		homeClosedWindow = homeClosedWindow.takeIf { it in CLOSED_WINDOWS } ?: 0,
+		homeShow = homeShow.filter { it in HOME_STATES }.toSet(),
+		homeWindow = homeWindow.takeIf { it in HOME_WINDOWS } ?: -1,
 		widgetTodoWindowHours = widgetTodoWindowHours.takeIf { it in WIDGET_WINDOWS } ?: 24,
 		movementThresholdM = movementThresholdM.coerceIn(50, 5_000),
 		stationaryRadiusM = stationaryRadiusM.coerceIn(25, 1_000),
@@ -161,6 +172,10 @@ val HOME_TABS = setOf("PLANNED", "CLOSED")
 
 /* the "Chiuse" windows offered (issue #59; hours; 0 = today) */
 val CLOSED_WINDOWS = setOf(0, 24, 168, 720)
+
+/* the Home list (owner, 2026-10-27): states it can show and windows (-1 = today, 0 = all) */
+val HOME_STATES = setOf("TODO", "MISSING", "DONE", "IGNORED")
+val HOME_WINDOWS = setOf(-1, 24, 72, 168, 720, 0)
 
 /* the planned-to-dos widget windows offered (issue #62; hours ahead) */
 val WIDGET_WINDOWS = setOf(24, 72, 168, 720)
