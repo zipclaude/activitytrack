@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /* One HTTP exchange, as the transport sees it. */
@@ -83,9 +84,12 @@ class PluginClient(
 					extra[paging.sizeParam] = "${paging.pageSize}"
 				}
 				is Paging.Cursor -> cursor?.let { extra[paging.cursorParam] = it }
+				is Paging.JsonParam -> extra[paging.param] = jsonPage(paging, req.query[paging.param]?.eval(null, env), page).toString()
 				Paging.Link, Paging.None -> Unit
 			}
-			val target = next ?: url(req.path, req.query, env, extra)
+			/* a JSON paging parameter replaces the query's own */
+			val query = if (paging is Paging.JsonParam) req.query - paging.param else req.query
+			val target = next ?: url(req.path, query, env, extra)
 			val reply = exchange(req.method, target, null, env)
 			val json = parse(reply)
 			val items = req.items?.eval(json, env) ?: json
@@ -98,6 +102,8 @@ class PluginClient(
 					cursor = text(paging.next.eval(json, env))?.takeIf { it.isNotEmpty() } ?: return out
 				}
 				Paging.Link -> next = nextLink(reply.header("Link")) ?: return out
+				/* "true" only: the API's samples also show has_more_rows as the string "false" */
+				is Paging.JsonParam -> if (rows.size < paging.pageSize || text(paging.more.eval(json, env))?.lowercase() != "true") return out
 				Paging.None -> return out
 			}
 			page++
@@ -113,7 +119,7 @@ class PluginClient(
 		}
 		if (!base.startsWith("https://"))
 			throw PluginDataException("only https:// addresses are allowed: $base")
-		val params = query.mapNotNull { (k, v) -> text(v.eval(null, env))?.let { k to it } } + extra.toList()
+		val params = query.mapNotNull { (k, v) -> queryText(v.eval(null, env))?.let { k to it } } + extra.toList()
 		if (params.isEmpty())
 			return base
 		return base + (if ('?' in base) "&" else "?") + params.joinToString("&") { (k, v) -> enc(k) + "=" + enc(v) }
@@ -124,9 +130,12 @@ class PluginClient(
 		headers["Accept"] = "application/json"
 		for ((k, v) in plugin.http.headers)
 			text(v.eval(null, env))?.let { headers[k] = it }
+		/* a form field holding the JSON (ServiceDesk Plus' input_data), else the JSON itself */
+		val form = plugin.http.bodyForm
 		if (body != null)
-			headers["Content-Type"] = "application/json"
-		val plain = HttpCall(method, url, headers, body?.toString())
+			headers["Content-Type"] = if (form != null) "application/x-www-form-urlencoded" else "application/json"
+		val payload = body?.let { if (form != null) enc(form) + "=" + enc(it.toString()) else it.toString() }
+		val plain = HttpCall(method, url, headers, payload)
 		var renewed = false
 		var attempt = 0
 		while (true) {
@@ -203,4 +212,15 @@ fun json(value: Any?): JsonElement = when (value) {
 	is Boolean -> JsonPrimitive(value)
 	is Number -> JsonPrimitive(value)
 	else -> JsonPrimitive(value.toString())
+}
+
+/* a query value: text, or the JSON of an object or a list (ServiceDesk Plus' input_data) */
+private fun queryText(v: JsonElement): String? = if (v is JsonObject || v is JsonArray) v.toString() else text(v)
+
+/* the JSON paging parameter of [page]: the query's own object with start and size set */
+private fun jsonPage(p: Paging.JsonParam, base: JsonElement?, page: Int): JsonObject {
+	val root = base as? JsonObject ?: JsonObject(emptyMap())
+	val inner = (p.inside?.let { root[it] as? JsonObject } ?: if (p.inside == null) root else null) ?: JsonObject(emptyMap())
+	val paged = JsonObject(inner + mapOf(p.start to JsonPrimitive(p.firstStart + page * p.pageSize), p.size to JsonPrimitive(p.pageSize)))
+	return if (p.inside == null) paged else JsonObject(root + (p.inside to paged))
 }

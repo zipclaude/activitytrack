@@ -138,7 +138,7 @@ class PluginSync(private val app: ActivityTrackApp) {
 				/* the remote closes a to-do; it never reopens one the user marked done */
 				done = base.done || r.bool("done") == true,
 				doneUtcMs = base.doneUtcMs ?: now.takeIf { r.bool("done") == true },
-				pluginFields = r.fields.takeIf { it.isNotEmpty() }?.let { JsonObject(it).toString() } ?: base.pluginFields,
+				pluginFields = importedFields(r.fields, base.pluginFields, r.bool("done") == true),
 				updatedUtcMs = if (existing == null) now else base.updatedUtcMs,
 			)
 			if (t.copy(updatedUtcMs = 0) != existing?.copy(updatedUtcMs = 0)) {
@@ -311,10 +311,39 @@ class PluginSync(private val app: ActivityTrackApp) {
 				}
 			}
 		}
+		/* to-dos marked done in the app: closed on the remote side once, after their last records went */
+		spec.todoDone?.let { done ->
+			for (t in dao.doneImportedTodos(companyId)) {
+				val fields = obj(t.pluginFields) ?: JsonObject(emptyMap())
+				if (fields[CLOSED] == JsonPrimitive(true))
+					continue
+				val todoJson = JsonObject(
+					mapOf(
+						"id" to JsonPrimitive(t.id), "externalKey" to JsonPrimitive(t.externalKey!!), "title" to JsonPrimitive(t.title),
+						"refs" to JsonPrimitive(t.refs), "fields" to fields,
+						"activities" to JsonPrimitive(dao.activitiesOfTodo(t.id).joinToString("\n\n")),
+					),
+				)
+				val env = base.with { r -> if (r.root == "todo") (if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)) else null }
+				client.call(done.method, done.path, env, PluginExport.body(done.body, env))
+				dao.updateTodo(t.copy(pluginFields = JsonObject(fields + (CLOSED to JsonPrimitive(true))).toString()))
+			}
+		}
 		return report
 	}
 
 	private fun obj(json: String?): JsonObject? = json?.let { runCatching { Json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
+
+	/*
+	 * A to-do's plugin fields after an import: the remote's, keeping the mark
+	 * that it is closed on the remote side (set here when the remote says so,
+	 * or after export.todoDone), so a done to-do is closed there only once.
+	 */
+	private fun importedFields(remote: Map<String, JsonElement>, old: String?, remoteDone: Boolean): String? {
+		val closed = remoteDone || obj(old)?.get(CLOSED) == JsonPrimitive(true)
+		val fields = remote + if (closed) mapOf(CLOSED to JsonPrimitive(true)) else emptyMap()
+		return fields.takeIf { it.isNotEmpty() }?.let { JsonObject(it).toString() } ?: old
+	}
 
 	private fun itemJson(i: RemoteItemEntity): JsonObject = RemoteItem(
 		i.list, i.id, i.parentId, i.name, i.clientCode, i.kind, i.active, i.order, obj(i.extra) ?: JsonObject(emptyMap()),
@@ -350,5 +379,7 @@ class PluginSync(private val app: ActivityTrackApp) {
 
 	private companion object {
 		val lock = Mutex()
+		/* in a to-do's plugin fields: closed on the remote side (export.todoDone) */
+		const val CLOSED = "_closed"
 	}
 }
