@@ -74,7 +74,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* data folder, calendars and gestures change through their own rows, not this form */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, homeTab = cur.homeTab, homeClosedWindow = cur.homeClosedWindow, widgetTodoWindowHours = cur.widgetTodoWindowHours, homeFilterEntries = cur.homeFilterEntries, todoShowIgnored = cur.todoShowIgnored, gestureHintSeen = cur.gestureHintSeen, swipeLearned = cur.swipeLearned, suspendHintSeen = cur.suspendHintSeen, listOrders = cur.listOrders) }
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, homeTab = cur.homeTab, homeClosedWindow = cur.homeClosedWindow, homeShow = cur.homeShow, homeWindow = cur.homeWindow, widgetTodoWindowHours = cur.widgetTodoWindowHours, homeFilterEntries = cur.homeFilterEntries, todoShowIgnored = cur.todoShowIgnored, gestureHintSeen = cur.gestureHintSeen, swipeLearned = cur.swipeLearned, suspendHintSeen = cur.suspendHintSeen, listOrders = cur.listOrders) }
 			onDone()
 		}
 	}

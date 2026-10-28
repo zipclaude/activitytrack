@@ -111,6 +111,20 @@ open class EntryCommander(
 
 	fun discard(id: Long) = run { entries.discard(id) }
 
+	/*
+	 * A stopped entry reopened from a swipe (owner, 2026-10-27): it goes back
+	 * to suspended; "Annulla" stops it again, closed if it was.
+	 */
+	fun reopen(e: TimeEntryEntity, title: String) = run({
+		it.infraconsulting.activitytrack.ui.common.Undo.post(
+			it.infraconsulting.activitytrack.ui.common.UndoEvent(R.string.undo_entry_reopened, title) {
+				entries.apply(e.id, EntryCommand.STOP)
+				if (e.status == it.infraconsulting.activitytrack.domain.model.EntryStatus.CLOSED)
+					entries.closeIfComplete(e.id)
+			},
+		)
+	}) { entries.apply(e.id, EntryCommand.REOPEN) }
+
 	fun dismissResume() {
 		_resume.value = null
 	}
