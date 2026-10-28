@@ -7,6 +7,9 @@
   <uses-permission android:name="android.permission.WRITE_CALENDAR" />
   <!-- Voice notes (M3), asked at first use. -->
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
+  <!-- the pairing QR code of ActivityTrack Web (issue #113); pasting the link works without -->
+  <uses-permission android:name="android.permission.CAMERA" />
+  <uses-feature android:name="android.hardware.camera" android:required="false" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <!-- issue #28: call recognition, asked only when enabled in Settings -> Calls -->
   <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -49,6 +52,13 @@
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <!-- pairing with ActivityTrack Web from a QR code read by another app (issue #113) -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="activitytrack" android:host="pair" />
       </intent-filter>
       <meta-data
           android:name="android.app.shortcuts"

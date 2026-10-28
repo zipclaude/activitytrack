@@ -37,6 +37,9 @@ class ActivityTrackApp : Application() {
 	/* connector secrets, keystore-encrypted (M4) */
 	val secrets: SecretStore by lazy { SecretStore(this) }
 
+	/* pairing with ActivityTrack Web (issue #113) */
+	val syncAccount by lazy { it.infraconsulting.activitytrack.sync.SyncAccount(this, secrets, container.sync, container.userAgent) }
+
 	/* integration plugins of the data folder and their OAuth logins (issue #48) */
 	val plugins by lazy { it.infraconsulting.activitytrack.connect.plugin.PluginRegistry(this) }
 	val oauth by lazy { it.infraconsulting.activitytrack.connect.plugin.OAuthPkce(this, secrets) }

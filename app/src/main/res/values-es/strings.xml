@@ -692,4 +692,35 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
     <item quantity="one">%d tarea planificada hoy sin trabajar</item>
     <item quantity="other">%d tareas planificadas hoy sin trabajar</item>
   </plurals>
+
+  <!-- Sync with ActivityTrack Web (issue #113) -->
+  <string name="sec_sync">Sincronización</string>
+  <string name="sync_intro">Vincula este teléfono a un servidor ActivityTrack Web: los datos se mantienen sincronizados en ambos sentidos y también puedes trabajar desde el navegador.</string>
+  <string name="sync_scan">Escanear el código QR</string>
+  <string name="sync_paste">Pegar el enlace</string>
+  <string name="sync_scan_hint">Apunta al código QR de la página web (Teléfonos → Vincular un teléfono).</string>
+  <string name="sync_camera_denied">Para leer el código se necesita la cámara; también puedes pegar el enlace.</string>
+  <string name="sync_confirm_title">¿Vincular con este servidor?</string>
+  <string name="sync_confirm_replace">El teléfono está vinculado a %1$s: esa vinculación termina.</string>
+  <string name="sync_confirm_pinned">El certificado del servidor no es de una autoridad que el teléfono conozca: desde ahora el teléfono solo confía en la clave de este código.</string>
+  <string name="sync_pair">Vincular</string>
+  <string name="sync_pairing">Vinculando…</string>
+  <string name="sync_paired_ok">Vinculado a %1$s.</string>
+  <string name="sync_server">Servidor</string>
+  <string name="sync_pinned">clave fijada</string>
+  <string name="sync_user">Usuario</string>
+  <string name="sync_org">Organización</string>
+  <string name="sync_paired_since">Vinculado el</string>
+  <string name="sync_pending">Cambios pendientes de envío</string>
+  <string name="sync_unpair">Desvincular</string>
+  <string name="sync_unpair_confirm">El teléfono conserva todos sus datos. Para volver a sincronizar, vincúlalo de nuevo desde la página web.</string>
+  <string name="sync_err_link">No es un código de vinculación de ActivityTrack.</string>
+  <string name="sync_err_version">El código es para una app más reciente: actualiza ActivityTrack.</string>
+  <string name="sync_err_https">El servidor debe ser accesible por https.</string>
+  <string name="sync_err_pin">La clave del código está dañada: genera un código nuevo.</string>
+  <string name="sync_err_code">El código ha caducado o ya se usó: genera uno nuevo en la página web.</string>
+  <string name="sync_err_user">Este usuario no puede vincular teléfonos.</string>
+  <string name="sync_err_network">No se puede contactar con el servidor.</string>
+  <string name="sync_err_cert">El certificado del servidor no es de confianza o no coincide con el código.</string>
+  <string name="sync_err_server">El servidor respondió con un error.</string>
 </resources>

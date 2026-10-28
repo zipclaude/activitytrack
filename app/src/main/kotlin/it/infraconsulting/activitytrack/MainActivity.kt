@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		if (savedInstanceState == null)
-			deepLink.value = EntryLinks.screenOf(intent)
+			deepLink.value = screenOf(intent)
 		val settingsRepo = (application as ActivityTrackApp).container.settings
 		val compactFlow = settingsRepo.settings.map { it.compactDisplay }
 		val learnedFlow = settingsRepo.settings.map { it.swipeLearned }
@@ -128,7 +128,16 @@ class MainActivity : ComponentActivity() {
 
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
-		EntryLinks.screenOf(intent)?.let { deepLink.value = it }
+		screenOf(intent)?.let { deepLink.value = it }
+	}
+
+	/* a pairing link (QR code read by another app, issue #113) opens Settings → Sync on it */
+	private fun screenOf(intent: Intent?): Screen? {
+		intent?.data?.takeIf { it.scheme == "activitytrack" && it.host == "pair" }?.let { link ->
+			(application as ActivityTrackApp).syncAccount.pendingLink.value = link.toString()
+			return Screen.SettingsPage(SettingsSection.SYNC.name)
+		}
+		return EntryLinks.screenOf(intent)
 	}
 }
 

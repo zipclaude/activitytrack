@@ -23,7 +23,15 @@ maplibre = "13.7.1"
 # Jetpack Glance, developer.android.com releases 2026-10-17 (stable 2026-08-26)
 glance = "1.2.0"
 
+# CameraX and ZXing core for the pairing QR code (issue #113), checked 2026-10-29
+camerax = "1.6.2"
+zxing = "3.5.4"
+
 [libraries]
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
