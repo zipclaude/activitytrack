@@ -160,13 +160,17 @@ fun <T> LazyItemScope.ReorderRow(
 
 /* The order chips at the top of a master-data list (M16). */
 @Composable
-fun ListOrderChips(order: ListOrder, onPick: (ListOrder) -> Unit) {
+fun ListOrderChips(order: ListOrder, key: String? = null, onPick: (ListOrder) -> Unit) {
+	/* the policy may fix the order (order<List>, 2026-10-28) */
+	val lock = key?.let { settingLock(it) } ?: SettingLock.FREE
+	if (lock == SettingLock.HIDDEN)
+		return
 	Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 		for ((o, label) in listOf(
 			ListOrder.ALPHABETICAL to R.string.order_alpha,
 			ListOrder.LAST_USE to R.string.order_last_use,
 			ListOrder.MANUAL to R.string.order_manual,
 		))
-			FilterChip(selected = order == o, onClick = { onPick(o) }, label = { Text(stringResource(label)) })
+			FilterChip(selected = order == o, onClick = { onPick(o) }, enabled = lock == SettingLock.FREE || order == o, label = { Text(stringResource(label)) })
 	}
 }

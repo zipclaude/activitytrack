@@ -74,7 +74,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* data folder, calendars and gestures change through their own rows, not this form */
-			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, homeTab = cur.homeTab, homeClosedWindow = cur.homeClosedWindow, widgetTodoWindowHours = cur.widgetTodoWindowHours, homeFilterEntries = cur.homeFilterEntries, todoShowIgnored = cur.todoShowIgnored, gestureHintSeen = cur.gestureHintSeen, swipeLearned = cur.swipeLearned, listOrders = cur.listOrders) }
+			repo.update { cur -> s.copy(rootUri = cur.rootUri, calendarId = cur.calendarId, companyCalendars = cur.companyCalendars, gestures = cur.gestures, todoCompanyFilter = cur.todoCompanyFilter, todoWindowHours = cur.todoWindowHours, homeTodoWindowHours = cur.homeTodoWindowHours, agendaView = cur.agendaView, homeTab = cur.homeTab, homeClosedWindow = cur.homeClosedWindow, homeShow = cur.homeShow, homeWindow = cur.homeWindow, widgetTodoWindowHours = cur.widgetTodoWindowHours, homeFilterEntries = cur.homeFilterEntries, todoShowIgnored = cur.todoShowIgnored, gestureHintSeen = cur.gestureHintSeen, swipeLearned = cur.swipeLearned, suspendHintSeen = cur.suspendHintSeen, listOrders = cur.listOrders) }
 			onDone()
 		}
 	}
@@ -87,13 +87,14 @@ private enum class F {
 }
 
 /* Settings grouped in sub-screens (backlog 2, 2026-10-18). */
-enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = true, val feature: Feature? = null) {
-	DISPLAY(R.string.sec_display, R.drawable.ic_menu_phone_android),
-	TIMES(R.string.sec_times, R.drawable.ic_clock),
+/* [essential]: listed first; the others under "Altre impostazioni" (issue #99) */
+enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = true, val feature: Feature? = null, val essential: Boolean = false) {
+	DISPLAY(R.string.sec_display, R.drawable.ic_menu_phone_android, essential = true),
+	TIMES(R.string.sec_times, R.drawable.ic_clock, essential = true),
 	CALLS(R.string.sec_calls, R.drawable.ic_menu_phone, feature = Feature.CALLS),
-	REMINDERS(R.string.sec_reminders, R.drawable.ic_menu_alarm),
+	REMINDERS(R.string.sec_reminders, R.drawable.ic_menu_alarm, essential = true),
 	NOTIFICATIONS(R.string.sec_notifications, R.drawable.ic_menu_bell, form = false),
-	LOCATION(R.string.sec_location, R.drawable.ic_menu_place, feature = Feature.LOCATION),
+	LOCATION(R.string.sec_location, R.drawable.ic_menu_place, feature = Feature.LOCATION, essential = true),
 	CALENDAR(R.string.sec_calendar, R.drawable.ic_calendar, form = false, feature = Feature.CALENDAR),
 	DICTATION(R.string.sec_dictation, R.drawable.ic_mic, feature = Feature.DICTATION),
 	REPORTS(R.string.sec_reports, R.drawable.ic_nav_report),
@@ -129,15 +130,25 @@ fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen:
 		)
 	}
 	val dots = if (dirty && section?.form == true) " •" else ""
+	var showAll by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title) + dots, onBack = ::guardedBack) { padding ->
 		if (section == null)
 			LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 				/* sections of features the policy switched off are not offered (issue #48) */
-				items(SettingsSection.entries.filter { it.feature?.let(policy::enabled) ?: true }) { sec ->
+				val offered = SettingsSection.entries.filter { it.feature?.let(policy::enabled) ?: true }
+				items(offered.filter { it.essential }) { sec ->
 					ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) }
 				}
 				if (policy.enabled(Feature.GESTURES))
 					item { ClickableRow(stringResource(R.string.gestures_title), icon = R.drawable.ic_menu_touch) { onOpen(Screen.Gestures) } }
+				/* the rest, folded (issue #99) */
+				item {
+					ClickableRow(stringResource(R.string.settings_more) + if (showAll) " ▴" else " ▾", icon = R.drawable.ic_menu_tune) { showAll = !showAll }
+				}
+				if (showAll)
+					items(offered.filter { !it.essential }) { sec ->
+						ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) }
+					}
 			}
 		else if (s != null)
 			SettingsForm(s, vm, section, Modifier.padding(padding), onDirty = { dirty = it })
@@ -299,9 +310,9 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					LocationPermissionRows()
 					AddTileRow()
 					field(F.MOVEMENT, R.string.set_movement, key = "movementThresholdM")
-					field(F.ST_RADIUS, R.string.set_stationary_radius)
-					field(F.ST_MIN, R.string.set_stationary_min)
-					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
+					field(F.ST_RADIUS, R.string.set_stationary_radius, key = "stationaryRadiusM")
+					field(F.ST_MIN, R.string.set_stationary_min, key = "stationaryMin")
+					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal, key = "kmFactor")
 				}
 				SettingsSection.CALENDAR -> CalendarRows()
 				/* language names in their own language, as in the system pickers */
@@ -316,17 +327,18 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				}
 				SettingsSection.REPORTS -> {
 					PolicySetting("carryOverMin") { TimeField(stringResource(R.string.set_carry_over), text[F.CARRY_OVER].orEmpty(), { text[F.CARRY_OVER] = it }) }
-					PolicySetting("roundingWorkMin") { RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text) }
-					PolicySetting("roundingTravelMin") { RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text) }
-					PolicySetting("roundingPauseMin") { RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text) }
+					/* mode, quantum and minimum each under their own key (policy, 2026-10-28) */
+					RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text, "Work")
+					RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text, "Travel")
+					RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text, "Pause")
 				}
 				SettingsSection.ONLINE -> {
 					PolicySetting("nominatimEnabled") { SwitchRow(stringResource(R.string.set_nominatim), nominatimOn) { nominatimOn = it } }
-					field(F.NOMINATIM, R.string.set_endpoint, KeyboardType.Uri)
+					field(F.NOMINATIM, R.string.set_endpoint, KeyboardType.Uri, key = "nominatimEndpoint")
 					PolicySetting("osrmEnabled") { SwitchRow(stringResource(R.string.set_osrm), osrmOn) { osrmOn = it } }
-					field(F.OSRM, R.string.set_endpoint, KeyboardType.Uri)
+					field(F.OSRM, R.string.set_endpoint, KeyboardType.Uri, key = "osrmEndpoint")
 					PolicySetting("tilesEnabled") { SwitchRow(stringResource(R.string.set_tiles), tilesOn) { tilesOn = it } }
-					field(F.TILES, R.string.set_endpoint, KeyboardType.Uri)
+					field(F.TILES, R.string.set_endpoint, KeyboardType.Uri, key = "tilesEndpoint")
 				}
 				SettingsSection.STORAGE -> {
 					DataDirRow(initial.rootUri)
@@ -376,19 +388,30 @@ private fun RoundingEditor(
 	onChange: (RoundingRule) -> Unit,
 	minField: F,
 	text: MutableMap<F, String>,
+	/* "Work", "Travel", "Pause": the policy keys rounding<kind>Mode / Min / MinimumMin */
+	kind: String,
 ) {
+	val p = LocalPolicy.current.settings
+	if (listOf("Mode", "Min", "MinimumMin").all { p["rounding$kind$it"]?.hidden == true })
+		return
 	Text(stringResource(label), style = MaterialTheme.typography.titleSmall)
-	ChoiceField(
-		stringResource(R.string.round_mode),
-		RoundingMode.entries.map { it to stringResource(modeLabel(it)) },
-		rule.mode,
-	) { onChange(rule.copy(mode = it)) }
-	ChoiceField(
-		stringResource(R.string.round_quantum),
-		AppSettings.QUANTA_MIN.map { it to it.toString() },
-		rule.quantum.toMinutes(),
-	) { onChange(rule.copy(quantum = Duration.ofMinutes(it))) }
-	TextInput(stringResource(R.string.round_minimum), text[minField].orEmpty(), { text[minField] = it }, KeyboardType.Number)
+	PolicySetting("rounding${kind}Mode") {
+		ChoiceField(
+			stringResource(R.string.round_mode),
+			RoundingMode.entries.map { it to stringResource(modeLabel(it)) },
+			rule.mode,
+		) { onChange(rule.copy(mode = it)) }
+	}
+	PolicySetting("rounding${kind}Min") {
+		ChoiceField(
+			stringResource(R.string.round_quantum),
+			AppSettings.QUANTA_MIN.map { it to it.toString() },
+			rule.quantum.toMinutes(),
+		) { onChange(rule.copy(quantum = Duration.ofMinutes(it))) }
+	}
+	PolicySetting("rounding${kind}MinimumMin") {
+		TextInput(stringResource(R.string.round_minimum), text[minField].orEmpty(), { text[minField] = it }, KeyboardType.Number)
+	}
 }
 
 private fun modeLabel(m: RoundingMode) = when (m) {

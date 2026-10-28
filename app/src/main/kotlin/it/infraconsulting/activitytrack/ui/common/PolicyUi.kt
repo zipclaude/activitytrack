@@ -90,3 +90,23 @@ fun PolicySetting(key: String, content: @Composable () -> Unit) {
 		}
 	}
 }
+
+/*
+ * The same rule for the controls outside Settings (filters, views, orders;
+ * 2026-10-28): HIDDEN, the control is not drawn; LOCKED, it is disabled and
+ * its label starts with a padlock; the value stays the policy's.
+ */
+enum class SettingLock { FREE, LOCKED, HIDDEN }
+
+@Composable
+fun settingLock(key: String): SettingLock {
+	val p = LocalPolicy.current.settings[key]
+	return when {
+		p?.hidden == true -> SettingLock.HIDDEN
+		p?.locked == true -> SettingLock.LOCKED
+		else -> SettingLock.FREE
+	}
+}
+
+/* "🔒 " before a locked control's label */
+fun SettingLock.prefix(): String = if (this == SettingLock.LOCKED) "🔒 " else ""

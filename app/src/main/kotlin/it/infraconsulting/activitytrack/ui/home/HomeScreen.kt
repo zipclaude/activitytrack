@@ -90,6 +90,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 /* An open entry with display names and its segments. */
 data class EntryCard(
@@ -114,7 +115,8 @@ class HomeViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
-) : EntryCommander(entries) {
+	todos: it.infraconsulting.activitytrack.data.repo.TodoRepository? = null,
+) : EntryCommander(entries, todos) {
 	val cards = combine(
 		entries.openEntries, entries.openEntrySegments, master.clients, master.companies,
 	) { list, segs, clients, companies ->
@@ -155,6 +157,9 @@ class HomeViewModel(
 		}
 	}.state(emptyList())
 
+	/* no client yet (issue #98): the Home shows how to begin; null while loading */
+	val hasClients = master.clients.map { l -> l.any { !it.archived } }.state(null)
+
 	/* every tag in use, for the "Chiuse" filter */
 	val tags = entries.allTags.state(emptyList())
 
@@ -162,8 +167,15 @@ class HomeViewModel(
 	fun setTab(tab: HomeTab) = run { settingsRepo.update { it.copy(homeTab = tab.name) } }
 	fun setClosedWindow(hours: Int) = run { settingsRepo.update { it.copy(homeClosedWindow = hours) } }
 
+	/* the Home list's state filter and window (owner, 2026-10-27), remembered */
+	fun setHomeShow(show: Set<HomeShow>) = run { settingsRepo.update { it.copy(homeShow = show.map { s -> s.name }.toSet()) } }
+	fun setHomeWindow(window: Int) = run { settingsRepo.update { it.copy(homeWindow = window) } }
+
 	/* the one-off gesture hint was read (issue #77) */
 	fun dismissGestureHint() = run { settingsRepo.update { it.copy(gestureHintSeen = true) } }
+
+	/* the one-off Suspend explanation was read (issue #91) */
+	fun dismissSuspendHint() = run { settingsRepo.update { it.copy(suspendHintSeen = true) } }
 
 	/* the entry shown in the big card; null = the most recent one */
 	private val _selected = MutableStateFlow<Long?>(null)
@@ -201,14 +213,32 @@ fun HomeScreen(
 	onOpenEntry: (Long) -> Unit,
 	onStartTodo: (Long) -> Unit,
 	onOpenGestures: () -> Unit = {},
+	onOpenTodos: (() -> Unit)? = null,
+	onOpenImport: (() -> Unit)? = null,
 ) {
-	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
+	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings, it.todos) }
 	val allCards by vm.cards.collectAsState()
 	val selected by vm.selected.collectAsState()
 	val settings by vm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
-	val run = rememberEntryCommands(vm, settings?.editableTimes == true) { id -> allCards.firstOrNull { it.entry.id == id }?.title ?: fallback }
+	val runNow = rememberEntryCommands(vm, settings?.editableTimes == true) { id -> allCards.firstOrNull { it.entry.id == id }?.title ?: fallback }
+	/* the first Suspend explains how it differs from Pause, once (issue #91) */
+	var suspending by remember { mutableStateOf<TimeEntryEntity?>(null) }
+	val run: (TimeEntryEntity, EntryCommand) -> Unit = { e, cmd ->
+		if (cmd == EntryCommand.SUSPEND && settings?.suspendHintSeen == false) suspending = e else runNow(e, cmd)
+	}
+	suspending?.let { e ->
+		AlertDialog(
+			onDismissRequest = { suspending = null },
+			title = { Text(stringResource(R.string.cmd_suspend)) },
+			text = { Text(stringResource(R.string.suspend_hint_text)) },
+			confirmButton = {
+				TextButton(onClick = { suspending = null; vm.dismissSuspendHint(); runNow(e, EntryCommand.SUSPEND) }) { Text(stringResource(R.string.cmd_suspend)) }
+			},
+			dismissButton = { TextButton(onClick = { suspending = null }) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
 
 	/* elapsed times refresh every 30 s; the DB keeps exact timestamps */
 	val now by produceState(System.currentTimeMillis()) {
@@ -221,7 +251,9 @@ fun HomeScreen(
 	val only = settings?.todoCompanyFilter?.takeIf { settings?.homeFilterEntries == true }
 	val cards = if (only == null) allCards else allCards.filter { it.entry.companyId == only }
 	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
-	val small = cards.filter { it !== big }
+	/* the ones with details missing sit in the list when it shows them (owner, 2026-10-27) */
+	val listsMissing = settings?.homeShow?.contains(HomeShow.MISSING.name) == true
+	val small = cards.filter { it !== big && !(listsMissing && it.entry.status == EntryStatus.TO_COMPLETE) }
 
 	/*
 	 * The bottom tabs (issue #59): planned to-dos ahead, entries and done
@@ -245,46 +277,22 @@ fun HomeScreen(
 	val canStart = policy.entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.FREE
 	val canTravel = policy.enabled(Feature.TRAVEL)
 	val showPlanned = policy.enabled(Feature.TODOS)
-	val tab = if (showPlanned) HomeTab.of(settings?.homeTab) else HomeTab.CLOSED
 	val zone = ZoneId.systemDefault()
 	val todoCompany = settings?.todoCompanyFilter
-	val plannedWindow = settings?.homeTodoWindowHours ?: 24
-	val closedWindow = settings?.homeClosedWindow ?: 0
-	val split = plannedSplit(openTodos, todoCompany, plannedWindow, Instant.now(), zone)
-	val boundary = closedBoundary(closedWindow, settings?.carryOverMin ?: 6 * 60, Instant.now(), zone)
-	val closedRows = buildList {
-		for (c in closedCards)
-			if ((todoCompany == null || c.entry.companyId == todoCompany) &&
-				(closedTag == null || closedTag in c.tags) &&
-				(c.endUtcMs ?: c.entry.updatedUtcMs) > boundary.toEpochMilli()
-			)
-				add(ClosedRow.Entry(c))
-		for (t in doneTodos)
-			if ((todoCompany == null || t.companyId == todoCompany) && Instant.ofEpochMilli(t.updatedUtcMs).isAfter(boundary))
-				add(ClosedRow.Todo(t, todoClients.firstOrNull { it.id == t.clientId }?.name))
-	}.sortedByDescending { it.sortMs }
-	/* the ones ignored today stay at the bottom of the planned list (owner, 2026-10-18) */
-	val ignoredToday = if (settings?.todoShowIgnored == false) emptyList() else ignoredTodos.filter { t ->
-		(todoCompany == null || t.companyId == todoCompany) &&
-			t.ignoredUtcMs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } == LocalDate.now()
-	}
-	val plannedCount = split.dated.size + split.noDate.size + ignoredToday.size
-	/* with a filter the header stays, so the filter can be removed */
-	val showTabs = plannedCount + closedRows.size > 0 || todoCompany != null || closedTag != null
-	val plannedLabels = listOf(
-		24 to stringResource(R.string.todo_window_24h),
-		72 to stringResource(R.string.todo_window_3d),
-		168 to stringResource(R.string.todo_window_7d),
-		720 to stringResource(R.string.todo_window_30d),
-		0 to stringResource(R.string.todo_window_all),
+	/*
+	 * One list instead of the two tabs (owner, 2026-10-27): to-dos and
+	 * stopped entries alike, with a state filter; no to-do states when the
+	 * policy turns the to-dos off.
+	 */
+	val offered = HomeShow.entries.filter { showPlanned || (it != HomeShow.TODO && it != HomeShow.IGNORED) }
+	val show = settings?.homeShow.orEmpty().mapNotNull { n -> HomeShow.entries.firstOrNull { it.name == n } }.toSet().intersect(offered.toSet())
+	val homeWindow = settings?.homeWindow ?: -1
+	val sections = homeSections(
+		openTodos, ignoredTodos, doneTodos, closedCards, show, todoCompany, closedTag, homeWindow,
+		settings?.carryOverMin ?: 6 * 60, Instant.now(), zone,
 	)
-	val closedLabels = listOf(
-		0 to stringResource(R.string.home_window_today),
-		24 to stringResource(R.string.todo_window_24h),
-		168 to stringResource(R.string.todo_window_7d),
-		720 to stringResource(R.string.todo_window_30d),
-	)
-	val plannedBands = bands(split.dated + split.noDate + ignoredToday, todoCompanies, todoClients)
+	val listed = sections.flatMap { it.second }
+	val todoBands = bands(listed.mapNotNull { (it as? HomeItem.Todo)?.todo }, todoCompanies, todoClients)
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
 		onBack = null,
@@ -306,7 +314,21 @@ fun HomeScreen(
 			 * again. Above the list, not in it: the settings load after the first
 			 * frame and an item inserted on top would land above the scrolled view.
 			 */
-			if (settings?.gestureHintSeen == false && policy.enabled(Feature.GESTURES))
+			val hasClients by vm.hasClients.collectAsState()
+			var addClient by remember { mutableStateOf(false) }
+			/* the first steps (issue #98): folder and permissions are asked before; then the first client */
+			if (hasClients == false && allCards.isEmpty())
+				androidx.compose.material3.Card(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).fillMaxWidth()) {
+					Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+						Text(stringResource(R.string.first_title), style = MaterialTheme.typography.titleLarge)
+						Text(stringResource(R.string.first_text), style = MaterialTheme.typography.bodyMedium)
+						Button(onClick = { addClient = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.first_client)) }
+						onOpenImport?.let { TextButton(onClick = it, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(stringResource(R.string.first_import)) } }
+					}
+				}
+			if (addClient)
+				it.infraconsulting.activitytrack.ui.common.QuickClientDialog(null, onDone = { _, _ -> addClient = false }, onDismiss = { addClient = false })
+			if (hasClients == true && settings?.gestureHintSeen == false && policy.enabled(Feature.GESTURES))
 				OutlinedCard(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).fillMaxWidth()) {
 					Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
 						Text(stringResource(R.string.gesture_hint_text), style = MaterialTheme.typography.bodyMedium)
@@ -346,85 +368,42 @@ fun HomeScreen(
 						SmallEntryCard(c, now, onSelect = { vm.select(c.entry.id) }, onCommand = { run(c.entry, it) }, onOpen = { onOpenEntry(c.entry.id) })
 					}
 				}
-				if (showTabs) {
-					item(key = "tabs") {
-						HomeTabsHeader(
-							tab = tab,
-							showPlanned = showPlanned,
-							count = if (tab == HomeTab.PLANNED) plannedCount else closedRows.size,
-							windowHours = if (tab == HomeTab.PLANNED) plannedWindow else closedWindow,
-							windowLabels = if (tab == HomeTab.PLANNED) plannedLabels else closedLabels,
-							onWindow = { if (tab == HomeTab.PLANNED) todosVm.setHomeWindow(it) else vm.setClosedWindow(it) },
-							todosVm = todosVm,
-							showTagFilter = tab == HomeTab.CLOSED,
-							tag = closedTag,
-							tags = allTags,
-							onTag = { closedTag = it },
-							onTab = { vm.setTab(it) },
+				item(key = "list-header") {
+					HomeListHeader(
+						show = show, offered = offered, onShow = vm::setHomeShow,
+						window = homeWindow, onWindow = vm::setHomeWindow,
+						todosVm = todosVm, tag = closedTag, tags = allTags, onTag = { closedTag = it },
+					)
+				}
+				for ((section, rows) in sections) {
+					item(key = "sec-${section.name}") {
+						Text(
+							sectionLabel(section).uppercase(),
+							style = MaterialTheme.typography.labelMedium,
+							color = if (section == HomeSection.OVERDUE || section == HomeSection.MISSING) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+							modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp),
 						)
 					}
-					when (tab) {
-						HomeTab.PLANNED -> {
-							items(split.dated, key = { "todo-${it.id}" }) { t ->
-								TodoSwipeCard(
-									t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
-									onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
-								) { todoDialog = t }
-							}
-							if (split.noDate.isNotEmpty()) {
-								item(key = "no-date") {
-									Text(
-										stringResource(R.string.home_no_date),
-										style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-										modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
-									)
-								}
-								items(split.noDate, key = { "todo-nodate-${it.id}" }) { t ->
-									TodoSwipeCard(
-										t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
-										onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
-									) { todoDialog = t }
-								}
-							}
-							items(ignoredToday, key = { "todo-ignored-${it.id}" }) { t ->
-								TodoSwipeCard(
-									t, todoClients.firstOrNull { it.id == t.clientId }?.name, todosVm, onStartTodo,
-									onReplan = { todosVm.clearError(); todoEditing = it }, band = plannedBands[t.id],
-								) { todoDialog = t }
-							}
-							if (plannedCount == 0)
-								item(key = "planned-empty") { EmptyText(stringResource(R.string.home_planned_empty)) }
-						}
-						HomeTab.CLOSED -> {
-							items(
-								closedRows,
-								key = { row ->
-									when (row) {
-										is ClosedRow.Entry -> "closed-entry-${row.card.entry.id}"
-										is ClosedRow.Todo -> "closed-todo-${row.todo.id}"
-									}
-								},
-							) { row ->
-								when (row) {
-									is ClosedRow.Entry -> Box(Modifier.padding(horizontal = 16.dp).alpha(0.75f)) {
-										SmallEntryCard(
-											row.card, now,
-											onSelect = { onOpenEntry(row.card.entry.id) },
-											onCommand = {},
-											onOpen = { onOpenEntry(row.card.entry.id) },
-											showDate = true,
-										)
-									}
-									is ClosedRow.Todo -> Box(Modifier.padding(horizontal = 16.dp)) {
-										TodoCard(row.todo, row.client) { todoDialog = row.todo }
-									}
-								}
-							}
-							if (closedRows.isEmpty())
-								item(key = "closed-empty") { EmptyText(stringResource(R.string.home_closed_empty)) }
-						}
+					items(rows, key = { it.key }) { row ->
+						HomeListRow(
+							row, clientOf = { id -> todoClients.firstOrNull { it.id == id }?.name },
+							band = (row as? HomeItem.Todo)?.let { todoBands[it.todo.id] },
+							gestures = gestures, todosVm = todosVm, onStartTodo = onStartTodo,
+							onReplan = { todosVm.clearError(); todoEditing = it },
+							onTodo = { todoDialog = it }, onEntry = onOpenEntry,
+							onReopen = { c -> vm.reopen(c.entry, c.title ?: fallback) },
+						)
 					}
 				}
+				if (listed.isEmpty())
+					item(key = "list-empty") { EmptyText(stringResource(R.string.home_list_empty)) }
+				/* the whole to-do list is a tab of its own (issue #96) */
+				if (onOpenTodos != null && HomeShow.TODO in show)
+					item(key = "list-all") {
+						Box(Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = Alignment.CenterEnd) {
+							TextButton(onClick = onOpenTodos) { Text(stringResource(R.string.home_all_todos)) }
+						}
+					}
 			}
 		}
 		todoDialog?.let { t ->
@@ -462,8 +441,8 @@ private fun EmptyEntryCard(fullSwipe: Boolean, onStart: (() -> Unit)?, onTravel:
 				Text(stringResource(R.string.home_none), style = MaterialTheme.typography.titleLarge)
 				Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
 					val size = if (compact) 48.dp else 64.dp
-					onStart?.let { CommandIconButton(start, startLabel, it, Modifier.size(size)) }
-					onTravel?.let { CommandIconButton(travel, stringResource(R.string.start_travel), it, Modifier.size(size)) }
+					onStart?.let { LabeledCommand(startLabel) { CommandIconButton(start, startLabel, it, Modifier.size(size)) } }
+					onTravel?.let { LabeledCommand(travelLabel) { CommandIconButton(travel, stringResource(R.string.start_travel), it, Modifier.size(size)) } }
 				}
 			}
 		}
@@ -590,7 +569,10 @@ private fun EntryCardView(
 					for ((cmd, label) in commands(e.status, e.mode)) {
 						val style = commandStyle(cmd)
 						if (style != null)
-							CommandIconButton(style, stringResource(label), { onCommand(cmd) }, if (compact) Modifier.size(44.dp) else Modifier)
+							/* the label under each button: the moon alone did not say "suspend" (issue #91) */
+							LabeledCommand(stringResource(label)) {
+								CommandIconButton(style, stringResource(label), { onCommand(cmd) }, if (compact) Modifier.size(44.dp) else Modifier)
+							}
 						else
 							OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
 					}
@@ -599,6 +581,15 @@ private fun EntryCardView(
 				}
 			}
 		}
+	}
+}
+
+/* A command button with its name under it (issue #91). */
+@Composable
+private fun LabeledCommand(label: String, button: @Composable () -> Unit) {
+	Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+		button()
+		Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
 	}
 }
 
@@ -636,7 +627,8 @@ private fun total(segments: List<SegmentEntity>, kind: SegmentKind, now: Long): 
 
 /* Duration as H:MM. */
 private fun hm(ms: Long): String {
-	val min = ms / 60_000
+	/* a start a little ahead of the clock (another device, a moved time) reads 0:00, never "-1:-9" */
+	val min = maxOf(0L, ms) / 60_000
 	return "%d:%02d".format(min / 60, min % 60)
 }
 

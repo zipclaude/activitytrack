@@ -28,10 +28,10 @@ DBS = ["activitytrack.db", "activitytrack.db-wal", "activitytrack.db-shm"]
 LABELS = {
 	"it": dict(new="Nuova attività", end="^Fine$", agenda="Agenda", day="Giorno", report="Report", more="Altro",
 		todos="Da fare", md="Anagrafiche", clients="Clienti", manual="Manuale", settings="Impostazioni", running="Farmacia Centrale",
-		contacts="Contatti", calls="Chiamate", planned="Da fare", closed="Chiuse"),
+		contacts="Contatti", calls="Chiamate", state="^Stato", done="^Fatte$", past="^Passata$"),
 	"en": dict(new="New activity", end="^End$", agenda="Agenda", day="Day", report="Report", more="More",
 		todos="To-dos", md="Master data", clients="Clients", manual="Manual", settings="Settings", running="Farmacia Centrale",
-		contacts="Contacts", calls="Calls", planned="To-dos", closed="Closed"),
+		contacts="Contacts", calls="Calls", state="^State", done="^Done$", past="^Past$"),
 }
 
 
@@ -89,13 +89,13 @@ def tap(pattern, index=0, wait=1.8):
 
 
 def nav(index, wait=1.8):
-	# the bottom bar by position (0 Home, 1 Agenda, 2 Report, 3 More): some
+	# the bottom bar by position (0 Home, 1 To-dos, 2 Agenda, 3 Report, 4 More): some
 	# phones (MIUI) report its labels with empty bounds
 	width = int(sh("wm", "size").split()[-1].split("x")[0])
 	height = int(sh("wm", "size").split()[-1].split("x")[1])
 	items = sorted({(b[0], b[1], b[2], b[3]) for n, b in nodes()
-		if (n.get("clickable") == "true" or n.get("selected") == "true") and b[1] > height * 0.8 and width / 5 < b[2] - b[0] < width / 3})
-	if len(items) != 4:
+		if (n.get("clickable") == "true" or n.get("selected") == "true") and b[1] > height * 0.8 and width / 7 < b[2] - b[0] < width / 4})
+	if len(items) != 5:
 		raise SystemExit(f"bottom bar not found ({len(items)} items)")
 	x1, y1, x2, y2 = items[index]
 	sh("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
@@ -139,15 +139,21 @@ def capture(lang):
 	t = LABELS[lang]
 	sh("cmd", "locale", "set-app-locales", PKG, "--locales", {"it": "it-IT", "en": "en-US"}[lang])
 	restart()
-	# the Home remembers its last tab (issue #59): the picture shows "Da fare"
-	tap(f"^{t['planned']}$", wait=2)
+	# the one Home list (0.8.0) with its default filter: to-dos and details missing
 	shot(lang, "home")
-	# the bottom tabs of the Home (issue #59): the Chiuse tab, then back
-	tap(f"^{t['closed']}$", wait=2.5)
+	# the state filter with Fatte added, then put back
+	tap(t["state"])
+	tap(t["done"], wait=1)
+	back()
+	time.sleep(1.5)
 	shot(lang, "home-closed")
-	tap(f"^{t['planned']}$", wait=2)
+	tap(t["state"])
+	tap(t["done"], wait=1)
+	back()
 	tap(t["new"])
 	shot(lang, "start")
+	# the Passata mode asks start and end (issue #92)
+	tap(t["past"])
 	tap(t["end"])
 	# a range on the grid: from the third cell of the first row to the eighth of the second
 	rows = [b for n, b in nodes() if re.fullmatch(r"\d\d:00", n.get("text") or "")]
@@ -163,15 +169,15 @@ def capture(lang):
 	tap(f"^{t['running']}$", wait=3)
 	shot(lang, "entry")
 	back()
-	nav(1)
+	nav(2)
 	tap(f"^{t['day']}$")
 	shot(lang, "agenda-day")
-	nav(2)
-	shot(lang, "report")
 	nav(3)
-	tap(f"^{t['todos']}$")
+	shot(lang, "report")
+	# Da fare is a tab of its own (issue #96)
+	nav(1)
 	shot(lang, "todos")
-	back()
+	nav(4)
 	tap(f"^{t['md']}$")
 	tap(f"^{t['clients']}$")
 	tap(f"^{t['manual']}$")

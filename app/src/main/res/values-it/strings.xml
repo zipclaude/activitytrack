@@ -7,7 +7,7 @@
   <string name="ch_arrival">Richieste di arrivo</string>
   <string name="ch_day_start">Inizio giornata</string>
   <string name="ch_day_summary">Riepilogo giornaliero</string>
-  <string name="ch_to_complete">Attività da completare</string>
+  <string name="ch_to_complete">Attività con dettagli mancanti</string>
 
   <string name="action_save">Salva</string>
   <string name="action_cancel">Annulla</string>
@@ -44,7 +44,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="widget_todo_description">I prossimi Da fare pianificati, ognuno con il pulsante Avvia</string>
   <string name="widget_todo_empty">Niente di pianificato</string>
   <string name="status_suspended">Sospesa</string>
-  <string name="status_to_complete">Da completare</string>
+  <string name="status_to_complete">Dettagli mancanti</string>
   <string name="status_closed">Chiusa</string>
 
   <string name="setup_title">Cartella dati</string>
@@ -120,6 +120,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_generic">Operazione non possibile.</string>
 
   <string name="settings_title">Impostazioni</string>
+  <string name="settings_more">Altre impostazioni</string>
   <string name="settings_saved">Impostazioni salvate</string>
   <string name="settings_unsaved">Ci sono modifiche non salvate in questa sezione.</string>
   <string name="settings_unsaved_leave">Esci senza salvare</string>
@@ -182,6 +183,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="cmd_pause">Pausa</string>
   <string name="cmd_suspend">Sospendi</string>
   <string name="cmd_stop">Stop</string>
+  <string name="suspend_hint_text">Sospendi lascia l\'attività per riprenderla più tardi, per esempio per lavorare a un\'altra; il tempo nel frattempo non conta. Pausa è un\'interruzione dentro l\'attività e conta come pausa.</string>
   <string name="cmd_complete">Completa</string>
   <string name="empty_activity_title">Attività non descritta</string>
   <string name="empty_activity_text">Completare con il solo cliente?</string>
@@ -195,6 +197,10 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="stop_now">Ferma ora</string>
   <string name="stop_return">Avvia rientro</string>
   <string name="stop_quick">Stop rapido</string>
+  <string name="stop_end_work">Fine lavoro</string>
+  <string name="stop_close">Chiudi</string>
+  <string name="stop_no_activity_hint">Senza descrizione resta «dettagli mancanti».</string>
+  <string name="stop_todo_done">Voce Da fare completata</string>
   <string name="resume_title">Riprendere \"%1$s\"?</string>
   <string name="action_yes">Sì</string>
   <string name="action_no">No</string>
@@ -216,7 +222,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="travel_suspend">Sospendi viaggio</string>
   <string name="err_completion_incomplete">Descrivi l\'attività.</string>
   <string name="err_client_required">Scegli un cliente.</string>
-  <string name="notif_to_complete_title">Attività da completare</string>
+  <string name="notif_to_complete_title">Attività: dettagli mancanti</string>
   <string name="notif_confirm_title">Ancora su %1$s?</string>
   <string name="notif_confirm_text">Ultima conferma alle %1$s</string>
   <string name="notif_stop_at">Stop alle %1$s</string>
@@ -231,8 +237,10 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="notif_still_travelling">Sono ancora in viaggio</string>
   <string name="notif_pause_title">Ancora in pausa?</string>
   <string name="notif_summary_title">Oggi</string>
-  <string name="notif_summary_text">Solare %1$s · rendicontato %2$s</string>
+  <string name="notif_summary_text">Totale %1$s</string>
   <string name="entry_title">Attività</string>
+  <string name="entry_add_section">Spese e allegati</string>
+  <string name="entry_summary_totals">Lavoro %1$s · Viaggio %2$s · Pausa %3$s</string>
   <string name="field_locality">Località</string>
   <string name="field_location_kind">Dove</string>
   <string name="segments">Tempi</string>
@@ -290,8 +298,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_overlapping_segments">Il segmento si sovrappone a tempo già registrato.</string>
   <string name="day_title">Giorno</string>
   <string name="day_today">Oggi</string>
-  <string name="day_solar">Solare</string>
-  <string name="day_reported">Rendicontato</string>
+  <string name="day_reported">Totale</string>
   <string name="day_empty">Nessun tempo registrato in questo giorno.</string>
   <string name="day_line_fmt">Lavoro %1$s → %2$s · Viaggio %3$s → %4$s · Pausa %5$s → %6$s</string>
   <string name="export_title">Importa / esporta</string>
@@ -320,7 +327,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_align_due_no">Mantieni</string>
   <string name="todo_start">Avvia attività</string>
   <string name="todo_mark_done">Segna come fatta</string>
-  <string name="todo_reopen">Segna come da fare</string>
   <string name="todo_edit">Modifica</string>
   <string name="todo_show_done">Mostra anche le fatte</string>
   <string name="todo_field_title">Descrizione</string>
@@ -388,13 +394,35 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="action_ok">OK</string>
   <string name="action_clear">Cancella</string>
   <string name="home_none">Nessuna attività in corso</string>
+  <string name="first_title">Per iniziare</string>
+  <string name="first_text">Crea il cliente per cui lavori, con la sua azienda: poi ▶ avvia la prima attività.</string>
+  <string name="first_client">Crea il primo cliente</string>
+  <string name="first_import">Importa da un file o da un gestionale</string>
   <string name="home_none_hint">Tocca il pulsante verde qui sotto per iniziarne una.</string>
   <string name="home_tab_planned">Da fare</string>
-  <string name="home_tab_closed">Chiuse</string>
+  <string name="home_tab_closed">Fatte</string>
   <string name="home_no_date">Senza data</string>
   <string name="home_window_today">Oggi</string>
   <string name="home_planned_empty">Niente di pianificato in questo intervallo</string>
-  <string name="home_closed_empty">Niente di chiuso in questo intervallo</string>
+  <string name="home_all_todos">Tutte le Da fare →</string>
+  <string name="home_filter_state">Stato</string>
+  <string name="home_filter_company">Azienda</string>
+  <string name="home_filter_tag">Tag</string>
+  <string name="home_show_todo">Da fare</string>
+  <string name="home_show_ignored">Ignorate</string>
+  <string name="home_show_all">Tutti</string>
+  <string name="home_show_none">Nessuno</string>
+  <string name="home_show_fmt">Stato: %1$s</string>
+  <string name="home_show_only_todo">Solo da fare</string>
+  <string name="home_show_only_done">Solo fatte</string>
+  <string name="home_sec_overdue">In ritardo</string>
+  <string name="home_sec_next">Prossimi giorni</string>
+  <string name="home_sec_earlier">Giorni precedenti</string>
+  <string name="home_state_open">aperta</string>
+  <string name="home_kind_entry">Attività</string>
+  <string name="home_list_empty">Niente da mostrare con questi filtri</string>
+  <string name="undo_entry_reopened">«%1$s» riaperta</string>
+  <string name="home_closed_empty">Niente di fatto in questo intervallo</string>
   <string name="todo_ignored">ignorata</string>
   <string name="swipe_start">Avvia</string>
   <string name="swipe_ignore">Ignora</string>
@@ -410,11 +438,26 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="gesture_hints_again">Mostra di nuovo i suggerimenti sui gesti</string>
   <string name="gestures_entries">Attività in corso</string>
   <string name="gestures_todos">Attività da fare</string>
+  <string name="gestures_past">Attività fermate</string>
+  <string name="swipe_start_or_done">Avvia o fatta</string>
+  <string name="todo_reopen_short">Riapri</string>
   <string name="gestures_to_start">Trascina a sinistra</string>
   <string name="gestures_to_end">Trascina a destra</string>
   <string name="gestures_full">Trascinamento lungo: esegue subito la prima azione</string>
   <string name="todo_due_at">scad. %1$s</string>
   <string name="todo_planned_chip">pianificata</string>
+  <string name="todo_done_chip">fatta</string>
+  <string name="todo_done_at">fatta %1$s</string>
+  <string name="todo_state">Stato</string>
+  <string name="todo_state_done">Fatta</string>
+  <string name="todo_state_ignored">Ignorata</string>
+  <string name="todo_clear_plan">Togli pianificazione</string>
+  <string name="action_undo">Annulla</string>
+  <string name="undo_todo_done">«%1$s» segnata come fatta</string>
+  <string name="undo_todo_open">«%1$s» riaperta</string>
+  <string name="undo_todo_ignored">«%1$s» ignorata</string>
+  <string name="undo_todo_postponed">«%1$s» posticipata</string>
+  <string name="undo_todo_unplanned">Pianificazione tolta da «%1$s»</string>
   <string name="gestures_behaviour">Comportamento</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Visualizzazione</string>
@@ -530,6 +573,16 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="call_propose_action">Crea attività</string>
   <string name="segment_note">Descrizione</string>
   <string name="start_end_hint">Inizio vuoto = adesso; Fine vuota = aperta; una Fine già passata registra l\'attività come conclusa.</string>
+  <string name="start_when_now">Adesso</string>
+  <string name="start_when_started">Già iniziata</string>
+  <string name="start_when_past">Passata</string>
+  <string name="start_when_now_hint">Parte adesso. Per un\'attività già iniziata o da registrare, scegli il modo in alto.</string>
+  <string name="start_when_started_hint">Resta aperta: la fermi con Stop.</string>
+  <string name="start_started_at">Iniziata alle</string>
+  <string name="start_minutes_ago">%1$d min fa</string>
+  <string name="start_now_action">Avvia adesso</string>
+  <string name="start_from_action">Avvia dalle %1$s</string>
+  <string name="start_record_action">Registra %1$s–%2$s</string>
   <!-- issue #37 add row -->
   <string name="short_expense">Spesa</string>
   <string name="short_photo">Foto</string>

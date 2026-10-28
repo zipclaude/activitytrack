@@ -1,7 +1,17 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.policy
 
+import it.infraconsulting.activitytrack.domain.rounding.RoundingMode
+import it.infraconsulting.activitytrack.domain.rounding.RoundingRule
+import it.infraconsulting.activitytrack.domain.settings.AGENDA_VIEWS
 import it.infraconsulting.activitytrack.domain.settings.AppSettings
+import it.infraconsulting.activitytrack.domain.settings.EntrySwipe
+import it.infraconsulting.activitytrack.domain.settings.HOME_STATES
+import it.infraconsulting.activitytrack.domain.settings.HOME_WINDOWS
+import it.infraconsulting.activitytrack.domain.settings.ListOrder
+import it.infraconsulting.activitytrack.domain.settings.OrderedList
+import it.infraconsulting.activitytrack.domain.settings.PastSwipe
+import it.infraconsulting.activitytrack.domain.settings.TodoSwipe
 import it.infraconsulting.activitytrack.domain.settings.TODO_WINDOWS
 import it.infraconsulting.activitytrack.domain.settings.WIDGET_WINDOWS
 import java.time.Duration
@@ -100,7 +110,7 @@ class SettingSpec(
 	val check: (Any) -> String?,
 	val apply: (AppSettings, Any) -> AppSettings,
 ) {
-	enum class Kind { BOOLEAN, INT, STRING }
+	enum class Kind { BOOLEAN, INT, DOUBLE, STRING }
 }
 
 object SettingsCatalog {
@@ -115,6 +125,29 @@ object SettingsCatalog {
 
 	private fun string(key: String, allowed: Collection<String>, apply: (AppSettings, String) -> AppSettings) =
 		SettingSpec(key, SettingSpec.Kind.STRING, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }) { s, v -> apply(s, v as String) }
+
+	private fun double(key: String, range: ClosedFloatingPointRange<Double>, apply: (AppSettings, Double) -> AppSettings) =
+		SettingSpec(key, SettingSpec.Kind.DOUBLE, { v -> if ((v as Double) in range) null else "must be in ${range.start}..${range.endInclusive}" }) { s, v -> apply(s, v as Double) }
+
+	/* a free text the [check] accepts (an endpoint URL, a list of names) */
+	private fun text(key: String, check: (String) -> String?, apply: (AppSettings, String) -> AppSettings) =
+		SettingSpec(key, SettingSpec.Kind.STRING, { v -> check(v as String) }) { s, v -> apply(s, v as String) }
+
+	private fun url(v: String, tiles: Boolean = false): String? = when {
+		!v.trim().startsWith("https://") -> "must be an https:// URL"
+		tiles && !listOf("{z}", "{x}", "{y}").all { it in v } -> "must contain {z}, {x} and {y}"
+		else -> null
+	}
+
+	private inline fun <reified E : Enum<E>> names() = enumValues<E>().map { it.name }
+
+	private fun rounding(s: AppSettings, kind: String, f: (RoundingRule) -> RoundingRule): AppSettings = s.copy(
+		rounding = when (kind) {
+			"work" -> s.rounding.copy(work = f(s.rounding.work))
+			"travel" -> s.rounding.copy(travel = f(s.rounding.travel))
+			else -> s.rounding.copy(pause = f(s.rounding.pause))
+		},
+	)
 
 	private val quanta = AppSettings.QUANTA_MIN.map { it.toInt() }
 
@@ -147,6 +180,39 @@ object SettingsCatalog {
 		bool("nominatimEnabled") { s, v -> s.copy(nominatim = s.nominatim.copy(enabled = v)) },
 		bool("osrmEnabled") { s, v -> s.copy(osrm = s.osrm.copy(enabled = v)) },
 		bool("tilesEnabled") { s, v -> s.copy(tiles = s.tiles.copy(enabled = v)) },
+		/* settings the policy could not reach before (owner, 2026-10-28: every option settable, lockable, hideable) */
+		int("stationaryRadiusM", 25..1_000) { s, v -> s.copy(stationaryRadiusM = v) },
+		int("stationaryMin", 5..120) { s, v -> s.copy(stationaryMin = v) },
+		double("kmFactor", 1.0..3.0) { s, v -> s.copy(kmFactor = v) },
+		text("nominatimEndpoint", { url(it) }) { s, v -> s.copy(nominatim = s.nominatim.copy(endpoint = v.trim())) },
+		text("osrmEndpoint", { url(it) }) { s, v -> s.copy(osrm = s.osrm.copy(endpoint = v.trim())) },
+		text("tilesEndpoint", { url(it, tiles = true) }) { s, v -> s.copy(tiles = s.tiles.copy(endpoint = v.trim())) },
+		string("roundingWorkMode", names<RoundingMode>()) { s, v -> rounding(s, "work") { it.copy(mode = RoundingMode.valueOf(v)) } },
+		string("roundingTravelMode", names<RoundingMode>()) { s, v -> rounding(s, "travel") { it.copy(mode = RoundingMode.valueOf(v)) } },
+		string("roundingPauseMode", names<RoundingMode>()) { s, v -> rounding(s, "pause") { it.copy(mode = RoundingMode.valueOf(v)) } },
+		int("roundingWorkMinimumMin", 0..60) { s, v -> rounding(s, "work") { it.copy(minimum = Duration.ofMinutes(v.toLong())) } },
+		int("roundingTravelMinimumMin", 0..60) { s, v -> rounding(s, "travel") { it.copy(minimum = Duration.ofMinutes(v.toLong())) } },
+		int("roundingPauseMinimumMin", 0..60) { s, v -> rounding(s, "pause") { it.copy(minimum = Duration.ofMinutes(v.toLong())) } },
+		/* the swipe gestures (Settings → Gestures) */
+		string("gestureTodoToStart", names<TodoSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(todoToStart = TodoSwipe.valueOf(v))) },
+		string("gestureTodoToEnd", names<TodoSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(todoToEnd = TodoSwipe.valueOf(v))) },
+		string("gestureEntryToStart", names<EntrySwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(entryToStart = EntrySwipe.valueOf(v))) },
+		string("gestureEntryToEnd", names<EntrySwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(entryToEnd = EntrySwipe.valueOf(v))) },
+		string("gesturePastToStart", names<PastSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(pastToStart = PastSwipe.valueOf(v))) },
+		string("gesturePastToEnd", names<PastSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(pastToEnd = PastSwipe.valueOf(v))) },
+		bool("gestureFullSwipe") { s, v -> s.copy(gestures = s.gestures.copy(fullSwipe = v)) },
+		/* the views the screens remember */
+		oneOf("homeWindow", HOME_WINDOWS) { s, v -> s.copy(homeWindow = v) },
+		text("homeShow", { v -> v.split(',').map(String::trim).firstOrNull { it.isNotEmpty() && it !in HOME_STATES }?.let { "unknown state $it (allowed: ${HOME_STATES.joinToString()})" } }) { s, v ->
+			s.copy(homeShow = v.split(',').map(String::trim).filter(String::isNotEmpty).toSet())
+		},
+		bool("homeFilterEntries") { s, v -> s.copy(homeFilterEntries = v) },
+		bool("todoShowIgnored") { s, v -> s.copy(todoShowIgnored = v) },
+		string("agendaView", AGENDA_VIEWS) { s, v -> s.copy(agendaView = v) },
+		string("orderCompanies", names<ListOrder>()) { s, v -> s.copy(listOrders = s.listOrders.with(OrderedList.COMPANIES, ListOrder.valueOf(v))) },
+		string("orderClients", names<ListOrder>()) { s, v -> s.copy(listOrders = s.listOrders.with(OrderedList.CLIENTS, ListOrder.valueOf(v))) },
+		string("orderRoles", names<ListOrder>()) { s, v -> s.copy(listOrders = s.listOrders.with(OrderedList.ROLES, ListOrder.valueOf(v))) },
+		string("orderPresets", names<ListOrder>()) { s, v -> s.copy(listOrders = s.listOrders.with(OrderedList.PRESETS, ListOrder.valueOf(v))) },
 	)
 
 	val byKey by lazy { all.associateBy { it.key } }

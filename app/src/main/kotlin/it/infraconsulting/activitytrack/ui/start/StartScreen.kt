@@ -36,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SegmentedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -102,21 +103,22 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 		/* the keyboard shrinks the form, so the field being typed in scrolls into view (issue #47) */
 		Column(modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
 			LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+				/* work or travel, and when (issue #92): two selectors of the same kind */
 				item {
-					Row(
-						modifier = Modifier.padding(horizontal = 16.dp),
-						horizontalArrangement = Arrangement.spacedBy(8.dp),
-					) {
-						FilterChip(
-							selected = f.mode == SegmentKind.WORK,
-							onClick = { vm.setMode(SegmentKind.WORK) },
-							label = { Text(stringResource(R.string.cmd_work)) },
-						)
+					Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
 						if (enabled(Feature.TRAVEL))
-							FilterChip(
-								selected = f.mode == SegmentKind.TRAVEL,
-								onClick = { vm.setMode(SegmentKind.TRAVEL) },
-								label = { Text(stringResource(R.string.cmd_travel)) },
+							Segmented(
+								listOf(SegmentKind.WORK to stringResource(R.string.cmd_work), SegmentKind.TRAVEL to stringResource(R.string.cmd_travel)),
+								f.mode, vm::setMode,
+							)
+						if (editableTimes)
+							Segmented(
+								listOf(
+									StartWhen.NOW to stringResource(R.string.start_when_now),
+									StartWhen.STARTED to stringResource(R.string.start_when_started),
+									StartWhen.PAST to stringResource(R.string.start_when_past),
+								),
+								f.start, { vm.setStart(it); vm.clearError() },
 							)
 					}
 				}
@@ -160,44 +162,7 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						modifier = Modifier.padding(16.dp),
 						verticalArrangement = Arrangement.spacedBy(8.dp),
 					) {
-						/* order (owner, issue #47): role, start-end, quick pick, description */
-						if (fieldShown(Field.ROLE))
-							WithAddButton(stringResource(R.string.quick_role), { addRole = true }) { PolicyField(Field.ROLE) {
-								ChoiceField(
-									fieldLabel(Field.ROLE, R.string.field_role),
-									listOf<Pair<Long?, String>>(null to none) +
-										roles.filter { !it.archived || it.id == f.roleId }.map { it.id to it.name },
-									f.roleId,
-									importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
-								) { vm.setRole(it) }
-							} }
-						/* M17: start in the past; empty = now */
-						if (editableTimes) {
-							/* the day (issue #44): empty = today; another day plans or records */
-							if (fieldShown(Field.DATE))
-								PolicyField(Field.DATE) {
-									DateField(fieldLabel(Field.DATE, R.string.field_date), f.date, { vm.setDate(it); vm.clearError() }, clearable = true, importance = fieldImportance(Field.DATE, Importance.OPTIONAL))
-								}
-							/* start and end on one row (issue #37) */
-							androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-								Column(Modifier.weight(1f)) {
-									/* empty Start: the range grid sets start and end; a set Start: the usual picker (issue #30) */
-									TimeField(
-										fieldLabel(Field.TIMES, R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() },
-										clearable = true, importance = Importance.OPTIONAL,
-										onOpen = if (f.startTime.isBlank()) ({ rangeGrid = true }) else null,
-									)
-								}
-								Column(Modifier.weight(1f)) {
-									/* M22: the end too, picked as a range on the grid (start and end together) */
-									TimeField(
-										stringResource(R.string.field_end), f.endTime, { vm.setEndTime(it); vm.clearError() },
-										clearable = true, importance = Importance.OPTIONAL, onOpen = { rangeGrid = true },
-									)
-								}
-							}
-							Text(stringResource(R.string.start_end_hint), style = MaterialTheme.typography.bodySmall)
-						}
+						/* order (issue #92): what is done first, then the role, then the times the mode asks */
 						val companyId = clients.firstOrNull { it.id == f.clientId }?.companyId ?: f.companyId
 						val usable = presets.filter { it.companyId == null || it.companyId == companyId }
 						/* "+" also for presets and roles (backlog 4, 2026-10-18) */
@@ -214,20 +179,85 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 						PolicyField(Field.DESCRIPTION) {
 							DictationInput(fieldLabel(Field.DESCRIPTION, R.string.field_activity), f.activity, vm::setActivity, Importance.REQUIRED)
 						}
+						if (fieldShown(Field.ROLE))
+							WithAddButton(stringResource(R.string.quick_role), { addRole = true }) { PolicyField(Field.ROLE) {
+								ChoiceField(
+									fieldLabel(Field.ROLE, R.string.field_role),
+									listOf<Pair<Long?, String>>(null to none) +
+										roles.filter { !it.archived || it.id == f.roleId }.map { it.id to it.name },
+									f.roleId,
+									importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
+								) { vm.setRole(it) }
+							} }
+						when (f.start.takeIf { editableTimes } ?: StartWhen.NOW) {
+							StartWhen.NOW -> Text(stringResource(R.string.start_when_now_hint), style = MaterialTheme.typography.bodySmall)
+							StartWhen.STARTED -> {
+								/* only the start: today, or yesterday for a time still to come (asked) */
+								TimeField(
+									stringResource(R.string.start_started_at), f.startTime, { vm.setStartTime(it); vm.clearError() },
+									clearable = true, importance = Importance.IMPORTANT,
+								)
+								androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+									for (back in listOf(15, 30, 60))
+										androidx.compose.material3.AssistChip(
+											onClick = {
+												val now = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+												vm.setStartTime(formatMin(((now - back) % 1440 + 1440) % 1440))
+												vm.clearError()
+											},
+											label = { Text(stringResource(R.string.start_minutes_ago, back)) },
+										)
+								}
+								Text(stringResource(R.string.start_when_started_hint), style = MaterialTheme.typography.bodySmall)
+							}
+							StartWhen.PAST -> {
+								/* the day (issue #44): empty = today */
+								if (fieldShown(Field.DATE))
+									PolicyField(Field.DATE) {
+										DateField(fieldLabel(Field.DATE, R.string.field_date), f.date, { vm.setDate(it); vm.clearError() }, clearable = true, importance = fieldImportance(Field.DATE, Importance.OPTIONAL))
+									}
+								/* start and end on one row (issue #37), both from the range grid */
+								Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+									Column(Modifier.weight(1f)) {
+										TimeField(
+											fieldLabel(Field.TIMES, R.string.field_start), f.startTime, { vm.setStartTime(it); vm.clearError() },
+											clearable = true, importance = Importance.IMPORTANT,
+											onOpen = if (f.startTime.isBlank()) ({ rangeGrid = true }) else null,
+										)
+									}
+									Column(Modifier.weight(1f)) {
+										TimeField(
+											stringResource(R.string.field_end), f.endTime, { vm.setEndTime(it); vm.clearError() },
+											clearable = true, importance = Importance.IMPORTANT, onOpen = { rangeGrid = true },
+										)
+									}
+								}
+							}
+						}
 						if (error != null)
 							Text(reasonText(error!!), color = MaterialTheme.colorScheme.error)
 					}
 				}
 			}
-			/* green play (owner request); the label stays for accessibility */
+			/* the button says what will happen (issue #92) */
 			val start = commandStyle(if (f.mode == SegmentKind.TRAVEL) EntryCommand.TRAVEL else EntryCommand.WORK)!!
-			val label = stringResource(R.string.start_action)
+			val from = parseHhMm(f.startTime)?.takeIf { it < 1440 }
+			val to = parseHhMm(f.endTime)
+			val label = when {
+				!editableTimes || f.start == StartWhen.NOW || from == null -> stringResource(R.string.start_now_action)
+				f.start == StartWhen.PAST && to != null -> stringResource(R.string.start_record_action, formatMin(from), formatMin(to % 1440))
+				else -> stringResource(R.string.start_from_action, formatMin(from))
+			}
 			Button(
 				onClick = { vm.requestStart(onBack) },
 				enabled = f.canStart && pending.isEmpty(),
 				colors = ButtonDefaults.buttonColors(containerColor = start.container, contentColor = start.content),
 				modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
-			) { Icon(painterResource(start.icon), contentDescription = label, modifier = Modifier.size(32.dp)) }
+			) {
+				Icon(painterResource(start.icon), contentDescription = null, modifier = Modifier.size(24.dp))
+				androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
+				Text(label, style = MaterialTheme.typography.titleMedium)
+			}
 		}
 	}
 
@@ -295,6 +325,20 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 		)
 	if (addClient)
 		QuickClientDialog(f.companyId, onDone = { client, company -> addClient = false; vm.pickNewClient(client, company) }, onDismiss = { addClient = false })
+}
+
+/* One choice among a few, as connected buttons (issue #92: work/travel and when look alike). */
+@Composable
+private fun <T> Segmented(options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit) {
+	androidx.compose.material3.SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+		options.forEachIndexed { i, (value, label) ->
+			SegmentedButton(
+				selected = value == selected,
+				onClick = { onPick(value) },
+				shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(i, options.size),
+			) { Text(label, maxLines = 1) }
+		}
+	}
 }
 
 /*

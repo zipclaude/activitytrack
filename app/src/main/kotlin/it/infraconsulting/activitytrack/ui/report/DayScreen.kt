@@ -122,11 +122,7 @@ private fun DayContent(report: Report, tag: String?, zone: ZoneId, onOpenEntry: 
 				modifier = Modifier.fillMaxWidth().padding(16.dp),
 				horizontalArrangement = Arrangement.SpaceEvenly,
 			) {
-				/* with a tag: the exact work and travel of those entries instead of the day's span */
-				Total(
-					stringResource(R.string.day_solar),
-					if (tag == null) totals?.solar ?: Duration.ZERO else lines.fold(Duration.ZERO) { a, l -> a + l.work + l.travel },
-				)
+				/* one total, the reported one (owner, issue #99: the solar time interested only him) */
 				Total(
 					stringResource(R.string.day_reported),
 					if (tag == null) totals?.reported ?: Duration.ZERO else lines.fold(Duration.ZERO) { a, l -> a + l.reported },

@@ -8,6 +8,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /* Each schema version must migrate to the current one keeping the data (schemas in core/data/schemas). */
 @RunWith(AndroidJUnit4::class)
@@ -233,6 +234,22 @@ class MigrationTest {
 			}
 			db.execSQL("INSERT INTO client (id, company_id, name, archived) VALUES (2, NULL, 'Rossi', 0)")
 			db.execSQL("INSERT INTO todo (uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms) VALUES ('t1', NULL, 'Call', '', 0, 0, 0)")
+		}
+	}
+
+	@Test
+	fun v14ToV15GivesTheDoneTodosATime() {
+		helper.createDatabase(DB, 14).use { db ->
+			db.execSQL("INSERT INTO todo (uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms) VALUES ('t1', NULL, 'Done', '', 1, 0, 500)")
+			db.execSQL("INSERT INTO todo (uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms) VALUES ('t2', NULL, 'Open', '', 0, 0, 700)")
+		}
+		helper.runMigrationsAndValidate(DB, 15, true).use { db ->
+			db.query("SELECT uid, done_utc_ms FROM todo ORDER BY uid").use { c ->
+				c.moveToFirst()
+				assertEquals(500L, c.getLong(1))
+				c.moveToNext()
+				assertTrue(c.isNull(1))
+			}
 		}
 	}
 

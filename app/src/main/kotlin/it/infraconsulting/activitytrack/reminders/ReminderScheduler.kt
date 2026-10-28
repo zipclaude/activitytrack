@@ -224,14 +224,14 @@ class ReminderScheduler(
 		nm.notify(NotificationIds.of(0, NotificationIds.UNWORKED), ReminderNotifications.unworked(context, todos.map { it.title }, todos.map { it.id }, next))
 	}
 
-	/* Solar vs reported totals of [day]; nothing when the day has no time. */
+	/* The reported total of [day] (issue #99); nothing when the day has no time. */
 	private suspend fun postSummary(nm: NotificationManager, day: LocalDate) {
 		val s = container.settings.current()
 		val totals = container.reports.days(day, day, ZoneId.systemDefault(), s.rounding, s.carryOverMin).firstOrNull()
 			?: return
 		nm.notify(
 			NotificationIds.of(0, NotificationIds.DAY_SUMMARY),
-			ReminderNotifications.daySummary(context, totals.solar, totals.reported),
+			ReminderNotifications.daySummary(context, totals.reported),
 		)
 	}
 

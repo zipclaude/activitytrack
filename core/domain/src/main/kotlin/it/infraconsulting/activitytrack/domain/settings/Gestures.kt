@@ -6,13 +6,16 @@ import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 
 /* What a swipe on a to-do card offers (M10, owner decisions 2026-10-18). */
-enum class TodoSwipe { START, POSTPONE_OR_IGNORE, POSTPONE, IGNORE, DONE, REPLAN, NONE }
+enum class TodoSwipe { START, START_OR_DONE, POSTPONE_OR_IGNORE, POSTPONE, IGNORE, DONE, REPLAN, NONE }
 
 /* What a swipe on an open entry card offers. */
 enum class EntrySwipe { PAUSE_RESUME, STOP_OR_SUSPEND, STOP, SUSPEND, NONE }
 
+/* What a swipe on a stopped entry (to complete or closed) offers on the Home list (one rule for every row). */
+enum class PastSwipe { COMPLETE, REOPEN, NONE }
+
 /* One revealed button of a to-do swipe. */
-enum class TodoAction { START, POSTPONE, IGNORE, RESTORE, DONE, REPLAN }
+enum class TodoAction { START, POSTPONE, IGNORE, RESTORE, DONE, REPLAN, REOPEN }
 
 /*
  * Swipe gestures per card type and direction. Directions are layout
@@ -20,25 +23,37 @@ enum class TodoAction { START, POSTPONE, IGNORE, RESTORE, DONE, REPLAN }
  * meaning; in Italian or English "toward start" is a swipe to the left.
  * [fullSwipe]: a long swipe runs the first revealed action at once.
  */
+/*
+ * One rule for every row (owner, 2026-10-27): toward the start the step
+ * forward (start, done, complete), toward the end put off or go back
+ * (postpone, ignore, reopen). Each stays configurable.
+ */
 data class GestureSettings(
-	val todoToStart: TodoSwipe = TodoSwipe.START,
+	val todoToStart: TodoSwipe = TodoSwipe.START_OR_DONE,
 	val todoToEnd: TodoSwipe = TodoSwipe.POSTPONE_OR_IGNORE,
 	val entryToStart: EntrySwipe = EntrySwipe.PAUSE_RESUME,
 	val entryToEnd: EntrySwipe = EntrySwipe.STOP_OR_SUSPEND,
+	val pastToStart: PastSwipe = PastSwipe.COMPLETE,
+	val pastToEnd: PastSwipe = PastSwipe.REOPEN,
 	val fullSwipe: Boolean = true,
 )
 
 object Gestures {
-	/* The buttons a to-do swipe reveals, first = the long-swipe action; an ignored to-do only offers Restore. */
+	/*
+	 * The buttons a to-do swipe reveals, first = the long-swipe action; an
+	 * ignored to-do only offers Restore, a done one Reopen on the "put off"
+	 * side (postpone or ignore), nothing on the other.
+	 */
 	fun todoActions(swipe: TodoSwipe, ignored: Boolean, planned: Boolean, done: Boolean): List<TodoAction> {
 		if (swipe == TodoSwipe.NONE)
 			return emptyList()
+		if (done)
+			return if (swipe in BACK) listOf(TodoAction.REOPEN) else emptyList()
 		if (ignored)
 			return listOf(TodoAction.RESTORE)
-		if (done)
-			return emptyList()
 		return when (swipe) {
 			TodoSwipe.START -> listOf(TodoAction.START)
+			TodoSwipe.START_OR_DONE -> listOf(TodoAction.START, TodoAction.DONE)
 			TodoSwipe.POSTPONE_OR_IGNORE -> listOfNotNull(TodoAction.POSTPONE.takeIf { planned }, TodoAction.IGNORE)
 			TodoSwipe.POSTPONE -> listOfNotNull(TodoAction.POSTPONE.takeIf { planned })
 			TodoSwipe.IGNORE -> listOf(TodoAction.IGNORE)
@@ -46,6 +61,15 @@ object Gestures {
 			TodoSwipe.REPLAN -> listOf(TodoAction.REPLAN)
 			TodoSwipe.NONE -> emptyList()
 		}
+	}
+
+	private val BACK = setOf(TodoSwipe.POSTPONE_OR_IGNORE, TodoSwipe.POSTPONE, TodoSwipe.IGNORE)
+
+	/* What a swipe on a stopped entry offers: complete one with details missing, reopen either. */
+	fun pastCommands(swipe: PastSwipe, status: EntryStatus): List<EntryCommand> = when (swipe) {
+		PastSwipe.COMPLETE -> listOfNotNull(EntryCommand.COMPLETE.takeIf { status == EntryStatus.TO_COMPLETE })
+		PastSwipe.REOPEN -> listOfNotNull(EntryCommand.REOPEN.takeIf { status == EntryStatus.TO_COMPLETE || status == EntryStatus.CLOSED })
+		PastSwipe.NONE -> emptyList()
 	}
 
 	/*
