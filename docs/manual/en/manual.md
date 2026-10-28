@@ -1,7 +1,18 @@
-Version 0.8.0 (October 2026). Please report any difference between this
+Version 0.8.2 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.8.2** (tested on the debug phone)
+- The dialogs start from the **last company and client** chosen (new
+  client, new to-do, new contact), also after closing the app (§3).
+- Adding companies, clients, roles and quick picks opens **the same
+  dialog** everywhere, Master data included: a new client gets its
+  **colour** at once (§3, §10).
+- A to-do already started (its activity still open) no longer shows on
+  the Home list as planned (§3).
+- The time grid follows the finger with a large font and in landscape
+  (0.8.1).
 
 **New in 0.8.0** (tested on the debug phone)
 - The Home has **one list** for to-dos and stopped activities, with the
@@ -213,7 +224,8 @@ From a tab other than Home, Back returns to Home.
   *Done*, *Ignored* (the first two at first), with the shortcuts "Only
   to-dos", "Only done", "All"; activities with details missing always stay
   in view, whatever the period, and while the list shows them they have no
-  small card. **Tag** appears when the list shows stopped activities and
+  small card; a to-do whose activity is still open is not listed: the
+  activity stands for it. **Tag** appears when the list shows stopped activities and
   hides the to-dos (they have no tags). The choices are remembered. At the
   end **"All to-dos →"** opens the "To-dos" tab of the bottom bar.
 
@@ -272,7 +284,11 @@ already selected (a quick pick fills the description): Company, Client,
 Quick pick and Role in "New activity" and in the activity screen; Company and
 Client in the to-do editor; the client of a contact (also one imported from
 the phone book); the company of a client and of a quick pick, with its
-proposed role.
+proposed role. The dialog is the same when adding from Master data (0.8.2):
+for a client name, company and colour. The dialogs propose the **last
+company and client** chosen in any dialog (new client, new to-do, new
+contact), also after the app is reopened: one usually works for a company
+the whole day. "New activity" keeps its own proposal (§4).
 
 ### Required and optional fields
 The border colour tells how much a field matters:
