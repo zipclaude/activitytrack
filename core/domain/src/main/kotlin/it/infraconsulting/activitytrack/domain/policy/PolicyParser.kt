@@ -166,6 +166,7 @@ object PolicyParser {
 			val v: Any = when (spec.kind) {
 				SettingSpec.Kind.BOOLEAN -> bool(e, path)
 				SettingSpec.Kind.INT -> int(e, path, Int.MIN_VALUE..Int.MAX_VALUE)
+				SettingSpec.Kind.DOUBLE -> double(e, path)
 				SettingSpec.Kind.STRING -> string(e, path)
 			} ?: return null
 			return spec.check(v)?.let { msg -> null.also { error(path, msg) } } ?: v

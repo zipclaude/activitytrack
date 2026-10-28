@@ -165,7 +165,7 @@ fun CompaniesScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 		actions = { if (canCreateMasterData()) AddButton { vm.clearError(); adding = true } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
-			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.COMPANIES, it) } }
+			item(key = "order") { ListOrderChips(order, "orderCompanies") { vm.setOrder(OrderedList.COMPANIES, it) } }
 			if (companies.isEmpty())
 				item { EmptyText() }
 			items(shown(companies, reorder), key = { it.id }) { c ->
@@ -286,7 +286,7 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 		actions = { if ((active.isNotEmpty() || !withCompanies) && canCreateMasterData()) AddButton { vm.clearError(); adding = true } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
-			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.CLIENTS, it) } }
+			item(key = "order") { ListOrderChips(order, "orderClients") { vm.setOrder(OrderedList.CLIENTS, it) } }
 			if (companies.isEmpty() && withCompanies)
 				item { EmptyText(stringResource(R.string.clients_need_company)) }
 			else if (clients.isEmpty())
@@ -396,7 +396,7 @@ fun RolesScreen(onBack: () -> Unit) {
 		actions = { AddButton { vm.clearError(); editing = RoleEntity(name = "") } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
-			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.ROLES, it) } }
+			item(key = "order") { ListOrderChips(order, "orderRoles") { vm.setOrder(OrderedList.ROLES, it) } }
 			if (roles.isEmpty())
 				item { EmptyText() }
 			items(shown(roles, reorder), key = { it.id }) { r ->
@@ -430,7 +430,7 @@ fun PresetsScreen(onBack: () -> Unit) {
 		actions = { AddButton { vm.clearError(); editing = ActivityPresetEntity(text = "") } },
 	) { padding ->
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding)) {
-			item(key = "order") { ListOrderChips(order) { vm.setOrder(OrderedList.PRESETS, it) } }
+			item(key = "order") { ListOrderChips(order, "orderPresets") { vm.setOrder(OrderedList.PRESETS, it) } }
 			if (presets.isEmpty())
 				item { EmptyText() }
 			items(shown(presets, reorder), key = { it.id }) { p ->

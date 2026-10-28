@@ -77,6 +77,47 @@ class PolicyParserTest {
 	}
 
 	@Test
+	fun everyOptionCanBeSetIncludingTheGestures() {
+		/* the keys added on 2026-10-28: gestures, location, endpoints, rounding parts, remembered views */
+		val p = valid(
+			""",
+			"settings": {
+				"gestureTodoToStart": { "value": "DONE", "locked": true }, "gestureFullSwipe": { "value": false, "hidden": true },
+				"gesturePastToEnd": "NONE", "kmFactor": 1.4, "stationaryMin": 20,
+				"tilesEndpoint": "https://tiles.example.org/{z}/{x}/{y}.png", "roundingWorkMode": "FLOOR", "roundingWorkMinimumMin": 30,
+				"homeWindow": 168, "homeShow": "TODO,DONE", "agendaView": "WEEK", "orderClients": "ALPHABETICAL"
+			}
+			""",
+		)
+		val s = p.applyTo(it.infraconsulting.activitytrack.domain.settings.AppSettings())
+		assertEquals(it.infraconsulting.activitytrack.domain.settings.TodoSwipe.DONE, s.gestures.todoToStart)
+		assertEquals(false, s.gestures.fullSwipe)
+		assertEquals(it.infraconsulting.activitytrack.domain.settings.PastSwipe.NONE, s.gestures.pastToEnd)
+		assertEquals(1.4, s.kmFactor)
+		assertEquals(it.infraconsulting.activitytrack.domain.rounding.RoundingMode.FLOOR, s.rounding.work.mode)
+		assertEquals(java.time.Duration.ofMinutes(30), s.rounding.work.minimum)
+		assertEquals(setOf("TODO", "DONE"), s.homeShow)
+		assertEquals("WEEK", s.agendaView)
+		/* only the fixed ones are written back at every read */
+		val user = s.copy(gestures = s.gestures.copy(todoToStart = it.infraconsulting.activitytrack.domain.settings.TodoSwipe.START, pastToEnd = it.infraconsulting.activitytrack.domain.settings.PastSwipe.REOPEN))
+		assertEquals(it.infraconsulting.activitytrack.domain.settings.TodoSwipe.DONE, p.enforce(user).gestures.todoToStart)
+		assertEquals(it.infraconsulting.activitytrack.domain.settings.PastSwipe.REOPEN, p.enforce(user).gestures.pastToEnd)
+	}
+
+	@Test
+	fun badNewValuesAreReported() {
+		val text = policy(
+			""",
+			"settings": { "kmFactor": 9, "osrmEndpoint": "http://x", "tilesEndpoint": "https://t/{z}.png", "homeShow": "TODO,LATER", "gestureEntryToEnd": "JUMP" }
+			""",
+		)
+		assertEquals(
+			setOf("settings.kmFactor.value", "settings.osrmEndpoint.value", "settings.tilesEndpoint.value", "settings.homeShow.value", "settings.gestureEntryToEnd.value"),
+			errors(text).map { it.path }.toSet(),
+		)
+	}
+
+	@Test
 	fun unknownKeysAndBadValuesAreAllReported() {
 		val text = policy(
 			""",

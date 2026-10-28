@@ -45,7 +45,10 @@ import it.infraconsulting.activitytrack.domain.settings.Gestures
 import it.infraconsulting.activitytrack.ui.common.Banded
 import it.infraconsulting.activitytrack.ui.common.GREEN
 import it.infraconsulting.activitytrack.ui.common.ORANGE
+import it.infraconsulting.activitytrack.ui.common.SettingLock
 import it.infraconsulting.activitytrack.ui.common.SwipeAction
+import it.infraconsulting.activitytrack.ui.common.prefix
+import it.infraconsulting.activitytrack.ui.common.settingLock
 import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.ui.common.TagFilterChip
 import it.infraconsulting.activitytrack.ui.common.formatMin
@@ -90,8 +93,8 @@ internal fun HomeListHeader(
 		Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 6.dp),
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 	) {
-		PeriodChip(window, windows, onWindow)
-		StateChip(show, offered, onShow)
+		PeriodChip(window, windows, onWindow, settingLock("homeWindow"))
+		StateChip(show, offered, onShow, settingLock("homeShow"))
 		CompanyFilter(todosVm, onHome = true, label = stringResource(R.string.home_filter_company))
 		if (HomeShow.MISSING in show || HomeShow.DONE in show)
 			TagFilterChip(tags, tag, label = stringResource(R.string.home_filter_tag), onSelect = onTag)
@@ -100,10 +103,15 @@ internal fun HomeListHeader(
 
 /* the period, always in sight: its value, grey */
 @Composable
-private fun PeriodChip(window: Int, labels: List<Pair<Int, String>>, onPick: (Int) -> Unit) {
+private fun PeriodChip(window: Int, labels: List<Pair<Int, String>>, onPick: (Int) -> Unit, lock: SettingLock) {
+	if (lock == SettingLock.HIDDEN)
+		return
 	var open by remember { mutableStateOf(false) }
 	Box {
-		FilterChip(selected = false, onClick = { open = true }, label = { Text((labels.firstOrNull { it.first == window }?.second ?: "") + " ▾") })
+		FilterChip(
+			selected = false, onClick = { open = true }, enabled = lock == SettingLock.FREE,
+			label = { Text(lock.prefix() + (labels.firstOrNull { it.first == window }?.second ?: "") + " ▾") },
+		)
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
 			for ((w, label) in labels)
 				DropdownMenuItem(text = { Text(label) }, onClick = { open = false; onPick(w) })
@@ -121,14 +129,16 @@ private fun showLabel(s: HomeShow): Int = when (s) {
 }
 
 @Composable
-private fun StateChip(show: Set<HomeShow>, offered: List<HomeShow>, onShow: (Set<HomeShow>) -> Unit) {
+private fun StateChip(show: Set<HomeShow>, offered: List<HomeShow>, onShow: (Set<HomeShow>) -> Unit, lock: SettingLock) {
+	if (lock == SettingLock.HIDDEN)
+		return
 	var open by remember { mutableStateOf(false) }
 	/* coloured when it differs from the default (to-dos and details missing) */
 	val changed = show != DEFAULT_SHOW.intersect(offered.toSet())
 	Box {
 		FilterChip(
-			selected = changed, onClick = { open = true },
-			label = { Text(stringResource(R.string.home_filter_state) + " ▾", maxLines = 1) },
+			selected = changed, onClick = { open = true }, enabled = lock == SettingLock.FREE,
+			label = { Text(lock.prefix() + stringResource(R.string.home_filter_state) + " ▾", maxLines = 1) },
 		)
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
 			for (s in offered)
