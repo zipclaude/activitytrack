@@ -16,7 +16,7 @@ import it.infraconsulting.activitytrack.domain.sync.SyncIds
 object SyncSchema {
 	interface Sql {
 		fun exec(sql: String, vararg args: Any?)
-		fun rows(sql: String): List<List<Any?>>
+		fun rows(sql: String, vararg args: Any?): List<List<Any?>>
 	}
 
 	/* table -> record type of the wire schema (ActivityTrack Web, SYNC.md §1) */

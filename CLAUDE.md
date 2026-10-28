@@ -77,7 +77,10 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
 - `scripts/sample-db.py` builds an invented DB (schema of
   `ActivityTrackDatabase.VERSION`, times relative to now) and
   `scripts/screenshots.py` takes the manual's screenshots.
-- `docs/samples/` holds interchange and policy samples for device tests.
+- `docs/samples/` holds interchange and policy samples for device tests, and
+  `sync-schema.json`: the output of ActivityTrack Web's `manage.py sync_schema`.
+  `SyncMappingTest` compares it with `SyncMapping`; refresh it whenever the
+  server's models change, and change both sides together.
 - Some OEM ROMs (MIUI) refuse test-only APKs over USB
   (`INSTALL_FAILED_USER_RESTRICTED`): instrumented tests cannot run there;
   check behaviour from the UI and a copy of the DB. USB adb on Debian needs
