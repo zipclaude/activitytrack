@@ -79,6 +79,7 @@ fun WithAddButton(label: String, onAdd: () -> Unit, masterData: Boolean = false,
 
 @Composable
 fun QuickCompanyDialog(onDone: (Long) -> Unit, onDismiss: () -> Unit) {
+	val last = lastPickViewModel()
 	val vm = quickAddViewModel()
 	val error by vm.error.collectAsState()
 	var name by remember { mutableStateOf("") }
@@ -87,7 +88,8 @@ fun QuickCompanyDialog(onDone: (Long) -> Unit, onDismiss: () -> Unit) {
 		title = stringResource(R.string.quick_company),
 		error = error,
 		onDismiss = { vm.clearError(); onDismiss() },
-		onConfirm = { vm.addCompany(name, color) { onDone(it) } },
+		/* a new company is the one being worked on (issue #106) */
+		onConfirm = { vm.addCompany(name, color) { last.remember(it); onDone(it) } },
 	) {
 		TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
 		Text(stringResource(R.string.sec_color), style = MaterialTheme.typography.labelLarge)
@@ -160,7 +162,10 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long?) -> Unit, onDismiss
 	val error by vm.error.collectAsState()
 	val companies by vm.companies.collectAsState()
 	var name by remember { mutableStateOf("") }
-	var company by remember { mutableStateOf(companyId) }
+	/* the proposed one, else the company last chosen in a dialog (issue #106) */
+	val last = lastPickViewModel()
+	val lastCompany = lastPick().first
+	var company by remember { mutableStateOf(companyId ?: lastCompany) }
 	var addCompany by remember { mutableStateOf(false) }
 	var color by remember { mutableStateOf<Int?>(null) }
 	val chosen = company ?: companies.singleOrNull()?.id
@@ -168,7 +173,7 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long?) -> Unit, onDismiss
 		title = stringResource(R.string.quick_client),
 		error = error,
 		onDismiss = { vm.clearError(); onDismiss() },
-		onConfirm = { vm.addClient(chosen.takeIf { withCompanies }, name, !withCompanies, color, onDone) },
+		onConfirm = { vm.addClient(chosen.takeIf { withCompanies }, name, !withCompanies, color) { id, co -> last.remember(co, id); onDone(id, co) } },
 	) {
 		TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
 		if (withCompanies)

@@ -308,10 +308,14 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 			}
 		}
 	}
+	/* a new client of the company last chosen in a dialog, else the first (issue #106) */
+	val last = it.infraconsulting.activitytrack.ui.common.lastPickViewModel()
+	val lastCompany = it.infraconsulting.activitytrack.ui.common.lastPick().first
 	if (adding)
-		ClientDialog(ClientEntity(companyId = active.firstOrNull()?.id.takeIf { withCompanies }, name = ""), active, error, { adding = false }, null) {
-			vm.save(it) { adding = false }
-		}
+		ClientDialog(
+			ClientEntity(companyId = (active.firstOrNull { c -> c.id == lastCompany } ?: active.firstOrNull())?.id.takeIf { withCompanies }, name = ""),
+			active, error, { adding = false }, null,
+		) { c -> vm.save(c) { adding = false; last.remember(c.companyId) } }
 }
 
 @Composable
