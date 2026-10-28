@@ -6,11 +6,11 @@ plugins {
 }
 
 /*
- * Release signing (owner, 2026-10-18): one fixed key, so a release from
- * GitHub updates the installed one. CI passes it in RELEASE_* variables
- * (repository secrets); locally a properties file outside the repository
- * (-Pactivitytrack.signing=<file>, default <keys folder>/release.properties).
- * Without either, the release is built unsigned.
+ * Release signing: one fixed key, so a release from GitHub updates the
+ * installed one. CI passes it in RELEASE_* variables (repository secrets);
+ * locally a properties file outside the repository, named by the Gradle
+ * property activitytrack.signing (e.g. in ~/.gradle/gradle.properties) or
+ * the ACTIVITYTRACK_SIGNING variable. Without either, the release is built unsigned.
  */
 val releaseSigning: Map<String, String>? = run {
 	System.getenv("RELEASE_STORE_FILE")?.let { file ->
@@ -22,7 +22,8 @@ val releaseSigning: Map<String, String>? = run {
 		)
 	}
 	val path = (findProperty("activitytrack.signing") as String?)
-		?: "${System.getProperty("user.home")}/activitytrack-keys/release.properties"
+		?: System.getenv("ACTIVITYTRACK_SIGNING")
+		?: return@run null
 	file(path).takeIf { it.isFile }?.let { f ->
 		Properties().apply { f.inputStream().use(::load) }.let { p -> p.stringPropertyNames().associateWith(p::getProperty) }
 	}
@@ -40,7 +41,7 @@ android {
 		versionCode = (findProperty("activitytrack.versionCode") as String?)?.toInt() ?: 1
 		versionName = (findProperty("activitytrack.versionName") as String?) ?: "0.1.0"
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-		/* personal APK for the owner's phone: native libraries (MapLibre) only for arm64 */
+		/* native libraries (MapLibre) only for arm64, to keep the APK small */
 		ndk {
 			abiFilters += "arm64-v8a"
 		}

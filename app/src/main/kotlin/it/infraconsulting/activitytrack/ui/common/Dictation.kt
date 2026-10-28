@@ -36,8 +36,8 @@ import java.util.Locale
 /*
  * Multi-line text field with dictation (M3, DESIGN §9). SpeechRecognizer with
  * our own dialog: the RECOGNIZE_SPEECH activity is not usable on every device
- * (some devices answer "Voice search isn't available" without the
- * Google app) while recognition services are. On-device recognition first,
+ * (some devices answer "Voice search isn't available" without the Google
+ * app) while recognition services are. On-device recognition first,
  * the default service otherwise. Free offline STT (Vosk / whisper.cpp) is M4.
  */
 @Composable

@@ -321,7 +321,7 @@ M0 test vectors were cross-checked with an independent Python implementation.
 
 | Item | Status |
 |---|---|
-| M0 never compiled (sandbox without Maven/Google access) | owner to run `./gradlew :core:domain:test assembleDebug` |
+| M0 never compiled (first environment without Maven/Google access) | owner to run `./gradlew :core:domain:test assembleDebug` |
 | KSP 2.3.11 with AGP 9.4 built-in Kotlin | to verify at first build |
 | FGS location started from notification/widget while app in background | verify on Android 16; background location granted |
 | OxygenOS background restrictions | test reminders in Doze and with screen off |

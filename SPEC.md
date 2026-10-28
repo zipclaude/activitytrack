@@ -2,7 +2,7 @@
 
 Status: v0.14 (2026-10-19, release 0.5.0: M14–M19, private calendar events). Application ID `it.infraconsulting.activitytrack`.
 
-Personal Android app for a freelancer who works for several companies, on their
+Android app for freelancers who work for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
 produce reports without having to remember anything afterwards.
 
@@ -13,7 +13,7 @@ produce reports without having to remember anything afterwards.
 | License | GPL-3.0-or-later |
 | Language / UI | Kotlin, Jetpack Compose, Material 3 |
 | SDK | minSdk 33 (Android 13), targetSdk 36 (Android 16), compileSdk 37 (required by Compose BOM 2026.09) |
-| Reference device | Android 16 phone |
+| Reference device | Android 16 phone (arm64) |
 | Distribution | personal APK (sideload); no Google Play Services, no proprietary SDKs |
 | Database | SQLite via Room, app-private storage |
 | User data directory | folder chosen via SAF (persistable permission), e.g. `Documents/ActivityTrack/` with `attachments/` and `backup/` |

@@ -100,7 +100,7 @@ reference, locality.
 - SQLite database; attachments in a dedicated, externally accessible directory;
   daily backup.
 - Export: CSV now; later plug-ins for management systems via XML or JSON.
-- Personal APK for now. Device: Android 16 phone; keep compatibility down
+- APK distributed from GitHub Releases for now. Target: Android 16; keep compatibility down
   to Android 13 if possible.
 - UI languages: Italian, English, German, Spanish.
 - Name **ActivityTrack**, domain `activitytrack.infraconsulting.it` → application ID
