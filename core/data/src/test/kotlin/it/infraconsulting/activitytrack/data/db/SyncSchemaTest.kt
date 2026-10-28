@@ -2,10 +2,7 @@
 package it.infraconsulting.activitytrack.data.db
 
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
-import org.json.JSONObject
-import java.io.File
 import java.sql.Connection
-import java.sql.DriverManager
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,47 +14,18 @@ import kotlin.test.assertTrue
  * the uids, and the triggers must log every change.
  */
 class SyncSchemaTest {
-	private val dir = File("schemas/it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase")
 	private val open = mutableListOf<Connection>()
 
 	@AfterTest
 	fun close() = open.forEach { it.close() }
 
-	private fun create(version: Int): Connection {
-		val c = DriverManager.getConnection("jdbc:sqlite::memory:")
-		open += c
-		c.createStatement().use { it.execute("PRAGMA foreign_keys = ON") }
-		val db = JSONObject(File(dir, "$version.json").readText()).getJSONObject("database")
-		val entities = db.getJSONArray("entities")
-		for (i in 0 until entities.length()) {
-			val e = entities.getJSONObject(i)
-			val table = e.getString("tableName")
-			exec(c, e.getString("createSql").replace("\${TABLE_NAME}", table))
-			val indices = e.optJSONArray("indices") ?: continue
-			for (j in 0 until indices.length())
-				exec(c, indices.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}", table))
-		}
-		return c
-	}
+	private fun create(version: Int): Connection = JdbcSql.create(version).also { open += it }
 
-	private fun exec(c: Connection, sql: String, vararg args: Any?) {
-		c.prepareStatement(sql).use { s ->
-			args.forEachIndexed { i, a -> s.setObject(i + 1, a) }
-			s.execute()
-		}
-	}
+	private fun exec(c: Connection, sql: String, vararg args: Any?) = JdbcSql(c).exec(sql, *args)
 
-	private fun rows(c: Connection, sql: String): List<List<Any?>> = c.createStatement().use { s ->
-		s.executeQuery(sql).use { r ->
-			val n = r.metaData.columnCount
-			buildList { while (r.next()) add((1..n).map { r.getObject(it) }) }
-		}
-	}
+	private fun rows(c: Connection, sql: String): List<List<Any?>> = JdbcSql(c).rows(sql)
 
-	private fun sql(c: Connection) = object : SyncSchema.Sql {
-		override fun exec(sql: String, vararg args: Any?) = exec(c, sql, *args)
-		override fun rows(sql: String) = rows(c, sql)
-	}
+	private fun sql(c: Connection) = JdbcSql(c)
 
 	/* what Room compares: columns, indexes and foreign keys of every table, and the triggers */
 	private fun shape(c: Connection): Map<String, Any> {
@@ -123,7 +91,7 @@ class SyncSchemaTest {
 		val company = rows(c, "SELECT uid FROM company WHERE id = 1")[0][0] as String
 		assertEquals(SyncIds.remoteItem(company, "sdp", "types", "s1", "t1"), rows(c, "SELECT uid FROM remote_item WHERE id = 't1'")[0][0])
 		/* nothing logged: the app is not paired yet */
-		assertEquals(0, rows(c, "SELECT COUNT(*) FROM sync_change")[0][0])
+		assertEquals(0L, rows(c, "SELECT COUNT(*) FROM sync_change")[0][0])
 	}
 
 	@Test

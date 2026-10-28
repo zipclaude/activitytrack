@@ -98,12 +98,12 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		}
 	}
 
-	private class SupportSql(private val db: SupportSQLiteDatabase) : SyncSchema.Sql {
+	internal class SupportSql(private val db: SupportSQLiteDatabase) : SyncSchema.Sql {
 		override fun exec(sql: String, vararg args: Any?) {
 			if (args.isEmpty()) db.execSQL(sql) else db.execSQL(sql, args)
 		}
 
-		override fun rows(sql: String): List<List<Any?>> = db.query(sql).use { c ->
+		override fun rows(sql: String, vararg args: Any?): List<List<Any?>> = db.query(sql, args).use { c ->
 			buildList {
 				while (c.moveToNext())
 					add(

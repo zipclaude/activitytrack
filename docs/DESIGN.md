@@ -112,7 +112,11 @@ uids name-based (`SyncIds`); `sync_change` (change log written by SQLite
 triggers while `sync_state.enabled` and not `applying`), `sync_shadow`,
 `sync_state`; contact phones and entry tags log their parent record; a
 `keep_uid` trigger keeps a row's identity across updates (`SyncSchema`).
-`ActivityTrackDatabase.VERSION` is the single source.
+Records travel as wire fields (issue #112): `SyncMapping` (core:domain) maps
+each record type to its table and each field to its column and kind
+(references as uids, epoch days as dates, JSON text as JSON, contact phones
+and entry tags as lists); `SyncRecords` (core:data) reads and writes records
+by those fields. `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)
 

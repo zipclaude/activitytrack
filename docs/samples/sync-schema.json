@@ -1,0 +1,851 @@
+{
+  "version": 1,
+  "types": [
+    {
+      "type": "company",
+      "scope": "master",
+      "parent": null,
+      "fields": [
+        {
+          "name": "name",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "archived",
+          "kind": "bool",
+          "null": false
+        },
+        {
+          "name": "color",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "externalCode",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "position",
+          "kind": "int",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "companySite",
+      "scope": "child",
+      "parent": "company",
+      "fields": [
+        {
+          "name": "label",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "lat",
+          "kind": "float",
+          "null": false
+        },
+        {
+          "name": "lon",
+          "kind": "float",
+          "null": false
+        },
+        {
+          "name": "radiusM",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "address",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "companyUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "company"
+        }
+      ]
+    },
+    {
+      "type": "client",
+      "scope": "master",
+      "parent": null,
+      "fields": [
+        {
+          "name": "companyUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "company"
+        },
+        {
+          "name": "name",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "archived",
+          "kind": "bool",
+          "null": false
+        },
+        {
+          "name": "color",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "externalCode",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "position",
+          "kind": "int",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "clientSite",
+      "scope": "child",
+      "parent": "client",
+      "fields": [
+        {
+          "name": "label",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "lat",
+          "kind": "float",
+          "null": false
+        },
+        {
+          "name": "lon",
+          "kind": "float",
+          "null": false
+        },
+        {
+          "name": "radiusM",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "address",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "clientUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "client"
+        }
+      ]
+    },
+    {
+      "type": "contact",
+      "scope": "child",
+      "parent": "client",
+      "fields": [
+        {
+          "name": "clientUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "client"
+        },
+        {
+          "name": "name",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "email",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "externalKey",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "phones",
+          "kind": "json",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "role",
+      "scope": "master",
+      "parent": null,
+      "fields": [
+        {
+          "name": "name",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "archived",
+          "kind": "bool",
+          "null": false
+        },
+        {
+          "name": "position",
+          "kind": "int",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "preset",
+      "scope": "master",
+      "parent": null,
+      "fields": [
+        {
+          "name": "text",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "defaultRoleUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "role"
+        },
+        {
+          "name": "companyUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "company"
+        },
+        {
+          "name": "position",
+          "kind": "int",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "material",
+      "scope": "master",
+      "parent": null,
+      "fields": [
+        {
+          "name": "name",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "unit",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "unitCostCents",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "companyUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "company"
+        },
+        {
+          "name": "archived",
+          "kind": "bool",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "place",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "label",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "lat",
+          "kind": "float",
+          "null": false
+        },
+        {
+          "name": "lon",
+          "kind": "float",
+          "null": false
+        },
+        {
+          "name": "radiusM",
+          "kind": "int",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "todo",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "companyUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "company"
+        },
+        {
+          "name": "clientUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "client"
+        },
+        {
+          "name": "externalKey",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "title",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "notes",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "refs",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "dueDate",
+          "kind": "date",
+          "null": true
+        },
+        {
+          "name": "dueTimeMin",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "priority",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "done",
+          "kind": "bool",
+          "null": false
+        },
+        {
+          "name": "doneUtcMs",
+          "kind": "instant",
+          "null": true
+        },
+        {
+          "name": "createdUtcMs",
+          "kind": "instant",
+          "null": false
+        },
+        {
+          "name": "updatedUtcMs",
+          "kind": "instant",
+          "null": false
+        },
+        {
+          "name": "planDate",
+          "kind": "date",
+          "null": true
+        },
+        {
+          "name": "planStartMin",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "durationMin",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "ignoredUtcMs",
+          "kind": "instant",
+          "null": true
+        },
+        {
+          "name": "pluginFields",
+          "kind": "json",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "entry",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "todoUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "todo"
+        },
+        {
+          "name": "contactUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "contact"
+        },
+        {
+          "name": "companyUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "company"
+        },
+        {
+          "name": "clientUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "client"
+        },
+        {
+          "name": "roleUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "role"
+        },
+        {
+          "name": "activity",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "status",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "mode",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "locality",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "locationKind",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "notes",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "zoneId",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "plannedEndUtcMs",
+          "kind": "instant",
+          "null": true
+        },
+        {
+          "name": "pluginFields",
+          "kind": "json",
+          "null": true
+        },
+        {
+          "name": "tags",
+          "kind": "json",
+          "null": false
+        },
+        {
+          "name": "createdUtcMs",
+          "kind": "instant",
+          "null": false
+        },
+        {
+          "name": "updatedUtcMs",
+          "kind": "instant",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "segment",
+      "scope": "child",
+      "parent": "entry",
+      "fields": [
+        {
+          "name": "entryUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "entry"
+        },
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "startUtcMs",
+          "kind": "instant",
+          "null": false
+        },
+        {
+          "name": "endUtcMs",
+          "kind": "instant",
+          "null": true
+        },
+        {
+          "name": "zoneId",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "source",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "kmEstimated",
+          "kind": "float",
+          "null": true
+        },
+        {
+          "name": "kmDeclared",
+          "kind": "float",
+          "null": true
+        },
+        {
+          "name": "note",
+          "kind": "text",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "attachment",
+      "scope": "child",
+      "parent": "entry",
+      "fields": [
+        {
+          "name": "entryUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "entry"
+        },
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "mime",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "transcript",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "createdUtcMs",
+          "kind": "instant",
+          "null": false
+        },
+        {
+          "name": "sha256",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "size",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "hasFile",
+          "kind": "bool",
+          "null": false,
+          "readOnly": true
+        }
+      ]
+    },
+    {
+      "type": "expense",
+      "scope": "child",
+      "parent": "entry",
+      "fields": [
+        {
+          "name": "entryUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "entry"
+        },
+        {
+          "name": "segmentUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "segment"
+        },
+        {
+          "name": "amountCents",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "description",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "attachmentUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "attachment"
+        },
+        {
+          "name": "createdUtcMs",
+          "kind": "instant",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "entryMaterial",
+      "scope": "child",
+      "parent": "entry",
+      "fields": [
+        {
+          "name": "entryUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "entry"
+        },
+        {
+          "name": "materialUid",
+          "kind": "ref",
+          "null": true,
+          "ref": "material"
+        },
+        {
+          "name": "description",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "quantity",
+          "kind": "float",
+          "null": true
+        },
+        {
+          "name": "unit",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "unitCostCents",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "createdUtcMs",
+          "kind": "instant",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "externalRef",
+      "scope": "child",
+      "parent": "entry",
+      "fields": [
+        {
+          "name": "entryUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "entry"
+        },
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "value",
+          "kind": "text",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "absence",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "date",
+          "kind": "date",
+          "null": false
+        },
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "timeMin",
+          "kind": "int",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "dayOff",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "date",
+          "kind": "date",
+          "null": false
+        },
+        {
+          "name": "note",
+          "kind": "text",
+          "null": true
+        }
+      ]
+    },
+    {
+      "type": "workSchedule",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "dayOfWeek",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "startMin",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "endMin",
+          "kind": "int",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "lunchBreak",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "dayOfWeek",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "startMin",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "endMin",
+          "kind": "int",
+          "null": false
+        }
+      ]
+    },
+    {
+      "type": "remoteItem",
+      "scope": "user",
+      "parent": null,
+      "fields": [
+        {
+          "name": "companyUid",
+          "kind": "ref",
+          "null": false,
+          "ref": "company"
+        },
+        {
+          "name": "pluginId",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "list",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "parentId",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "itemId",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "name",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "clientCode",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "active",
+          "kind": "bool",
+          "null": false
+        },
+        {
+          "name": "order",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "extra",
+          "kind": "json",
+          "null": false
+        }
+      ]
+    }
+  ]
+}
