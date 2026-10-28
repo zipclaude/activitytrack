@@ -63,6 +63,10 @@ fun ContactsScreen(onBack: () -> Unit) {
 	val clients by md.clients.collectAsState()
 	val error by vm.error.collectAsState()
 	var editing by remember { mutableStateOf<Pair<ContactEntity, List<String>>?>(null) }
+	/* a new contact of the client last chosen in a dialog, else the first (issue #106) */
+	val last = it.infraconsulting.activitytrack.ui.common.lastPickViewModel()
+	val lastClient = it.infraconsulting.activitytrack.ui.common.lastPick().second
+	fun defaultClient(): Long = (clients.firstOrNull { it.id == lastClient } ?: clients.firstOrNull())?.id ?: 0
 	val context = LocalContext.current
 	/* a phone of the address book: picking it grants reading that row only (no READ_CONTACTS) */
 	val pick = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -72,7 +76,7 @@ fun ContactsScreen(onBack: () -> Unit) {
 		)?.use { c ->
 			if (c.moveToFirst()) {
 				vm.clearError()
-				editing = ContactEntity(clientId = clients.firstOrNull()?.id ?: 0, name = c.getString(0).orEmpty()) to listOf(c.getString(1).orEmpty())
+				editing = ContactEntity(clientId = defaultClient(), name = c.getString(0).orEmpty()) to listOf(c.getString(1).orEmpty())
 			}
 		}
 	}
@@ -80,7 +84,7 @@ fun ContactsScreen(onBack: () -> Unit) {
 	ScreenScaffold(
 		title = stringResource(R.string.md_contacts),
 		onBack = onBack,
-		actions = { if (canCreateMasterData()) AddButton { vm.clearError(); editing = ContactEntity(clientId = clients.firstOrNull()?.id ?: 0, name = "") to emptyList() } },
+		actions = { if (canCreateMasterData()) AddButton { vm.clearError(); editing = ContactEntity(clientId = defaultClient(), name = "") to emptyList() } },
 	) { padding ->
 		LazyColumn(Modifier.fillMaxSize().padding(padding)) {
 			item {
@@ -112,7 +116,7 @@ fun ContactsScreen(onBack: () -> Unit) {
 		val delete = if (c.id != 0L) confirmDelete(c.name) { vm.delete(c) { editing = null } } else null
 		EditDialog(
 			stringResource(R.string.contact_edit), error, { editing = null },
-			{ vm.save(c.copy(name = name, clientId = clientId, email = email), phones.lines()) { editing = null } }, delete,
+			{ vm.save(c.copy(name = name, clientId = clientId, email = email), phones.lines()) { editing = null; last.remember(clients.firstOrNull { it.id == clientId }?.companyId, clientId) } }, delete,
 		) {
 			TextInput(stringResource(R.string.field_name), name, { name = it }, importance = Importance.REQUIRED)
 			/* the client may not exist yet, e.g. a number imported from the phone book (issue #37) */

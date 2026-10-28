@@ -111,6 +111,8 @@ import it.infraconsulting.activitytrack.ui.common.settingLock
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.Undo
+import it.infraconsulting.activitytrack.ui.common.lastPick
+import it.infraconsulting.activitytrack.ui.common.lastPickViewModel
 import it.infraconsulting.activitytrack.ui.common.UndoEvent
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseDate
@@ -686,9 +688,24 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	val companies by vm.companies.collectAsState()
 	val error by vm.error.collectAsState()
 	var title by remember { mutableStateOf(initial.title) }
+	/* a new one starts from the company and client last chosen in a dialog (issue #106) */
+	val last = lastPickViewModel()
+	val (lastCompany, lastClient) = lastPick()
+	val isNew = initial.id == 0L
 	var clientId by remember { mutableStateOf(initial.clientId) }
 	/* the companies may still be loading when the dialog opens (agenda): default to the first once known */
 	var picked by remember { mutableStateOf(initial.companyId) }
+	/* the last pick may arrive after the first frame: taken once, if nothing was chosen meanwhile */
+	var lastTaken by remember { mutableStateOf(!isNew) }
+	androidx.compose.runtime.LaunchedEffect(lastCompany, lastClient, clients) {
+		if (lastTaken || (lastCompany == null && lastClient == null))
+			return@LaunchedEffect
+		if (picked == null)
+			picked = lastCompany
+		if (clientId == null)
+			clientId = lastClient?.takeIf { id -> clients.firstOrNull { it.id == id }?.companyId == picked }
+		lastTaken = clients.isNotEmpty() || lastClient == null
+	}
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
 	/* without companies (policy, issue #48) a to-do belongs to none */
@@ -724,14 +741,14 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 			confirmButton = {
 				TextButton(onClick = {
 					val (day, min) = alignedDue(pending.plan()!!, pending.dueTimeMin, ZoneId.systemDefault())
-					vm.save(pending.copy(dueEpochDay = day.toEpochDay(), dueTimeMin = min), onClose)
+					vm.save(pending.copy(dueEpochDay = day.toEpochDay(), dueTimeMin = min)) { last.remember(pending.companyId, pending.clientId); onClose() }
 					alignDue = null
 				}) {
 					Text(stringResource(R.string.todo_align_due_yes))
 				}
 			},
 			dismissButton = {
-				TextButton(onClick = { vm.save(pending, onClose); alignDue = null }) {
+				TextButton(onClick = { vm.save(pending) { last.remember(pending.companyId, pending.clientId); onClose() }; alignDue = null }) {
 					Text(stringResource(R.string.todo_align_due_no))
 				}
 			},
@@ -786,7 +803,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				alignDue = todo
 				return@EditDialog
 			}
-			vm.save(todo, onClose)
+			vm.save(todo) { last.remember(todo.companyId, todo.clientId); onClose() }
 		},
 	) {
 		/* order and fields of the approved mockup (owner, issue #47) */

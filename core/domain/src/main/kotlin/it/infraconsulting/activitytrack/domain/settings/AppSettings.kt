@@ -100,6 +100,9 @@ data class AppSettings(
 	val swipeLearned: Boolean = false,
 	/* the one-off "Suspend vs Pause" explanation was read (issue #91) */
 	val suspendHintSeen: Boolean = false,
+	/* the company and client last chosen in a dialog, its default next time (issue #106) */
+	val lastCompanyId: Long? = null,
+	val lastClientId: Long? = null,
 	/* order of the master-data lists and drop-downs (M16) */
 	val listOrders: ListOrders = ListOrders(),
 	/*

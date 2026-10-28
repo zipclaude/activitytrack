@@ -5,6 +5,8 @@ import it.infraconsulting.activitytrack.ui.common.companiesShown
 import it.infraconsulting.activitytrack.ui.common.canCreateMasterData
 import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
+import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
+import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import it.infraconsulting.activitytrack.ui.common.rememberReorder
 import it.infraconsulting.activitytrack.ui.common.ReorderRow
@@ -173,10 +175,9 @@ fun CompaniesScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 			}
 		}
 	}
+	/* the same dialog as the "+" next to the company fields (issue #109): name and colour */
 	if (adding)
-		NameDialog(stringResource(R.string.company_edit), "", false, error, { adding = false }, null) { n, a ->
-			vm.save(CompanyEntity(name = n, archived = a)) { adding = false }
-		}
+		QuickCompanyDialog(onDone = { adding = false }, onDismiss = { adding = false })
 }
 
 @Composable
@@ -308,10 +309,12 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 			}
 		}
 	}
+	/*
+	 * The same dialog as the "+" next to the client fields (issue #109): name,
+	 * company (the one last chosen in a dialog, issue #106) and colour.
+	 */
 	if (adding)
-		ClientDialog(ClientEntity(companyId = active.firstOrNull()?.id.takeIf { withCompanies }, name = ""), active, error, { adding = false }, null) {
-			vm.save(it) { adding = false }
-		}
+		QuickClientDialog(null, onDone = { _, _ -> adding = false }, onDismiss = { adding = false })
 }
 
 @Composable
@@ -404,8 +407,12 @@ fun RolesScreen(onBack: () -> Unit) {
 			}
 		}
 	}
-	editing?.let { r ->
-		val delete = if (r.id != 0L) confirmDelete(r.name) { vm.delete(r) { editing = null } } else null
+	/* a new one in the same dialog as the "+" next to the role fields (issue #109) */
+	editing?.takeIf { it.id == 0L }?.let {
+		QuickRoleDialog(onDone = { editing = null }, onDismiss = { editing = null })
+	}
+	editing?.takeIf { it.id != 0L }?.let { r ->
+		val delete = confirmDelete(r.name) { vm.delete(r) { editing = null } }
 		NameDialog(stringResource(R.string.role_edit), r.name, r.archived, error, { editing = null }, delete) { n, a ->
 			vm.save(r.copy(name = n, archived = a)) { editing = null }
 		}
@@ -442,7 +449,11 @@ fun PresetsScreen(onBack: () -> Unit) {
 			}
 		}
 	}
-	editing?.let { p ->
+	/* a new one in the same dialog as the "+" next to the quick pick fields (issue #109) */
+	editing?.takeIf { it.id == 0L }?.let {
+		QuickPresetDialog("", null, onDone = { editing = null }, onDismiss = { editing = null })
+	}
+	editing?.takeIf { it.id != 0L }?.let { p ->
 		var text by remember(p) { mutableStateOf(p.text) }
 		var roleId by remember(p) { mutableStateOf(p.defaultRoleId) }
 		var companyId by remember(p) { mutableStateOf(p.companyId) }
