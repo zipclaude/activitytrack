@@ -2,12 +2,15 @@
 package it.infraconsulting.activitytrack.data.db
 
 import android.content.Context
+import android.database.Cursor
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.AutoMigrationSpec
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 
 @Database(
 	entities = [
@@ -39,6 +42,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		RemoteItemEntity::class,
 		RemoteRecordEntity::class,
 		RemoteDeletedEntity::class,
+		SyncChangeEntity::class,
+		SyncShadowEntity::class,
+		SyncStateEntity::class,
 	],
 	version = ActivityTrackDatabase.VERSION,
 	exportSchema = true,
@@ -57,6 +63,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 		AutoMigration(from = 11, to = 12),	/* issue #48 policy history; plugin lists and sent records, entry and to-do plugin fields, contact key */
 		AutoMigration(from = 13, to = 14),	/* issue #48: remote records of deleted entries */
 		AutoMigration(from = 14, to = 15, spec = ActivityTrackDatabase.FillDoneTimes::class),	/* issue #89: when a to-do was done */
+		/* 15 -> 16 is MIGRATION_15_16: uids filled before their unique indexes, triggers (issue #111) */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
@@ -69,19 +76,48 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 	abstract fun materialDao(): MaterialDao
 	abstract fun policyDao(): PolicyDao
 	abstract fun pluginDao(): PluginDao
+	abstract fun syncDao(): SyncDao
 
 	companion object {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 15
+		const val VERSION = 16
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =
 			Room.databaseBuilder(context.applicationContext, ActivityTrackDatabase::class.java, FILE_NAME)
 				.setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
+				.addMigrations(MIGRATION_15_16)
 				.addCallback(Seed)
 				.build()
+
+		/* issue #111: sync identities on every synced table, the change log and its triggers */
+		val MIGRATION_15_16 = object : Migration(15, 16) {
+			override fun migrate(db: SupportSQLiteDatabase) = SyncSchema.migrate15To16(SupportSql(db))
+		}
+	}
+
+	private class SupportSql(private val db: SupportSQLiteDatabase) : SyncSchema.Sql {
+		override fun exec(sql: String, vararg args: Any?) {
+			if (args.isEmpty()) db.execSQL(sql) else db.execSQL(sql, args)
+		}
+
+		override fun rows(sql: String): List<List<Any?>> = db.query(sql).use { c ->
+			buildList {
+				while (c.moveToNext())
+					add(
+						(0 until c.columnCount).map { i ->
+							when (c.getType(i)) {
+								Cursor.FIELD_TYPE_NULL -> null
+								Cursor.FIELD_TYPE_INTEGER -> c.getLong(i)
+								Cursor.FIELD_TYPE_FLOAT -> c.getDouble(i)
+								else -> c.getString(i)
+							}
+						},
+					)
+			}
+		}
 	}
 
 	/* 2 -> 3: existing entries get a uid (32 random hex digits; new ones get a UUID). */
@@ -98,11 +134,19 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		}
 	}
 
-	/* Default lunch break Monday to Friday 12:30-14:00 (SPEC §5), editable afterwards. */
+	/*
+	 * Default lunch break Monday to Friday 12:30-14:00 (SPEC §5), editable
+	 * afterwards; the sync state row and triggers (issue #111).
+	 */
 	object Seed : RoomDatabase.Callback() {
 		override fun onCreate(db: SupportSQLiteDatabase) {
+			SyncSchema.onCreate(SupportSql(db))
 			for (day in 1..5)
-				db.execSQL("INSERT INTO lunch_break (day_of_week, start_min, end_min) VALUES ($day, 750, 840)")
+				db.execSQL("INSERT INTO lunch_break (day_of_week, start_min, end_min, uid) VALUES ($day, 750, 840, '${SyncIds.random()}')")
+		}
+
+		override fun onOpen(db: SupportSQLiteDatabase) {
+			SyncSchema.onOpen(SupportSql(db))
 		}
 	}
 }

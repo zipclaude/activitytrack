@@ -40,10 +40,11 @@ def main(out):
 	if os.path.exists(out):
 		os.remove(out)
 	db = sqlite3.connect(out)
+	# indexes after the data: the uid columns are filled at the end (unique, default '')
+	indices = []
 	for e in s["entities"]:
 		db.execute(e["createSql"].replace("${TABLE_NAME}", e["tableName"]))
-		for i in e.get("indices", []):
-			db.execute(i["createSql"].replace("${TABLE_NAME}", e["tableName"]))
+		indices += [i["createSql"].replace("${TABLE_NAME}", e["tableName"]) for i in e.get("indices", [])]
 	for v in s.get("views", []):
 		db.execute(v["createSql"].replace("${VIEW_NAME}", v["viewName"]))
 	for q in s["setupQueries"]:
@@ -169,9 +170,29 @@ def main(out):
 			"INSERT INTO call_log (contact_id, client_id, direction, start_utc_ms, end_utc_ms) VALUES (?, ?, ?, ?, ?)",
 			(contact, client, direction, begin, begin + seconds * 1000),
 		)
+	fill_uids(db, s)
+	for i in indices:
+		db.execute(i)
 	db.commit()
 	db.close()
 	print(out)
+
+
+# as SyncIds.kt (issue #111): random uids, a day off's from its date
+SYNC_NAMESPACE = uuid.UUID("5b0c9f2e-8d0a-4c6b-9a43-2f8e1d7c6a10")
+
+
+def fill_uids(db, s):
+	for e in s["entities"]:
+		t = e["tableName"]
+		if t.startswith("sync_") or not any(f["columnName"] == "uid" for f in e["fields"]):
+			continue
+		if t == "day_off":
+			for (day,) in db.execute("SELECT date_epoch_day FROM day_off").fetchall():
+				db.execute("UPDATE day_off SET uid = ? WHERE date_epoch_day = ?", (str(uuid.uuid5(SYNC_NAMESPACE, f"dayOff:{day}")), day))
+			continue
+		for (rowid,) in db.execute(f"SELECT rowid FROM `{t}` WHERE uid IS NULL OR uid = ''").fetchall():
+			db.execute(f"UPDATE `{t}` SET uid = ? WHERE rowid = ?", (str(uuid.uuid4()), rowid))
 
 
 if __name__ == "__main__":

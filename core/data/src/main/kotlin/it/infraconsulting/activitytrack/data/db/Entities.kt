@@ -11,6 +11,7 @@ import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 
 /*
  * Conventions:
@@ -30,7 +31,7 @@ enum class AbsenceKind { FULL_DAY, LATE_ENTRY, EARLY_EXIT }
 
 @Entity(
 	tableName = "company",
-	indices = [Index(value = ["name"], unique = true), Index(value = ["external_code"], unique = true)],
+	indices = [Index(value = ["uid"], unique = true), Index(value = ["name"], unique = true), Index(value = ["external_code"], unique = true)],
 )
 data class CompanyEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -45,6 +46,8 @@ data class CompanyEntity(
 	@ColumnInfo(name = "connector_config") val connectorConfig: String? = null,
 	/* manual list order (M16); null = never placed, after the placed ones */
 	@ColumnInfo(name = "sort_position") val position: Int? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 @Entity(
@@ -57,7 +60,7 @@ data class CompanyEntity(
 			onDelete = ForeignKey.CASCADE,
 		),
 	],
-	indices = [Index("company_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("company_id")],
 )
 data class CompanySiteEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -67,6 +70,8 @@ data class CompanySiteEntity(
 	val lon: Double,
 	@ColumnInfo(name = "radius_m") val radiusM: Int = 100,
 	val address: String? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 @Entity(
@@ -80,6 +85,7 @@ data class CompanySiteEntity(
 		),
 	],
 	indices = [
+		Index(value = ["uid"], unique = true),
 		Index(value = ["company_id", "name"], unique = true),
 		Index(value = ["company_id", "external_code"], unique = true),
 	],
@@ -95,6 +101,8 @@ data class ClientEntity(
 	@ColumnInfo(name = "external_code") val externalCode: String? = null,
 	/* manual list order (M16); null = never placed, after the placed ones */
 	@ColumnInfo(name = "sort_position") val position: Int? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 @Entity(
@@ -107,7 +115,7 @@ data class ClientEntity(
 			onDelete = ForeignKey.CASCADE,
 		),
 	],
-	indices = [Index("client_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("client_id")],
 )
 data class ClientSiteEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -117,9 +125,11 @@ data class ClientSiteEntity(
 	val lon: Double,
 	@ColumnInfo(name = "radius_m") val radiusM: Int = 100,
 	val address: String? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
-@Entity(tableName = "place")
+@Entity(tableName = "place", indices = [Index(value = ["uid"], unique = true)])
 data class PlaceEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	val kind: PlaceKind,
@@ -127,15 +137,19 @@ data class PlaceEntity(
 	val lat: Double,
 	val lon: Double,
 	@ColumnInfo(name = "radius_m") val radiusM: Int = 100,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
-@Entity(tableName = "role", indices = [Index(value = ["name"], unique = true)])
+@Entity(tableName = "role", indices = [Index(value = ["uid"], unique = true), Index(value = ["name"], unique = true)])
 data class RoleEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	val name: String,
 	val archived: Boolean = false,
 	/* manual list order (M16); null = never placed, after the placed ones */
 	@ColumnInfo(name = "sort_position") val position: Int? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 @Entity(
@@ -154,7 +168,7 @@ data class RoleEntity(
 			onDelete = ForeignKey.CASCADE,
 		),
 	],
-	indices = [Index("default_role_id"), Index("company_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("default_role_id"), Index("company_id")],
 )
 data class ActivityPresetEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -165,6 +179,8 @@ data class ActivityPresetEntity(
 	@ColumnInfo(name = "sort_position") val position: Int? = null,
 	/* last time it was picked for an entry (M16 "last use" order) */
 	@ColumnInfo(name = "last_used_utc_ms") val lastUsedUtcMs: Long? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /*
@@ -267,8 +283,8 @@ data class TodoEntity(
 )
 data class TimeEntryEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
-	/* stable identity across devices and exports (M4); null only before migration 2 -> 3 filled it */
-	val uid: String? = null,
+	/* stable identity across devices, exports and the sync (M4, issue #111): a canonical UUID since schema 16 */
+	val uid: String? = SyncIds.random(),
 	@ColumnInfo(name = "todo_id") val todoId: Long? = null,
 	/* the client's person the work was for (issue #44), optional */
 	@ColumnInfo(name = "contact_id") val contactId: Long? = null,
@@ -309,7 +325,7 @@ data class TimeEntryEntity(
 			onDelete = ForeignKey.CASCADE,
 		),
 	],
-	indices = [Index(value = ["entry_id", "start_utc_ms"]), Index("end_utc_ms")],
+	indices = [Index(value = ["uid"], unique = true), Index(value = ["entry_id", "start_utc_ms"]), Index("end_utc_ms")],
 )
 data class SegmentEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -323,6 +339,8 @@ data class SegmentEntity(
 	@ColumnInfo(name = "km_declared") val kmDeclared: Double? = null,
 	/* description of a pause, e.g. "Telefonata Banca" for one made by a call (issue #28) */
 	val note: String? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /* Coordinates are displayed only; they are never exported. */
@@ -365,7 +383,7 @@ data class LocationSampleEntity(
 			onDelete = ForeignKey.CASCADE,
 		),
 	],
-	indices = [Index("entry_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("entry_id")],
 )
 data class AttachmentEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -375,6 +393,8 @@ data class AttachmentEntity(
 	val mime: String,
 	val transcript: String? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 @Entity(
@@ -399,7 +419,7 @@ data class AttachmentEntity(
 			onDelete = ForeignKey.SET_NULL,
 		),
 	],
-	indices = [Index("entry_id"), Index("segment_id"), Index("attachment_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("entry_id"), Index("segment_id"), Index("attachment_id")],
 )
 data class ExpenseEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -410,6 +430,8 @@ data class ExpenseEntity(
 	val description: String,
 	@ColumnInfo(name = "attachment_id") val attachmentId: Long? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 @Entity(
@@ -422,13 +444,15 @@ data class ExpenseEntity(
 			onDelete = ForeignKey.CASCADE,
 		),
 	],
-	indices = [Index("entry_id"), Index("value")],
+	indices = [Index(value = ["uid"], unique = true), Index("entry_id"), Index("value")],
 )
 data class ExternalRefEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	@ColumnInfo(name = "entry_id") val entryId: Long,
 	val kind: ExternalRefKind,
 	val value: String,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /* A tag of an entry (backlog 13): lower case, without '#', no spaces. */
@@ -450,38 +474,46 @@ data class EntryTagEntity(
 	val tag: String,
 )
 
-@Entity(tableName = "absence", indices = [Index("date_epoch_day")])
+@Entity(tableName = "absence", indices = [Index(value = ["uid"], unique = true), Index("date_epoch_day")])
 data class AbsenceEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	@ColumnInfo(name = "date_epoch_day") val dateEpochDay: Long,
 	val kind: AbsenceKind,
 	/* entry time for LATE_ENTRY, exit time for EARLY_EXIT, null for FULL_DAY */
 	@ColumnInfo(name = "time_min") val timeMin: Int? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /* A manual day off (holiday not in the national calendar, leave): no day-start prompt. */
-@Entity(tableName = "day_off")
+@Entity(tableName = "day_off", indices = [Index(value = ["uid"], unique = true)])
 data class DayOffEntity(
 	@PrimaryKey @ColumnInfo(name = "date_epoch_day") val dateEpochDay: Long,
 	val note: String? = null,
+	/* sync identity (issue #111): one per date, the same on every phone */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.dayOff(dateEpochDay),
 )
 
 /* Working hours; several intervals per day of week (1 = Monday ... 7 = Sunday). */
-@Entity(tableName = "work_schedule", indices = [Index("day_of_week")])
+@Entity(tableName = "work_schedule", indices = [Index(value = ["uid"], unique = true), Index("day_of_week")])
 data class WorkScheduleEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	@ColumnInfo(name = "day_of_week") val dayOfWeek: Int,
 	@ColumnInfo(name = "start_min") val startMin: Int,
 	@ColumnInfo(name = "end_min") val endMin: Int,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /* Lunch break per day of week (e.g. 12:30-14:00); pause reminders are muted in it. */
-@Entity(tableName = "lunch_break", indices = [Index(value = ["day_of_week"], unique = true)])
+@Entity(tableName = "lunch_break", indices = [Index(value = ["uid"], unique = true), Index(value = ["day_of_week"], unique = true)])
 data class LunchBreakEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
 	@ColumnInfo(name = "day_of_week") val dayOfWeek: Int,
 	@ColumnInfo(name = "start_min") val startMin: Int,
 	@ColumnInfo(name = "end_min") val endMin: Int,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /*
@@ -493,7 +525,7 @@ data class LunchBreakEntity(
 	foreignKeys = [
 		ForeignKey(entity = ClientEntity::class, parentColumns = ["id"], childColumns = ["client_id"], onDelete = ForeignKey.CASCADE),
 	],
-	indices = [Index("client_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("client_id")],
 )
 data class ContactEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -503,6 +535,8 @@ data class ContactEntity(
 	val email: String? = null,
 	/* key in the management system of an imported contact (issue #48) */
 	@ColumnInfo(name = "external_key") val externalKey: String? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /* A number of a contact, as dialled (digits and a leading +). */
@@ -549,7 +583,7 @@ data class CallLogEntity(
 	foreignKeys = [
 		ForeignKey(entity = CompanyEntity::class, parentColumns = ["id"], childColumns = ["company_id"], onDelete = ForeignKey.SET_NULL),
 	],
-	indices = [Index("company_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("company_id")],
 )
 data class MaterialEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -559,6 +593,8 @@ data class MaterialEntity(
 	@ColumnInfo(name = "unit_cost_cents") val unitCostCents: Long? = null,
 	@ColumnInfo(name = "company_id") val companyId: Long? = null,
 	val archived: Boolean = false,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
 /*
@@ -572,7 +608,7 @@ data class MaterialEntity(
 		ForeignKey(entity = TimeEntryEntity::class, parentColumns = ["id"], childColumns = ["entry_id"], onDelete = ForeignKey.CASCADE),
 		ForeignKey(entity = MaterialEntity::class, parentColumns = ["id"], childColumns = ["material_id"], onDelete = ForeignKey.SET_NULL),
 	],
-	indices = [Index("entry_id"), Index("material_id")],
+	indices = [Index(value = ["uid"], unique = true), Index("entry_id"), Index("material_id")],
 )
 data class EntryMaterialEntity(
 	@PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -583,6 +619,8 @@ data class EntryMaterialEntity(
 	val unit: String? = null,
 	@ColumnInfo(name = "unit_cost_cents") val unitCostCents: Long? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 ) {
 	/* quantity × unit cost; without a quantity one unit; null without a cost */
 	val totalCents: Long? get() = unitCostCents?.let { Math.round(it * (quantity ?: 1.0)) }
@@ -620,6 +658,7 @@ data class PolicyRecordEntity(
 	foreignKeys = [
 		ForeignKey(entity = CompanyEntity::class, parentColumns = ["id"], childColumns = ["company_id"], onDelete = ForeignKey.CASCADE),
 	],
+	indices = [Index(value = ["uid"], unique = true)],
 )
 data class RemoteItemEntity(
 	@ColumnInfo(name = "company_id") val companyId: Long,
@@ -634,6 +673,8 @@ data class RemoteItemEntity(
 	@ColumnInfo(name = "sort_order") val order: Int? = null,
 	/* the extra values of the descriptor, JSON object */
 	val extra: String = "{}",
+	/* sync identity (issue #111): set by PluginDao.replaceItems from the company and the item key */
+	@ColumnInfo(defaultValue = "") val uid: String = "",
 )
 
 /*

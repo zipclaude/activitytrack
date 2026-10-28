@@ -31,6 +31,9 @@ dependencies {
 	ksp(libs.androidx.room.compiler)
 
 	testImplementation(libs.kotlin.test.junit)
+	/* SyncSchemaTest runs the migration and the triggers on a real SQLite, read against the exported schemas */
+	testImplementation(libs.sqlite.jdbc)
+	testImplementation(libs.org.json)
 	androidTestImplementation(libs.kotlin.test.junit)
 	androidTestImplementation(libs.androidx.room.testing)
 	androidTestImplementation(libs.androidx.test.runner)

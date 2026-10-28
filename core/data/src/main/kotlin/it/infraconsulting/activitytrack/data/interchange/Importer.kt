@@ -35,6 +35,7 @@ import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.Segment
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
@@ -254,7 +255,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		val duration = x.durationMin?.takeIf { it in 1..TodoPlan.MAX_DURATION_MIN }
 			?: x.durationMin?.let { return r.skip("todos", x.key, "duration $it") }
 		val refs = x.refs.map(String::trim).filter(String::isNotEmpty).joinToString("\n")
-		val existing = todos.byExternalKey(companyId, x.key) ?: todos.byUid(x.key)
+		val existing = todos.byExternalKey(companyId, x.key) ?: todos.byUid(SyncIds.canonical(x.key))
 		if (existing == null) {
 			val now = clock.millis()
 			todos.insert(
@@ -285,7 +286,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 	}
 
 	private suspend fun entry(r: Run, x: XEntry) {
-		val existing = bulk.entryByUid(x.key)
+		val existing = bulk.entryByUid(SyncIds.canonical(x.key))
 		if (existing != null) {
 			val diff = listOfNotNull(
 				"status".takeIf { existing.status.name != x.status },
@@ -314,13 +315,13 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		val clientId = x.clientKey?.let { clientId(r, companyId, it) ?: return r.skip("entries", x.key, "unknown client $it") }
 		val clientCompany = clientId?.let { master.client(it)?.companyId }
 		val todoId = x.todoKey?.let { key ->
-			(companyId?.let { todos.byExternalKey(it, key) } ?: todos.byUid(key))?.id
+			(companyId?.let { todos.byExternalKey(it, key) } ?: todos.byUid(SyncIds.canonical(key)))?.id
 				?: return r.skip("entries", x.key, "unknown to-do $key")
 		}
 		val now = clock.millis()
 		val id = entries.insertEntry(
 			TimeEntryEntity(
-				uid = x.key, todoId = todoId, companyId = clientCompany ?: companyId, clientId = clientId,
+				uid = SyncIds.canonical(x.key), todoId = todoId, companyId = clientCompany ?: companyId, clientId = clientId,
 				roleId = x.role?.let { role(it) }, activity = x.activity?.trim()?.ifEmpty { null }, status = status,
 				locality = x.locality, locationKind = x.locationKind?.let { runCatching { LocationKind.valueOf(it) }.getOrNull() },
 				notes = x.notes, zoneId = zone.id, createdUtcMs = segs.minOfOrNull { it.startUtcMs } ?: now, updatedUtcMs = now,

@@ -27,7 +27,7 @@ pull requests.
 | Manual / brochure | pandoc, graphviz (`dot`), Chromium (`chromium` on `PATH`) |
 
 ```sh
-./gradlew :core:domain:test assembleDebug     # unit tests + debug APK
+./gradlew :core:domain:test :core:data:testDebugUnitTest assembleDebug   # unit tests + debug APK
 ./gradlew :app:assembleRelease                 # release APK (signed when configured, §3)
 scripts/build-manual.sh                        # manual PDFs into build/manual
 scripts/build-brochure.sh                      # brochure PDF (Google Fonts need the network)
@@ -120,6 +120,15 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
   stale; read widget data from flows inside the composition.
 - Some ROMs defer widget and alarm updates of a cached app (app-standby
   buckets, up to minutes): launching the app forces the redraw.
+- Room AutoMigrations that rebuild a table drop its triggers: the sync
+  triggers (`SyncSchema`) are re-created with IF NOT EXISTS at every open,
+  but a migration that needs them during its own run must create them.
+  `SyncSchemaTest` (JVM, sqlite-jdbc) checks a migration against the
+  exported schema the way Room does; extend it with every new migration of
+  a synced table.
+- Synced rows carry a `uid` defaulting to a fresh random one: an entity
+  rebuilt with the old id and saved would change it; the `keep_uid` trigger
+  puts the old one back. Prefer `copy()` of the loaded row anyway.
 - `git add core` after switching branches may stage files another branch
   left untracked (e.g. a Room schema JSON of a newer version): check
   `git status` before committing.
