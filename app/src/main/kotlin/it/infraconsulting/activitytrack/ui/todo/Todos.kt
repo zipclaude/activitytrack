@@ -105,6 +105,9 @@ import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
 import it.infraconsulting.activitytrack.ui.common.SwipeAction
 import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.ui.common.SwitchRow
+import it.infraconsulting.activitytrack.ui.common.SettingLock
+import it.infraconsulting.activitytrack.ui.common.prefix
+import it.infraconsulting.activitytrack.ui.common.settingLock
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.Undo
@@ -375,6 +378,9 @@ fun TodoSwipeCard(
 /* To-dos screen window: 24 h, 7 days, 30 days or all (owner, 2026-10-19); overdue always shown. */
 @Composable
 private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
+	val lock = settingLock("todoWindowHours")
+	if (lock == SettingLock.HIDDEN)
+		return
 	var open by remember { mutableStateOf(false) }
 	val labels = mapOf(
 		/* the same choices as the Home tab (issue #96) */
@@ -382,7 +388,7 @@ private fun WindowFilter(hours: Int, onPick: (Int) -> Unit) {
 		720 to stringResource(R.string.todo_window_30d), 0 to stringResource(R.string.todo_window_all),
 	)
 	Box {
-		FilterChip(selected = hours != 0, onClick = { open = true }, label = { Text(labels[hours].orEmpty() + " ▾") })
+		FilterChip(selected = hours != 0, onClick = { open = true }, enabled = lock == SettingLock.FREE, label = { Text(lock.prefix() + labels[hours].orEmpty() + " ▾") })
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
 			for ((h, label) in labels)
 				DropdownMenuItem(text = { Text(label) }, onClick = { open = false; onPick(h) })
@@ -417,8 +423,9 @@ internal fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false, label: S
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
 			DropdownMenuItem(text = { Text(stringResource(R.string.todo_filter_all)) }, onClick = { open = false; vm.setCompanyFilter(null) })
 			/* on Home: the filter may hide the entries above too (owner, issue #44; off by default) */
-			if (onHome)
-				DropdownMenuItem(
+			val entriesLock = settingLock("homeFilterEntries")
+			if (onHome && entriesLock != SettingLock.HIDDEN)
+				DropdownMenuItem(enabled = entriesLock == SettingLock.FREE,
 					text = { Text(stringResource(R.string.home_filter_entries)) },
 					leadingIcon = { androidx.compose.material3.Checkbox(checked = settings?.homeFilterEntries == true, onCheckedChange = null) },
 					onClick = { open = false; vm.setHomeFilterEntries(settings?.homeFilterEntries != true) },
@@ -578,7 +585,9 @@ fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> 
 							onClick = { editingFilters = true },
 							label = { Text(stringResource(R.string.todo_filters) + if (more.count > 0) " (${more.count})" else "") },
 						)
-						FilterChip(selected = showIgnored, onClick = { vm.setShowIgnored(!showIgnored) }, label = { Text(stringResource(R.string.todo_filter_ignored)) })
+						settingLock("todoShowIgnored").takeIf { it != SettingLock.HIDDEN }?.let { lock ->
+							FilterChip(selected = showIgnored, onClick = { vm.setShowIgnored(!showIgnored) }, enabled = lock == SettingLock.FREE, label = { Text(lock.prefix() + stringResource(R.string.todo_filter_ignored)) })
+						}
 						CompanyFilter(vm)
 					}
 				}

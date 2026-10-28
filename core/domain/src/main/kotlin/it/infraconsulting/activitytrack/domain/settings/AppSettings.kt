@@ -170,6 +170,9 @@ val TODO_WINDOWS = setOf(0, 24, 72, 168, 720)
 /* the Home tabs (issue #59), as persisted in [AppSettings.homeTab] */
 val HOME_TABS = setOf("PLANNED", "CLOSED")
 
+/* the Agenda modes (app AgendaMode), for the policy */
+val AGENDA_VIEWS = setOf("LIST", "DAY", "WEEK", "MONTH")
+
 /* the "Chiuse" windows offered (issue #59; hours; 0 = today) */
 val CLOSED_WINDOWS = setOf(0, 24, 168, 720)
 

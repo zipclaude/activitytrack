@@ -310,9 +310,9 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					LocationPermissionRows()
 					AddTileRow()
 					field(F.MOVEMENT, R.string.set_movement, key = "movementThresholdM")
-					field(F.ST_RADIUS, R.string.set_stationary_radius)
-					field(F.ST_MIN, R.string.set_stationary_min)
-					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal)
+					field(F.ST_RADIUS, R.string.set_stationary_radius, key = "stationaryRadiusM")
+					field(F.ST_MIN, R.string.set_stationary_min, key = "stationaryMin")
+					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal, key = "kmFactor")
 				}
 				SettingsSection.CALENDAR -> CalendarRows()
 				/* language names in their own language, as in the system pickers */
@@ -327,17 +327,18 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				}
 				SettingsSection.REPORTS -> {
 					PolicySetting("carryOverMin") { TimeField(stringResource(R.string.set_carry_over), text[F.CARRY_OVER].orEmpty(), { text[F.CARRY_OVER] = it }) }
-					PolicySetting("roundingWorkMin") { RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text) }
-					PolicySetting("roundingTravelMin") { RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text) }
-					PolicySetting("roundingPauseMin") { RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text) }
+					/* mode, quantum and minimum each under their own key (policy, 2026-10-28) */
+					RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text, "Work")
+					RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text, "Travel")
+					RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text, "Pause")
 				}
 				SettingsSection.ONLINE -> {
 					PolicySetting("nominatimEnabled") { SwitchRow(stringResource(R.string.set_nominatim), nominatimOn) { nominatimOn = it } }
-					field(F.NOMINATIM, R.string.set_endpoint, KeyboardType.Uri)
+					field(F.NOMINATIM, R.string.set_endpoint, KeyboardType.Uri, key = "nominatimEndpoint")
 					PolicySetting("osrmEnabled") { SwitchRow(stringResource(R.string.set_osrm), osrmOn) { osrmOn = it } }
-					field(F.OSRM, R.string.set_endpoint, KeyboardType.Uri)
+					field(F.OSRM, R.string.set_endpoint, KeyboardType.Uri, key = "osrmEndpoint")
 					PolicySetting("tilesEnabled") { SwitchRow(stringResource(R.string.set_tiles), tilesOn) { tilesOn = it } }
-					field(F.TILES, R.string.set_endpoint, KeyboardType.Uri)
+					field(F.TILES, R.string.set_endpoint, KeyboardType.Uri, key = "tilesEndpoint")
 				}
 				SettingsSection.STORAGE -> {
 					DataDirRow(initial.rootUri)
@@ -387,19 +388,30 @@ private fun RoundingEditor(
 	onChange: (RoundingRule) -> Unit,
 	minField: F,
 	text: MutableMap<F, String>,
+	/* "Work", "Travel", "Pause": the policy keys rounding<kind>Mode / Min / MinimumMin */
+	kind: String,
 ) {
+	val p = LocalPolicy.current.settings
+	if (listOf("Mode", "Min", "MinimumMin").all { p["rounding$kind$it"]?.hidden == true })
+		return
 	Text(stringResource(label), style = MaterialTheme.typography.titleSmall)
-	ChoiceField(
-		stringResource(R.string.round_mode),
-		RoundingMode.entries.map { it to stringResource(modeLabel(it)) },
-		rule.mode,
-	) { onChange(rule.copy(mode = it)) }
-	ChoiceField(
-		stringResource(R.string.round_quantum),
-		AppSettings.QUANTA_MIN.map { it to it.toString() },
-		rule.quantum.toMinutes(),
-	) { onChange(rule.copy(quantum = Duration.ofMinutes(it))) }
-	TextInput(stringResource(R.string.round_minimum), text[minField].orEmpty(), { text[minField] = it }, KeyboardType.Number)
+	PolicySetting("rounding${kind}Mode") {
+		ChoiceField(
+			stringResource(R.string.round_mode),
+			RoundingMode.entries.map { it to stringResource(modeLabel(it)) },
+			rule.mode,
+		) { onChange(rule.copy(mode = it)) }
+	}
+	PolicySetting("rounding${kind}Min") {
+		ChoiceField(
+			stringResource(R.string.round_quantum),
+			AppSettings.QUANTA_MIN.map { it to it.toString() },
+			rule.quantum.toMinutes(),
+		) { onChange(rule.copy(quantum = Duration.ofMinutes(it))) }
+	}
+	PolicySetting("rounding${kind}MinimumMin") {
+		TextInput(stringResource(R.string.round_minimum), text[minField].orEmpty(), { text[minField] = it }, KeyboardType.Number)
+	}
 }
 
 private fun modeLabel(m: RoundingMode) = when (m) {

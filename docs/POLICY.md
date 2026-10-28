@@ -157,10 +157,10 @@ are written back at every read, so they cannot drift.
 | `backupRetention` | backups kept | 1–365 |
 | `backupEveryHours` | hours | 6, 12, 24, 168 |
 | `backupHour` | hour | 0–23 |
-| `todoWindowHours` | hours | 0 (all), 24, 168, 720 |
-| `homeTodoWindowHours` | hours | 0 (all), 24, 168, 720 |
+| `todoWindowHours` | hours | 0 (all), 24, 72, 168, 720 |
+| `homeTodoWindowHours` | hours | 0 (all), 24, 72, 168, 720 (before 0.8.0; the Home uses `homeWindow`) |
 | `widgetTodoWindowHours` | hours | 24, 72, 168, 720 |
-| `roundingWorkMin` | minutes | 1, 5, 15, 30, 60 |
+| `roundingWorkMin` | minutes | 1, 5, 15, 30, 60 (the quantum only) |
 | `roundingTravelMin` | minutes | 1, 5, 15, 30, 60 |
 | `roundingPauseMin` | minutes | 1, 5, 15, 30, 60 |
 | `dictationLanguage` | text | it-IT, en-US, de-DE, es-ES |
@@ -173,6 +173,41 @@ are written back at every read, so they cannot drift.
 | `nominatimEnabled` | true/false | |
 | `osrmEnabled` | true/false | |
 | `tilesEnabled` | true/false | |
+| `stationaryRadiusM` | metres | 25–1000 |
+| `stationaryMin` | minutes | 5–120 |
+| `kmFactor` | number | 1.0–3.0 (road km per straight-line km) |
+| `nominatimEndpoint` | text | an `https://` URL |
+| `osrmEndpoint` | text | an `https://` URL |
+| `tilesEndpoint` | text | an `https://` URL with `{z}`, `{x}`, `{y}` |
+| `roundingWorkMode` | text | CEIL_TOLERANT, CEIL, FLOOR |
+| `roundingTravelMode` | text | CEIL_TOLERANT, CEIL, FLOOR |
+| `roundingPauseMode` | text | CEIL_TOLERANT, CEIL, FLOOR |
+| `roundingWorkMinimumMin` | minutes | 0–60 |
+| `roundingTravelMinimumMin` | minutes | 0–60 |
+| `roundingPauseMinimumMin` | minutes | 0–60 |
+| `gestureTodoToStart` | text | START, START_OR_DONE, POSTPONE_OR_IGNORE, POSTPONE, IGNORE, DONE, REPLAN, NONE |
+| `gestureTodoToEnd` | text | as above |
+| `gestureEntryToStart` | text | PAUSE_RESUME, STOP_OR_SUSPEND, STOP, SUSPEND, NONE |
+| `gestureEntryToEnd` | text | as above |
+| `gesturePastToStart` | text | COMPLETE, REOPEN, NONE (stopped entries on the Home list) |
+| `gesturePastToEnd` | text | as above |
+| `gestureFullSwipe` | true/false | a long swipe runs the first action |
+| `homeWindow` | hours | -1 (today), 24, 72, 168, 720, 0 (all) |
+| `homeShow` | text | comma list of TODO, MISSING, DONE, IGNORED |
+| `homeFilterEntries` | true/false | the company filter hides the entries too |
+| `todoShowIgnored` | true/false | |
+| `agendaView` | text | LIST, DAY, WEEK, MONTH |
+| `orderCompanies` | text | ALPHABETICAL, LAST_USE, MANUAL |
+| `orderClients` | text | as above |
+| `orderRoles` | text | as above |
+| `orderPresets` | text | as above |
+
+Settings on screens other than Settings (the Home and To-dos filters, the
+Agenda view, the list orders) follow the same rule: locked, their control is
+greyed with the padlock; hidden, the control is not shown and the value
+stays the policy's. A gesture locked or hidden is shown greyed, or left
+out, in Settings → Gestures; `features.gestures: false` still turns all
+swipes off.
 
 ## 7. Behaviours
 
