@@ -39,6 +39,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -99,8 +102,20 @@ fun TimeGridSheet(
 	val freeColor = MaterialTheme.colorScheme.surfaceContainerHighest
 	val busyColor = MaterialTheme.colorScheme.outlineVariant
 
+	/*
+	 * Where each hour row really lies (issue #104): with a large system font
+	 * the rows grow past ROW_HEIGHT, and a touch computed from the nominal
+	 * height drifted one row per row down the grid.
+	 */
+	val rowTops = remember { androidx.compose.runtime.mutableStateMapOf<Int, Pair<Float, Float>>() }
+	/* the hour labels keep one line: wider with a larger font instead of wrapping */
+	val density = androidx.compose.ui.platform.LocalDensity.current
+	val labelWidth = LABEL_WIDTH * density.fontScale.coerceAtLeast(1f)
+	val gapPx = with(density) { GAP.toPx() }
+
 	ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, sheetGesturesEnabled = false) {
-		Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
+		/* scrolls when the screen is short (landscape, issue #104); the grid itself takes the drags */
+		Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
 			Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 			val sel = selection
 			Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -129,7 +144,7 @@ fun TimeGridSheet(
 			}
 			/* minute labels every quarter of an hour */
 			Row(Modifier.fillMaxWidth()) {
-				Spacer(Modifier.width(LABEL_WIDTH))
+				Spacer(Modifier.width(labelWidth))
 				for (k in 0 until 12)
 					Text(
 						if (k % 3 == 0) "%02d".format(k * 5) else "",
@@ -140,16 +155,24 @@ fun TimeGridSheet(
 					)
 			}
 			Box(
-				Modifier.fillMaxWidth().pointerInput(first, range) {
-					val labelPx = LABEL_WIDTH.toPx()
+				Modifier.fillMaxWidth().pointerInput(first, range, labelWidth) {
+					val labelPx = labelWidth.toPx()
 					val rowPx = (ROW_HEIGHT + GAP).toPx()
 					fun cellAt(o: Offset): Int {
-						val row = (o.y / rowPx).toInt().coerceIn(0, TimeGrid.WINDOW_HOURS - 1)
+						/* the measured rows; the nominal height only before the first layout */
+						val measured = (0 until TimeGrid.WINDOW_HOURS).mapNotNull { r -> rowTops[r]?.let { r to it } }
+						val row = if (measured.size == TimeGrid.WINDOW_HOURS)
+							measured.firstOrNull { (_, b) -> o.y < b.second }?.first ?: (TimeGrid.WINDOW_HOURS - 1)
+						else
+							(o.y / rowPx).toInt().coerceIn(0, TimeGrid.WINDOW_HOURS - 1)
 						val col = ((o.x - labelPx) / ((size.width - labelPx) / 12f)).toInt().coerceIn(0, 11)
 						return (first + row) * 12 + col
 					}
 					awaitEachGesture {
 						val down = awaitFirstDown()
+						/* the hour labels are left to the sheet's scroll: on a short screen (landscape) that column scrolls */
+						if (down.position.x < labelPx)
+							return@awaitEachGesture
 						down.consume()
 						val anchor = cellAt(down.position)
 						var last = anchor
@@ -180,8 +203,15 @@ fun TimeGridSheet(
 			) {
 				Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
 					for (h in first until first + TimeGrid.WINDOW_HOURS)
-						Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(GAP)) {
-							Text(formatMin(h * 60), fontSize = 13.sp, modifier = Modifier.width(LABEL_WIDTH - GAP))
+						Row(
+							Modifier.onGloballyPositioned { c ->
+								/* bottom edge plus half the gap: a touch between two rows goes to the nearer one */
+								val top = c.positionInParent().y
+								rowTops[h - first] = top to top + c.size.height + gapPx / 2
+							},
+							verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(GAP),
+						) {
+							Text(formatMin(h * 60), fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(labelWidth - GAP))
 							for (k in 0 until 12) {
 								val cell = h * 12 + k
 								/* any overlap: a recorded 18:36-18:40 lights the 18:35 cell too */
