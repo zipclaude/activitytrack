@@ -38,6 +38,7 @@ object PluginParser {
 	private val R_RECORD = setOf("option", "identity", "lookup")
 	private val R_ENTRY_FORM = setOf("option", "entry", "todo", "field", "list")
 	private val R_BODY = setOf("option", "identity", "lookup", "entry", "todo", "block", "field", "list")
+	private val R_TODO_DONE = setOf("option", "identity", "lookup", "todo")
 
 	fun parse(text: String, fileId: String? = null): PluginResult {
 		val root = try {
@@ -192,7 +193,7 @@ object PluginParser {
 				error("http", "required, with \"baseUrl\"")
 				return Http(Expr.NULL, emptyMap(), 60, Paging.None)
 			}
-			keys(o, "http", setOf("baseUrl", "headers", "timeoutSec", "paging"))
+			keys(o, "http", setOf("baseUrl", "headers", "timeoutSec", "paging", "bodyForm"))
 			val paging = obj(o["paging"], "http.paging")?.let { p ->
 				val path = "http.paging"
 				when (string(p["style"], "$path.style")) {
@@ -216,7 +217,17 @@ object PluginParser {
 						)
 					}
 					"link" -> Paging.Link.also { keys(p, path, setOf("style")) }
-					else -> Paging.None.also { error("$path.style", "one of none, odata, page, cursor, link") }
+					"jsonParam" -> {
+						keys(p, path, setOf("style", "param", "inside", "start", "size", "firstStart", "pageSize", "more"))
+						Paging.JsonParam(
+							string(p["param"], "$path.param") ?: "input_data".also { error("$path.param", "required") },
+							string(p["inside"], "$path.inside"),
+							string(p["start"], "$path.start") ?: "start_index", string(p["size"], "$path.size") ?: "row_count",
+							int(p["firstStart"], "$path.firstStart", 0..1) ?: 1, int(p["pageSize"], "$path.pageSize", 1..10_000) ?: 100,
+							expr(p["more"], "$path.more", emptySet(), selector = true, required = true) ?: Expr.NULL,
+						)
+					}
+					else -> Paging.None.also { error("$path.style", "one of none, odata, page, cursor, link, jsonParam") }
 				}
 			} ?: Paging.None
 			return Http(
@@ -224,6 +235,7 @@ object PluginParser {
 				exprMap(o["headers"], "http.headers", R_CONFIG),
 				int(o["timeoutSec"], "http.timeoutSec", 5..300) ?: 60,
 				paging,
+				string(o["bodyForm"], "http.bodyForm"),
 			)
 		}
 
@@ -285,29 +297,35 @@ object PluginParser {
 			}.toMap()
 		}
 
-		private fun imports(e: JsonElement?): Map<ImportTarget, ImportSpec> {
+		/* each target: one source object, or a list of them (keys must not clash between sources) */
+		private fun imports(e: JsonElement?): Map<ImportTarget, List<ImportSpec>> {
 			val o = obj(e, "import") ?: return emptyMap()
 			keys(o, "import", ImportTarget.byKey.keys)
 			return o.mapNotNull { (k, v) ->
 				val target = ImportTarget.byKey[k] ?: return@mapNotNull null
-				val p = "import.$k"
-				val io = obj(v, p) ?: return@mapNotNull null
-				keys(io, p, setOf("request", "key", "skipNew", "map"))
-				val req = request(io["request"], "$p.request", R_REQUEST) ?: return@mapNotNull null
-				val mo = obj(io["map"], "$p.map") ?: return@mapNotNull null.also { error("$p.map", "required") }
-				val allowed = target.fields + if (target == ImportTarget.TODOS) setOf("fields") else emptySet()
-				keys(mo, "$p.map", allowed)
-				val first = if (target == ImportTarget.TODOS) "title" else "name"
-				if (first !in mo)
-					error("$p.map", "needs \"$first\"")
-				target to ImportSpec(
-					req,
-					expr(io["key"], "$p.key", R_RECORD, selector = true, required = true) ?: return@mapNotNull null,
-					expr(io["skipNew"], "$p.skipNew", R_RECORD, selector = true),
-					mo.filterKeys { it != "fields" }.mapNotNull { (f, x) -> expr(x, "$p.map.$f", R_RECORD, selector = true)?.let { f to it } }.toMap(),
-					exprMap(mo["fields"], "$p.map.fields", R_RECORD, selector = true),
-				)
+				val sources = if (v is JsonArray) v.mapIndexed { i, s -> "import.$k.$i" to s } else listOf("import.$k" to v)
+				target to sources.mapNotNull { (p, s) -> importSpec(target, s, p) }
 			}.toMap()
+		}
+
+		private fun importSpec(target: ImportTarget, v: JsonElement, p: String): ImportSpec? {
+			val io = obj(v, p) ?: return null
+			keys(io, p, setOf("request", "key", "skipNew", "map", "when"))
+			val req = request(io["request"], "$p.request", R_REQUEST) ?: return null
+			val mo = obj(io["map"], "$p.map") ?: return null.also { error("$p.map", "required") }
+			val allowed = target.fields + if (target == ImportTarget.TODOS) setOf("fields") else emptySet()
+			keys(mo, "$p.map", allowed)
+			val first = if (target == ImportTarget.TODOS) "title" else "name"
+			if (first !in mo)
+				error("$p.map", "needs \"$first\"")
+			return ImportSpec(
+				req,
+				expr(io["key"], "$p.key", R_RECORD, selector = true, required = true) ?: return null,
+				expr(io["skipNew"], "$p.skipNew", R_RECORD, selector = true),
+				mo.filterKeys { it != "fields" }.mapNotNull { (f, x) -> expr(x, "$p.map.$f", R_RECORD, selector = true)?.let { f to it } }.toMap(),
+				exprMap(mo["fields"], "$p.map.fields", R_RECORD, selector = true),
+				io["when"]?.let { expr(it, "$p.when", R_CONFIG) },
+			)
 		}
 
 		private fun entryFields(e: JsonElement?): List<EntryField> {
@@ -345,7 +363,7 @@ object PluginParser {
 
 		private fun export(e: JsonElement?): ExportSpec? {
 			val o = obj(e, "export") ?: return null
-			keys(o, "export", setOf("entries", "group", "body", "travelBody", "create", "update", "delete"))
+			keys(o, "export", setOf("entries", "group", "body", "travelBody", "create", "update", "delete", "todoDone"))
 			string(o["entries"], "export.entries")?.let { if (it != "closed") error("export.entries", "only \"closed\" for now") }
 			val g = obj(o["group"], "export.group")
 			val group = if (g == null) {
@@ -367,13 +385,29 @@ object PluginParser {
 			val travelBody = o["travelBody"]?.let { exprMap(it, "export.travelBody", R_BODY) }
 			if (group.travel == TravelMode.SEPARATE && travelBody == null)
 				error("export.travelBody", "required with \"travel\": \"separate\"")
-			val create = call(o["create"], "export.create", R_CONFIG, idSelector = true) ?: return null.also { if (o["create"] == null) error("export.create", "required") }
+			/* the path may depend on the to-do (ServiceDesk Plus: /requests/{id}/worklogs) */
+			val create = call(o["create"], "export.create", R_CONFIG + "todo", idSelector = true) ?: return null.also { if (o["create"] == null) error("export.create", "required") }
 			if (create.id == null)
 				error("export.create.id", "required: where the response gives the new record's id")
 			return ExportSpec(
 				group, body, travelBody, create,
 				call(o["update"], "export.update", R_CONFIG + "remote", addRoots = R_BODY + "remote"),
 				call(o["delete"], "export.delete", R_CONFIG + "remote"),
+				todoDone(o["todoDone"]),
+			)
+		}
+
+		private fun todoDone(e: JsonElement?): TodoDone? {
+			val path = "export.todoDone"
+			val o = obj(e, path) ?: return null
+			keys(o, path, setOf("method", "path", "body"))
+			val method = string(o["method"], "$path.method")?.uppercase() ?: return null.also { error("$path.method", "required") }
+			if (method !in METHODS)
+				error("$path.method", "one of ${METHODS.joinToString()}")
+			return TodoDone(
+				method,
+				expr(o["path"], "$path.path", R_TODO_DONE, required = true) ?: return null,
+				exprMap(o["body"], "$path.body", R_TODO_DONE),
 			)
 		}
 
@@ -386,7 +420,8 @@ object PluginParser {
 			return Call(
 				method,
 				expr(o["path"], "$path.path", roots, required = true) ?: return null,
-				if (idSelector) expr(o["id"], "$path.id", emptySet(), selector = true) else null,
+				/* the response's id, or a key built with the to-do (an id that holds the whole remote path) */
+				if (idSelector) expr(o["id"], "$path.id", setOf("todo"), selector = true) else null,
 				addRoots != null && (bool(o["fetchFirst"], "$path.fetchFirst") ?: false),
 				addRoots?.let { exprMap(o["add"], "$path.add", it) }.orEmpty(),
 			)

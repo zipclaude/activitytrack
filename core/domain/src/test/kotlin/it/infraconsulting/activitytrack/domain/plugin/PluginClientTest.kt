@@ -71,7 +71,7 @@ class PluginClientTest {
 		val page = (1..200).joinToString(",", "[", "]") { """{ "Id": "$it" }""" }
 		val fake = Fake(mutableListOf(ok(page), ok("""[ { "Id": "201" } ]""")))
 		val e = env().also { it.identity["personId"] = JsonPrimitive("42") }
-		val rows = run { client(fake).list(antares.imports.getValue(ImportTarget.TODOS).request, e) }
+		val rows = run { client(fake).list(antares.imports.getValue(ImportTarget.TODOS).single().request, e) }
 		assertEquals(201, rows.size)
 		assertTrue(fake.calls[0].url.contains("%24top=200&%24skip=0"), fake.calls[0].url)
 		assertTrue(fake.calls[1].url.contains("%24skip=200"))
@@ -119,13 +119,13 @@ class PluginClientTest {
 				ok("[2]"),
 			),
 		)
-		val rows = run { PluginClient(p, fake, StaticAuthorizer(p.auth, e), { }).list(p.imports.getValue(ImportTarget.CLIENTS).request, e) }
+		val rows = run { PluginClient(p, fake, StaticAuthorizer(p.auth, e), { }).list(p.imports.getValue(ImportTarget.CLIENTS).single().request, e) }
 		assertEquals(2, rows.size)
 		assertEquals("https://x.example/api/customers", fake.calls[0].url)
 		assertEquals("https://x.example/api/customers?page=2", fake.calls[1].url)
 		assertEquals("S3CRET", fake.calls[1].headers["X-Api-Key"])
 		val plain = PluginEnv(p, mapOf("url" to JsonPrimitive("http://x.example")), { "k" }, ZoneId.of("UTC"))
-		assertFailsWith<PluginDataException> { PluginClient(p, fake, noAuth, { }).url(p.imports.getValue(ImportTarget.CLIENTS).request.path, emptyMap(), plain) }
+		assertFailsWith<PluginDataException> { PluginClient(p, fake, noAuth, { }).url(p.imports.getValue(ImportTarget.CLIENTS).single().request.path, emptyMap(), plain) }
 	}
 
 	@Test
