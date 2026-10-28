@@ -1,4 +1,4 @@
-Versione 0.7.6 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
+Versione 0.8.0 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
 resto.
 
 ## 1. Prima volta

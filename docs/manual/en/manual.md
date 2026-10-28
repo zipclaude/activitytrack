@@ -1,16 +1,23 @@
-Version 0.7.6 (October 2026). Please report any difference between this
+Version 0.8.0 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**New in 0.7.8** (not yet tested on the phone)
+**New in 0.8.0** (tested on the debug phone)
+- The Home has **one list** for to-dos and stopped activities, with the
+  **period**, **State**, **Company** and **Tag** filters on one row (§3).
+- **Gestures** follow one rule for every row: left is the step forward,
+  right puts off or goes back; still configurable, stopped activities too
+  (§3).
+- **Policies** can set, lock or hide every option, gestures included
+  (§11).
 - Done to-dos show **"done"** and when they were done, no longer
-  "planned" with the planned time; in "Done" they are sorted by that
+  "planned" with the planned time; in the list they are sorted by that
   moment and dimmed like the closed activities.
 - Tapping a to-do, **State**: "Open", "Done" or "Ignored", whatever it was
   before; **"Remove the plan"** removes its date and time (§8).
-- Clearer names: the state "To complete" is now **"Details missing"**, the
-  Home tab "Closed" is now **"Done"**.
+- Clearer names: the state "To complete" is now **"Details missing"**;
+  what is closed or completed is called **"Done"**.
 - The big card's buttons carry their **name under the icon**; the first
   **Suspend** explains once how it differs from Pause (§5).
 - **New activity**: two selectors, **Work / Travel** and **Now / Already
@@ -169,7 +176,7 @@ test build installed from the PC: a separate app with its own data and folder
 
 | Tab | Content |
 |---|---|
-| **Home** | the running activity's card (or ▶ Start / 🚗 Travel), small cards of the others; below, the **To-dos** and **Done** tabs |
+| **Home** | the running activity's card (or ▶ Start / 🚗 Travel), small cards of the others; below, the list of to-dos and stopped activities, with its filters |
 | **To-dos** | all the to-dos, with filters (§8) |
 | **Agenda** | consultation: list, day, week, month |
 | **Report** | one day's report: total, one line per activity, export |
@@ -177,56 +184,66 @@ test build installed from the PC: a separate app with its own data and folder
 
 From a tab other than Home, Back returns to Home.
 
-### Home cards
+### The Home
 - At the top the **big card**: the most recent open activity, with time,
-  state and commands (each button with its name underneath). With no open activity it shows "No activity running"
-  with **▶ Start** (opens "New activity") and **🚗 Travel** (the travel starts
-  at once; the destination is set later or comes with the arrival); dragging
-  it left starts, dragging it right starts the travel.
-- With open activities, ▶ and 🚗 sit in the top bar (🚗 opens "New activity"
-  with Travel selected, because it asks what to do with the others).
-- Below, a **small card** for every other open activity (paused, suspended,
-  with details missing): state and times as "from–to (length)" (e.g.
-  "11:00–11:45 (0:45)"), and a button to resume it (or pause it, or complete
-  it). Tapping it brings the activity to the big card.
-- At the bottom the two **tabs** (0.7.4; browser-like tabs since 0.7.5):
-  **To-dos** and **Done** ("Closed" up to 0.7.7). Switch
-  by tapping the tab or dragging the header horizontally (the card
-  gestures stay); the chosen tab is remembered across restarts.
-- **To-dos**: those planned or due within the chosen period, the
-  overdue ones first (their time in red); under a **"No date"** separator
-  those without a plan and without a due date; at the bottom, struck
-  through, those ignored today. The period next to the title: **24 h**
-  (default), **3 d**, **7 d**, **30 d** or **All** — separate from the
-  "To-dos" tab's. Next to it, **"All companies"** filters the to-dos by
-  company. At the end **"All to-dos →"** opens the "To-dos" tab of the
-  bottom bar.
-- **Done**: activities closed or with details missing and to-dos marked done
-  ("done" and when you marked it), the most recent end first; the tag filter lives here (to-dos carry no tags).
-  The period: **Today** (default, from the 06:00 carry-over boundary as in
-  the reports), **24 h**, **7 d**, **30 d**.
+  state and commands (each button named underneath). With no open
+  activity it shows "No activity running" with **▶ Start** (opens "New
+  activity") and **🚗 Travel** (the travel starts at once, the destination
+  comes later or with the arrival); dragging it left starts, right starts a
+  travel.
+- With open activities, ▶ and 🚗 move to the top bar (🚗 opens "New
+  activity" with Travel picked, since it asks what to do with the others).
+- Below, a **small card** for each other open activity (paused or
+  suspended): state and times as "from–to (duration)" (e.g. "11:00–11:45
+  (0:45)"), and a button to resume or pause it. Tapping it brings the
+  activity to the big card.
+- At the bottom **one list** (0.8.0, instead of the "To-dos" and "Done"
+  tabs): to-dos and stopped activities, every row the same shape: the state
+  mark on the left (**!** overdue, clock planned, **✎** details missing,
+  **✓** done, **■** closed, **○** open), the title, "client · kind · state"
+  and the time on the right; done and closed rows are dimmed. The groups:
+  **Overdue**, **Details missing**, **Today**, **Next days**, **Earlier**,
+  **No date**, **Ignored**.
+- The filters, on one row: the **period** with its value (**Today**, the
+  default, from the 06:00 boundary as in the reports; **24 h**, **3 d**,
+  **7 d**, **30 d**, **All**: ahead for the to-dos, the overdue ones always
+  kept; behind for what was done); then **State**, **Company** and **Tag**
+  by name, grey while they are the starting ones and coloured once
+  changed. **State** picks with check boxes *To-dos*, *Details missing*,
+  *Done*, *Ignored* (the first two at first), with the shortcuts "Only
+  to-dos", "Only done", "All"; activities with details missing always stay
+  in view, whatever the period, and while the list shows them they have no
+  small card. **Tag** appears when the list shows stopped activities and
+  hides the to-dos (they have no tags). The choices are remembered. At the
+  end **"All to-dos →"** opens the "To-dos" tab of the bottom bar.
 
-![Home: a running activity, the others below, the To-dos and Done tabs](img/home.png)
+![Home: a running activity, the others below, the list with its filters](img/home.png)
 
-![Home, the Done tab](img/home-closed.png)
+![Home, the list with Done too](img/home-closed.png)
 
 ### Gestures (dragging the cards)
 Every card can be dragged left or right (Home, Agenda list, "To-dos"
-screen). A short drag reveals the buttons to tap; a long drag runs the first
-one at once.
+tab). A short drag reveals the buttons to tap; a long drag runs the first
+one at once. One rule for every row (0.8.0): **left is the step
+forward**, **right puts off or goes back**.
 
 | Card | Left | Right |
 |---|---|---|
-| Running activity | Pause, or Resume if paused or suspended | Stop (with the same questions as the Stop button) or Suspend |
-| To-do | Start | Postpone (if planned) or Ignore |
+| Running activity | Pause, or Resume if paused or suspended | Stop (the closing sheet) or Suspend |
+| To-do | Start or Done | Postpone (if planned) or Ignore |
+| Done to-do | — | Reopen |
 | Ignored to-do | Restore | Restore |
+| Activity with details missing | Complete (opens it) | Reopen |
+| Closed activity | — | Reopen (back to suspended) |
 
-They are changed in "Settings" → **"Gestures"**: what each direction offers
-(also nothing), and whether a long drag runs the first action. At first the
-Home shows a **tip** about the gestures ("Got it" closes it) and the cards
-carry a faint ‹ › on their sides until one is dragged; "Gestures" → **"Show
-the gesture hints again"** brings both back (0.7.6), with the explanation
-of the first Suspend (§5).
+After a gesture on a to-do, or after Reopen on an activity, **"Undo"**
+stays for 10 seconds. They are changed in "Settings" → **"Gestures"**: for
+each kind of card and direction what it offers (also nothing, or the
+directions swapped), and whether a long drag runs the first action. At
+first the Home shows a **tip** about the gestures ("Got it" closes it) and
+the cards carry a faint ‹ › on their sides until one is dragged;
+"Gestures" → **"Show the gesture hints again"** brings both back, with the
+explanation of the first Suspend (§5).
 
 ### Company and client colours
 In a company or client screen ("More" → "Master data") pick a **colour** out
@@ -720,7 +737,12 @@ another trade ("Site" instead of "Client").
 - What it can do: switch features off (planning, travel, expenses,
   materials, attachments, gestures, calendar, calls, import / export…),
   rename, colour, hide or require fields (a required field blocks starting
-  and saving), fix settings, let activities start from to-dos only, create
+  and saving), fix settings (since 0.8.0 all of them: gestures too,
+  stop radius and minutes, km factor, the online service addresses,
+  rounding mode and minimum, and the choices the screens remember such as
+  the Home period and State, the Agenda view, the list orders; locked they
+  stay greyed with the padlock, hidden they disappear outside Settings
+  too), let activities start from to-dos only, create
   companies, clients and contacts by import only, force the language.
 - **Without companies**: with the company field hidden, clients and to-dos
   have no company and the Companies menu disappears (fit for a freelancer).

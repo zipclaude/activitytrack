@@ -32,6 +32,7 @@ fun clockOf(ms: Long, zone: ZoneId): String {
 
 /* Duration in ms as H:MM. */
 fun hmOf(ms: Long): String {
-	val min = ms / 60_000
+	/* a start a little ahead of the clock (another device, a moved time) reads 0:00, never "-1:-9" */
+	val min = maxOf(0L, ms) / 60_000
 	return "%d:%02d".format(min / 60, min % 60)
 }

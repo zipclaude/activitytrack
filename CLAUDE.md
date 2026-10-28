@@ -232,6 +232,16 @@ selectTab in MainActivity; #97 Undo bus + UndoHost snackbar, to-dos only;
 the Report and the summary notification, SettingsSection.essential. Build
 and unit tests green, NOT device-tested; the local debug APK is signed with
 ~/.android/debug.keystore (CI artifacts use another key).
+Owner 2026-10-28: Home tabs replaced by one list (HomeList.kt,
+homeSections in HomeTabs.kt; HomeShow/homeWindow settings), filters on one
+row (period with value; Stato/Azienda/Tag by name, coloured when set);
+uniform swipe rule with PastSwipe for stopped entries, gestures still
+configurable; policy covers every option (PolicyCatalog: gestures,
+stationary, kmFactor DOUBLE, endpoints, rounding mode/minimum, remembered
+views; settingLock() for chips outside Settings). Device-tested on the
+Xiaomi over adb 127.0.0.1:55555 (owner's tunnel): upgrade with data,
+Home list and filters, #89 done chip, Annulla (now 10 s), entry summary.
+screenshots.py adapted (5 tabs, Stato filter, Passata). Released v0.8.0.
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on
