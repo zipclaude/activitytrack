@@ -166,6 +166,8 @@ fun QuickClientDialog(companyId: Long?, onDone: (Long, Long?) -> Unit, onDismiss
 	val last = lastPickViewModel()
 	val lastCompany = lastPick().first
 	var company by remember { mutableStateOf(companyId ?: lastCompany) }
+	/* the last pick may arrive after the first frame (a screen just opened) */
+	androidx.compose.runtime.LaunchedEffect(lastCompany) { if (company == null) company = lastCompany }
 	var addCompany by remember { mutableStateOf(false) }
 	var color by remember { mutableStateOf<Int?>(null) }
 	val chosen = company ?: companies.singleOrNull()?.id

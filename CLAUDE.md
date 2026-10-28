@@ -264,6 +264,12 @@ views; settingLock() for chips outside Settings). Device-tested on the
 Xiaomi over adb 127.0.0.1:55555 (owner's tunnel): upgrade with data,
 Home list and filters, #89 done chip, Annulla (now 10 s), entry summary.
 screenshots.py adapted (5 tabs, Stato filter, Passata). Released v0.8.0.
+Owner 2026-10-28: v0.8.1 (#104 time grid: measured rows, one-line labels,
+scrolling sheet, kept across rotation). #106 last company/client in dialogs
+(AppSettings lastCompanyId/lastClientId, LastPickViewModel; taken when it
+arrives after the first frame), #107 to-dos with an open entry leave the
+Home list, #109 Master data adds through the Quick*Dialog; device-tested
+on the Xiaomi; released v0.8.2.
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on
