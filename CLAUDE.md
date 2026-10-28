@@ -230,6 +230,40 @@ launcher page; widgets.png retaken (screenshots.py finds the page by the
 widgets' size, MIUI labels them "<app>null"). #87 (owner 2026-10-27, no
 manual change): the Chiuse rows start with the day; released as v0.7.7
 with the 0.7.6 manual (scripts/manual-unchanged).
+Owner 2026-10-27: usability review → issues #90–#99 (F: the field border
+colours stay, only explained in the manual; J: drop Solare/Rendicontato from
+the UI, details to agree). #89 (branch `issue-89-todo-status`, PR open): done
+to-dos showed "pianificata" (the chip ignored `done`); one `todoState()`
+(done, ignored, overdue, planned, open; the filters' TodoState enum
+extended), `done_utc_ms` (schema v15, migration fills it from
+updated_utc_ms), "fatta <when>" on the card and in "Chiuse" order/window,
+done cards dimmed, dialog "Stato" chips Aperta/Fatta/Ignorata + "Togli
+pianificazione"; manual 0.7.8 text. Build and unit tests green locally, NOT
+device-tested. Mockups for #92 (start) and #93 (stop sheet) requested.
+Owner 2026-10-27 (after the mockups): keep the Home "Da fare" tab with its
+own period and company filters; rendicontato is the only total; closing
+without description from the stop sheet is fine. Branch `usability-0-8`
+(on top of `issue-89-todo-status`, draft PR #101): #90 Dettagli mancanti /
+Fatte; #91 labels under commands + one-off suspend hint (suspendHintSeen);
+#92 StartWhen NOW/STARTED/PAST (StartForm.start), segmented selectors,
+labelled start button; #93 StopSheet (ModalBottomSheet) replaces the stop
+dialogs, EntryCommander.close + EntryRepository.setActivity/closeIfComplete;
+#94 EntrySummary card, add row moved, ⋮ Elimina; #96 Screen.Todos is a tab,
+selectTab in MainActivity; #97 Undo bus + UndoHost snackbar, to-dos only;
+#98 "Per iniziare" card (HomeViewModel.hasClients); #99 solar dropped from
+the Report and the summary notification, SettingsSection.essential. Build
+and unit tests green, NOT device-tested; the local debug APK is signed with
+~/.android/debug.keystore (CI artifacts use another key).
+Owner 2026-10-28: Home tabs replaced by one list (HomeList.kt,
+homeSections in HomeTabs.kt; HomeShow/homeWindow settings), filters on one
+row (period with value; Stato/Azienda/Tag by name, coloured when set);
+uniform swipe rule with PastSwipe for stopped entries, gestures still
+configurable; policy covers every option (PolicyCatalog: gestures,
+stationary, kmFactor DOUBLE, endpoints, rounding mode/minimum, remembered
+views; settingLock() for chips outside Settings). Device-tested on the
+Xiaomi over adb 127.0.0.1:55555 (owner's tunnel): upgrade with data,
+Home list and filters, #89 done chip, Annulla (now 10 s), entry summary.
+screenshots.py adapted (5 tabs, Stato filter, Passata). Released v0.8.0.
 Remaining untried on a device: policy lock of `widgetTodoWindowHours`;
 done to-dos in Chiuse (sample DB has none), 3-day window chip, tag
 filter on Chiuse. The debug phone (Xiaomi) keeps the two 4×2 widgets on

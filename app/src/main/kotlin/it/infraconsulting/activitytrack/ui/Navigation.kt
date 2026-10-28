@@ -162,7 +162,8 @@ fun rememberBackStack(): SnapshotStateList<Screen> =
 	rememberSaveable(saver = BackStackSaver) { listOf<Screen>(Screen.Home).toMutableStateList() }
 
 /* Bottom navigation (M6/M7, owner decision 2026-10-17): roots shown with the bar. */
-val TABS: List<Screen> by lazy { listOf(Screen.Home, Screen.Agenda, Screen.Day, Screen.More) }
+/* "Da fare" is a tab of its own (issue #96), hidden when the policy turns the to-dos off */
+val TABS: List<Screen> by lazy { listOf(Screen.Home, Screen.Todos, Screen.Agenda, Screen.Day, Screen.More) }
 
 /* Inside a tab root the bottom bar owns the navigation-bar inset. */
 val LocalBottomBar = staticCompositionLocalOf { false }

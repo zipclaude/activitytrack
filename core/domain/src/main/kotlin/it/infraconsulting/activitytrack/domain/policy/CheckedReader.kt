@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 
 /*
@@ -45,6 +46,12 @@ open class CheckedReader(val text: String) {
 			v !in range -> null.also { error(path, "must be in ${range.first}..${range.last}") }
 			else -> v
 		}
+	}
+
+	fun double(e: JsonElement?, path: String): Double? {
+		if (e == null)
+			return null
+		return (e as? JsonPrimitive)?.takeIf { !it.isString }?.doubleOrNull ?: null.also { error(path, "must be a number") }
 	}
 
 	fun string(e: JsonElement?, path: String): String? = when {

@@ -21,6 +21,9 @@ import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.domain.settings.EntrySwipe
 import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.domain.settings.TodoSwipe
+import it.infraconsulting.activitytrack.domain.settings.PastSwipe
+import it.infraconsulting.activitytrack.ui.common.PolicySetting
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
@@ -41,7 +44,7 @@ class GesturesViewModel(private val repo: SettingsRepository) : ViewModel() {
 
 	/* the Home hint and the cards' ‹ › again (issue #77) */
 	fun showHints() {
-		viewModelScope.launch { repo.update { it.copy(gestureHintSeen = false, swipeLearned = false) } }
+		viewModelScope.launch { repo.update { it.copy(gestureHintSeen = false, swipeLearned = false, suspendHintSeen = false) } }
 	}
 }
 
@@ -64,16 +67,25 @@ fun GesturesScreen(onBack: () -> Unit) {
 			val entryOptions = EntrySwipe.entries.map { it to stringResource(entryLabel(it)) }
 			val todoOptions = TodoSwipe.entries.map { it to stringResource(todoLabel(it)) }
 
-			SectionHeader(stringResource(R.string.gestures_entries))
-			ChoiceField(stringResource(R.string.gestures_to_start), entryOptions, g.entryToStart) { v -> vm.set { it.copy(entryToStart = v) } }
-			ChoiceField(stringResource(R.string.gestures_to_end), entryOptions, g.entryToEnd) { v -> vm.set { it.copy(entryToEnd = v) } }
+			/* each choice may be set, locked or hidden by the policy (2026-10-28); a section with all hidden goes */
+			val p = LocalPolicy.current.settings
+			fun shown(vararg keys: String) = keys.any { p[it]?.hidden != true }
+			if (shown("gestureEntryToStart", "gestureEntryToEnd")) SectionHeader(stringResource(R.string.gestures_entries))
+			PolicySetting("gestureEntryToStart") { ChoiceField(stringResource(R.string.gestures_to_start), entryOptions, g.entryToStart) { v -> vm.set { it.copy(entryToStart = v) } } }
+			PolicySetting("gestureEntryToEnd") { ChoiceField(stringResource(R.string.gestures_to_end), entryOptions, g.entryToEnd) { v -> vm.set { it.copy(entryToEnd = v) } } }
 
-			SectionHeader(stringResource(R.string.gestures_todos))
-			ChoiceField(stringResource(R.string.gestures_to_start), todoOptions, g.todoToStart) { v -> vm.set { it.copy(todoToStart = v) } }
-			ChoiceField(stringResource(R.string.gestures_to_end), todoOptions, g.todoToEnd) { v -> vm.set { it.copy(todoToEnd = v) } }
+			if (shown("gestureTodoToStart", "gestureTodoToEnd")) SectionHeader(stringResource(R.string.gestures_todos))
+			PolicySetting("gestureTodoToStart") { ChoiceField(stringResource(R.string.gestures_to_start), todoOptions, g.todoToStart) { v -> vm.set { it.copy(todoToStart = v) } } }
+			PolicySetting("gestureTodoToEnd") { ChoiceField(stringResource(R.string.gestures_to_end), todoOptions, g.todoToEnd) { v -> vm.set { it.copy(todoToEnd = v) } } }
+
+			/* the stopped entries of the Home list (owner, 2026-10-27) */
+			val pastOptions = PastSwipe.entries.map { it to stringResource(pastLabel(it)) }
+			if (shown("gesturePastToStart", "gesturePastToEnd")) SectionHeader(stringResource(R.string.gestures_past))
+			PolicySetting("gesturePastToStart") { ChoiceField(stringResource(R.string.gestures_to_start), pastOptions, g.pastToStart) { v -> vm.set { it.copy(pastToStart = v) } } }
+			PolicySetting("gesturePastToEnd") { ChoiceField(stringResource(R.string.gestures_to_end), pastOptions, g.pastToEnd) { v -> vm.set { it.copy(pastToEnd = v) } } }
 
 			SectionHeader(stringResource(R.string.gestures_behaviour))
-			SwitchRow(stringResource(R.string.gestures_full), g.fullSwipe) { v -> vm.set { it.copy(fullSwipe = v) } }
+			PolicySetting("gestureFullSwipe") { SwitchRow(stringResource(R.string.gestures_full), g.fullSwipe) { v -> vm.set { it.copy(fullSwipe = v) } } }
 			TextButton(onClick = vm::showHints) { Text(stringResource(R.string.gesture_hints_again)) }
 		}
 	}
@@ -87,8 +99,15 @@ private fun entryLabel(s: EntrySwipe): Int = when (s) {
 	EntrySwipe.NONE -> R.string.swipe_none
 }
 
+private fun pastLabel(s: PastSwipe): Int = when (s) {
+	PastSwipe.COMPLETE -> R.string.cmd_complete
+	PastSwipe.REOPEN -> R.string.cmd_reopen
+	PastSwipe.NONE -> R.string.swipe_none
+}
+
 private fun todoLabel(s: TodoSwipe): Int = when (s) {
 	TodoSwipe.START -> R.string.swipe_start
+	TodoSwipe.START_OR_DONE -> R.string.swipe_start_or_done
 	TodoSwipe.POSTPONE_OR_IGNORE -> R.string.swipe_postpone_or_ignore
 	TodoSwipe.POSTPONE -> R.string.swipe_postpone
 	TodoSwipe.IGNORE -> R.string.swipe_ignore

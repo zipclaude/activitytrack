@@ -52,9 +52,14 @@ data class StartForm(
 	val endTime: String = "",
 	/* the day "yyyy-mm-dd" (issue #44); blank = today, or yesterday for a time still to come */
 	val date: String = "",
+	/* now, already started, or a past one to record (issue #92): which times the form asks */
+	val start: StartWhen = StartWhen.NOW,
 ) {
 	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
 }
+
+/* How a new entry starts (issue #92): now, from a time already passed, or a past one with its end. */
+enum class StartWhen { NOW, STARTED, PAST }
 
 /* A recognised call to record (issue #28): rounded start and end, contact name. */
 data class CallPrefill(val startMs: Long, val endMs: Long, val contact: String)
@@ -141,12 +146,21 @@ class StartViewModel(
 
 	fun setStartTime(hhmm: String) = _form.update { it.copy(startTime = hhmm) }
 
+	/* the times a mode does not ask are dropped (issue #92) */
+	fun setStart(w: StartWhen) = _form.update { f ->
+		when (w) {
+			StartWhen.NOW -> f.copy(start = w, startTime = "", endTime = "", date = "")
+			StartWhen.STARTED -> f.copy(start = w, endTime = "", date = "")
+			StartWhen.PAST -> f.copy(start = w)
+		}
+	}
+
 	/* "Telefonata con NOME" from start to end of the call (issue #28); the client comes as picked */
 	fun prefillCall(c: CallPrefill) {
 		val zone = ZoneId.systemDefault()
 		fun hhmm(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).let { "%02d:%02d".format(it.hour, it.minute) }
 		callActivity = c.contact
-		_form.update { it.copy(startTime = hhmm(c.startMs), endTime = hhmm(c.endMs)) }
+		_form.update { it.copy(start = StartWhen.PAST, startTime = hhmm(c.startMs), endTime = hhmm(c.endMs)) }
 	}
 
 	/* applied after the client's defaults, which would otherwise replace it */
@@ -355,6 +369,19 @@ class StartViewModel(
 			endMs = times(_form.value).second
 			doStart()
 			return
+		}
+		/* a past one (issue #92): start and end both, and no "is it over?" question */
+		if (editableTimes.value && f.start == StartWhen.PAST) {
+			if (startMin == null)
+				return fail(ValidationException.Reason.START_REQUIRED)
+			if (parseHhMm(e) == null)
+				return fail(ValidationException.Reason.END_REQUIRED)
+			val end = times(_form.value).second
+			if (end != null && end <= System.currentTimeMillis()) {
+				endMs = end
+				doStart()
+				return
+			}
 		}
 		/* a Start still to come today: ask first (issue #37) */
 		val nowMin = java.time.LocalTime.now().let { it.hour * 60 + it.minute }

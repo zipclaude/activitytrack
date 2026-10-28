@@ -60,6 +60,12 @@ import it.infraconsulting.activitytrack.R
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
@@ -113,10 +119,23 @@ fun EntryScreen(entryId: Long, onBack: () -> Unit) {
 	ScreenScaffold(
 		title = stringResource(R.string.entry_title),
 		onBack = onBack,
-		/* the whole entry (issue #40) */
+		/* the whole entry (issue #40), in the ⋮ menu (issue #94) */
 		actions = {
-			if (LocalPolicy.current.enabled(Feature.DELETE_ENTRIES))
-				TextButton(onClick = vm::askDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+			if (LocalPolicy.current.enabled(Feature.DELETE_ENTRIES)) {
+				var menu by remember { mutableStateOf(false) }
+				val menuLabel = stringResource(R.string.nav_more)
+				androidx.compose.foundation.layout.Box {
+					androidx.compose.material3.IconButton(onClick = { menu = true }) {
+						Text("⋮", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { contentDescription = menuLabel })
+					}
+					androidx.compose.material3.DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+						androidx.compose.material3.DropdownMenuItem(
+							text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
+							onClick = { menu = false; vm.askDelete() },
+						)
+					}
+				}
+			}
 		},
 	) { padding ->
 		/* the form starts from the first loaded state; later emissions refresh only status and lists */
@@ -168,33 +187,24 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	/* read here: the lazy list's builder is not composable (issue #48) */
 	val policy = LocalPolicy.current
 	val entryPlugin = rememberEntryPlugin(e)
+	val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+	val scope = androidx.compose.runtime.rememberCoroutineScope()
 	Column(modifier = modifier.fillMaxSize()) {
-		LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+		LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
 			item {
 				Column(Modifier.padding(if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)) {
-					/* + Travel and + Pause at the top, no scrolling to reach them (owner, 2026-10-19) */
-					Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-						Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+					/*
+					 * a summary first (issue #94): state, totals, the segments as a
+					 * coloured bar (a tap goes to Tempi), + Travel and + Pause
+					 * still without scrolling (owner, 2026-10-19)
+					 */
+					EntrySummary(e, segments, onTimes = { scope.launch { listState.animateScrollToItem(1) } }) {
 						val travel = commandStyle(EntryCommand.TRAVEL)!!
 						val pause = commandStyle(EntryCommand.PAUSE)!!
 						if (enabled(Feature.TRAVEL))
 							ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
 						ColoredActionButton(stringResource(R.string.add_pause), pause.icon, pause.container, { vm.clearError(); adding = SegmentKind.PAUSE }, pause.content)
 					}
-					/* expense, photo, voice note, file on one row, before the client (owner, issue #37) */
-					/* only what the policy keeps (issue #48) */
-					val choices = listOfNotNull(
-						AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_euro, MAGENTA).takeIf { policy.enabled(Feature.EXPENSES) },
-						AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE).takeIf { policy.enabled(Feature.ATTACHMENTS) },
-						AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL).takeIf { policy.enabled(Feature.VOICE_NOTES) },
-						AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO).takeIf { policy.enabled(Feature.ATTACHMENTS) },
-						AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK).takeIf { policy.enabled(Feature.MATERIALS) },
-					)
-					if (choices.isNotEmpty())
-						Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-							for ((req, label, icon, color) in choices)
-								MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
-						}
 					val coNames = companies.associate { it.id to it.name }
 					/* by company in the company order, then in the client order (M16; stable sort) */
 					val coIndex = companies.withIndex().associate { (i, c) -> c.id to i }
@@ -248,7 +258,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 							importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
 						) { roleId = it }
 					} }
-					val folded = compact && !more && locality.isEmpty() && locationKind == null && notes.isEmpty()
+					/* locality, place and notes folded while empty, in every display (issue #94) */
+					val folded = !more && locality.isEmpty() && locationKind == null && notes.isEmpty()
 					if (folded)
 						TextButton(onClick = { more = true }) { Text(stringResource(R.string.more_details) + " ▾") }
 					else {
@@ -300,6 +311,22 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				}
 			}
 
+			/* expense, photo, voice note, file, material: one row with the sections they fill (issue #94) */
+			val choices = listOfNotNull(
+				AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_euro, MAGENTA).takeIf { policy.enabled(Feature.EXPENSES) },
+				AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE).takeIf { policy.enabled(Feature.ATTACHMENTS) },
+				AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL).takeIf { policy.enabled(Feature.VOICE_NOTES) },
+				AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO).takeIf { policy.enabled(Feature.ATTACHMENTS) },
+				AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK).takeIf { policy.enabled(Feature.MATERIALS) },
+			)
+			if (choices.isNotEmpty())
+				item {
+					SectionHeader(stringResource(R.string.entry_add_section))
+					Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+						for ((req, label, icon, color) in choices)
+							MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
+					}
+				}
 			if (policy.field(Field.TAGS).visible)
 				item { TagsSection(vm) }
 			if (policy.field(Field.REFS).visible) {
@@ -336,13 +363,17 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			horizontalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			if (e.status == EntryStatus.TO_COMPLETE || e.status == EntryStatus.CLOSED)
-				OutlinedButton(onClick = vm::reopen) { Text(stringResource(R.string.cmd_reopen)) }
-			OutlinedButton(onClick = { vm.save(details(), onBack) }) { Text(stringResource(R.string.action_save)) }
-			if (e.status == EntryStatus.TO_COMPLETE)
+				OutlinedButton(onClick = vm::reopen, modifier = Modifier.height(52.dp)) { Text(stringResource(R.string.cmd_reopen)) }
+			/* the main action fills the row (issue #94): Completa when details are missing, else Salva */
+			if (e.status == EntryStatus.TO_COMPLETE) {
+				OutlinedButton(onClick = { vm.save(details(), onBack) }, modifier = Modifier.height(52.dp)) { Text(stringResource(R.string.action_save)) }
 				Button(
 					onClick = { vm.complete(details(), onBack) },
 					colors = ButtonDefaults.buttonColors(containerColor = commandStyle(EntryCommand.WORK)!!.container, contentColor = Color.White),
+					modifier = Modifier.weight(1f).height(52.dp),
 				) { Text(stringResource(R.string.cmd_complete)) }
+			} else
+				Button(onClick = { vm.save(details(), onBack) }, modifier = Modifier.weight(1f).height(52.dp)) { Text(stringResource(R.string.action_save)) }
 		}
 	}
 
@@ -736,3 +767,55 @@ enum class AddRequest { EXPENSE, PHOTO, VOICE, FILE, MATERIAL }
 private val TEAL_DARK = androidx.compose.ui.graphics.Color(0xFF5D4037)
 
 private data class AddChoice(val request: AddRequest, val label: Int, val icon: Int, val color: androidx.compose.ui.graphics.Color)
+
+/*
+ * The top of the entry screen (issue #94): the state as on the Home card,
+ * the totals of work, travel and pause, the segments as a coloured bar in
+ * their order and length; [actions] are + Travel and + Pause.
+ */
+@Composable
+private fun EntrySummary(e: TimeEntryEntity, segments: List<SegmentEntity>, onTimes: () -> Unit, actions: @Composable () -> Unit) {
+	val now = System.currentTimeMillis()
+	fun len(s: SegmentEntity) = maxOf(0L, (s.endUtcMs ?: now) - s.startUtcMs)
+	fun sum(k: SegmentKind) = segments.filter { it.kind == k }.sumOf(::len)
+	androidx.compose.material3.Card(Modifier.fillMaxWidth()) {
+		Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			Row(verticalAlignment = Alignment.CenterVertically) {
+				val style = it.infraconsulting.activitytrack.ui.common.stateStyle(e.status, e.mode)
+				Box(Modifier.weight(1f)) {
+					if (style != null && style.container != Color.Transparent)
+						it.infraconsulting.activitytrack.ui.common.StatePill(style, statusText(e.status, e.mode))
+					else
+						Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary)
+				}
+				Text(hmOf(sum(SegmentKind.WORK) + sum(SegmentKind.TRAVEL)), style = MaterialTheme.typography.titleLarge)
+			}
+			val total = segments.sumOf(::len)
+			if (total > 0)
+				Row(
+					Modifier.fillMaxWidth().height(10.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(5.dp)).clickable(onClick = onTimes),
+					horizontalArrangement = Arrangement.spacedBy(2.dp),
+				) {
+					for (s in segments.sortedBy { it.startUtcMs }) {
+						val w = len(s).toFloat() / total
+						if (w > 0f)
+							Box(Modifier.weight(w).fillMaxSize().background(commandStyle(segmentCommand(s.kind))!!.container))
+					}
+				}
+			Row(verticalAlignment = Alignment.CenterVertically) {
+				Text(
+					stringResource(R.string.entry_summary_totals, hmOf(sum(SegmentKind.WORK)), hmOf(sum(SegmentKind.TRAVEL)), hmOf(sum(SegmentKind.PAUSE))),
+					style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f),
+				)
+				TextButton(onClick = onTimes) { Text(stringResource(R.string.segments) + " ›") }
+			}
+			androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { actions() }
+		}
+	}
+}
+
+private fun segmentCommand(k: SegmentKind) = when (k) {
+	SegmentKind.TRAVEL -> EntryCommand.TRAVEL
+	SegmentKind.PAUSE -> EntryCommand.PAUSE
+	else -> EntryCommand.WORK
+}

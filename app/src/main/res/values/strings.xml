@@ -12,7 +12,7 @@
   <string name="ch_arrival">Arrival prompts</string>
   <string name="ch_day_start">Start of day</string>
   <string name="ch_day_summary">Daily summary</string>
-  <string name="ch_to_complete">Activities to complete</string>
+  <string name="ch_to_complete">Activities with details missing</string>
 
   <!-- actions -->
   <string name="action_save">Save</string>
@@ -50,7 +50,7 @@ Tap the green play button below to start one.</string>
   <string name="widget_todo_description">The next planned to-dos, each with a Start button</string>
   <string name="widget_todo_empty">Nothing planned</string>
   <string name="status_suspended">Suspended</string>
-  <string name="status_to_complete">To complete</string>
+  <string name="status_to_complete">Details missing</string>
   <string name="status_closed">Closed</string>
 
   <!-- data folder -->
@@ -131,6 +131,7 @@ Tap the green play button below to start one.</string>
 
   <!-- settings -->
   <string name="settings_title">Settings</string>
+  <string name="settings_more">Other settings</string>
   <string name="settings_saved">Settings saved</string>
   <string name="settings_unsaved">There are unsaved changes in this section.</string>
   <string name="settings_unsaved_leave">Leave without saving</string>
@@ -194,6 +195,7 @@ Tap the green play button below to start one.</string>
   <string name="cmd_pause">Pause</string>
   <string name="cmd_suspend">Suspend</string>
   <string name="cmd_stop">Stop</string>
+  <string name="suspend_hint_text">Suspend leaves the activity to resume it later, for example to work on another one; the time in between is not counted. Pause is a break inside the activity and is counted as a pause.</string>
   <string name="cmd_complete">Complete</string>
   <string name="empty_activity_title">No activity description</string>
   <string name="empty_activity_text">Complete with the client only?</string>
@@ -207,6 +209,10 @@ Tap the green play button below to start one.</string>
   <string name="stop_now">Stop now</string>
   <string name="stop_return">Start return travel</string>
   <string name="stop_quick">Quick stop</string>
+  <string name="stop_end_work">End of work</string>
+  <string name="stop_close">Close</string>
+  <string name="stop_no_activity_hint">No description: it stays “details missing”.</string>
+  <string name="stop_todo_done">To-do done</string>
   <string name="resume_title">Resume \"%1$s\"?</string>
   <string name="action_yes">Yes</string>
   <string name="action_no">No</string>
@@ -228,7 +234,7 @@ Tap the green play button below to start one.</string>
   <string name="travel_suspend">Suspend travel</string>
   <string name="err_completion_incomplete">Describe the activity.</string>
   <string name="err_client_required">Choose a client.</string>
-  <string name="notif_to_complete_title">Activity to complete</string>
+  <string name="notif_to_complete_title">Activity: details missing</string>
   <string name="notif_confirm_title">Still on %1$s?</string>
   <string name="notif_confirm_text">Last confirmation at %1$s</string>
   <string name="notif_stop_at">Stop at %1$s</string>
@@ -243,8 +249,10 @@ Tap the green play button below to start one.</string>
   <string name="notif_still_travelling">Still travelling</string>
   <string name="notif_pause_title">Still on pause?</string>
   <string name="notif_summary_title">Today</string>
-  <string name="notif_summary_text">Solar %1$s · reported %2$s</string>
+  <string name="notif_summary_text">Total %1$s</string>
   <string name="entry_title">Activity</string>
+  <string name="entry_add_section">Expenses and attachments</string>
+  <string name="entry_summary_totals">Work %1$s · Travel %2$s · Pause %3$s</string>
   <string name="field_locality">Locality</string>
   <string name="field_location_kind">Where</string>
   <string name="segments">Times</string>
@@ -302,8 +310,7 @@ Tap the green play button below to start one.</string>
   <string name="err_overlapping_segments">The segment overlaps time already recorded.</string>
   <string name="day_title">Day</string>
   <string name="day_today">Today</string>
-  <string name="day_solar">Solar</string>
-  <string name="day_reported">Reported</string>
+  <string name="day_reported">Total</string>
   <string name="day_empty">No time recorded on this day.</string>
   <string name="day_line_fmt">Work %1$s → %2$s · Travel %3$s → %4$s · Pause %5$s → %6$s</string>
   <string name="export_title">Import / export</string>
@@ -332,7 +339,6 @@ Tap the green play button below to start one.</string>
   <string name="todo_align_due_no">Keep it</string>
   <string name="todo_start">Start activity</string>
   <string name="todo_mark_done">Mark as done</string>
-  <string name="todo_reopen">Mark as not done</string>
   <string name="todo_edit">Edit to-do</string>
   <string name="todo_show_done">Show done ones</string>
   <string name="todo_field_title">Description</string>
@@ -399,13 +405,35 @@ Tap the green play button below to start one.</string>
   <string name="action_ok">OK</string>
   <string name="action_clear">Clear</string>
   <string name="home_none">No activity running</string>
+  <string name="first_title">Getting started</string>
+  <string name="first_text">Create the client you work for, with its company: then ▶ starts your first activity.</string>
+  <string name="first_client">Create the first client</string>
+  <string name="first_import">Import from a file or a management system</string>
   <string name="home_none_hint">Tap the green button below to start one.</string>
   <string name="home_tab_planned">To-dos</string>
-  <string name="home_tab_closed">Closed</string>
+  <string name="home_tab_closed">Done</string>
   <string name="home_no_date">Without a date</string>
   <string name="home_window_today">Today</string>
   <string name="home_planned_empty">Nothing planned in this window</string>
-  <string name="home_closed_empty">Nothing closed in this window</string>
+  <string name="home_all_todos">All to-dos →</string>
+  <string name="home_filter_state">State</string>
+  <string name="home_filter_company">Company</string>
+  <string name="home_filter_tag">Tag</string>
+  <string name="home_show_todo">To-dos</string>
+  <string name="home_show_ignored">Ignored</string>
+  <string name="home_show_all">All</string>
+  <string name="home_show_none">None</string>
+  <string name="home_show_fmt">State: %1$s</string>
+  <string name="home_show_only_todo">Only to-dos</string>
+  <string name="home_show_only_done">Only done</string>
+  <string name="home_sec_overdue">Overdue</string>
+  <string name="home_sec_next">Next days</string>
+  <string name="home_sec_earlier">Earlier</string>
+  <string name="home_state_open">open</string>
+  <string name="home_kind_entry">Activity</string>
+  <string name="home_list_empty">Nothing to show with these filters</string>
+  <string name="undo_entry_reopened">“%1$s” reopened</string>
+  <string name="home_closed_empty">Nothing done in this window</string>
   <string name="todo_ignored">ignored</string>
   <string name="swipe_start">Start</string>
   <string name="swipe_ignore">Ignore</string>
@@ -421,11 +449,26 @@ Tap the green play button below to start one.</string>
   <string name="gesture_hints_again">Show the gesture hints again</string>
   <string name="gestures_entries">Running activities</string>
   <string name="gestures_todos">To-dos</string>
+  <string name="gestures_past">Stopped activities</string>
+  <string name="swipe_start_or_done">Start or done</string>
+  <string name="todo_reopen_short">Reopen</string>
   <string name="gestures_to_start">Swipe left</string>
   <string name="gestures_to_end">Swipe right</string>
   <string name="gestures_full">Long swipe runs the first action at once</string>
   <string name="todo_due_at">due %1$s</string>
   <string name="todo_planned_chip">planned</string>
+  <string name="todo_done_chip">done</string>
+  <string name="todo_done_at">done %1$s</string>
+  <string name="todo_state">State</string>
+  <string name="todo_state_done">Done</string>
+  <string name="todo_state_ignored">Ignored</string>
+  <string name="todo_clear_plan">Remove the plan</string>
+  <string name="action_undo">Undo</string>
+  <string name="undo_todo_done">“%1$s” marked done</string>
+  <string name="undo_todo_open">“%1$s” open again</string>
+  <string name="undo_todo_ignored">“%1$s” ignored</string>
+  <string name="undo_todo_postponed">“%1$s” postponed</string>
+  <string name="undo_todo_unplanned">Plan removed from “%1$s”</string>
   <string name="gestures_behaviour">Behaviour</string>
   <!-- M11 home start, compact display, quick add -->
   <string name="sec_display">Display</string>
@@ -541,6 +584,16 @@ Tap the green play button below to start one.</string>
   <string name="call_propose_action">Create activity</string>
   <string name="segment_note">Description</string>
   <string name="start_end_hint">Empty Start = now; empty End = open; an End already passed records the activity as done.</string>
+  <string name="start_when_now">Now</string>
+  <string name="start_when_started">Already started</string>
+  <string name="start_when_past">Past</string>
+  <string name="start_when_now_hint">Starts now. For an activity already under way, or one to record, pick the mode above.</string>
+  <string name="start_when_started_hint">It stays open: stop it with Stop.</string>
+  <string name="start_started_at">Started at</string>
+  <string name="start_minutes_ago">%1$d min ago</string>
+  <string name="start_now_action">Start now</string>
+  <string name="start_from_action">Start from %1$s</string>
+  <string name="start_record_action">Record %1$s–%2$s</string>
   <!-- issue #37 add row -->
   <string name="short_expense">Expense</string>
   <string name="short_photo">Photo</string>

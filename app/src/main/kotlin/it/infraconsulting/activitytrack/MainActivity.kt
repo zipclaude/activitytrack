@@ -3,6 +3,17 @@ package it.infraconsulting.activitytrack
 
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import it.infraconsulting.activitytrack.ui.common.Undo
+import kotlinx.coroutines.flow.collectLatest
 import it.infraconsulting.activitytrack.policy.PolicyLoader
 import it.infraconsulting.activitytrack.ui.start.CallPrefill
 import android.Manifest
@@ -41,6 +52,8 @@ import it.infraconsulting.activitytrack.notify.EntryLinks
 import kotlinx.coroutines.flow.map
 import it.infraconsulting.activitytrack.ui.ActivityTrackTheme
 import it.infraconsulting.activitytrack.ui.LocalBottomBar
+import it.infraconsulting.activitytrack.domain.policy.Feature
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.ui.ScopedEntry
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.TABS
@@ -140,6 +153,8 @@ private fun Navigator(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 	val stack = rememberBackStack()
 	val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
 	val open: (Screen) -> Unit = { stack.add(it) }
+	/* to another tab's root, as the bottom bar does */
+	val selectTab: (Screen) -> Unit = { stack.clear(); stack.add(it) }
 	LaunchedEffect(deepLink) {
 		if (deepLink != null) {
 			if (stack.last() != deepLink)
@@ -159,22 +174,43 @@ private fun Navigator(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 	Column(Modifier.fillMaxSize()) {
 		Box(Modifier.weight(1f)) {
 			CompositionLocalProvider(LocalBottomBar provides tab) {
-				ScopedEntry(stack) { t -> Destination(t, back, open) }
+				ScopedEntry(stack) { t -> Destination(t, back, open, selectTab) }
 			}
+			UndoHost(Modifier.align(Alignment.BottomCenter).then(if (tab) Modifier else Modifier.navigationBarsPadding()))
 		}
 		if (tab)
-			BottomBar(top) { selected ->
-				stack.clear()
-				stack.add(selected)
-			}
+			BottomBar(top, selectTab)
 	}
+}
+
+/* The "Annulla" snackbar of every screen (issue #97), above the bottom bar. */
+@Composable
+private fun UndoHost(modifier: Modifier) {
+	val host = remember { SnackbarHostState() }
+	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
+	LaunchedEffect(Unit) {
+		Undo.events.collectLatest { e ->
+			val result = host.showSnackbar(
+				message = context.getString(e.message, e.arg),
+				actionLabel = context.getString(R.string.action_undo),
+				duration = SnackbarDuration.Long,
+			)
+			if (result == SnackbarResult.ActionPerformed)
+				scope.launch { e.undo() }
+		}
+	}
+	SnackbarHost(host, modifier.padding(bottom = 8.dp))
 }
 
 @Composable
 private fun BottomBar(current: Screen, onSelect: (Screen) -> Unit) {
+	val policy = LocalPolicy.current
 	NavigationBar {
-		for ((screen, icon, label) in listOf(
+		for ((screen, icon, label) in listOfNotNull(
 			Triple(Screen.Home, R.drawable.ic_nav_home, R.string.nav_home),
+			Triple(Screen.Todos, R.drawable.ic_menu_todo, R.string.todo_title)
+				.takeIf { policy.enabled(Feature.TODOS) },
 			Triple(Screen.Agenda, R.drawable.ic_nav_agenda, R.string.nav_agenda),
 			Triple(Screen.Day, R.drawable.ic_nav_report, R.string.nav_report),
 			Triple(Screen.More, R.drawable.ic_nav_more, R.string.nav_more),
@@ -212,7 +248,7 @@ private fun RequestRuntimePermissions() {
 }
 
 @Composable
-private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
+private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, selectTab: (Screen) -> Unit) {
 	when (top) {
 		Screen.Home -> HomeScreen(
 			onStart = { open(Screen.Start) },
@@ -220,6 +256,8 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 			onOpenEntry = { open(Screen.Entry(it)) },
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
 			onOpenGestures = { open(Screen.Gestures) },
+			onOpenTodos = { selectTab(Screen.Todos) },
+			onOpenImport = { open(Screen.Export) },
 		)
 		Screen.Agenda -> AgendaScreen(onOpenEntry = { open(Screen.Entry(it)) }, onStartTodo = { open(Screen.StartFromTodo(it)) })
 		Screen.More -> MoreScreen(open)
@@ -230,7 +268,8 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit) {
 		is Screen.StartFromCall -> StartScreen(back, top.clientId, call = CallPrefill(top.startMs, top.endMs, top.contact))
 		Screen.Contacts -> it.infraconsulting.activitytrack.ui.masterdata.ContactsScreen(back)
 		Screen.Materials -> it.infraconsulting.activitytrack.ui.masterdata.MaterialsScreen(back)
-		Screen.Todos -> TodosScreen(back) { open(Screen.StartFromTodo(it)) }
+		/* a tab root, or opened from a notification above another screen */
+		Screen.Todos -> TodosScreen(back.takeUnless { LocalBottomBar.current }) { open(Screen.StartFromTodo(it)) }
 		is Screen.Todo -> TodosScreen(back, editId = top.id) { open(Screen.StartFromTodo(it)) }
 		is Screen.Entry -> EntryScreen(top.id, back)
 		Screen.Day -> DayScreen(null, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })

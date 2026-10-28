@@ -40,6 +40,9 @@ import it.infraconsulting.activitytrack.ui.common.TagFilterChip
 import it.infraconsulting.activitytrack.ui.todo.CompanyFilter
 import it.infraconsulting.activitytrack.ui.todo.TodosViewModel
 import it.infraconsulting.activitytrack.ui.todo.moment
+import it.infraconsulting.activitytrack.ui.todo.todoState
+import it.infraconsulting.activitytrack.ui.todo.TodoState
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -92,119 +95,98 @@ internal fun closedBoundary(window: Int, carryOverMin: Int, now: Instant, zone: 
 	return if (start.isAfter(now)) today.minusDays(1).atMinute(carryOverMin, zone) else start
 }
 
-/* One row of the "Chiuse" tab: an entry that stopped being worked on, or a done to-do. */
-internal sealed interface ClosedRow {
-	val sortMs: Long
+/* What the Home list can show (owner, 2026-10-27: one list with a state filter, AppSettings.homeShow). */
+enum class HomeShow { TODO, MISSING, DONE, IGNORED }
 
-	data class Entry(val card: EntryCard) : ClosedRow {
-		override val sortMs: Long get() = card.endUtcMs ?: card.entry.updatedUtcMs
+/* The groups of the Home list, in this order. */
+enum class HomeSection { OVERDUE, MISSING, TODAY, NEXT, EARLIER, NO_DATE, IGNORED }
+
+/* One row of the Home list: a to-do or a stopped entry, drawn alike. */
+internal sealed interface HomeItem {
+	val key: String
+
+	data class Todo(val todo: TodoEntity) : HomeItem {
+		override val key get() = "todo-${todo.id}"
 	}
 
-	data class Todo(val todo: TodoEntity, val client: String?) : ClosedRow {
-		override val sortMs: Long get() = todo.updatedUtcMs
+	data class Entry(val card: EntryCard) : HomeItem {
+		override val key get() = "entry-${card.entry.id}"
 	}
 }
 
 /*
- * "[Pianificate n | Chiuse] [window ▾] [company] [#tag ▾]" (issue #59;
- * browser-like tabs since #72, a plain text row before): the tabs switch
- * by tapping or swiping this header horizontally (the card swipes below
- * stay untouched); the count of the list shown sits beside the active
- * label. The window and the filters act on the list shown — ahead for
- * the planned tab, behind for the closed one. The window labels come in
- * display order from the caller.
+ * The Home list (owner, 2026-10-27). [window]: -1 today, 0 everything, else
+ * hours; ahead for the open to-dos (the overdue always shown), behind for
+ * what was done or ignored (today from the carry-over boundary, as the
+ * reports). Entries with details missing are always shown: they wait for
+ * the user. A tag keeps only the entries with it. Empty groups are left out.
  */
-@Composable
-internal fun HomeTabsHeader(
-	tab: HomeTab,
-	showPlanned: Boolean,
-	count: Int,
-	windowHours: Int,
-	windowLabels: List<Pair<Int, String>>,
-	onWindow: (Int) -> Unit,
-	todosVm: TodosViewModel,
-	showTagFilter: Boolean,
+internal fun homeSections(
+	open: List<TodoEntity>,
+	ignored: List<TodoEntity>,
+	done: List<TodoEntity>,
+	stopped: List<EntryCard>,
+	show: Set<HomeShow>,
+	company: Long?,
 	tag: String?,
-	tags: List<String>,
-	onTag: (String?) -> Unit,
-	onTab: (HomeTab) -> Unit,
-) {
-	val tabs = if (showPlanned) HomeTab.entries.toList() else listOf(HomeTab.CLOSED)
-	val threshold = with(LocalDensity.current) { 40.dp.toPx() }
-	val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-	/* read inside the gesture block below, which must not restart on every recomposition */
-	val currentTab by rememberUpdatedState(tab)
-	val currentOnTab by rememberUpdatedState(onTab)
-	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-		/* browser-like tabs (issue #72; a plain text row before): the count
-		 * of the list shown sits beside the active label */
-		TabRow(
-			selectedTabIndex = tabs.indexOf(tab).coerceAtLeast(0),
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(top = 6.dp)
-				/*
-				 * Swipe on the header (issue #59). Watched in the Initial pass,
-				 * without consuming: the Material tabs take their taps in the
-				 * Main pass and a Main-pass drag detector here never sees a
-				 * drag started on a tab.
-				 */
-				.pointerInput(tabs) {
-					awaitEachGesture {
-						val down = awaitFirstDown(pass = PointerEventPass.Initial)
-						var drag = 0f
-						try {
-							while (true) {
-								val event = awaitPointerEvent(PointerEventPass.Initial)
-								val change = event.changes.firstOrNull { it.id == down.id } ?: break
-								drag += change.positionChange().x
-								if (!change.pressed)
-									break
-							}
-						} catch (e: CancellationException) {
-							return@awaitEachGesture
-						}
-						if (abs(drag) > threshold) {
-							val forward = if (rtl) drag > 0f else drag < 0f
-							val i = tabs.indexOf(currentTab)
-							if (forward && i < tabs.size - 1) currentOnTab(tabs[i + 1])
-							else if (!forward && i > 0) currentOnTab(tabs[i - 1])
-						}
-					}
-				},
-		) {
-			for (t in tabs) {
-				Tab(
-					selected = t == tab,
-					onClick = { onTab(t) },
-					text = {
-						Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-							Text(stringResource(if (t == HomeTab.PLANNED) R.string.home_tab_planned else R.string.home_tab_closed))
-							if (t == tab && count > 0)
-								Text(count.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-						}
-					},
-				)
+	window: Int,
+	carryOverMin: Int,
+	now: Instant,
+	zone: ZoneId,
+): List<Pair<HomeSection, List<HomeItem>>> {
+	val today = now.atZone(zone).toLocalDate()
+	val todayFrom = closedBoundary(0, carryOverMin, now, zone)
+	val ahead: Instant? = when (window) {
+		-1 -> today.plusDays(1).atStartOfDay(zone).toInstant()
+		0 -> null
+		else -> now.plus(Duration.ofHours(window.toLong()))
+	}
+	val behind: Instant = when (window) {
+		-1 -> todayFrom
+		0 -> Instant.EPOCH
+		else -> now.minus(Duration.ofHours(window.toLong()))
+	}
+	fun ofCompany(c: Long?) = company == null || c == company
+	val todos = tag == null
+	val groups = HomeSection.entries.associateWith { mutableListOf<Pair<Long, HomeItem>>() }
+
+	if (HomeShow.TODO in show && todos)
+		for (t in open.filter { ofCompany(it.companyId) }) {
+			val m = moment(t, zone)
+			when {
+				todoState(t, now) == TodoState.OVERDUE ->
+					groups.getValue(HomeSection.OVERDUE) += (m?.toEpochMilli() ?: 0L) to HomeItem.Todo(t)
+				m == null -> groups.getValue(HomeSection.NO_DATE) += (t.priority?.toLong() ?: Long.MAX_VALUE) to HomeItem.Todo(t)
+				ahead != null && m.isAfter(ahead) -> {}
+				m.atZone(zone).toLocalDate().isAfter(today) -> groups.getValue(HomeSection.NEXT) += m.toEpochMilli() to HomeItem.Todo(t)
+				else -> groups.getValue(HomeSection.TODAY) += m.toEpochMilli() to HomeItem.Todo(t)
 			}
 		}
-		FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-			WindowChip(windowHours, windowLabels, onWindow)
-			CompanyFilter(todosVm, onHome = true)
-			if (showTagFilter)
-				TagFilterChip(tags, tag, onTag)
+	for (c in stopped.filter { ofCompany(it.entry.companyId) && (tag == null || tag in it.tags) }) {
+		val end = c.endUtcMs ?: c.entry.updatedUtcMs
+		val missing = c.entry.status == EntryStatus.TO_COMPLETE
+		when {
+			missing -> if (HomeShow.MISSING in show) groups.getValue(HomeSection.MISSING) += -end to HomeItem.Entry(c)
+			HomeShow.DONE !in show || end < behind.toEpochMilli() -> {}
+			/* after today's to-dos: the most recent first */
+			end >= todayFrom.toEpochMilli() -> groups.getValue(HomeSection.TODAY) += (Long.MAX_VALUE - end) to HomeItem.Entry(c)
+			else -> groups.getValue(HomeSection.EARLIER) += -end to HomeItem.Entry(c)
 		}
 	}
-}
-
-/* The window picker of the tab shown: "24 h ▾", "Oggi ▾", ... */
-@Composable
-private fun WindowChip(hours: Int, labels: List<Pair<Int, String>>, onPick: (Int) -> Unit) {
-	var open by remember { mutableStateOf(false) }
-	Box {
-		FilterChip(selected = true, onClick = { open = true }, label = { Text((labels.firstOrNull { it.first == hours }?.second ?: "") + " ▾") })
-		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-			for ((h, label) in labels)
-				DropdownMenuItem(text = { Text(label) }, onClick = { open = false; onPick(h) })
+	if (HomeShow.DONE in show && todos)
+		for (t in done.filter { ofCompany(it.companyId) }) {
+			val at = t.doneUtcMs ?: t.updatedUtcMs
+			when {
+				at < behind.toEpochMilli() -> {}
+				at >= todayFrom.toEpochMilli() -> groups.getValue(HomeSection.TODAY) += (Long.MAX_VALUE - at) to HomeItem.Todo(t)
+				else -> groups.getValue(HomeSection.EARLIER) += -at to HomeItem.Todo(t)
+			}
 		}
+	if (HomeShow.IGNORED in show && todos)
+		for (t in ignored.filter { ofCompany(it.companyId) && (it.ignoredUtcMs ?: 0L) >= behind.toEpochMilli() })
+			groups.getValue(HomeSection.IGNORED) += -(t.ignoredUtcMs ?: 0L) to HomeItem.Todo(t)
+
+	return HomeSection.entries.mapNotNull { s ->
+		groups.getValue(s).takeIf { it.isNotEmpty() }?.sortedBy { it.first }?.map { it.second }?.let { s to it }
 	}
 }

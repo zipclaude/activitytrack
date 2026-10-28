@@ -210,6 +210,8 @@ data class TodoEntity(
 	@ColumnInfo(name = "due_time_min") val dueTimeMin: Int? = null,
 	val priority: Int? = null,
 	val done: Boolean = false,
+	/* when it was marked done (issue #89); null while open. Migrated rows got their last update */
+	@ColumnInfo(name = "done_utc_ms") val doneUtcMs: Long? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
 	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
 	/* planned slot (M9): local day and start, both or neither; duration optional */

@@ -292,7 +292,7 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val plan: (LocalDate, Int) -> Unit = { day, min -> if (canPlan) { todosVm.clearError(); editing = newTodo(day, min) } }
 	val onTodo: (TodoEntity) -> Unit = { selected = it }
 	/* swipes on open entries run the commands like Home (owner, 2026-10-18: gestures everywhere) */
-	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries) }
+	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries, it.todos) }
 	val settings by todosVm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
@@ -312,11 +312,18 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 		) { padding ->
 			Column(Modifier.fillMaxSize().padding(padding)) {
 				Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-					for ((m, label) in listOf(
-						AgendaMode.LIST to R.string.agenda_list, AgendaMode.DAY to R.string.agenda_day,
-						AgendaMode.WEEK to R.string.agenda_week, AgendaMode.MONTH to R.string.agenda_month,
-					))
-						FilterChip(selected = mode == m, onClick = { vm.mode.value = m }, label = { Text(stringResource(label)) })
+					/* the view may be fixed by the policy (agendaView): locked, the others greyed; hidden, no choice */
+					val viewLock = it.infraconsulting.activitytrack.ui.common.settingLock("agendaView")
+					if (viewLock != it.infraconsulting.activitytrack.ui.common.SettingLock.HIDDEN)
+						for ((m, label) in listOf(
+							AgendaMode.LIST to R.string.agenda_list, AgendaMode.DAY to R.string.agenda_day,
+							AgendaMode.WEEK to R.string.agenda_week, AgendaMode.MONTH to R.string.agenda_month,
+						))
+							FilterChip(
+								selected = mode == m, onClick = { vm.mode.value = m },
+								enabled = viewLock == it.infraconsulting.activitytrack.ui.common.SettingLock.FREE || mode == m,
+								label = { Text(stringResource(label)) },
+							)
 					TagFilterChip(loaded?.items?.flatMap { it.tags }?.distinct().orEmpty(), tag) { tag = it }
 				}
 				Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
