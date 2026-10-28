@@ -90,7 +90,8 @@ fun StartScreen(onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null
 	val error by vm.error.collectAsState()
 	val editableTimes by vm.editableTimes.collectAsState()
 	val askEnded by vm.askEnded.collectAsState()
-	var rangeGrid by remember { mutableStateOf(false) }
+	/* kept across a rotation (issue #104): the grid stays open */
+	var rangeGrid by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 	val none = stringResource(R.string.field_none)
 	/* read here: the lazy list's builder is not composable */
 	val policy = it.infraconsulting.activitytrack.ui.common.LocalPolicy.current
