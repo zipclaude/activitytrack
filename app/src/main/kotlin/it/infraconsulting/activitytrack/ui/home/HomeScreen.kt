@@ -290,6 +290,7 @@ fun HomeScreen(
 	val sections = homeSections(
 		openTodos, ignoredTodos, doneTodos, closedCards, show, todoCompany, closedTag, homeWindow,
 		settings?.carryOverMin ?: 6 * 60, Instant.now(), zone,
+		working = allCards.mapNotNull { it.entry.todoId }.toSet(),
 	)
 	val listed = sections.flatMap { it.second }
 	val todoBands = bands(listed.mapNotNull { (it as? HomeItem.Todo)?.todo }, todoCompanies, todoClients)
