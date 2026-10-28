@@ -133,6 +133,8 @@ internal fun homeSections(
 	carryOverMin: Int,
 	now: Instant,
 	zone: ZoneId,
+	/* to-dos with an activity still open (running, paused, suspended, details missing): shown by that activity (issue #107) */
+	working: Set<Long> = emptySet(),
 ): List<Pair<HomeSection, List<HomeItem>>> {
 	val today = now.atZone(zone).toLocalDate()
 	val todayFrom = closedBoundary(0, carryOverMin, now, zone)
@@ -151,7 +153,7 @@ internal fun homeSections(
 	val groups = HomeSection.entries.associateWith { mutableListOf<Pair<Long, HomeItem>>() }
 
 	if (HomeShow.TODO in show && todos)
-		for (t in open.filter { ofCompany(it.companyId) }) {
+		for (t in open.filter { ofCompany(it.companyId) && it.id !in working }) {
 			val m = moment(t, zone)
 			when {
 				todoState(t, now) == TodoState.OVERDUE ->

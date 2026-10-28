@@ -61,6 +61,13 @@ class HomeListTest {
 	}
 
 	@Test
+	fun aToDoBeingWorkedOnLeavesTheList() {
+		/* issue #107: started, its activity is in the cards above, not "planned" in the list */
+		val planned = todo(2, day, 15 * 60)
+		assertEquals(emptyList(), homeSections(listOf(planned), emptyList(), emptyList(), emptyList(), setOf(HomeShow.TODO), null, null, -1, 6 * 60, now, zone, working = setOf(2L)))
+	}
+
+	@Test
 	fun todayWindowStopsAtMidnightAndATagHidesTheToDos() {
 		val tomorrow = todo(3, day.plusDays(1), 9 * 60)
 		assertEquals(emptyList(), homeSections(listOf(tomorrow), emptyList(), emptyList(), emptyList(), setOf(HomeShow.TODO), null, null, -1, 6 * 60, now, zone))
