@@ -692,11 +692,20 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	val last = lastPickViewModel()
 	val (lastCompany, lastClient) = lastPick()
 	val isNew = initial.id == 0L
-	var clientId by remember {
-		mutableStateOf(initial.clientId ?: lastClient?.takeIf { isNew && clients.firstOrNull { c -> c.id == it }?.companyId == (initial.companyId ?: lastCompany) })
-	}
+	var clientId by remember { mutableStateOf(initial.clientId) }
 	/* the companies may still be loading when the dialog opens (agenda): default to the first once known */
-	var picked by remember { mutableStateOf(initial.companyId ?: lastCompany.takeIf { isNew }) }
+	var picked by remember { mutableStateOf(initial.companyId) }
+	/* the last pick may arrive after the first frame: taken once, if nothing was chosen meanwhile */
+	var lastTaken by remember { mutableStateOf(!isNew) }
+	androidx.compose.runtime.LaunchedEffect(lastCompany, lastClient, clients) {
+		if (lastTaken || (lastCompany == null && lastClient == null))
+			return@LaunchedEffect
+		if (picked == null)
+			picked = lastCompany
+		if (clientId == null)
+			clientId = lastClient?.takeIf { id -> clients.firstOrNull { it.id == id }?.companyId == picked }
+		lastTaken = clients.isNotEmpty() || lastClient == null
+	}
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
 	/* without companies (policy, issue #48) a to-do belongs to none */

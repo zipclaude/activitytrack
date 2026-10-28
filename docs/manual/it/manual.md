@@ -1,7 +1,19 @@
-Versione 0.8.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.8.2 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.8.2** (provata sul telefono di debug)
+- I dialoghi ripartono dall'**ultima azienda e dall'ultimo cliente**
+  scelti (nuovo cliente, nuova voce *Da fare*, nuovo contatto), anche
+  dopo aver chiuso l'app (§3).
+- Aggiungere aziende, clienti, ruoli e scelte rapide apre **lo stesso
+  dialogo** ovunque, anche da Anagrafiche: il nuovo cliente ha subito il
+  suo **colore** (§3, §10).
+- Una voce *Da fare* già avviata (con l'attività aperta) non compare più
+  nella lista della Home come pianificata (§3).
+- La griglia degli orari segue il dito anche con il carattere grande e in
+  orizzontale (0.8.1).
 
 **Novità della 0.8.0** (provata sul telefono di debug)
 - La Home ha **una sola lista** per voci da fare e attività fermate, con i
@@ -213,7 +225,8 @@ Da una scheda diversa dalla Home, il tasto Indietro torna alla Home.
   le prime due), con le scorciatoie "Solo da fare", "Solo fatte", "Tutti";
   le attività con dettagli mancanti restano sempre in vista, qualunque sia
   il periodo, e finché la lista le mostra non hanno più il riquadro
-  piccolo. **Tag** compare quando la lista mostra attività fermate e
+  piccolo; una voce *Da fare* con l'attività ancora aperta non è in lista:
+  la rappresenta l'attività. **Tag** compare quando la lista mostra attività fermate e
   nasconde le voci da fare (che non hanno tag). Le scelte restano
   ricordate. In fondo **"Tutte le Da fare →"** apre la scheda "Da fare"
   della barra in basso.
@@ -275,7 +288,12 @@ uscire, che risulta già scelto (la scelta rapida riempie la descrizione):
 Azienda, Cliente, Scelta rapida e Ruolo in "Nuova attività" e nella scheda
 attività; Azienda e Cliente nell'editor delle voci da fare; il cliente nel
 contatto (anche importato dalla rubrica); l'azienda nel cliente e nella
-scelta rapida, con il ruolo proposto.
+scelta rapida, con il ruolo proposto. Il dialogo è lo stesso anche quando
+si aggiunge da Anagrafiche (0.8.2): per un cliente nome, azienda e colore.
+I dialoghi propongono l'**ultima azienda e l'ultimo cliente** scelti in un
+dialogo qualsiasi (nuovo cliente, nuova voce da fare, nuovo contatto),
+anche dopo la riapertura dell'app: di solito si lavora per un'azienda
+tutto il giorno. "Nuova attività" ha la sua proposta (§4).
 
 ### Campi obbligatori e facoltativi
 Il colore del bordo dice quanto conta un campo:
