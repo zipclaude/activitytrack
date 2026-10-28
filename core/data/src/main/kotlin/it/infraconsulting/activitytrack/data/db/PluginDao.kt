@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import kotlinx.coroutines.flow.Flow
 
 /* What the plugins' imports read and write (issue #48 B3). */
@@ -17,11 +18,21 @@ interface PluginDao {
 	@Insert
 	suspend fun insertItems(items: List<RemoteItemEntity>)
 
-	/* a sync replaces the company's lists of that plugin at once */
+	@Query("SELECT uid FROM company WHERE id = :companyId")
+	suspend fun companyUid(companyId: Long): String?
+
+	/*
+	 * A sync replaces the company's lists of that plugin at once; each item
+	 * keeps its uid from one sync to the next (issue #111).
+	 */
 	@Transaction
 	suspend fun replaceItems(companyId: Long, pluginId: String, items: List<RemoteItemEntity>) {
+		val company = companyUid(companyId) ?: return
 		clearItems(companyId, pluginId)
-		insertItems(items.distinctBy { listOf(it.list, it.parentId, it.id) })
+		insertItems(
+			items.distinctBy { listOf(it.list, it.parentId, it.id) }
+				.map { it.copy(uid = SyncIds.remoteItem(company, pluginId, it.list, it.parentId, it.id)) },
+		)
 	}
 
 	@Query("SELECT * FROM remote_item WHERE company_id = :companyId AND plugin_id = :pluginId AND list = :list ORDER BY parent_id, sort_order, name COLLATE NOCASE")

@@ -34,7 +34,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Unit tests
-        run: ./gradlew :core:domain:test :app:testDebugUnitTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+        run: ./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
 
       # Instrumented tests need a device; CI only keeps them compiling.
       - name: Compile instrumented tests

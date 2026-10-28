@@ -12,6 +12,8 @@ room = "2.8.5"
 work = "2.12.0"
 datastore = "1.2.1"
 junit4 = "4.13.2"
+sqliteJdbc = "3.53.4.0"
+orgJson = "20260814"
 androidxTestRunner = "1.7.0"
 androidxTestExtJunit = "1.3.0"
 # kotlinx.serialization, Maven Central 2026-10-17 (1.12.0 still RC)
@@ -43,6 +45,8 @@ androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx"
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqliteJdbc" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
 

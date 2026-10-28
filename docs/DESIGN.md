@@ -105,7 +105,14 @@ v3 (M4, auto-migration with `FillEntryUids`) `todo(uid, company_id,
 client_id?, external_key?, title, notes?, refs, due_epoch_day?, due_time_min?,
 priority?, done)`, `time_entry.uid` (unique) and `time_entry.todo_id`,
 `company.external_code / connector_id / connector_config`,
-`client.external_code`. `ActivityTrackDatabase.VERSION` is the single source.
+`client.external_code`. v16 (issue #111, manual `MIGRATION_15_16`): a
+unique `uid` (canonical UUID) on every synced table, existing entry uids
+canonicalised (schema 3 wrote 32 hex digits), day off and plugin list item
+uids name-based (`SyncIds`); `sync_change` (change log written by SQLite
+triggers while `sync_state.enabled` and not `applying`), `sync_shadow`,
+`sync_state`; contact phones and entry tags log their parent record; a
+`keep_uid` trigger keeps a row's identity across updates (`SyncSchema`).
+`ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)
 
