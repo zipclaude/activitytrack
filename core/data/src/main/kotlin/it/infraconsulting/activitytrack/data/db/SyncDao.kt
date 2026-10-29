@@ -28,6 +28,7 @@ interface SyncDao {
 		clearState()
 		clearChanges()
 		clearShadow()
+		clearErrors()
 	}
 
 	@Query("UPDATE sync_state SET server_url = NULL, enabled = 0, applying = 0, cursor = 0, clock_offset_ms = 0, last_sync_utc_ms = NULL, last_error = NULL WHERE id = 1")
@@ -38,6 +39,12 @@ interface SyncDao {
 
 	@Query("DELETE FROM sync_shadow")
 	suspend fun clearShadow()
+
+	@Query("DELETE FROM sync_error")
+	suspend fun clearErrors()
+
+	@Query("SELECT * FROM sync_error ORDER BY at_utc_ms DESC")
+	fun observeErrors(): Flow<List<SyncErrorEntity>>
 
 	@Query("SELECT COUNT(*) FROM sync_change")
 	fun observePending(): Flow<Int>

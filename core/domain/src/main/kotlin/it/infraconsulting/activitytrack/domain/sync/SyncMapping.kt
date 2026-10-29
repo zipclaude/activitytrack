@@ -130,7 +130,7 @@ object SyncMapping {
 				ref("clientUid", "client", "client_id"), ref("roleUid", "role", "role_id"), text("activity", nullable = true),
 				text("status"), text("mode", nullable = true), text("locality", nullable = true), text("locationKind", nullable = true),
 				text("notes", nullable = true), text("zoneId"), instant("plannedEndUtcMs", nullable = true), json("pluginFields"),
-				instant("createdUtcMs"), instant("updatedUtcMs"),
+				bool("needsReview"), instant("createdUtcMs"), instant("updatedUtcMs"),
 			),
 			lists = listOf(FoldedList("tags", "entry_tag", "entry_id", "tag")),
 			localDefaults = mapOf("unanswered_reminders" to 0L),

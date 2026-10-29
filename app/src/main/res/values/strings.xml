@@ -743,4 +743,14 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="central_suffix">central</string>
   <string name="central_locked">A central record: the administrator or a manager changes it, on the web.</string>
   <string name="plugin_not_holder">Another phone of yours sends to the management system (ActivityTrack Web): this one only imports.</string>
+  <string name="entry_needs_review">To check: after a sync two periods of this activity overlap. Fix the times.</string>
+  <string name="ch_sync">Sync with the server</string>
+  <string name="sync_concurrent_title">Two activities were running</string>
+  <string name="sync_concurrent_text">After the sync with the server, suspended: %1$s</string>
+  <string name="sync_problems">Not synced</string>
+  <string name="sync_discard">Discard the change</string>
+  <string name="sync_discard_confirm">This phone\'s unsent change to the record is dropped and the server\'s version comes back.</string>
+  <string name="sync_rec_entry">Activity</string>
+  <string name="sync_rec_todo">To-do</string>
+  <string name="sync_rec_other">Record</string>
 </resources>

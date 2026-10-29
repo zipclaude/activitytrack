@@ -481,6 +481,11 @@
           "null": false
         },
         {
+          "name": "needsReview",
+          "kind": "bool",
+          "null": false
+        },
+        {
           "name": "createdUtcMs",
           "kind": "instant",
           "null": false

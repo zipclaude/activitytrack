@@ -131,7 +131,12 @@ above the server's `filesMaxMb` reported and kept here. v18 (issue #115):
 `central` on the master-data tables, set by the sync from the server's
 records; lists show "centrale", and for a user paired as User central
 records open read-only; their local edits (a list's manual order) are not
-pushed and give way to the server's next version.
+pushed and give way to the server's next version. v19 (issue #119): `time_entry.needs_review`
+(synced) set after a sync when the entry's segments overlap and cleared
+once fixed, shown on the entry; `sync_error` lists what the last sync could
+not send or take, with "discard the change" (back to the server's version);
+two running activities after a sync, without `concurrentEntries`: the older
+ones are suspended and a notification on the "sync" channel says so.
 `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)

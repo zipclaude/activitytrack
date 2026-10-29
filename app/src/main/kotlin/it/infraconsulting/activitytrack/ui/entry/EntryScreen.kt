@@ -780,6 +780,9 @@ private fun EntrySummary(e: TimeEntryEntity, segments: List<SegmentEntity>, onTi
 	fun sum(k: SegmentKind) = segments.filter { it.kind == k }.sumOf(::len)
 	androidx.compose.material3.Card(Modifier.fillMaxWidth()) {
 		Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			/* two nodes' changes left overlapping segments (issue #119): fix the times below */
+			if (e.needsReview)
+				Text(stringResource(R.string.entry_needs_review), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				val style = it.infraconsulting.activitytrack.ui.common.stateStyle(e.status, e.mode)
 				Box(Modifier.weight(1f)) {

@@ -47,3 +47,12 @@ data class SyncStateEntity(
 	@ColumnInfo(name = "last_sync_utc_ms") val lastSyncUtcMs: Long? = null,
 	@ColumnInfo(name = "last_error") val lastError: String? = null,
 )
+
+/* A record the last sync could not send or take (issue #119), listed under Settings → Sync. */
+@Entity(tableName = "sync_error", primaryKeys = ["type", "uid"])
+data class SyncErrorEntity(
+	val type: String,
+	val uid: String,
+	val message: String,
+	@ColumnInfo(name = "at_utc_ms") val atUtcMs: Long,
+)

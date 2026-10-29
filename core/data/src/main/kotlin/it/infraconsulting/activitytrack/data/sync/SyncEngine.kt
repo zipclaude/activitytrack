@@ -66,6 +66,7 @@ class SyncEngine(
 		var offset = 0L
 		try {
 			var pulled = 0
+			db.run { it.clearErrors() }
 			if (!db.run { it.state().enabled }) {
 				db.run { it.enable() }
 				pull(errors) { offset = it }.also { pulled += it }
@@ -76,6 +77,8 @@ class SyncEngine(
 			for (round in 1..3) {
 				pushed += push(errors) { offset = it }
 				pulled += pull(errors) { offset = it }
+				/* a merge may leave overlapping segments: the mark travels too */
+				db.run { it.review() }
 				if (db.run { it.pending(1).isEmpty() }) break
 			}
 			files?.let { transferFiles(it, errors) }
@@ -168,10 +171,12 @@ class SyncEngine(
 			val bytes = files.read(f.relPath)
 			if (bytes == null) {
 				errors += "attachment ${f.uid}: file missing here"
+				db.run { it.recordError("attachment", f.uid, "file missing here") }
 				continue
 			}
 			if (bytes.size > maxBytes) {
 				errors += "attachment ${f.uid}: larger than the server accepts"
+				db.run { it.recordError("attachment", f.uid, "larger than the server accepts (${maxBytes / 1024 / 1024} MB)") }
 				continue
 			}
 			val sha = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
@@ -179,6 +184,7 @@ class SyncEngine(
 			if (reply.status == 401) throw SyncRevoked()
 			if (reply.status != 200) {
 				errors += "attachment ${f.uid}: upload HTTP ${reply.status}"
+				db.run { it.recordError("attachment", f.uid, "upload HTTP ${reply.status}") }
 				continue
 			}
 			val record = runCatching { json.parseToJsonElement(reply.body).jsonObject["record"]?.jsonObject }.getOrNull() ?: continue

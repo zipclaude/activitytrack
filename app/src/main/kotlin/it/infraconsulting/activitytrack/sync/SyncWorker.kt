@@ -14,6 +14,11 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import it.infraconsulting.activitytrack.ActivityTrackApp
+import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.policy.Feature
+import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.data.sync.SyncEngine
 import it.infraconsulting.activitytrack.data.sync.SyncFailed
 import it.infraconsulting.activitytrack.data.sync.SyncRevoked
@@ -26,6 +31,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /*
@@ -65,6 +71,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 			val r = SyncEngine(app.container.sync, transport, files = AttachmentFiles(app), downloads = downloads).sync()
 			Log.i(TAG, "sync: ${r.pushed} pushed, ${r.pulled} pulled, ${r.errors.size} errors")
 			r.errors.take(5).forEach { Log.w(TAG, it) }
+			concurrent(app)
 			Result.success()
 		} catch (e: SyncRevoked) {
 			account.markRevoked()
@@ -77,8 +84,31 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		}
 	}
 
+	/*
+	 * Two activities running after a sync (one started on the web while the
+	 * phone was offline, issue #119): without concurrent activities (policy)
+	 * the older ones are suspended, as when a second one starts here.
+	 */
+	private suspend fun concurrent(app: ActivityTrackApp) {
+		if (app.container.policies.current.value.enabled(Feature.CONCURRENT_ENTRIES)) return
+		val active = app.container.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+		if (active.size < 2) return
+		val older = active.sortedByDescending { it.createdUtcMs }.drop(1)
+		for (e in older) app.container.entries.apply(e.id, EntryCommand.SUSPEND)
+		val names = older.joinToString { it.activity ?: "#${it.id}" }
+		val n = android.app.Notification.Builder(app, NotificationChannels.SYNC)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(app.getString(R.string.sync_concurrent_title))
+			.setContentText(app.getString(R.string.sync_concurrent_text, names))
+			.setStyle(android.app.Notification.BigTextStyle().bigText(app.getString(R.string.sync_concurrent_text, names)))
+			.setAutoCancel(true)
+			.build()
+		app.getSystemService(android.app.NotificationManager::class.java).notify(CONCURRENT_NOTICE, n)
+	}
+
 	companion object {
 		private const val TAG = "SyncWorker"
+		private const val CONCURRENT_NOTICE = 7301
 		private const val NOW = "sync-now"
 		private const val PERIODIC = "sync-periodic"
 		private const val FILES = "files"

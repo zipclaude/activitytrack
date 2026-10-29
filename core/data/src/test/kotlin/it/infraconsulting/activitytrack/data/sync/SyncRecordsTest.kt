@@ -21,7 +21,7 @@ import kotlin.test.assertNull
 
 /* Issue #112: every record type written from wire fields and read back the same, on the schema Room makes. */
 class SyncRecordsTest {
-	private val c: Connection = JdbcSql.create(18)
+	private val c: Connection = JdbcSql.create(19)
 	private val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 	private val records = SyncRecords(sql)
 

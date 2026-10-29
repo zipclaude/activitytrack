@@ -325,6 +325,8 @@ data class TimeEntryEntity(
 	@ColumnInfo(name = "plugin_fields") val pluginFields: String? = null,
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
 	@ColumnInfo(name = "updated_utc_ms") val updatedUtcMs: Long,
+	/* segments overlap after the sync merged two nodes' changes (issue #119): a person checks */
+	@ColumnInfo(name = "needs_review", defaultValue = "0") val needsReview: Boolean = false,
 )
 
 @Entity(
