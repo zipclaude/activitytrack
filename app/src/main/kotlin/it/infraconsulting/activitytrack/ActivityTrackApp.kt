@@ -59,6 +59,8 @@ class ActivityTrackApp : Application() {
 		it.infraconsulting.activitytrack.quick.QuickWidgets.start(this, container, appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
 		pluginWatcher = it.infraconsulting.activitytrack.connect.plugin.PluginWatcher(this).also { it.start(appScope) }
+		/* ActivityTrack Web: periodic and after-change syncs while paired (issue #114) */
+		it.infraconsulting.activitytrack.sync.SyncWorker.start(this, appScope)
 		/* a UI language forced by the policy (ui.language, issue #48) */
 		appScope.launch {
 			container.policies.current.map { it.ui.language }.distinctUntilChanged().collect { lang ->

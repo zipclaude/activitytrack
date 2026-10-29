@@ -83,6 +83,11 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
   (`app/src/debug/res/xml/network_security_debug.xml`). A pairing link can
   be opened with `adb shell am start -a android.intent.action.VIEW -n
   <debug package>/it.infraconsulting.activitytrack.MainActivity -d '<link>'`.
+- `SyncServerTest` runs the sync engine against a real ActivityTrack Web:
+  `ATWEB_URL=http://localhost:8765 ATWEB_CODES=<code>,<code> ./gradlew
+  :core:data:testDebugUnitTest --tests '*SyncServerTest*'` (two fresh pairing
+  codes of one user, from `PairingCode.issue` in `manage.py shell`); skipped
+  without them, so CI does not need a server.
 - `docs/samples/` holds interchange and policy samples for device tests, and
   `sync-schema.json`: the output of ActivityTrack Web's `manage.py sync_schema`.
   `SyncMappingTest` compares it with `SyncMapping`; refresh it whenever the

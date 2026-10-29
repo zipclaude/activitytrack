@@ -116,7 +116,15 @@ Records travel as wire fields (issue #112): `SyncMapping` (core:domain) maps
 each record type to its table and each field to its column and kind
 (references as uids, epoch days as dates, JSON text as JSON, contact phones
 and entry tags as lists); `SyncRecords` (core:data) reads and writes records
-by those fields. `ActivityTrackDatabase.VERSION` is the single source.
+by those fields. `SyncEngine` (issue #114) runs a sync: the first time a
+full pull with adoption of central master data (a personal company,
+client or role of the same natural key takes the central uid), then every
+local record logged and pushed; afterwards push (changes collapsed per
+record, only the fields that differ from the shadow) and pull by cursor,
+fields still pending locally kept. `SyncStore` holds the database side,
+`SyncWorker` schedules it (15 min, a few seconds after a change, at once
+in front, `sync/head` every 30 s while the app is open).
+`ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)
 

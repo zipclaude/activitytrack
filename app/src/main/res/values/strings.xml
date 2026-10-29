@@ -734,4 +734,9 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="sync_err_network">The server cannot be reached.</string>
   <string name="sync_err_cert">The server\'s certificate is not trusted, or does not match the code.</string>
   <string name="sync_err_server">The server answered with an error.</string>
+  <string name="sync_last">Last sync</string>
+  <string name="sync_never">not yet</string>
+  <string name="sync_last_error">Last problem</string>
+  <string name="sync_now">Sync now</string>
+  <string name="sync_revoked">The server revoked this phone\'s pairing: the data stay here; to sync again, pair it again.</string>
 </resources>

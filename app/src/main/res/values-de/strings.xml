@@ -722,4 +722,9 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_err_network">Der Server ist nicht erreichbar.</string>
   <string name="sync_err_cert">Dem Zertifikat des Servers wird nicht vertraut, oder es passt nicht zum Code.</string>
   <string name="sync_err_server">Der Server hat mit einem Fehler geantwortet.</string>
+  <string name="sync_last">Letzte Synchronisierung</string>
+  <string name="sync_never">noch nicht</string>
+  <string name="sync_last_error">Letztes Problem</string>
+  <string name="sync_now">Jetzt synchronisieren</string>
+  <string name="sync_revoked">Der Server hat die Verbindung dieses Telefons widerrufen: Die Daten bleiben hier; zum Synchronisieren neu verbinden.</string>
 </resources>
