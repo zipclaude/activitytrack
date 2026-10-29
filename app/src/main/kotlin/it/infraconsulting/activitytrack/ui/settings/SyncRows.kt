@@ -114,6 +114,7 @@ fun SyncRows() {
 		Info(stringResource(R.string.sync_paired_since), format(paired.pairedUtcMs))
 		Info(stringResource(R.string.sync_last), state?.lastSyncUtcMs?.let(::format) ?: stringResource(R.string.sync_never))
 		Info(stringResource(R.string.sync_pending), pending.toString())
+		if (!paired.pluginHolder) Text(stringResource(R.string.plugin_not_holder), style = MaterialTheme.typography.bodySmall)
 		if (revoked) {
 			Text(stringResource(R.string.sync_revoked), color = MaterialTheme.colorScheme.error)
 		} else {

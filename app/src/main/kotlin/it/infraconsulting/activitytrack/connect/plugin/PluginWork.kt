@@ -193,7 +193,7 @@ class PluginWatcher(private val app: ActivityTrackApp) {
 			return
 		val company = c.masterData.company(e.companyId ?: return) ?: return
 		val plugin = company.connectorId?.let { app.plugins.plugin(it) } ?: return
-		if (plugin.export == null || !PluginState.ready(app, company, plugin))
+		if (plugin.export == null || !PluginState.ready(app, company, plugin) || !app.syncAccount.sendsToPlugins())
 			return
 		val mode = PluginState.closeMode(app, company, plugin)
 		val fromTodo = e.todoId?.let { c.pluginData.todo(it) }?.let { it.companyId == company.id && it.externalKey != null } ?: false

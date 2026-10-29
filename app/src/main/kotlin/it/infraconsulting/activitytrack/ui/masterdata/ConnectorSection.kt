@@ -185,6 +185,10 @@ private fun PluginCard(company: CompanyEntity, plugin: Plugin, config: JSONObjec
 					}
 				}
 		}
+		/* another phone of the user sends to the management system (issue #118) */
+		val holder = app.syncAccount.info.collectAsState().value?.pluginHolder ?: true
+		if (!holder && plugin.export != null)
+			Text(stringResource(R.string.plugin_not_holder), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 		if (missing.isEmpty() && (!oauth || loggedIn))
 			ClickableRow(stringResource(if (running) R.string.plugin_syncing else R.string.plugin_sync_now), plugin.name) {
 				if (!running)

@@ -731,4 +731,5 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="err_file_coming">El archivo está llegando del servidor: vuelve a abrirlo en un momento.</string>
   <string name="central_suffix">central</string>
   <string name="central_locked">Es un registro central: lo modifican el administrador o un responsable, desde la web.</string>
+  <string name="plugin_not_holder">Al sistema de gestión envía otro de tus teléfonos (ActivityTrack Web): este solo importa.</string>
 </resources>
