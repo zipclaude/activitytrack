@@ -127,7 +127,11 @@ in front, `sync/head` every 30 s while the app is open). v17 (issue #116): `atta
 `has_file` as the server has them; the file travels apart after its record
 (upload computes nothing on the phone: the server sets hash and size),
 downloads on unmetered networks or when an attachment is opened, files
-above the server's `filesMaxMb` reported and kept here.
+above the server's `filesMaxMb` reported and kept here. v18 (issue #115):
+`central` on the master-data tables, set by the sync from the server's
+records; lists show "centrale", and for a user paired as User central
+records open read-only; their local edits (a list's manual order) are not
+pushed and give way to the server's next version.
 `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)

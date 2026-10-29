@@ -103,14 +103,14 @@ class SyncEngineTest {
 		}
 	}
 
-	private class Phone {
-		val c: Connection = JdbcSql.create(17)
+	private class Phone(val canEditCentral: Boolean = true) {
+		val c: Connection = JdbcSql.create(18)
 		val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 		val db = object : SyncDb {
 			override suspend fun <T> run(block: (SyncStore) -> T): T {
 				sql.exec("BEGIN")
 				try {
-					return block(SyncStore(sql)).also { sql.exec("COMMIT") }
+					return block(SyncStore(sql, canEditCentral = canEditCentral)).also { sql.exec("COMMIT") }
 				} catch (e: Throwable) {
 					sql.exec("ROLLBACK")
 					throw e
@@ -132,7 +132,7 @@ class SyncEngineTest {
 	private val server = FakeServer()
 	private val phones = mutableListOf<Phone>()
 
-	private fun phone() = Phone().also { phones += it }
+	private fun phone(canEditCentral: Boolean = true) = Phone(canEditCentral).also { phones += it }
 
 	@AfterTest
 	fun close() = phones.forEach { it.c.close() }
@@ -269,6 +269,29 @@ class SyncEngineTest {
 		/* the file's path is the phone's own business: nothing to push */
 		assertEquals(0L, b.one("SELECT COUNT(*) FROM sync_change"))
 		assertEquals(e, b.one("SELECT t.uid FROM time_entry t JOIN attachment a ON a.entry_id = t.id WHERE a.uid = ?", att))
+	}
+
+	@Test
+	fun centralRecordsAreMarkedAndOnlyManagersChangeThem() {
+		val central = SyncIds.random()
+		server.put("company", central, mapOf("name" to JsonPrimitive("Acme"), "archived" to JsonPrimitive(false), "color" to JsonNull, "externalCode" to JsonNull, "position" to JsonNull), central = true)
+		val user = phone(canEditCentral = false)
+		val mine = company(user, "Mia")
+		sync(user)
+		assertEquals(1L, user.one("SELECT central FROM company WHERE uid = ?", central))
+		assertEquals(0L, user.one("SELECT central FROM company WHERE uid = ?", mine))
+		/* a user's own order of the list stays on the phone */
+		user.sql.exec("UPDATE company SET sort_position = 3 WHERE uid = ?", central)
+		sync(user)
+		assertEquals(JsonNull, server.records["company" to central]!!.fields["position"])
+		assertEquals(0L, user.one("SELECT COUNT(*) FROM sync_change"))
+		val manager = phone(canEditCentral = true)
+		sync(manager)
+		manager.sql.exec("UPDATE company SET name = 'Acme S.p.A.' WHERE uid = ?", central)
+		sync(manager)
+		assertEquals(JsonPrimitive("Acme S.p.A."), server.records["company" to central]!!.fields["name"])
+		sync(user)
+		assertEquals("Acme S.p.A.", user.one("SELECT name FROM company WHERE uid = ?", central))
 	}
 
 	@Test

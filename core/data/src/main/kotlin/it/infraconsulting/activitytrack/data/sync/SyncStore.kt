@@ -20,7 +20,12 @@ import kotlinx.serialization.json.jsonPrimitive
  * records. Every call runs inside the caller's transaction; the engine does
  * the network in between.
  */
-class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = System::currentTimeMillis) {
+class SyncStore(
+	private val db: SyncSchema.Sql,
+	private val now: () -> Long = System::currentTimeMillis,
+	/* the user may change central master data (admin, manager); else their edits stay on this phone */
+	private val canEditCentral: Boolean = true,
+) {
 	val records = SyncRecords(db)
 
 	/* the changes of one record since the last push, collapsed */
@@ -77,8 +82,21 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 	private fun log(type: String, uid: String, op: String) =
 		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES (?, ?, ?, ?)", type, uid, op, now())
 
+	private fun isCentral(type: String, uid: String): Boolean {
+		val table = SyncMapping.byType.getValue(type).table
+		return type in WITH_CENTRAL && (db.rows("SELECT central FROM `$table` WHERE uid = ?", uid).firstOrNull()?.get(0) as Long? ?: 0L) != 0L
+	}
+
+	private fun markCentral(type: String, uid: String, record: JsonObject) {
+		if (type !in WITH_CENTRAL) return
+		val central = record["central"]?.jsonPrimitive?.booleanOrNull ?: return
+		db.exec("UPDATE `${SyncMapping.byType.getValue(type).table}` SET central = ? WHERE uid = ?", if (central) 1 else 0, uid)
+	}
+
 	/* the change to push for [p], or null when nothing differs from what the server has */
 	fun change(p: Pending): JsonObject? {
+		/* central data the user may not change: local only (the order of a list), the server's next version wins */
+		if (!canEditCentral && isCentral(p.type, p.uid)) return null
 		val shadow = shadow(p.type, p.uid)
 		val current = if (p.op == "delete") null else records.read(p.type, p.uid)
 		if (current == null) {
@@ -121,6 +139,7 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 		val fields = record["fields"]?.jsonObject ?: return "${p.type} ${p.uid}: answer without fields"
 		/* edited again while the push travelled: keep the new values, push them next */
 		if (!hasChanges(p.type, p.uid, p.maxSeq)) applying { records.write(p.type, p.uid, fields) }
+		applying { markCentral(p.type, p.uid, record) }
 		putShadow(p.type, p.uid, fields)
 		dropChanges(p.type, p.uid, p.maxSeq)
 		return null
@@ -149,6 +168,7 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 				} else {
 					records.write(type, uid, fields)
 				}
+				markCentral(type, uid, record)
 			}
 			putShadow(type, uid, fields)
 			null
@@ -249,6 +269,9 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 	}
 
 	private companion object {
+		/* master data that can be central (issue #115) */
+		val WITH_CENTRAL = setOf("company", "companySite", "client", "clientSite", "contact", "role", "preset", "material")
+
 		/* the unique indexes a central record could collide with */
 		val NATURAL_KEYS: Map<String, List<List<String>>> = mapOf(
 			"company" to listOf(listOf("externalCode"), listOf("name")),

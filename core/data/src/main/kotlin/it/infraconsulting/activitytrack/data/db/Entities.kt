@@ -48,6 +48,8 @@ data class CompanyEntity(
 	@ColumnInfo(name = "sort_position") val position: Int? = null,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 @Entity(
@@ -72,6 +74,8 @@ data class CompanySiteEntity(
 	val address: String? = null,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 @Entity(
@@ -103,6 +107,8 @@ data class ClientEntity(
 	@ColumnInfo(name = "sort_position") val position: Int? = null,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 @Entity(
@@ -127,6 +133,8 @@ data class ClientSiteEntity(
 	val address: String? = null,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 @Entity(tableName = "place", indices = [Index(value = ["uid"], unique = true)])
@@ -150,6 +158,8 @@ data class RoleEntity(
 	@ColumnInfo(name = "sort_position") val position: Int? = null,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 @Entity(
@@ -181,6 +191,8 @@ data class ActivityPresetEntity(
 	@ColumnInfo(name = "last_used_utc_ms") val lastUsedUtcMs: Long? = null,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 /*
@@ -542,6 +554,8 @@ data class ContactEntity(
 	@ColumnInfo(name = "external_key") val externalKey: String? = null,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 /* A number of a contact, as dialled (digits and a leading +). */
@@ -600,6 +614,8 @@ data class MaterialEntity(
 	val archived: Boolean = false,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
 /*

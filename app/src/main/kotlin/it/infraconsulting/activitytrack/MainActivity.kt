@@ -115,9 +115,12 @@ class MainActivity : ComponentActivity() {
 			val compact by compactFlow.collectAsState(initial = false)
 			val learned by learnedFlow.collectAsState(initial = true)
 			val policy by (application as ActivityTrackApp).container.policies.current.collectAsState()
+			val account by (application as ActivityTrackApp).syncAccount.info.collectAsState()
+			val centralLocked = account?.let { a -> a.profile !in it.infraconsulting.activitytrack.sync.SyncAccount.CENTRAL_EDITORS } ?: false
 			ActivityTrackTheme(compact) {
 				androidx.compose.runtime.CompositionLocalProvider(
 					it.infraconsulting.activitytrack.ui.common.LocalPolicy provides policy,
+					it.infraconsulting.activitytrack.ui.common.LocalCentralLocked provides centralLocked,
 					it.infraconsulting.activitytrack.ui.common.LocalSwipeHints provides hints.copy(show = !learned),
 				) {
 					Root(deepLink.value) { deepLink.value = null }

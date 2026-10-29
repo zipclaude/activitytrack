@@ -40,6 +40,7 @@ fun MaterialsScreen(onBack: () -> Unit) {
 	val companies by md.companies.collectAsState()
 	val error by vm.error.collectAsState()
 	var editing by remember { mutableStateOf<MaterialEntity?>(null) }
+	val guard = centralGuard()
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_materials),
@@ -55,7 +56,7 @@ fun MaterialsScreen(onBack: () -> Unit) {
 					m.companyId?.let { id -> companies.firstOrNull { it.id == id }?.name },
 					archivedSuffix(m.archived),
 				).joinToString(" · ").ifEmpty { null }
-				ClickableRow(m.name, detail) { vm.clearError(); editing = m }
+				ClickableRow(m.name, masterSuffix(false, m.central, detail)) { guard(m.central) { vm.clearError(); editing = m } }
 			}
 		}
 	}

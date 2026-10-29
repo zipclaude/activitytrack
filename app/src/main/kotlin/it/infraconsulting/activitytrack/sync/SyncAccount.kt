@@ -114,10 +114,13 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		_info.value = null
 	}
 
-	private companion object {
-		const val TOKEN = "sync.token"
-		const val PIN = "sync.pin"
-		const val INFO = "sync.info"
-		const val REVOKED = "sync.revoked"
+	companion object {
+		/* the server's profiles that change central master data (issue #115) */
+		val CENTRAL_EDITORS = setOf("admin", "manager")
+
+		private const val TOKEN = "sync.token"
+		private const val PIN = "sync.pin"
+		private const val INFO = "sync.info"
+		private const val REVOKED = "sync.revoked"
 	}
 }
