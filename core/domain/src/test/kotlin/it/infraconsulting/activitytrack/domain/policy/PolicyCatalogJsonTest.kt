@@ -21,6 +21,17 @@ class PolicyCatalogJsonTest {
 		assertEquals(rendered, file.readText(), "docs/policy-catalog.json is stale: UPDATE_POLICY_CATALOG=1 ./gradlew :core:domain:test")
 	}
 
+	/* what ActivityTrack Web's editor writes (its policies tests) is a policy this app accepts */
+	@Test
+	fun serverSampleIsValid() {
+		val r = PolicyParser.parse(File("../../docs/samples/policy-server-example.json").readText())
+		assertTrue(r is PolicyResult.Valid, r.toString())
+		val p = (r as PolicyResult.Valid).policy
+		assertEquals(false, p.features[Feature.TRAVEL])
+		assertEquals(true, p.settings.getValue("editableTimes").locked)
+		assertEquals(MasterDataSource.IMPORT_ONLY, p.masterData)
+	}
+
 	@Test
 	fun everyItemHasItsDescription() {
 		for (part in listOf("\"key\": \"editableTimes\"", "\"key\": \"km\"", "\"key\": \"calls\"", "\"key\": \"minDurationSec\""))

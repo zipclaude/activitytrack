@@ -28,6 +28,18 @@ A complete example: [`docs/samples/policy-example.json`](samples/policy-example.
 - Removing the file does not remove the policy (it is in the database):
   apply an empty policy instead.
 
+### From ActivityTrack Web
+
+A phone paired with ActivityTrack Web gets its policy from the server at
+every sync (the organisation's, then its user's profile, then its user's,
+merged key by key; edited on the web page Policy). The same checks apply:
+an unsigned policy is accepted until a signed one pinned a CN, then the
+server must sign with a certificate of that CN (`[policy] key`, `cert`,
+`chain` in its settings.ini). While the server's policy is in force
+`policy.json` in the data folder is ignored (one notification says so);
+after unpairing it applies again. `docs/policy-catalog.json` lists every
+key for the server's editor.
+
 ## 2. Signature (optional)
 
 `policy.json.sig` beside it, written by `scripts/sign-policy.sh policy.json key.pem cert.pem [chain.pem]`

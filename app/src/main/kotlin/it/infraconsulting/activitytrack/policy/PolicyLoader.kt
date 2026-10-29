@@ -71,6 +71,38 @@ object PolicyLoader {
 			return
 		val policy = read(app, tree, FILE) ?: return
 		val sig = read(app, tree, SIGNATURE)
+		/* paired with a server that sends a policy: it wins over the file (issue #117) */
+		if (app.syncAccount.serverPolicyInForce()) {
+			val fp = PolicyGate.fingerprint(policy, sig)
+			if (app.syncAccount.noteIgnoredFile(fp))
+				notify(app, app.getString(R.string.policy_file_ignored_title), app.getString(R.string.policy_file_ignored_text))
+			return
+		}
+		handle(app, tree, policy, sig, FILE)
+	}
+
+	/*
+	 * The policy of ActivityTrack Web (issue #117, SYNC.md §8): the same
+	 * checks as policy.json (unsigned accepted until a signer's CN is pinned,
+	 * then signed by it), the same backup and notification.
+	 */
+	suspend fun fromServer(context: Context, policy: ByteArray, sig: ByteArray?) = lock.withLock {
+		val app = context.applicationContext as ActivityTrackApp
+		val tree = app.container.settings.current().rootUri?.toUri()?.takeIf(app.container.userDataDir::isAccessible) ?: return@withLock
+		try {
+			if (handle(app, tree, policy, sig, app.getString(R.string.policy_from_server)))
+				app.syncAccount.markServerPolicy()
+			app.plugins.reload()
+		} catch (e: CancellationException) {
+			throw e
+		} catch (e: Exception) {
+			Log.w(TAG, "server policy failed", e)
+		}
+	}
+
+	/* true when the policy is (or already was) in force */
+	private suspend fun handle(app: ActivityTrackApp, tree: Uri, policy: ByteArray, sig: ByteArray?, source: String): Boolean {
+		val c = app.container
 		val state = c.policies.gateState()
 		val outcome = if (policy.size > MAX_BYTES || (sig?.size ?: 0) > MAX_BYTES) {
 			val fp = PolicyGate.fingerprint(policy, sig)
@@ -80,28 +112,31 @@ object PolicyLoader {
 			PolicyGate.decide(policy, sig, state, ::trustAnchors)
 		}
 		when (val o = outcome) {
-			PolicyGate.Outcome.Unchanged -> Unit
+			/* handled before: in force or refused, as it was */
+			PolicyGate.Outcome.Unchanged -> return source != FILE && app.syncAccount.serverPolicyInForce()
 			is PolicyGate.Outcome.Refuse -> {
 				c.policies.recordRefused(o.errors, o.fingerprint)
 				notify(app, app.getString(R.string.policy_refused_title), o.errors.take(8).joinToString("\n") + more(app, o.errors))
-				Log.w(TAG, "policy.json refused: ${o.errors.joinToString("; ")}")
+				Log.w(TAG, "$source refused: ${o.errors.joinToString("; ")}")
+				return false
 			}
 			is PolicyGate.Outcome.Apply -> {
 				val now = Instant.now()
 				/* the backup first: without it the policy waits for the next check */
 				if (!BackupWorker.write(app, tree, DatabaseBackup.policyFileName(now, ZoneId.systemDefault()), now))
-					return
+					return false
 				writeRoot(app, tree, OLD, c.policies.inForceText() ?: EMPTY)
 				val text = policy.toString(Charsets.UTF_8)
 				c.policies.recordApplied(o.policy, text, o.fingerprint, o.signerCn)
 				c.settings.update { o.policy.applyTo(it) }
-				val name = listOf(o.policy.id, o.policy.version).filter { it.isNotEmpty() }.joinToString(" ").ifEmpty { FILE }
+				val name = listOf(o.policy.id, o.policy.version).filter { it.isNotEmpty() }.joinToString(" ").ifEmpty { source }
 				notify(
 					app,
 					app.getString(R.string.policy_applied_title, name),
 					o.signerCn?.let { app.getString(R.string.policy_applied_signed, it) } ?: app.getString(R.string.policy_applied_unsigned),
 				)
-				Log.i(TAG, "policy $name applied, signer ${o.signerCn}")
+				Log.i(TAG, "policy $name applied from $source, signer ${o.signerCn}")
+				return true
 			}
 		}
 	}

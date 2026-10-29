@@ -41,6 +41,18 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		_revoked.value = true
 	}
 
+	/* a policy from the server is in force: policy.json in the data folder is ignored (issue #117) */
+	fun serverPolicyInForce(): Boolean = _info.value != null && secrets.getApp(SERVER_POLICY) != null
+
+	fun markServerPolicy() = secrets.putApp(SERVER_POLICY, "1")
+
+	/* true the first time a given ignored policy.json is seen (one notification per file) */
+	fun noteIgnoredFile(fingerprint: String): Boolean {
+		if (secrets.getApp(IGNORED_FILE) == fingerprint) return false
+		secrets.putApp(IGNORED_FILE, fingerprint)
+		return true
+	}
+
 	/* sends to the management systems: not paired, or the phone the server names (issue #118) */
 	fun sendsToPlugins(): Boolean = _info.value?.pluginHolder ?: true
 
@@ -128,6 +140,9 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		secrets.putApp(PIN, null)
 		secrets.putApp(INFO, null)
 		secrets.putApp(REVOKED, null)
+		/* the policy.json of the data folder applies again */
+		secrets.putApp(SERVER_POLICY, null)
+		secrets.putApp(IGNORED_FILE, null)
 		dao.forgetServer()
 		_revoked.value = false
 		_info.value = null
@@ -141,5 +156,7 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		private const val PIN = "sync.pin"
 		private const val INFO = "sync.info"
 		private const val REVOKED = "sync.revoked"
+		private const val SERVER_POLICY = "sync.policy"
+		private const val IGNORED_FILE = "sync.policyFileIgnored"
 	}
 }

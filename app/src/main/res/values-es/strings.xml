@@ -742,4 +742,7 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="sync_rec_entry">Actividad</string>
   <string name="sync_rec_todo">Tarea</string>
   <string name="sync_rec_other">Registro</string>
+  <string name="policy_from_server">la política del servidor</string>
+  <string name="policy_file_ignored_title">policy.json ignorada</string>
+  <string name="policy_file_ignored_text">Este teléfono sigue la política del servidor al que está vinculado; la policy.json de la carpeta de datos vuelve a valer tras desvincularlo.</string>
 </resources>

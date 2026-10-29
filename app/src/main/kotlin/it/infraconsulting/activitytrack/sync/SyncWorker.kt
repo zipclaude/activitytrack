@@ -72,6 +72,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 			Log.i(TAG, "sync: ${r.pushed} pushed, ${r.pulled} pulled, ${r.errors.size} errors")
 			r.errors.take(5).forEach { Log.w(TAG, it) }
 			concurrent(app)
+			policy(app, http, token)
 			Result.success()
 		} catch (e: SyncRevoked) {
 			account.markRevoked()
@@ -82,6 +83,16 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		} catch (e: SyncFailed) {
 			Result.retry()
 		}
+	}
+
+	/* the server's policy for this user (issue #117): applied when new, through the policy checks */
+	private suspend fun policy(app: ActivityTrackApp, http: SyncHttp, token: String) {
+		val r = runCatching { http.send("GET", "api/v1/policy", token = token) }.getOrNull() ?: return
+		if (r.status != 200) return
+		val o = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(r.body) as kotlinx.serialization.json.JsonObject }.getOrNull() ?: return
+		val text = (o["policy"] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content ?: return
+		val sig = (o["signature"] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content
+		it.infraconsulting.activitytrack.policy.PolicyLoader.fromServer(app, text.toByteArray(Charsets.UTF_8), sig?.toByteArray(Charsets.UTF_8))
 	}
 
 	/*
