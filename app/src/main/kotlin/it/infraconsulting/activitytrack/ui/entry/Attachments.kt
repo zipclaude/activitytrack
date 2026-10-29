@@ -82,6 +82,11 @@ class AttachmentsViewModel(
 	fun delete(a: AttachmentEntity) = run { storage { repo.delete(tree(), a) } }
 
 	fun open(context: Context, a: AttachmentEntity) = run {
+		/* synced from the server, file not here yet (issue #116): fetch it now */
+		if (a.relPath.isEmpty()) {
+			it.infraconsulting.activitytrack.sync.SyncWorker.now(context, files = true)
+			throw ValidationException(Reason.FILE_COMING)
+		}
 		val uri = storage { repo.uriOf(tree(), a) } ?: throw ValidationException(Reason.NOT_FOUND)
 		try {
 			context.startActivity(

@@ -17,6 +17,20 @@ interface SyncTransport {
 	class Reply(val status: Int, val body: String)
 
 	suspend fun send(method: String, path: String, body: String? = null): Reply
+
+	/* PUT of a file (issue #116); the answer is JSON */
+	suspend fun upload(path: String, bytes: ByteArray, mime: String, sha256: String): Reply
+
+	/* GET of a file: its bytes, null with the status when the server has none */
+	suspend fun download(path: String): Pair<Int, ByteArray?>
+}
+
+/* The attachments' files in the data folder (issue #116); absent without a data folder. */
+interface SyncFiles {
+	suspend fun read(relPath: String): ByteArray?
+
+	/* stores a downloaded file of an attachment of entry [entryId]; returns its relative path */
+	suspend fun write(entryId: Long, uid: String, mime: String, bytes: ByteArray): String
 }
 
 /* A transaction on the database, with the sync's view of it. */
@@ -35,7 +49,14 @@ class SyncFailed(message: String) : Exception(message)
  * has; then push what changed here and pull what changed there. Network
  * calls happen between transactions, never inside one.
  */
-class SyncEngine(private val db: SyncDb, private val server: SyncTransport, private val now: () -> Long = System::currentTimeMillis) {
+class SyncEngine(
+	private val db: SyncDb,
+	private val server: SyncTransport,
+	private val now: () -> Long = System::currentTimeMillis,
+	private val files: SyncFiles? = null,
+	/* files are downloaded now (unmetered network, or asked for) */
+	private val downloads: Boolean = false,
+) {
 	class Result(val pushed: Int, val pulled: Int, val errors: List<String>)
 
 	private val json = Json { ignoreUnknownKeys = true }
@@ -57,6 +78,7 @@ class SyncEngine(private val db: SyncDb, private val server: SyncTransport, priv
 				pulled += pull(errors) { offset = it }
 				if (db.run { it.pending(1).isEmpty() }) break
 			}
+			files?.let { transferFiles(it, errors) }
 			db.run { it.finished(offset, errors.firstOrNull()) }
 			return Result(pushed, pulled, errors)
 		} catch (e: SyncRevoked) {
@@ -139,7 +161,48 @@ class SyncEngine(private val db: SyncDb, private val server: SyncTransport, priv
 		return count
 	}
 
+	/* uploads the files the server lacks, then (when allowed) downloads the ones this phone lacks */
+	private suspend fun transferFiles(files: SyncFiles, errors: MutableList<String>) {
+		val maxBytes = (runCatching { call("GET", "sync/head")["filesMaxMb"]?.jsonPrimitive?.longOrNull }.getOrNull() ?: 25L) * 1024 * 1024
+		for (f in db.run { it.filesToUpload() }) {
+			val bytes = files.read(f.relPath)
+			if (bytes == null) {
+				errors += "attachment ${f.uid}: file missing here"
+				continue
+			}
+			if (bytes.size > maxBytes) {
+				errors += "attachment ${f.uid}: larger than the server accepts"
+				continue
+			}
+			val sha = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+			val reply = server.upload("files/${f.uid}", bytes, f.mime, sha)
+			if (reply.status == 401) throw SyncRevoked()
+			if (reply.status != 200) {
+				errors += "attachment ${f.uid}: upload HTTP ${reply.status}"
+				continue
+			}
+			val record = runCatching { json.parseToJsonElement(reply.body).jsonObject["record"]?.jsonObject }.getOrNull() ?: continue
+			db.run { it.fileUploaded(record) }
+		}
+		if (!downloads) return
+		var budget = MAX_DOWNLOAD
+		for (f in db.run { it.filesToDownload() }) {
+			if ((f.size ?: 0) > budget) continue
+			val (status, bytes) = server.download("files/${f.uid}")
+			if (status == 401) throw SyncRevoked()
+			if (bytes == null) {
+				errors += "attachment ${f.uid}: download HTTP $status"
+				continue
+			}
+			budget -= bytes.size
+			val path = files.write(f.entryId, f.uid, f.mime, bytes)
+			db.run { it.fileDownloaded(f.uid, path) }
+		}
+	}
+
 	private companion object {
+		/* per sync, so a phone that just paired does not fetch everything at once */
+		const val MAX_DOWNLOAD = 200L * 1024 * 1024
 		const val BATCH = 500
 		const val MAX_ROUNDS = 50
 	}

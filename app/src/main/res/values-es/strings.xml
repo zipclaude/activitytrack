@@ -728,4 +728,5 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="sync_last_error">Último problema</string>
   <string name="sync_now">Sincronizar ahora</string>
   <string name="sync_revoked">El servidor revocó la vinculación de este teléfono: los datos se quedan aquí; para volver a sincronizar, vincúlalo de nuevo.</string>
+  <string name="err_file_coming">El archivo está llegando del servidor: vuelve a abrirlo en un momento.</string>
 </resources>

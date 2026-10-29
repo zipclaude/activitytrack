@@ -86,7 +86,8 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 			if (shadow == null) return null
 			return JsonObject(mapOf("type" to JsonPrimitive(p.type), "uid" to JsonPrimitive(p.uid), "op" to JsonPrimitive("delete"), "time" to JsonPrimitive(p.time)))
 		}
-		val diff = current.filter { (k, v) -> shadow?.get(k) != v }
+		val t = SyncMapping.byType.getValue(p.type)
+		val diff = current.filter { (k, v) -> t.byName[k]?.readOnly != true && shadow?.get(k) != v }
 		if (diff.isEmpty()) return null
 		return JsonObject(
 			mapOf(
@@ -138,9 +139,8 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 		return try {
 			applying {
 				val local = records.read(type, uid)
-				val central = record["central"]?.jsonPrimitive?.booleanOrNull == true
 				if (local == null) {
-					if (central) adopt(type, uid, fields)
+					adopt(type, uid, fields)
 					records.write(type, uid, fields)
 				} else if (hasChanges(type, uid)) {
 					/* fields edited here and not pushed yet stay; the push settles them */
@@ -170,10 +170,11 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 	}
 
 	/*
-	 * A central record arriving with the natural key of a personal one of
-	 * this phone (SYNC.md §7): the local row takes the central uid, so every
-	 * reference follows; the records pointing at it are pushed again (now
-	 * pointing at the central one) before the personal one is deleted there.
+	 * A record arriving with the natural key of another one of this phone
+	 * (SYNC.md §7): a central company of the same name, or the same user's
+	 * from another phone. The local row takes the arriving uid, so every
+	 * reference follows; the records pointing at it are pushed again before
+	 * the local one, if the server had it, is deleted there.
 	 */
 	private fun adopt(type: String, uid: String, fields: JsonObject) {
 		val keys = NATURAL_KEYS[type] ?: return
@@ -200,6 +201,37 @@ class SyncStore(private val db: SyncSchema.Sql, private val now: () -> Long = Sy
 			if (shadow(type, old) != null) log(type, old, "delete") else dropChanges(type, old)
 			return
 		}
+	}
+
+	/* an attachment's file to upload (issue #116) */
+	class FileUp(val uid: String, val relPath: String, val mime: String)
+
+	/* an attachment whose file is on the server and not here */
+	class FileDown(val uid: String, val entryId: Long, val mime: String, val size: Long?)
+
+	/* attachments the server knows (they have a shadow) whose file it has not yet */
+	fun filesToUpload(): List<FileUp> = db.rows(
+		"SELECT a.uid, a.rel_path, a.mime, s.json FROM attachment a JOIN sync_shadow s ON s.type = 'attachment' AND s.uid = a.uid WHERE a.rel_path != ''",
+	).mapNotNull { r ->
+		val has = Json.parseToJsonElement(r[3] as String).jsonObject["hasFile"]?.jsonPrimitive?.booleanOrNull == true
+		if (has) null else FileUp(r[0] as String, r[1] as String, r[2] as String)
+	}
+
+	fun filesToDownload(): List<FileDown> =
+		db.rows("SELECT uid, entry_id, mime, size FROM attachment WHERE rel_path = '' AND has_file = 1 ORDER BY created_utc_ms DESC")
+			.map { FileDown(it[0] as String, it[1] as Long, it[2] as String, it[3] as Long?) }
+
+	/* the server's attachment record after an upload */
+	fun fileUploaded(record: JsonObject) {
+		val uid = record["uid"]?.jsonPrimitive?.contentOrNull ?: return
+		val fields = record["fields"]?.jsonObject ?: return
+		applying { records.write("attachment", uid, fields) }
+		putShadow("attachment", uid, fields)
+	}
+
+	/* a downloaded file is in the data folder at [relPath] */
+	fun fileDownloaded(uid: String, relPath: String) = applying {
+		db.exec("UPDATE attachment SET rel_path = ? WHERE uid = ?", relPath, uid)
 	}
 
 	/*

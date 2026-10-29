@@ -123,7 +123,11 @@ local record logged and pushed; afterwards push (changes collapsed per
 record, only the fields that differ from the shadow) and pull by cursor,
 fields still pending locally kept. `SyncStore` holds the database side,
 `SyncWorker` schedules it (15 min, a few seconds after a change, at once
-in front, `sync/head` every 30 s while the app is open).
+in front, `sync/head` every 30 s while the app is open). v17 (issue #116): `attachment.sha256`, `size`,
+`has_file` as the server has them; the file travels apart after its record
+(upload computes nothing on the phone: the server sets hash and size),
+downloads on unmetered networks or when an attachment is opened, files
+above the server's `filesMaxMb` reported and kept here.
 `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)

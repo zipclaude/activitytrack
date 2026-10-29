@@ -42,6 +42,8 @@ class WireField(
 	val nullable: Boolean = false,
 	/* record type a REF points to */
 	val ref: String? = null,
+	/* set by the server only: received, never pushed */
+	val readOnly: Boolean = false,
 )
 
 /* rows of another table folded into a list of strings (contact phones, entry tags) */
@@ -143,11 +145,13 @@ object SyncMapping {
 		),
 		RecordType(
 			"attachment", "attachment",
-			listOf(ref("entryUid", "entry", "entry_id", nullable = false), text("kind"), text("mime"), text("transcript", nullable = true), instant("createdUtcMs")),
+			listOf(
+				ref("entryUid", "entry", "entry_id", nullable = false), text("kind"), text("mime"), text("transcript", nullable = true),
+				instant("createdUtcMs"), text("sha256"), int("size", nullable = true), WireField("hasFile", "has_file", WireKind.BOOL, readOnly = true),
+			),
 			parent = "entryUid",
-			/* the file is fetched apart (issue #116) */
+			/* the file travels apart (issue #116): empty until downloaded */
 			localDefaults = mapOf("rel_path" to ""),
-			notYet = mapOf("sha256" to "#116", "size" to "#116", "hasFile" to "#116"),
 		),
 		RecordType(
 			"expense", "expense",
