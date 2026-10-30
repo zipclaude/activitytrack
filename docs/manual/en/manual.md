@@ -1,9 +1,14 @@
-Version 0.8.2 (October 2026). Please report any difference between this
+Version 0.9.0 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**Coming next** (tested on the debug phone)
+**New in 0.9.0** (tested on the debug phone)
+- **Sync with ActivityTrack Web**, the organisation's server: pair the phone
+  by scanning a **QR code**, then activities, to-dos, master data and
+  attachments stay in step both ways, also after days without network;
+  **central** and personal master data, **policy** from the server,
+  conflicts reported (§11).
 - **Tags in the master data** with a **colour**: on the activities they show
   as **coloured dots** at the top right (Home, Agenda, Report) and as
   coloured tags in the activity screen; an option, or the policy, allows
@@ -761,6 +766,70 @@ frequency and hour chosen in Settings (every day at 02:00 unless changed;
 14 kept, adjustable); **"Back up now"** here, in Import / export. **"Restore backup"**
 replaces all data with a chosen backup: first it saves the current data as
 `…-before-restore.zip`, then it restarts the app.
+
+### Sync with ActivityTrack Web
+**ActivityTrack Web** is the organisation's server: it keeps a copy of the
+phone's data, shows it in the browser (also, read-only, to whoever does the
+accounting) and keeps the same user's phones in step. Without a server the
+app works as always.
+
+**Pairing the phone.** On the web: *Phones* → **"Pair a phone"** shows a QR
+code, valid for 10 minutes and for one use. In the app: Settings →
+**Sync** → **"Scan the QR code"** (the first time it asks for the camera
+permission), or **"Paste the link"** if the code came as text. The phone
+asks **"Pair with this server?"**: if it was paired with another server,
+that pairing ends; if the server's certificate is not from an authority the
+phone knows, from then on the phone trusts only the key in the code
+(**"pinned key"**). An expired or used code gives "The code has expired or
+was already used: make a new one on the web page".
+
+**The first sync** sends the server everything the phone has and receives
+what the server already has. Companies, clients, roles and tags with the
+same name are not doubled: they become one, with the server's data.
+
+**When it syncs.** At once when you open the app, a few seconds after each
+change, every 30 seconds while the app is open (for what comes from the web
+or another phone) and every 15 minutes in the background, whenever there is
+a network. Without a network the changes wait and leave when the connection
+is back. Attachment files download on Wi-Fi, or when you open the
+attachment. GPS positions stay on the phone: km and times travel.
+
+![Settings → Sync](img/sync.png)
+
+The page shows server, user, organisation, last sync and **changes waiting
+to be sent**; **"Sync now"** does not wait for the next round.
+
+**Central and personal master data.** The ones created on the web by the
+administrator or a manager are **central**: the lists mark them "central"
+and they cannot be edited on the phone ("A central record: the administrator or
+a manager changes it, on the web"). The ones created on the
+phone are yours (personal); under a central client you can add sites and
+contacts of your own.
+
+**Management systems.** When a user has several phones, only one sends the
+activities to the management systems (chosen on the web); the others only
+import and say so ("Another phone of yours sends to the management
+system").
+
+**Conflicts.** When the same data changes in two places, the latest change
+wins, field by field. Some cases are left to look at:
+- segments overlapping after a sync: the activity screen says **"To
+  check"**; fix the times (with times locked by the policy the
+  administrator or the manager fixes them on the web) and the mark goes;
+- two activities running when the policy does not allow it: the older one
+  is suspended and a notification says so;
+- a change the server refuses: it shows under **"Not synced"** with the
+  reason; **"Discard the change"** brings back the server's version (a
+  record that never reached the server is deleted).
+
+**Policy from the server.** With a server the policy comes from there and
+wins over a `policy.json` in the data folder (next section); it is updated
+at every sync.
+
+**Unpairing and revocation.** **"Unpair"** detaches the phone from the
+server: the data stay on the phone; syncing again needs a new code. If the
+pairing is revoked on the web, the page says "The server revoked this
+phone's pairing" and syncing stops, again without losing data.
 
 ### Policy and integrations
 

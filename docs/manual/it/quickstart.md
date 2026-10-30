@@ -1,4 +1,4 @@
-Versione 0.8.2 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
+Versione 0.9.0 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
 resto.
 
 ## 1. Prima volta
@@ -10,6 +10,9 @@ resto.
 4. In Home, **"Per iniziare"** → **"Crea il primo cliente"** (con la sua
    **azienda**), o "Importa da un file o da un gestionale"; in Altro →
    Anagrafiche imposta l'**orario di lavoro**.
+5. Con un server **ActivityTrack Web**: Impostazioni → Sincronizzazione →
+   "Inquadra il codice QR" mostrato dal web (*Telefoni* → "Associa un
+   telefono"); da lì i dati restano allineati da soli.
 
 ## 2. Avviare
 In Home tocca **▶** (lavoro) o **🚗** (viaggio, parte subito).

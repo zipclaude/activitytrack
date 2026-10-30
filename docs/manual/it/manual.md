@@ -1,9 +1,14 @@
-Versione 0.8.2 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità in preparazione** (provata sul telefono di debug)
+**Novità della 0.9.0** (provata sul telefono di debug)
+- **Sincronizzazione con ActivityTrack Web**, il server dell'organizzazione:
+  si associa il telefono inquadrando un **codice QR**, poi attività, voci da
+  fare, anagrafiche e allegati restano allineati nei due sensi, anche dopo
+  giorni senza rete; anagrafiche **centrali** e personali, **policy** dal
+  server, conflitti segnalati (§11).
 - **Tag dell'anagrafica** con un **colore**: sulle attività compaiono come
   **pallini colorati** in alto a destra (Home, Agenda, Report) e come tag
   colorati nella scheda; un'opzione, o la policy, ammette solo i tag
@@ -781,6 +786,74 @@ cambiate; ne conserva 14, modificabile); **"Esegui backup ora"** qui, in
 Importa / esporta.
 **"Ripristina backup"** sostituisce tutti i dati con un backup scelto: prima
 salva i dati attuali come backup `…-before-restore.zip`, poi riavvia l'app.
+
+### Sincronizzazione con ActivityTrack Web
+**ActivityTrack Web** è il server dell'organizzazione: tiene una copia dei
+dati del telefono, li mostra nel browser (anche a chi rendiconta, in sola
+lettura) e li allinea fra i telefoni dello stesso utente. Senza server l'app
+funziona come sempre.
+
+**Associare il telefono.** Sul web: *Telefoni* → **"Associa un telefono"**
+mostra un codice QR, valido 10 minuti e per una sola volta. Nell'app:
+Impostazioni → **Sincronizzazione** → **"Inquadra il codice QR"** (la prima
+volta chiede il permesso della fotocamera), oppure **"Incolla il
+collegamento"** se il codice è arrivato come testo. Il telefono chiede
+**"Associare a questo server?"**: se era associato a un altro server,
+quell'associazione termina; se il certificato del server non è di
+un'autorità che il telefono conosce, da quel momento il telefono si fida
+solo della chiave contenuta nel codice (**"chiave fissata"**). Un codice
+scaduto o già usato dà "Il codice è scaduto o già usato: generane uno nuovo
+dalla pagina web".
+
+**La prima sincronizzazione** manda al server tutto ciò che il telefono ha
+e riceve ciò che il server ha già. Aziende, clienti, ruoli e tag con lo
+stesso nome non si raddoppiano: diventano uno solo, con i dati del server.
+
+**Quando sincronizza.** Subito quando apri l'app, pochi secondi dopo ogni
+modifica, ogni 30 secondi mentre l'app è aperta (per ciò che arriva dal web
+o da un altro telefono) e ogni 15 minuti in background, appena c'è rete.
+Senza rete le modifiche aspettano e partono al ritorno della connessione.
+I file degli allegati si scaricano su Wi-Fi, o quando apri l'allegato. Le
+posizioni GPS restano sul telefono: viaggiano km e tempi.
+
+![Impostazioni → Sincronizzazione](img/sync.png)
+
+La pagina mostra server, utente, organizzazione, ultima sincronizzazione e
+**modifiche in attesa di invio**; **"Sincronizza ora"** non aspetta il
+prossimo giro.
+
+**Anagrafiche centrali e personali.** Quelle create dal web
+dall'amministratore o da un responsabile sono **centrali**: negli elenchi
+hanno la scritta "centrale" e sul telefono non si modificano ("È
+un'anagrafica centrale: la modificano l'amministratore o un responsabile,
+dal web"). Quelle create sul telefono sono tue (personali); sotto un cliente
+centrale puoi aggiungere sedi e contatti tuoi.
+
+**Gestionali.** Se un utente ha più telefoni, solo uno invia le attività ai
+gestionali (lo sceglie il web); gli altri importano soltanto e lo dicono
+("Al gestionale invia un altro tuo telefono").
+
+**Conflitti.** Se lo stesso dato cambia in due posti, vince la modifica più
+recente, campo per campo. Alcuni casi restano da guardare:
+- tratti che si sovrappongono dopo una sincronizzazione: la scheda
+  dell'attività dice **"Da verificare"**; si correggono gli orari (con gli
+  orari bloccati dalla policy li corregge dal web l'amministratore o il
+  responsabile) e il segno sparisce;
+- due attività in corso, quando la policy non le ammette insieme: la più
+  vecchia viene sospesa e una notifica lo dice;
+- una modifica che il server rifiuta: compare sotto **"Non
+  sincronizzati"** con il motivo; **"Scarta la modifica"** riporta la
+  versione del server (un elemento mai arrivato al server viene eliminato).
+
+**Policy dal server.** Con il server la policy arriva da lì e prevale su un
+`policy.json` nella cartella dati (§ seguente); si aggiorna a ogni
+sincronizzazione.
+
+**Dissociare e revoca.** **"Dissocia"** stacca il telefono dal server: i
+dati restano sul telefono; per sincronizzare di nuovo serve un nuovo
+codice. Se l'associazione viene revocata dal web, la pagina dice "Il server
+ha revocato l'associazione di questo telefono" e la sincronizzazione si
+ferma, sempre senza perdere dati.
 
 ### Policy e integrazioni
 

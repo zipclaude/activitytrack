@@ -1,4 +1,4 @@
-Version 0.8.2 · for everyday use; the *User manual* explains everything else.
+Version 0.9.0 · for everyday use; the *User manual* explains everything else.
 
 ## 1. First time
 1. Install `ActivityTrack-<version>.apk` from the GitHub *Releases*.
@@ -9,6 +9,9 @@ Version 0.8.2 · for everyday use; the *User manual* explains everything else.
 4. On Home, **"Getting started"** → **"Create the first client"** (with its
    **company**), or "Import from a file or a management system"; in More →
    Master data set the **working hours**.
+5. With an **ActivityTrack Web** server: Settings → Sync → "Scan the QR
+   code" shown on the web (*Phones* → "Pair a phone"); from then on the data
+   stay in step by themselves.
 
 ## 2. Starting
 On Home tap **▶** (work) or **🚗** (travel, starts at once).
