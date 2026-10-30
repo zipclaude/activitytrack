@@ -109,6 +109,10 @@ interface EntryDao {
 	)
 	fun observeOpenEntrySegments(): Flow<List<SegmentEntity>>
 
+	/* the tags of the open entries: dots on the Home cards (issue #133) */
+	@Query("SELECT entry_tag.* FROM entry_tag JOIN time_entry ON time_entry.id = entry_tag.entry_id WHERE time_entry.status != 'CLOSED'")
+	fun observeOpenEntryTags(): Flow<List<EntryTagEntity>>
+
 	/* The last [n] completed entries (Home keeps a few in view, owner 2026-10-19). */
 	@Query("SELECT * FROM time_entry WHERE status = 'CLOSED' ORDER BY updated_utc_ms DESC LIMIT :n")
 	fun observeRecentClosed(n: Int): Flow<List<TimeEntryEntity>>

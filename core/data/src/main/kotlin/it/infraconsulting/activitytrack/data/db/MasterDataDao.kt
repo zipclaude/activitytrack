@@ -134,6 +134,32 @@ interface MasterDataDao {
 	@Delete
 	suspend fun deleteRole(r: RoleEntity)
 
+	/* tags of the master data (issue #133) */
+	@Query("SELECT * FROM tag ORDER BY archived, name")
+	fun observeTagList(): Flow<List<TagEntity>>
+
+	@Query("SELECT * FROM tag")
+	suspend fun allTags(): List<TagEntity>
+
+	@Query("SELECT * FROM tag WHERE name = :name")
+	suspend fun tagByName(name: String): TagEntity?
+
+	@Insert
+	suspend fun insertTag(t: TagEntity): Long
+
+	@Update
+	suspend fun updateTag(t: TagEntity)
+
+	@Delete
+	suspend fun deleteTag(t: TagEntity)
+
+	/* a rename follows on the entries: the new name where the entry has not it yet, then the old one goes */
+	@Query("INSERT OR IGNORE INTO entry_tag (entry_id, tag) SELECT entry_id, :to FROM entry_tag WHERE tag = :from")
+	suspend fun copyEntryTags(from: String, to: String)
+
+	@Query("DELETE FROM entry_tag WHERE tag = :name")
+	suspend fun dropEntryTags(name: String)
+
 	/* activity presets */
 	@Query("SELECT * FROM activity_preset ORDER BY text COLLATE NOCASE")
 	fun observePresets(): Flow<List<ActivityPresetEntity>>

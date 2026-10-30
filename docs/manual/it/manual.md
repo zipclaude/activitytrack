@@ -3,6 +3,12 @@ e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
+**Novità in preparazione** (provata sul telefono di debug)
+- **Tag dell'anagrafica** con un **colore**: sulle attività compaiono come
+  **pallini colorati** in alto a destra (Home, Agenda, Report) e come tag
+  colorati nella scheda; un'opzione, o la policy, ammette solo i tag
+  dell'anagrafica (§3, §6, §10).
+
 **Novità della 0.8.2** (provata sul telefono di debug)
 - I dialoghi ripartono dall'**ultima azienda e dall'ultimo cliente**
   scelti (nuovo cliente, nuova voce *Da fare*, nuovo contatto), anche
@@ -278,6 +284,16 @@ sempre), **"Ignorate"** mostra o nasconde le voci ignorate. **"Filtri"** apre
 i filtri avanzati: cliente, priorità, stato (aperta, pianificata, in ritardo),
 pianificata sì/no; "Azzera" li toglie.
 
+### Tag colorati
+I tag che hanno un colore nell'anagrafica ("Altro" → "Anagrafiche" → "Tag",
+§10) compaiono come **pallini colorati in alto a destra** nei riquadri della
+Home, nelle righe della lista e dell'Agenda (anche nei blocchi della vista
+Giorno) e nel dettaglio di un giorno del Report: fino a quattro, poi "+N".
+I tag liberi, o senza colore, hanno il pallino grigio. Nella scheda
+dell'attività i tag sono scritti per intero, nel loro colore.
+
+![Tag colorati nella scheda dell'attività](img/entry-tags.png)
+
 ### Visualizzazione compatta
 Impostazioni → "Visualizzazione" → **Compatta**: testo un po' più piccolo,
 riquadri e pulsanti più stretti, per vedere più attività e voci insieme.
@@ -546,9 +562,15 @@ Nella scheda dell'attività (0.7.8):
   CLIENTE" per quelle create da una chiamata; vuota per quelle manuali):
   toccando una pausa la modifichi o la cancelli, anche con "Orari
   modificabili" spento;
-- **Tag**: etichette libere (es. `#remoto`, `#urgente`); scrivine uno o più
-  nel campo e tocca "+", oppure tocca un suggerimento tra quelli già usati;
-  la ✕ su un tag lo toglie. Si aggiungono anche dopo la chiusura;
+- **Tag**: etichette (es. `#remoto`, `#urgente`); scrivine uno o più nel
+  campo e tocca "Aggiungi", oppure tocca un suggerimento: prima quelli
+  dell'anagrafica, col loro colore, poi quelli liberi già usati. La ✕ su un
+  tag lo toglie. Si aggiungono anche dopo la chiusura. Un tag libero (grigio)
+  si tiene in anagrafica toccandolo: **"Tieni in anagrafica"** gli dà un
+  colore. Con l'opzione **"Anche tag liberi"** spenta (o fissata dalla
+  policy) si aggiungono solo i tag dell'anagrafica: gli altri restano fuori
+  ("Solo i tag dell'anagrafica: … non aggiunti"); i tag liberi già sulle
+  attività restano;
 - **Spese e allegati**: una riga di pulsanti colorati (**Spesa**, **Foto**,
   **Nota voc.**, **File**, **Materiale**) sopra le loro sezioni;
 - "Riferimenti esterni": ticket, URL o codici (riconosciuti automaticamente);
@@ -694,6 +716,16 @@ alla voce senza salvare.
   "Posizione attuale" o da "Mappa" (sposta la mappa sotto il mirino e "Usa
   questo punto").
 - **Ruoli**, **Scelte rapide** (testi ricorrenti, con ruolo proposto).
+- **Tag** — nome e **colore** fra i dodici (o nessuno), in ordine
+  alfabetico; archiviati in fondo. Il nome è unico: non ci sono due tag con
+  lo stesso testo. **Rinominare** un tag lo cambia anche su tutte le
+  attività che lo hanno; **eliminarlo** lascia il testo sulle attività, come
+  tag libero (grigio). Con il server, i tag **centrali** li gestisce dal web
+  l'amministratore o un responsabile (sul telefono non si modificano); se
+  hai già un tag con lo stesso nome di uno centrale, diventa quello centrale
+  e ne prende il colore.
+
+![Tag dell'anagrafica](img/tags.png)
 - **Ordine degli elenchi** — in cima ad Aziende, Clienti, Ruoli e Scelte
   rapide scegli **A–Z**, **Ultimo uso** (prima quelli usati più di
   recente; per le scelte rapide, l'ultima volta che le hai scelte) o
@@ -943,6 +975,7 @@ riportati al limite più vicino.
 |---|---|---|
 | Normale / Compatta | Compatta: testo all'88 %, riquadri e pulsanti più stretti. | Normale |
 | Widget «Da fare»: intervallo | Quanto guardare avanti nel widget omonimo: 24 h, 3, 7 o 30 giorni; le voci in ritardo sono sempre incluse. Una policy può fissarla (con lucchetto). | 24 h |
+| Anche tag liberi | Acceso: si può scrivere qualsiasi tag. Spento: solo i tag dell'anagrafica; quelli liberi già sulle attività restano. Policy: `tagsFreeText`. | Acceso |
 
 ### Orari
 
@@ -1055,7 +1088,7 @@ schermate stesse e restano finché non li cambi.
 | Spesa | importo, descrizione, scontrino | di un'attività |
 | Allegato | foto, nota vocale, file | di un'attività, nella cartella dati |
 | Riferimento esterno | ticket, URL, codice | di un'attività |
-| Tag | parola libera | di un'attività |
+| Tag | nome, colore (se in anagrafica); libero se scritto a mano | di un'attività; l'anagrafica dei tag ne dà il colore, collegata per nome |
 | Contatto | nome, numeri, e-mail | di un cliente; riconosce le chiamate; facoltativo su un'attività |
 | Materiale di consumo | descrizione, unità, costo unitario, azienda | proposto nelle righe dei materiali |
 | Riga di materiale | descrizione, quantità, unità, costo unitario | di un'attività |

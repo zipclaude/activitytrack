@@ -103,6 +103,7 @@ object SyncMapping {
 			parent = "clientUid",
 		),
 		RecordType("role", "role", listOf(text("name"), bool("archived"), int("position", "sort_position", nullable = true))),
+		RecordType("tag", "tag", listOf(text("name"), int("color", nullable = true), bool("archived"), int("position", "sort_position", nullable = true))),
 		RecordType(
 			"preset", "activity_preset",
 			listOf(text("text"), ref("defaultRoleUid", "role", "default_role_id"), ref("companyUid", "company", "company_id"), int("position", "sort_position", nullable = true)),

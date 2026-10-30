@@ -95,6 +95,7 @@ class EntryRepository(
 
 	val openEntries = dao.observeOpenEntries()
 	val openEntrySegments = dao.observeOpenEntrySegments()
+	val openEntryTags = dao.observeOpenEntryTags()
 	val recentClosed = dao.observeRecentClosed(RECENT_CLOSED)
 	val recentClosedSegments = dao.observeRecentClosedSegments(RECENT_CLOSED)
 	val clientLastUse = dao.observeClientLastUse()

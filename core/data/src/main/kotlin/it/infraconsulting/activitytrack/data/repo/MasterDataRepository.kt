@@ -23,6 +23,8 @@ import it.infraconsulting.activitytrack.data.db.LunchBreakEntity
 import it.infraconsulting.activitytrack.data.db.PlaceEntity
 import it.infraconsulting.activitytrack.data.db.PlaceKind
 import it.infraconsulting.activitytrack.data.db.RoleEntity
+import it.infraconsulting.activitytrack.data.db.TagEntity
+import it.infraconsulting.activitytrack.domain.tag.Tags
 import it.infraconsulting.activitytrack.data.db.WorkScheduleEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
@@ -62,6 +64,9 @@ class MasterDataRepository(
 			val last = uses.associate { it.id to it.lastMs }
 			Ordering.sort(list, o, { it.name }, { it.archived }, { last[it.id] }, { it.position }, { it.id })
 		}
+	/* tags of the master data (issue #133), by name; archived ones last */
+	val tags: Flow<List<TagEntity>> = dao.observeTagList()
+
 	val presets: Flow<List<ActivityPresetEntity>> =
 		combine(dao.observePresets(), order.map { it.presets }.distinctUntilChanged()) { list, o ->
 			Ordering.sort(list, o, { it.text }, lastUse = { it.lastUsedUtcMs }, position = { it.position }, id = { it.id })
@@ -149,6 +154,24 @@ class MasterDataRepository(
 	}
 
 	suspend fun deleteRole(r: RoleEntity) = guard { dao.deleteRole(r) }
+
+	/*
+	 * A tag of the master data (issue #133): its name normalised as the
+	 * entries' tags; renamed, the entries using it follow (owner, 2026-10-30).
+	 */
+	suspend fun saveTag(t: TagEntity): Long = db.withTransaction {
+		val v = t.copy(name = Tags.normalize(t.name) ?: throw ValidationException(Reason.BLANK_NAME))
+		val old = if (v.id == 0L) null else dao.allTags().firstOrNull { it.id == v.id }
+		guard { if (v.id == 0L) dao.insertTag(v) else v.id.also { dao.updateTag(v) } }.also {
+			if (old != null && old.name != v.name) {
+				dao.copyEntryTags(old.name, v.name)
+				dao.dropEntryTags(old.name)
+			}
+		}
+	}
+
+	/* the entries keep the name: it becomes a free tag */
+	suspend fun deleteTag(t: TagEntity) = guard { dao.deleteTag(t) }
 
 	suspend fun savePreset(p: ActivityPresetEntity): Long {
 		val v = p.copy(text = name(p.text))

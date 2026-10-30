@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.common.canCreateMasterData
+import it.infraconsulting.activitytrack.ui.common.tagColor
+import it.infraconsulting.activitytrack.ui.common.TagDialog
+import it.infraconsulting.activitytrack.ui.common.TagLabel
 import it.infraconsulting.activitytrack.ui.common.enabled
 import it.infraconsulting.activitytrack.ui.common.fieldShown
 import it.infraconsulting.activitytrack.ui.common.fieldImportance
@@ -36,6 +40,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -114,7 +119,7 @@ import java.time.ZoneId
 
 @Composable
 fun EntryScreen(entryId: Long, onBack: () -> Unit) {
-	val vm = appViewModel { c -> EntryViewModel(entryId, c.entries, c.masterData, c.todos, c.settings.settings.map { s -> s.editableTimes }, { c.policies.current.value }) }
+	val vm = appViewModel { c -> EntryViewModel(entryId, c.entries, c.masterData, c.todos, c.settings.settings.map { s -> s.editableTimes }, c.settings.settings.map { s -> s.tagsFreeText }, { c.policies.current.value }) }
 	val entry by vm.entry.collectAsState()
 	ScreenScaffold(
 		title = stringResource(R.string.entry_title),
@@ -582,40 +587,72 @@ private fun RunningSegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewMo
 
 /*
  * Tags of the entry (backlog 13): chips with a remove button, a field to
- * add one or more ("#urgente remoto"), suggestions from the tags in use.
+ * add one or more ("#urgente remoto"), suggestions from the master data's
+ * tags first, then the free ones in use (issue #133). Without free tags
+ * (setting, policy) only the master data's are taken; a free tag already
+ * on the entry can be kept in the master data with a colour.
  */
 @Composable
 private fun TagsSection(vm: EntryViewModel) {
 	val tags by vm.tags.collectAsState()
 	val all by vm.allTags.collectAsState()
+	val master by vm.masterTags.collectAsState()
+	val free by vm.tagsFreeText.collectAsState()
+	val error by vm.error.collectAsState()
 	var text by remember { mutableStateOf("") }
+	var refused by remember { mutableStateOf(emptyList<String>()) }
+	var keeping by remember { mutableStateOf<String?>(null) }
+	val known = master.filter { !it.archived }.map { it.name }
+	val names = master.map { it.name }.toSet()
 	val typed = Tags.normalize(text.substringAfterLast(' '))
-	val suggestions = all.filter { it !in tags && (typed == null || it.startsWith(typed)) }.take(8)
+	val pool = if (free) known + all.filter { it !in names } else known
+	val suggestions = pool.filter { it !in tags && (typed == null || it.startsWith(typed)) }.take(8)
+	val canKeep = canCreateMasterData()
+	fun add(new: List<String>) {
+		val (ok, no) = new.partition { free || it in known }
+		refused = no
+		if (ok.isNotEmpty()) vm.setTags(tags + ok)
+	}
 	/* the header carries its own padding, like the other sections */
 	SectionHeader(stringResource(R.string.tags))
 	Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
 		if (tags.isNotEmpty())
-			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
 				for (t in tags)
-					InputChip(
-						selected = false, onClick = { vm.setTags(tags - t) }, label = { Text("#$t") },
-						trailingIcon = { Icon(painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.action_delete), modifier = Modifier.size(16.dp)) },
-					)
+					Row(verticalAlignment = Alignment.CenterVertically) {
+						/* a free tag: a tap keeps it in the master data */
+						val keep = canKeep && t !in names
+						TagLabel(t, if (keep) Modifier.clickable { vm.clearError(); keeping = t } else Modifier)
+						IconButton(onClick = { vm.setTags(tags - t) }, modifier = Modifier.size(32.dp)) {
+							Icon(painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.action_delete), modifier = Modifier.size(16.dp))
+						}
+					}
 			}
 		Row(verticalAlignment = Alignment.CenterVertically) {
 			Column(Modifier.weight(1f)) {
-				TextInput(stringResource(R.string.tag_new), text, { text = it }, importance = Importance.OPTIONAL)
+				TextInput(stringResource(if (free) R.string.tag_new else R.string.tag_pick), text, { text = it; refused = emptyList() }, importance = Importance.OPTIONAL)
 			}
 			AddButton {
-				vm.setTags(tags + Tags.parse(text))
+				add(Tags.parse(text))
 				text = ""
 			}
 		}
+		if (refused.isNotEmpty())
+			Text(stringResource(R.string.tag_only_master, Tags.show(refused)), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
 		if (suggestions.isNotEmpty())
 			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
 				for (t in suggestions)
-					SuggestionChip(onClick = { vm.setTags(tags + t); text = "" }, label = { Text("#$t") })
+					SuggestionChip(
+						onClick = { add(listOf(t)); text = "" },
+						label = { Text("#$t") },
+						icon = { Box(Modifier.size(10.dp).clip(androidx.compose.foundation.shape.CircleShape).background(tagColor(t))) },
+					)
 			}
+	}
+	keeping?.let { t ->
+		TagDialog(stringResource(R.string.tag_keep), t, null, false, error, { keeping = null }, null) { n, c, a ->
+			vm.saveTag(it.infraconsulting.activitytrack.data.db.TagEntity(name = n, color = c, archived = a)) { keeping = null }
+		}
 	}
 }
 

@@ -35,6 +35,7 @@ class MasterDataViewModel(private val repo: MasterDataRepository, private val se
 	val companies = repo.companies.state(emptyList())
 	val clients = repo.clients.state(emptyList())
 	val roles = repo.roles.state(emptyList())
+	val tags = repo.tags.state(emptyList())
 	val presets = repo.presets.state(emptyList())
 	val places = repo.places.state(emptyList())
 	val schedule = repo.schedule.state(emptyList())
@@ -60,6 +61,8 @@ class MasterDataViewModel(private val repo: MasterDataRepository, private val se
 	fun delete(s: ClientSiteEntity, done: () -> Unit) = run(done) { repo.deleteClientSite(s) }
 	fun save(r: RoleEntity, done: () -> Unit) = run(done) { repo.saveRole(r) }
 	fun delete(r: RoleEntity, done: () -> Unit) = run(done) { repo.deleteRole(r) }
+	fun save(t: it.infraconsulting.activitytrack.data.db.TagEntity, done: () -> Unit) = run(done) { repo.saveTag(t) }
+	fun delete(t: it.infraconsulting.activitytrack.data.db.TagEntity, done: () -> Unit) = run(done) { repo.deleteTag(t) }
 	fun save(p: ActivityPresetEntity, done: () -> Unit) = run(done) { repo.savePreset(p) }
 	fun delete(p: ActivityPresetEntity, done: () -> Unit) = run(done) { repo.deletePreset(p) }
 	fun save(p: PlaceEntity, done: () -> Unit) = run(done) { repo.savePlace(p) }

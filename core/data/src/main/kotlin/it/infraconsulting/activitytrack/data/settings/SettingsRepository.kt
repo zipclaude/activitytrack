@@ -111,6 +111,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val callsAlways = booleanPreferencesKey("calls_always")
 		fun order(list: OrderedList) = stringPreferencesKey("order_${list.name.lowercase()}")
 		val editableTimes = booleanPreferencesKey("editable_times")
+		val tagsFreeText = booleanPreferencesKey("tags_free_text")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -170,6 +171,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			lastClientId = p[K.lastClient],
 			listOrders = OrderedList.entries.fold(d.listOrders) { o, l -> o.with(l, enumOr(p[K.order(l)], d.listOrders.of(l))) },
 			editableTimes = p[K.editableTimes] ?: d.editableTimes,
+			tagsFreeText = p[K.tagsFreeText] ?: d.tagsFreeText,
 			callsIncoming = p[K.callsIncoming] ?: d.callsIncoming,
 			callsOutgoing = p[K.callsOutgoing] ?: d.callsOutgoing,
 			callAutoPause = p[K.callAutoPause] ?: d.callAutoPause,
@@ -232,6 +234,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		s.lastClientId?.let { p[K.lastClient] = it } ?: p.remove(K.lastClient)
 		OrderedList.entries.forEach { p[K.order(it)] = s.listOrders.of(it).name }
 		p[K.editableTimes] = s.editableTimes
+		p[K.tagsFreeText] = s.tagsFreeText
 		p[K.callsIncoming] = s.callsIncoming
 		p[K.callsOutgoing] = s.callsOutgoing
 		p[K.callAutoPause] = s.callAutoPause

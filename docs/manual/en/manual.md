@@ -3,6 +3,12 @@ manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
+**Coming next** (tested on the debug phone)
+- **Tags in the master data** with a **colour**: on the activities they show
+  as **coloured dots** at the top right (Home, Agenda, Report) and as
+  coloured tags in the activity screen; an option, or the policy, allows
+  only the master data's tags (§3, §6, §10).
+
 **New in 0.8.2** (tested on the debug phone)
 - The dialogs start from the **last company and client** chosen (new
   client, new to-do, new contact), also after closing the app (§3).
@@ -274,6 +280,15 @@ to-dos planned or due within that time (overdue ones always),
 advanced filters: client, priority, state (open, planned, overdue), planned
 yes/no; "Clear" removes them.
 
+### Coloured tags
+Tags with a colour in the master data ("More" → "Master data" → "Tags",
+§10) show as **coloured dots at the top right** of the Home cards, of the
+list and Agenda rows (the Day view's blocks too) and of a Report day's
+detail: up to four, then "+N". Free tags, or tags without a colour, have a
+grey dot. In the activity screen the tags are written out, in their colour.
+
+![Coloured tags in the activity screen](img/entry-tags.png)
+
 ### Compact display
 Settings → "Display" → **Compact**: slightly smaller text, tighter cards and
 buttons, to see more activities and to-dos at once.
@@ -535,9 +550,14 @@ In the activity screen (0.7.8):
 - **pauses** have an optional **description** (e.g. "Phone call CLIENT" for
   those made by a call; empty for manual ones): tap a pause to edit or clear
   it, also with "Times freely editable" off;
-- **Tags**: free labels (e.g. `#remote`, `#urgent`); type one or more and tap
-  "+", or tap a suggestion among those already used; the ✕ on a tag removes
-  it. They can be added after closing too;
+- **Tags**: labels (e.g. `#remote`, `#urgent`); type one or more and tap
+  "Add", or tap a suggestion: first the master data's, in their colour, then
+  the free ones already used. The ✕ on a tag removes it. They can be added
+  after closing too. A free (grey) tag is kept in the master data by tapping
+  it: **"Keep in the master data"** gives it a colour. With the **"Free tags
+  too"** option off (or locked by the policy) only the master data's tags
+  are added: the others are left out ("Only the tags of the master data: …
+  not added"); free tags already on activities stay;
 - **Expenses and attachments**: one row of coloured buttons (**Expense**,
   **Photo**, **Voice note**, **File**, **Material**) above their sections;
 - "External references": tickets, URLs or codes (recognised automatically);
@@ -679,6 +699,16 @@ the to-do without saving.
 - **Sites** — label, coordinates, radius, address. Coordinates from "Current
   position" or "Map" (move the map under the crosshair and "Use this point").
 - **Roles**, **Quick picks** (recurring descriptions, with a proposed role).
+- **Tags** — name and **colour** out of the twelve (or none), in
+  alphabetical order; archived ones last. The name is unique: no two tags
+  with the same text. **Renaming** a tag changes it on every activity that
+  has it too; **deleting** it leaves the text on the activities, as a free
+  (grey) tag. With the server, **central** tags are managed on the web by
+  the administrator or a manager (they cannot be edited on the phone); a tag
+  of yours with the same name as a central one becomes the central one and
+  takes its colour.
+
+![Tags of the master data](img/tags.png)
 - **List order** — at the top of Companies, Clients, Roles and Quick picks pick
   **A–Z**, **Last used** (most recently used first; for quick picks, the last
   time you picked them) or **Manual**: in manual order every row has a ≡
@@ -920,6 +950,7 @@ to the nearest limit.
 |---|---|---|
 | Normal / Compact | Compact: text at 88 %, tighter cards and buttons. | Normal |
 | To-dos widget: window | How far the like-named widget looks ahead: 24 h, 3, 7 or 30 days; overdue to-dos are always included. A policy can lock it (padlock). | 24 h |
+| Free tags too | On: any tag can be typed. Off: only the master data's tags; free ones already on activities stay. Policy: `tagsFreeText`. | On |
 
 ### Times
 
@@ -1030,7 +1061,7 @@ stay until you change them.
 | Expense | amount, description, receipt | of an activity |
 | Attachment | photo, voice note, file | of an activity, in the data folder |
 | External reference | ticket, URL, code | of an activity |
-| Tag | free word | of an activity |
+| Tag | name, colour (when in the master data); free when typed | of an activity; the tags of the master data give its colour, linked by name |
 | Contact | name, numbers, e-mail | of a client; recognises calls; optional on an activity |
 | Consumable | description, unit, unit cost, company | proposed in the material lines |
 | Material line | description, quantity, unit, unit cost | of an activity |

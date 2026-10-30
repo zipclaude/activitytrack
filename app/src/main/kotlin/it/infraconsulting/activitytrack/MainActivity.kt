@@ -116,11 +116,14 @@ class MainActivity : ComponentActivity() {
 			val learned by learnedFlow.collectAsState(initial = true)
 			val policy by (application as ActivityTrackApp).container.policies.current.collectAsState()
 			val account by (application as ActivityTrackApp).syncAccount.info.collectAsState()
+			val tagList by (application as ActivityTrackApp).container.masterData.tags.collectAsState(initial = emptyList())
+			val tagColors = androidx.compose.runtime.remember(tagList) { tagList.associate { t -> t.name to t.color } }
 			val centralLocked = account?.let { a -> a.profile !in it.infraconsulting.activitytrack.sync.SyncAccount.CENTRAL_EDITORS } ?: false
 			ActivityTrackTheme(compact) {
 				androidx.compose.runtime.CompositionLocalProvider(
 					it.infraconsulting.activitytrack.ui.common.LocalPolicy provides policy,
 					it.infraconsulting.activitytrack.ui.common.LocalCentralLocked provides centralLocked,
+					it.infraconsulting.activitytrack.ui.common.LocalTagColors provides tagColors,
 					it.infraconsulting.activitytrack.ui.common.LocalSwipeHints provides hints.copy(show = !learned),
 				) {
 					Root(deepLink.value) { deepLink.value = null }
@@ -310,6 +313,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, s
 		Screen.Clients -> ClientsScreen(back) { open(Screen.Client(it)) }
 		is Screen.Client -> ClientScreen(top.id, back)
 		Screen.Roles -> RolesScreen(back)
+		Screen.Tags -> it.infraconsulting.activitytrack.ui.masterdata.TagsScreen(back)
 		Screen.Presets -> PresetsScreen(back)
 		Screen.Places -> PlacesScreen(back)
 		Screen.Schedule -> ScheduleScreen(back)

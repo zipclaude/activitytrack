@@ -41,9 +41,12 @@ class SyncMigrationTest {
 				c.moveToFirst()
 				assertTrue(SyncIds.isCanonical(c.getString(0)))
 			}
+			val present = HashSet<String>()
+			db.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { c -> while (c.moveToNext()) present += c.getString(0) }
 			db.query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'sync_%'").use { c ->
 				c.moveToFirst()
-				assertEquals(SyncSchema.triggers().size, c.getInt(0))
+				/* the tables of schema 16; later ones get theirs when they exist */
+				assertEquals(SyncSchema.triggers(present).size, c.getInt(0))
 			}
 		}
 	}

@@ -745,4 +745,11 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="policy_from_server">die Richtlinie des Servers</string>
   <string name="policy_file_ignored_title">policy.json ignoriert</string>
   <string name="policy_file_ignored_text">Dieses Telefon folgt der Richtlinie des verbundenen Servers; die policy.json im Datenordner gilt nach dem Trennen wieder.</string>
+  <string name="md_tags">Tags</string>
+  <string name="tag_edit">Tag</string>
+  <string name="tag_pick">Tags der Stammdaten (z. B. #dringend)</string>
+  <string name="tag_only_master">Nur die Tags der Stammdaten: %1$s nicht hinzugefügt.</string>
+  <string name="tag_keep">In den Stammdaten behalten</string>
+  <string name="set_tags_free_text">Auch freie Tags</string>
+  <string name="set_tags_free_text_hint">An: jeder Tag kann eingegeben werden. Aus: nur die Tags der Stammdaten; freie Tags auf bestehenden Tätigkeiten bleiben.</string>
 </resources>

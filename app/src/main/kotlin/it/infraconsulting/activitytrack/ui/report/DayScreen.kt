@@ -149,6 +149,9 @@ private fun Total(label: String, d: Duration) {
 private fun LineCard(line: EntryDayLine, report: Report, zone: ZoneId, onClick: () -> Unit) {
 	val m = report.meta[line.entryId]
 	Card(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+		androidx.compose.foundation.layout.Box {
+		/* the tags' colours in the top right corner (issue #133) */
+		it.infraconsulting.activitytrack.ui.common.TagDots(m?.tags.orEmpty(), Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 16.dp))
 		Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
 			if (m != null && m.client.isNotEmpty())
 				Text(m.company, style = MaterialTheme.typography.labelMedium)
@@ -173,6 +176,7 @@ private fun LineCard(line: EntryDayLine, report: Report, zone: ZoneId, onClick: 
 				),
 				style = MaterialTheme.typography.bodySmall,
 			)
+		}
 		}
 	}
 }

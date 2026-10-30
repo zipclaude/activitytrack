@@ -187,6 +187,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
 	var compact by remember { mutableStateOf(initial.compactDisplay) }
 	var editableTimes by remember { mutableStateOf(initial.editableTimes) }
+	var tagsFreeText by remember { mutableStateOf(initial.tagsFreeText) }
 	var callsIn by remember { mutableStateOf(initial.callsIncoming) }
 	var callsOut by remember { mutableStateOf(initial.callsOutgoing) }
 	var callPause by remember { mutableStateOf(initial.callAutoPause) }
@@ -233,6 +234,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		dictationLanguage = dictation,
 		compactDisplay = compact,
 		editableTimes = editableTimes,
+		tagsFreeText = tagsFreeText,
 		callsIncoming = callsIn,
 		callsOutgoing = callsOut,
 		callAutoPause = callPause,
@@ -286,6 +288,12 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 							widgetTodoWindow,
 						) { widgetTodoWindow = it }
 					}
+					/* free tags or only the master data's (issue #133) */
+					if (LocalPolicy.current.field(it.infraconsulting.activitytrack.domain.policy.Field.TAGS).visible)
+						PolicySetting("tagsFreeText") {
+							SwitchRow(stringResource(R.string.set_tags_free_text), tagsFreeText) { tagsFreeText = it }
+							Text(stringResource(R.string.set_tags_free_text_hint), style = MaterialTheme.typography.bodySmall)
+						}
 				}
 				SettingsSection.TIMES -> {
 					PolicySetting("editableTimes") {

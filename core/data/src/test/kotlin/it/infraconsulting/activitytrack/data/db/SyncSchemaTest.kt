@@ -77,7 +77,9 @@ class SyncSchemaTest {
 	fun migrationFillsCanonicalUniqueUids() {
 		val c = sample15()
 		SyncSchema.migrate15To16(sql(c))
-		for (table in SyncSchema.TYPES.keys) {
+		val present = rows(c, "SELECT name FROM sqlite_master WHERE type = 'table'").map { it[0] as String }.toSet()
+		/* tables of later schemas are not there yet */
+		for (table in SyncSchema.TYPES.keys.filter { it in present }) {
 			val uids = rows(c, "SELECT uid FROM `$table`").map { it[0] as String }
 			assertTrue(uids.all { SyncIds.isCanonical(it) }, "$table: $uids")
 			assertEquals(uids.size, uids.toSet().size, table)
@@ -94,9 +96,29 @@ class SyncSchemaTest {
 		assertEquals(0L, rows(c, "SELECT COUNT(*) FROM sync_change")[0][0])
 	}
 
+	/*
+	 * 19 -> 20 (issue #133) is an AutoMigration: Room adds the tag table as
+	 * 20.json has it; opening adds its triggers like those of the other tables.
+	 */
+	@Test
+	fun tagTableAfterTheMigrationIsSyncedLikeTheOthers() {
+		val c = create(19).also { SyncSchema.onCreate(sql(it)) }
+		val tag = org.json.JSONObject(java.io.File("schemas/it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase/20.json").readText())
+			.getJSONObject("database").getJSONArray("entities").let { a -> (0 until a.length()).map(a::getJSONObject).first { it.getString("tableName") == "tag" } }
+		exec(c, tag.getString("createSql").replace("\${TABLE_NAME}", "tag"))
+		val indices = tag.getJSONArray("indices")
+		for (i in 0 until indices.length()) exec(c, indices.getJSONObject(i).getString("createSql").replace("\${TABLE_NAME}", "tag"))
+		SyncSchema.onOpen(sql(c))
+		assertEquals(shape(create(20).also { SyncSchema.onCreate(sql(it)) }), shape(c))
+		exec(c, "UPDATE sync_state SET enabled = 1")
+		val urgente = SyncIds.random()
+		exec(c, "INSERT INTO tag (name, color, archived, uid, central) VALUES ('urgente', 14042181, 0, ?, 0)", urgente)
+		assertEquals(listOf(listOf("tag", urgente, "upsert")), changes(c))
+	}
+
 	@Test
 	fun everyTableWithAUidIsSynced() {
-		val withUid = rows(create(16), "SELECT m.name FROM sqlite_master m, pragma_table_info(m.name) p WHERE m.type = 'table' AND p.name = 'uid' AND m.name NOT LIKE 'sync_%'")
+		val withUid = rows(create(ActivityTrackDatabase.VERSION), "SELECT m.name FROM sqlite_master m, pragma_table_info(m.name) p WHERE m.type = 'table' AND p.name = 'uid' AND m.name NOT LIKE 'sync_%'")
 			.map { it[0] as String }.toSet()
 		assertEquals(withUid, SyncSchema.TYPES.keys)
 	}

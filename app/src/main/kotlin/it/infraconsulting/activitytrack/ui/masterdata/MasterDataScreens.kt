@@ -136,6 +136,7 @@ internal fun centralGuard(): (central: Boolean, action: () -> Unit) -> Unit {
 @Composable
 fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
 	val withCompanies = companiesShown()
+	val tagsOn = it.infraconsulting.activitytrack.ui.common.LocalPolicy.current.field(it.infraconsulting.activitytrack.domain.policy.Field.TAGS).visible
 	ScreenScaffold(title = stringResource(R.string.md_title), onBack = onBack) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 			val sections = listOfNotNull(
@@ -143,6 +144,8 @@ fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
 				Triple(Screen.Clients, R.string.md_clients, R.drawable.ic_menu_person),
 				Triple(Screen.Contacts, R.string.md_contacts, R.drawable.ic_menu_phone),
 				Triple(Screen.Roles, R.string.md_roles, R.drawable.ic_menu_work),
+				/* tags of the master data, with their colours (issue #133) */
+				Triple(Screen.Tags, R.string.md_tags, R.drawable.ic_menu_label).takeIf { tagsOn },
 				Triple(Screen.Presets, R.string.md_presets, R.drawable.ic_menu_list),
 				Triple(Screen.Materials, R.string.md_materials, R.drawable.ic_menu_inventory),
 				Triple(Screen.Places, R.string.md_places, R.drawable.ic_menu_place),
@@ -440,6 +443,38 @@ fun RolesScreen(onBack: () -> Unit) {
 		val delete = confirmDelete(r.name) { vm.delete(r) { editing = null } }
 		NameDialog(stringResource(R.string.role_edit), r.name, r.archived, error, { editing = null }, delete) { n, a ->
 			vm.save(r.copy(name = n, archived = a)) { editing = null }
+		}
+	}
+}
+
+/* Tags of the master data (issue #133): by name, with their colour; central ones read-only for users. */
+@Composable
+fun TagsScreen(onBack: () -> Unit) {
+	val vm = masterDataViewModel()
+	val tags by vm.tags.collectAsState()
+	val error by vm.error.collectAsState()
+	var editing by remember { mutableStateOf<it.infraconsulting.activitytrack.data.db.TagEntity?>(null) }
+	val guard = centralGuard()
+
+	ScreenScaffold(
+		title = stringResource(R.string.md_tags),
+		onBack = onBack,
+		actions = { if (canCreateMasterData()) AddButton { vm.clearError(); editing = it.infraconsulting.activitytrack.data.db.TagEntity(name = "") } },
+	) { padding ->
+		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+			if (tags.isEmpty())
+				item { EmptyText() }
+			items(tags, key = { it.id }) { t ->
+				ClickableRow("#${t.name}", masterSuffix(t.archived, t.central), dot = t.color ?: it.infraconsulting.activitytrack.ui.common.NO_COLOR) {
+					guard(t.central) { vm.clearError(); editing = t }
+				}
+			}
+		}
+	}
+	editing?.let { t ->
+		val delete = if (t.id == 0L) null else confirmDelete("#${t.name}") { vm.delete(t) { editing = null } }
+		it.infraconsulting.activitytrack.ui.common.TagDialog(stringResource(R.string.tag_edit), t.name, t.color, t.archived, error, { editing = null }, delete) { n, c, a ->
+			vm.save(t.copy(name = n, color = c, archived = a)) { editing = null }
 		}
 	}
 }

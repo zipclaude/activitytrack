@@ -20,6 +20,7 @@ import it.infraconsulting.activitytrack.domain.sync.SyncIds
 		ClientSiteEntity::class,
 		PlaceEntity::class,
 		RoleEntity::class,
+		TagEntity::class,
 		ActivityPresetEntity::class,
 		TimeEntryEntity::class,
 		SegmentEntity::class,
@@ -68,6 +69,7 @@ import it.infraconsulting.activitytrack.domain.sync.SyncIds
 		AutoMigration(from = 16, to = 17),	/* issue #116: attachment file on the server */
 		AutoMigration(from = 17, to = 18),	/* issue #115: central master data */
 		AutoMigration(from = 18, to = 19),	/* issue #119: entries to review, sync errors */
+		AutoMigration(from = 19, to = 20),	/* issue #133: tags of the master data */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
@@ -86,7 +88,7 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 19
+		const val VERSION = 20
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =

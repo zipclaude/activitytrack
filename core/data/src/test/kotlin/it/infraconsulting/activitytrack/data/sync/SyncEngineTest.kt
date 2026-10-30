@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.sync
 
+import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.JdbcSql
 import it.infraconsulting.activitytrack.data.db.SyncSchema
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
@@ -108,7 +109,7 @@ class SyncEngineTest {
 	}
 
 	private class Phone(val canEditCentral: Boolean = true) {
-		val c: Connection = JdbcSql.create(19)
+		val c: Connection = JdbcSql.create(ActivityTrackDatabase.VERSION)
 		val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 		val db = object : SyncDb {
 			override suspend fun <T> run(block: (SyncStore) -> T): T {

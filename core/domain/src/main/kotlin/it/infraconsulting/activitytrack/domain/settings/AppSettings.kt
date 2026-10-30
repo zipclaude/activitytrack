@@ -113,6 +113,8 @@ data class AppSettings(
 	 * settable by policy later.
 	 */
 	val editableTimes: Boolean = true,
+	/* tags typed freely besides the ones of the master data (issue #133); off = only the master data's */
+	val tagsFreeText: Boolean = true,
 	/* call recognition (issue #28): incoming and outgoing each, off until enabled; pause and proposal options */
 	val callsIncoming: Boolean = false,
 	val callsOutgoing: Boolean = false,

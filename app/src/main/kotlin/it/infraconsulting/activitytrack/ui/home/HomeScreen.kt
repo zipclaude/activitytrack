@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.common.TagDots
 import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.ui.common.companyColor
@@ -100,7 +101,7 @@ data class EntryCard(
 	val segments: List<SegmentEntity>,
 	/* company colour for the card band (M12) */
 	val companyColor: Int? = null,
-	/* the entry's tags, set on the "Chiuse" rows only (issue #59) */
+	/* the entry's tags: the "Chiuse" filter (issue #59), dots on every card (issue #133) */
 	val tags: Set<String> = emptySet(),
 	/* the last segment end: the sort key of the "Chiuse" list (issue #59) */
 	val endUtcMs: Long? = null,
@@ -118,13 +119,17 @@ class HomeViewModel(
 	todos: it.infraconsulting.activitytrack.data.repo.TodoRepository? = null,
 ) : EntryCommander(entries, todos) {
 	val cards = combine(
-		entries.openEntries, entries.openEntrySegments, master.clients, master.companies,
-	) { list, segs, clients, companies ->
+		entries.openEntries, entries.openEntrySegments, entries.openEntryTags, master.clients, master.companies,
+	) { list, segs, tags, clients, companies ->
 		val cl = clients.associateBy { it.id }
 		val co = companies.associateBy { it.id }
 		val bySeg = segs.groupBy { it.entryId }
+		val byTag = tags.groupBy({ it.entryId }, { it.tag })
 		list.map { e ->
-			EntryCard(e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(), companyColor(e.companyId, e.companyId?.let { co[it]?.color }))
+			EntryCard(
+				e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(),
+				companyColor(e.companyId, e.companyId?.let { co[it]?.color }), tags = byTag[e.id].orEmpty().toSet(),
+			)
 		}.sortedByDescending { it.lastChange }
 	}.state(emptyList())
 
@@ -471,6 +476,9 @@ private fun SmallEntryCard(
 	val button = Modifier.size(if (compact) 36.dp else 44.dp)
 	Card(onClick = onSelect, modifier = Modifier.fillMaxWidth()) {
 		Banded(card.companyColor) {
+			Box {
+			/* the tags' colours in the top right corner (issue #133) */
+			TagDots(card.tags, Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 12.dp))
 			Row(
 				modifier = Modifier.fillMaxWidth().heightIn(min = if (compact) 52.dp else 72.dp)
 					.padding(start = if (compact) 12.dp else 16.dp, end = 10.dp, top = if (compact) 4.dp else 8.dp, bottom = if (compact) 4.dp else 8.dp),
@@ -510,6 +518,7 @@ private fun SmallEntryCard(
 					e.status == EntryStatus.TO_COMPLETE -> TextButton(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
 				}
 			}
+			}
 		}
 	}
 }
@@ -539,9 +548,13 @@ private fun EntryCardView(
 						Text(card.title ?: stringResource(R.string.entry_no_client), style = MaterialTheme.typography.titleLarge)
 						e.activity?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
 					}
-					/* the running segment's time, the number one looks for */
-					if (e.status == EntryStatus.ACTIVE && last?.endUtcMs == null && last != null)
-						Text(hm(now - last.startUtcMs), style = MaterialTheme.typography.headlineMedium)
+					Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+						/* the tags' colours, top right (issue #133) */
+						TagDots(card.tags)
+						/* the running segment's time, the number one looks for */
+						if (e.status == EntryStatus.ACTIVE && last?.endUtcMs == null && last != null)
+							Text(hm(now - last.startUtcMs), style = MaterialTheme.typography.headlineMedium)
+					}
 				}
 
 				val state = statusText(e.status, e.mode)
