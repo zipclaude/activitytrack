@@ -733,6 +733,7 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="central_locked">È un\'anagrafica centrale: la modificano l\'amministratore o un responsabile, dal web.</string>
   <string name="plugin_not_holder">Al gestionale invia un altro tuo telefono (ActivityTrack Web): questo importa soltanto.</string>
   <string name="entry_needs_review">Da verificare: dopo una sincronizzazione due periodi di questa attività si sovrappongono. Correggi gli orari.</string>
+  <string name="entry_needs_review_locked">Da verificare: dopo una sincronizzazione due periodi di questa attività si sovrappongono. Qui gli orari non sono modificabili: li corregge dal web un amministratore o il tuo responsabile.</string>
   <string name="ch_sync">Sincronizzazione con il server</string>
   <string name="sync_concurrent_title">Erano in corso due attività</string>
   <string name="sync_concurrent_text">Dopo la sincronizzazione con il server, sospesa: %1$s</string>
