@@ -723,4 +723,9 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="sync_err_network">No se puede contactar con el servidor.</string>
   <string name="sync_err_cert">El certificado del servidor no es de confianza o no coincide con el código.</string>
   <string name="sync_err_server">El servidor respondió con un error.</string>
+  <string name="sync_last">Última sincronización</string>
+  <string name="sync_never">todavía no</string>
+  <string name="sync_last_error">Último problema</string>
+  <string name="sync_now">Sincronizar ahora</string>
+  <string name="sync_revoked">El servidor revocó la vinculación de este teléfono: los datos se quedan aquí; para volver a sincronizar, vincúlalo de nuevo.</string>
 </resources>

@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack
 
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -92,6 +93,17 @@ class MainActivity : ComponentActivity() {
 		enableEdgeToEdge()
 		if (savedInstanceState == null)
 			deepLink.value = screenOf(intent)
+		lifecycleScope.launch {
+			repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+				val app = application as ActivityTrackApp
+				while (true) {
+					kotlinx.coroutines.delay(30_000)
+					if (app.syncAccount.info.value == null || app.syncAccount.revoked.value) continue
+					val cursor = app.container.sync.state()?.cursor ?: continue
+					if (app.syncAccount.serverAhead(cursor)) it.infraconsulting.activitytrack.sync.SyncWorker.now(app)
+				}
+			}
+		}
 		val settingsRepo = (application as ActivityTrackApp).container.settings
 		val compactFlow = settingsRepo.settings.map { it.compactDisplay }
 		val learnedFlow = settingsRepo.settings.map { it.swipeLearned }
@@ -124,6 +136,9 @@ class MainActivity : ComponentActivity() {
 		(application as ActivityTrackApp).notificationSync.refresh()
 		/* a policy.json dropped while the app was running (issue #48) */
 		(application as ActivityTrackApp).let { app -> app.appScope.launch { PolicyLoader.check(app) } }
+		/* in front: sync at once, then a cheap look at the server every 30 s (issue #114) */
+		val app = application as ActivityTrackApp
+		if (app.syncAccount.info.value != null && !app.syncAccount.revoked.value) it.infraconsulting.activitytrack.sync.SyncWorker.now(app)
 	}
 
 	override fun onNewIntent(intent: Intent) {

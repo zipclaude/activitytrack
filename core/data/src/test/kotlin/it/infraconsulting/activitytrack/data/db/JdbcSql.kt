@@ -8,10 +8,15 @@ import org.json.JSONObject
 
 /* SyncSchema.Sql on sqlite-jdbc, with values as Android's cursor gives them (Long, Double, String). */
 class JdbcSql(private val c: Connection) : SyncSchema.Sql {
+	/* SQLite errors as unchecked exceptions, like Android's SQLiteException */
 	override fun exec(sql: String, vararg args: Any?) {
-		c.prepareStatement(sql).use { s ->
-			args.forEachIndexed { i, a -> s.setObject(i + 1, a) }
-			s.execute()
+		try {
+			c.prepareStatement(sql).use { s ->
+				args.forEachIndexed { i, a -> s.setObject(i + 1, a) }
+				s.execute()
+			}
+		} catch (e: java.sql.SQLException) {
+			throw IllegalStateException(e.message, e)
 		}
 	}
 

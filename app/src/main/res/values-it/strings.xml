@@ -723,4 +723,9 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="sync_err_network">Il server non è raggiungibile.</string>
   <string name="sync_err_cert">Il certificato del server non è affidabile, o non corrisponde al codice.</string>
   <string name="sync_err_server">Il server ha risposto con un errore.</string>
+  <string name="sync_last">Ultima sincronizzazione</string>
+  <string name="sync_never">non ancora</string>
+  <string name="sync_last_error">Ultimo problema</string>
+  <string name="sync_now">Sincronizza ora</string>
+  <string name="sync_revoked">Il server ha revocato l\'associazione di questo telefono: i dati restano qui; per sincronizzare di nuovo va riassociato.</string>
 </resources>

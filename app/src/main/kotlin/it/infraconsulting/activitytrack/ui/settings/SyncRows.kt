@@ -35,6 +35,7 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.sync.PairError
 import it.infraconsulting.activitytrack.domain.sync.PairException
 import it.infraconsulting.activitytrack.domain.sync.PairLink
+import it.infraconsulting.activitytrack.sync.SyncWorker
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -53,6 +54,8 @@ fun SyncRows() {
 	val account = app.syncAccount
 	val info by account.info.collectAsState()
 	val pending by app.container.sync.observePending().collectAsState(initial = 0)
+	val state by app.container.sync.observeState().collectAsState(initial = null)
+	val revoked by account.revoked.collectAsState()
 	val scope = rememberCoroutineScope()
 	/* debug builds accept http, for a development server */
 	val allowHttp = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
@@ -109,8 +112,17 @@ fun SyncRows() {
 		Info(stringResource(R.string.sync_user), if (paired.userName.isBlank()) paired.username else "${paired.userName} (${paired.username})")
 		Info(stringResource(R.string.sync_org), paired.org)
 		Info(stringResource(R.string.sync_paired_since), format(paired.pairedUtcMs))
+		Info(stringResource(R.string.sync_last), state?.lastSyncUtcMs?.let(::format) ?: stringResource(R.string.sync_never))
 		Info(stringResource(R.string.sync_pending), pending.toString())
-		OutlinedButton(onClick = { confirmUnpair = true }) { Text(stringResource(R.string.sync_unpair)) }
+		if (revoked) {
+			Text(stringResource(R.string.sync_revoked), color = MaterialTheme.colorScheme.error)
+		} else {
+			state?.lastError?.let { Info(stringResource(R.string.sync_last_error), it) }
+		}
+		Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+			if (!revoked) Button(onClick = { SyncWorker.now(context) }) { Text(stringResource(R.string.sync_now)) }
+			OutlinedButton(onClick = { confirmUnpair = true }) { Text(stringResource(R.string.sync_unpair)) }
+		}
 	}
 	if (busy) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 		CircularProgressIndicator()

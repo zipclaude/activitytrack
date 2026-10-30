@@ -18,6 +18,9 @@ import javax.net.ssl.SSLException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 
 /*
  * The pairing with ActivityTrack Web: the token and the pin live in the
@@ -27,6 +30,27 @@ import kotlinx.coroutines.flow.asStateFlow
 class SyncAccount(private val context: Context, private val secrets: SecretStore, private val dao: SyncRepository, private val userAgent: String) {
 	private val _info = MutableStateFlow(load())
 	val info: StateFlow<SyncAccountInfo?> = _info.asStateFlow()
+
+	/* the server revoked this phone (issue #114): no more syncs until it is paired again */
+	private val _revoked = MutableStateFlow(secrets.getApp(REVOKED) != null)
+	val revoked: StateFlow<Boolean> = _revoked.asStateFlow()
+
+	fun markRevoked() {
+		secrets.putApp(REVOKED, "1")
+		_revoked.value = true
+	}
+
+	/* true when the server has changes after [cursor] (the cheap check while the app is in front) */
+	suspend fun serverAhead(cursor: Long): Boolean {
+		val http = http() ?: return false
+		val r = runCatching { http.send("GET", "api/v1/sync/head", token = token()) }.getOrNull() ?: return false
+		if (r.status == 401) {
+			markRevoked()
+			return false
+		}
+		val rev = runCatching { PairApi.json.parseToJsonElement(r.body).jsonObject["rev"]?.jsonPrimitive?.long }.getOrNull() ?: return false
+		return rev > cursor
+	}
 
 	/* a pairing link that opened the app, waiting for the user to confirm it */
 	val pendingLink = MutableStateFlow<String?>(null)
@@ -73,6 +97,8 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		secrets.putApp(PIN, link.pin)
 		secrets.putApp(INFO, PairApi.json.encodeToString(SyncAccountInfo.serializer(), info))
 		dao.setServer(link.server)
+		secrets.putApp(REVOKED, null)
+		_revoked.value = false
 		_info.value = info
 		return info
 	}
@@ -82,7 +108,9 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		secrets.putApp(TOKEN, null)
 		secrets.putApp(PIN, null)
 		secrets.putApp(INFO, null)
+		secrets.putApp(REVOKED, null)
 		dao.forgetServer()
+		_revoked.value = false
 		_info.value = null
 	}
 
@@ -90,5 +118,6 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		const val TOKEN = "sync.token"
 		const val PIN = "sync.pin"
 		const val INFO = "sync.info"
+		const val REVOKED = "sync.revoked"
 	}
 }
