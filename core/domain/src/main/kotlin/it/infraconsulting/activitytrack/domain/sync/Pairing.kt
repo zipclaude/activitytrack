@@ -46,7 +46,6 @@ data class PairRequest(
 	val deviceName: String,
 	val model: String,
 	val appVersion: String,
-	val fcmToken: String? = null,
 )
 
 @Serializable
