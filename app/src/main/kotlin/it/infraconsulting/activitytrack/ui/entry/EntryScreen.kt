@@ -198,7 +198,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					 * coloured bar (a tap goes to Tempi), + Travel and + Pause
 					 * still without scrolling (owner, 2026-10-19)
 					 */
-					EntrySummary(e, segments, onTimes = { scope.launch { listState.animateScrollToItem(1) } }) {
+					EntrySummary(e, segments, editableTimes, onTimes = { scope.launch { listState.animateScrollToItem(1) } }) {
 						val travel = commandStyle(EntryCommand.TRAVEL)!!
 						val pause = commandStyle(EntryCommand.PAUSE)!!
 						if (enabled(Feature.TRAVEL))
@@ -774,12 +774,15 @@ private data class AddChoice(val request: AddRequest, val label: Int, val icon: 
  * their order and length; [actions] are + Travel and + Pause.
  */
 @Composable
-private fun EntrySummary(e: TimeEntryEntity, segments: List<SegmentEntity>, onTimes: () -> Unit, actions: @Composable () -> Unit) {
+private fun EntrySummary(e: TimeEntryEntity, segments: List<SegmentEntity>, editableTimes: Boolean, onTimes: () -> Unit, actions: @Composable () -> Unit) {
 	val now = System.currentTimeMillis()
 	fun len(s: SegmentEntity) = maxOf(0L, (s.endUtcMs ?: now) - s.startUtcMs)
 	fun sum(k: SegmentKind) = segments.filter { it.kind == k }.sumOf(::len)
 	androidx.compose.material3.Card(Modifier.fillMaxWidth()) {
 		Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			/* two nodes' changes left overlapping segments (issue #119): fixed below, or on the web by a manager when times are locked */
+			if (e.needsReview)
+				Text(stringResource(if (editableTimes) R.string.entry_needs_review else R.string.entry_needs_review_locked), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				val style = it.infraconsulting.activitytrack.ui.common.stateStyle(e.status, e.mode)
 				Box(Modifier.weight(1f)) {

@@ -34,6 +34,8 @@ class SyncEngineTest {
 		val records = LinkedHashMap<Pair<String, String>, Record>()
 		var rev = 0L
 		var revoked = false
+		/* uids whose changes are refused, as ActivityTrack Web does for a forbidden one */
+		val refuse = HashSet<String>()
 		val files = HashMap<String, ByteArray>()
 
 		override suspend fun upload(path: String, bytes: ByteArray, mime: String, sha256: String): SyncTransport.Reply {
@@ -77,6 +79,8 @@ class SyncEngineTest {
 							changes.map { c ->
 								val type = c["type"]!!.jsonPrimitive.content
 								val uid = c["uid"]!!.jsonPrimitive.content
+								if (uid in refuse)
+									return@map JsonObject(mapOf("uid" to JsonPrimitive(uid), "status" to JsonPrimitive("error"), "error" to JsonPrimitive("forbidden")))
 								val r = records.getOrPut(type to uid) { Record(mutableMapOf(), false, false, 0) }
 								if (c["op"]!!.jsonPrimitive.content == "delete") r.deleted = true
 								else c["fields"]!!.jsonObject.forEach { (k, v) -> r.fields[k] = v }
@@ -104,7 +108,7 @@ class SyncEngineTest {
 	}
 
 	private class Phone(val canEditCentral: Boolean = true) {
-		val c: Connection = JdbcSql.create(18)
+		val c: Connection = JdbcSql.create(19)
 		val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 		val db = object : SyncDb {
 			override suspend fun <T> run(block: (SyncStore) -> T): T {
@@ -292,6 +296,43 @@ class SyncEngineTest {
 		assertEquals(JsonPrimitive("Acme S.p.A."), server.records["company" to central]!!.fields["name"])
 		sync(user)
 		assertEquals("Acme S.p.A.", user.one("SELECT name FROM company WHERE uid = ?", central))
+	}
+
+	@Test
+	fun overlappingSegmentsAreMarkedToReviewEverywhere() {
+		val a = phone()
+		val acme = company(a, "Acme")
+		val e = entry(a, acme, "Patching")
+		val seg = "INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 'WORK', ?, ?, 'Europe/Rome', 'MANUAL', ?)"
+		val late = SyncIds.random()
+		a.sql.exec(seg, 0L, 3_600_000L, SyncIds.random())
+		a.sql.exec(seg, 1_800_000L, 5_400_000L, late)
+		sync(a)
+		assertEquals(1L, a.one("SELECT needs_review FROM time_entry WHERE uid = ?", e))
+		assertEquals(JsonPrimitive(true), server.records["entry" to e]!!.fields["needsReview"])
+		a.sql.exec("UPDATE segment SET start_utc_ms = 3600000 WHERE uid = ?", late)
+		sync(a)
+		assertEquals(0L, a.one("SELECT needs_review FROM time_entry WHERE uid = ?", e))
+		assertEquals(JsonPrimitive(false), server.records["entry" to e]!!.fields["needsReview"])
+	}
+
+	@Test
+	fun aRefusedChangeIsListedAndCanBeDiscarded() {
+		val a = phone()
+		val acme = company(a, "Acme")
+		sync(a)
+		server.refuse += acme
+		a.sql.exec("UPDATE company SET name = 'Rinominata' WHERE uid = ?", acme)
+		/* reported once, not once per round */
+		assertEquals(1, sync(a).errors.size)
+		assertEquals(listOf(listOf<Any?>("company", acme, "forbidden")), a.sql.rows("SELECT type, uid, message FROM sync_error"))
+		/* kept for the next try */
+		assertEquals(1L, a.one("SELECT COUNT(*) FROM sync_change"))
+		runBlocking { a.db.run { it.discard("company", acme) } }
+		assertEquals("Acme", a.one("SELECT name FROM company WHERE uid = ?", acme))
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_error"))
+		assertEquals(null, a.sql.rows("SELECT last_error FROM sync_state")[0][0])
 	}
 
 	@Test

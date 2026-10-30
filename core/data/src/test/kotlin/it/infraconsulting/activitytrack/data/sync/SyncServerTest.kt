@@ -38,7 +38,7 @@ class SyncServerTest {
 	}
 
 	private inner class Phone(code: String) {
-		val c = JdbcSql.create(18)
+		val c = JdbcSql.create(19)
 		val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 		val token = PairApi.reply(200, http("POST", "pair", PairApi.request(PairRequest(code, "jvm", "test", "0")), null).body).token
 		val db = object : SyncDb {

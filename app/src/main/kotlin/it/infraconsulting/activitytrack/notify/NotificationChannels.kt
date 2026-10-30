@@ -22,6 +22,7 @@ object NotificationChannels {
 	const val PLANNED = "planned"			/* planned to-do about to start */
 	const val POLICY = "policy"			/* policy.json applied or refused (issue #48) */
 	const val REMOTE = "remote"			/* management systems: send question, new to-dos, failures */
+	const val SYNC = "sync"				/* ActivityTrack Web: what a sync changed here (issue #119) */
 
 	/* channels in the order of the Notifications settings, with their names */
 	val LIST: List<Pair<String, Int>> by lazy {
@@ -29,7 +30,7 @@ object NotificationChannels {
 			CONFIRM to R.string.ch_confirm, PAUSE to R.string.ch_pause, PLANNED to R.string.ch_planned,
 			MOVEMENT to R.string.ch_movement, ARRIVAL to R.string.ch_arrival, DAY_START to R.string.ch_day_start,
 			DAY_SUMMARY to R.string.ch_day_summary, TO_COMPLETE to R.string.ch_to_complete, ONGOING to R.string.ch_ongoing,
-			REMOTE to R.string.ch_remote, POLICY to R.string.ch_policy,
+			REMOTE to R.string.ch_remote, SYNC to R.string.ch_sync, POLICY to R.string.ch_policy,
 		)
 	}
 
@@ -47,6 +48,7 @@ object NotificationChannels {
 			channel(context, PLANNED, R.string.ch_planned, NotificationManager.IMPORTANCE_HIGH),
 			channel(context, POLICY, R.string.ch_policy, NotificationManager.IMPORTANCE_DEFAULT),
 			channel(context, REMOTE, R.string.ch_remote, NotificationManager.IMPORTANCE_DEFAULT),
+			channel(context, SYNC, R.string.ch_sync, NotificationManager.IMPORTANCE_DEFAULT),
 		)
 		nm.createNotificationChannels(channels)
 	}

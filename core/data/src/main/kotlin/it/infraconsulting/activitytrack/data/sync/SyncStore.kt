@@ -118,6 +118,42 @@ class SyncStore(
 		)
 	}
 
+	/* the problems of the last sync (issue #119): one row per record */
+	fun clearErrors() = db.exec("DELETE FROM sync_error")
+
+	fun recordError(type: String, uid: String, message: String) =
+		db.exec("INSERT OR REPLACE INTO sync_error (type, uid, message, at_utc_ms) VALUES (?, ?, ?, ?)", type, uid, message, now())
+
+	/*
+	 * Drops this phone's unsent changes of a record the server refuses: it
+	 * goes back to what the server has (or away, if the server never had it).
+	 */
+	fun discard(type: String, uid: String) {
+		val shadow = shadow(type, uid)
+		applying {
+			try {
+				if (shadow != null) records.write(type, uid, shadow) else records.delete(type, uid)
+			} catch (e: SyncRecords.UnknownRef) {
+				records.delete(type, uid)
+			}
+		}
+		dropChanges(type, uid)
+		db.exec("DELETE FROM sync_error WHERE type = ? AND uid = ?", type, uid)
+		/* the last problem shown in Settings was this one */
+		db.exec("UPDATE sync_state SET last_error = NULL WHERE id = 1 AND NOT EXISTS (SELECT 1 FROM sync_error)")
+	}
+
+	/*
+	 * Entries whose segments overlap after a merge are marked to review, and
+	 * unmarked once fixed (issue #119, SYNC.md §11); the mark is synced.
+	 */
+	fun review() {
+		val overlap = "SELECT DISTINCT a.entry_id FROM segment a JOIN segment b ON a.entry_id = b.entry_id AND a.id < b.id " +
+			"WHERE a.start_utc_ms < coalesce(b.end_utc_ms, 9000000000000000000) AND b.start_utc_ms < coalesce(a.end_utc_ms, 9000000000000000000)"
+		db.exec("UPDATE time_entry SET needs_review = 1 WHERE needs_review = 0 AND id IN ($overlap)")
+		db.exec("UPDATE time_entry SET needs_review = 0 WHERE needs_review = 1 AND id NOT IN ($overlap)")
+	}
+
 	/* nothing to send for [p]: its log rows go */
 	fun skip(p: Pending) = dropChanges(p.type, p.uid, p.maxSeq)
 
@@ -127,7 +163,9 @@ class SyncStore(
 		if (status != "applied" && status != "conflict") {
 			val error = result["error"]?.jsonPrimitive?.contentOrNull ?: status ?: "error"
 			val detail = result["detail"]?.jsonPrimitive?.contentOrNull.orEmpty()
-			return "${p.type} ${p.uid}: $error${if (detail.isEmpty()) "" else " ($detail)"}"
+			val message = "$error${if (detail.isEmpty()) "" else " ($detail)"}"
+			recordError(p.type, p.uid, message)
+			return "${p.type} ${p.uid}: $message"
 		}
 		val record = result["record"]?.takeIf { it !is JsonNull }?.jsonObject
 		if (record == null || record["deleted"]?.jsonPrimitive?.booleanOrNull == true) {
@@ -175,10 +213,10 @@ class SyncStore(
 		} catch (e: SyncRecords.UnknownRef) {
 			"$type $uid: ${e.message}"
 		} catch (e: WireException) {
-			"$type $uid: ${e.message}"
+			"$type $uid: ${e.message}".also { recordError(type, uid, e.message.orEmpty()) }
 		} catch (e: RuntimeException) {
 			/* a unique index (a name already taken here) */
-			"$type $uid: ${e.message}"
+			"$type $uid: ${e.message}".also { recordError(type, uid, e.message.orEmpty()) }
 		}
 	}
 

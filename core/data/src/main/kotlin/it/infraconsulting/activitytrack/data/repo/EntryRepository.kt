@@ -716,7 +716,10 @@ class EntryRepository(
 		val segs = dao.segments(entryId).map {
 			Segment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli))
 		}
-		EntryInvariants.require(entryId, e.status, e.mode, segs)
+		/* overlaps a sync brought (issue #119) do not stop the commands; once fixed the mark goes */
+		EntryInvariants.require(entryId, e.status, e.mode, segs, overlaps = e.needsReview)
+		if (e.needsReview && EntryInvariants.firstOverlap(segs) == null)
+			dao.updateEntry(e.copy(needsReview = false))
 		if (e.clientId != null)
 			check(master.client(e.clientId)?.companyId == e.companyId) { "entry $entryId: company != client company" }
 	}

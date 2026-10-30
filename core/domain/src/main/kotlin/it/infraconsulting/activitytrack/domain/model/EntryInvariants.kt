@@ -10,10 +10,11 @@ class InvariantViolationException(entryId: Long, violations: List<String>) :
  * 1. at most one open segment;
  * 2. status ACTIVE <=> mode set <=> an open segment of kind mode exists;
  * 3. segments never overlap (an open segment extends to infinity, so it must
- *    be the last one).
+ *    be the last one), unless [overlaps] allows it: an entry merged by a sync
+ *    to review (issue #119), the user fixes it.
  */
 object EntryInvariants {
-	fun violations(status: EntryStatus, mode: SegmentKind?, segments: List<Segment>): List<String> {
+	fun violations(status: EntryStatus, mode: SegmentKind?, segments: List<Segment>, overlaps: Boolean = false): List<String> {
 		val out = ArrayList<String>()
 		val open = segments.filter { it.end == null }
 
@@ -25,12 +26,13 @@ object EntryInvariants {
 			out += "ACTIVE($mode) without a matching open segment"
 		if (status != EntryStatus.ACTIVE && open.isNotEmpty())
 			out += "open segment while $status"
-		firstOverlap(segments)?.let { (a, b) -> out += "overlapping segments $a and $b" }
+		if (!overlaps)
+			firstOverlap(segments)?.let { (a, b) -> out += "overlapping segments $a and $b" }
 		return out
 	}
 
-	fun require(entryId: Long, status: EntryStatus, mode: SegmentKind?, segments: List<Segment>) {
-		val v = violations(status, mode, segments)
+	fun require(entryId: Long, status: EntryStatus, mode: SegmentKind?, segments: List<Segment>, overlaps: Boolean = false) {
+		val v = violations(status, mode, segments, overlaps)
 		if (v.isNotEmpty())
 			throw InvariantViolationException(entryId, v)
 	}

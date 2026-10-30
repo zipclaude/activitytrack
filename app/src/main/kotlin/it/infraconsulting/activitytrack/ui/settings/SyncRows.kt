@@ -56,6 +56,8 @@ fun SyncRows() {
 	val pending by app.container.sync.observePending().collectAsState(initial = 0)
 	val state by app.container.sync.observeState().collectAsState(initial = null)
 	val revoked by account.revoked.collectAsState()
+	val problems by app.container.sync.observeErrors().collectAsState(initial = emptyList())
+	var discarding by remember { mutableStateOf<it.infraconsulting.activitytrack.data.db.SyncErrorEntity?>(null) }
 	val scope = rememberCoroutineScope()
 	/* debug builds accept http, for a development server */
 	val allowHttp = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
@@ -120,6 +122,18 @@ fun SyncRows() {
 		} else {
 			state?.lastError?.let { Info(stringResource(R.string.sync_last_error), it) }
 		}
+		/* what the last sync could not send or take (issue #119) */
+		if (problems.isNotEmpty()) {
+			Text(stringResource(R.string.sync_problems), style = MaterialTheme.typography.titleSmall)
+			for (pr in problems)
+				Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+					Column(Modifier.weight(1f)) {
+						Text(recordLabel(pr.type) + " " + pr.uid.take(8))
+						Text(pr.message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+					}
+					TextButton(onClick = { discarding = pr }) { Text(stringResource(R.string.sync_discard)) }
+				}
+		}
 		Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 			if (!revoked) Button(onClick = { SyncWorker.now(context) }) { Text(stringResource(R.string.sync_now)) }
 			OutlinedButton(onClick = { confirmUnpair = true }) { Text(stringResource(R.string.sync_unpair)) }
@@ -174,6 +188,19 @@ fun SyncRows() {
 			dismissButton = { TextButton(onClick = { proposed = null }) { Text(stringResource(R.string.action_cancel)) } },
 		)
 	}
+	discarding?.let { pr ->
+		AlertDialog(
+			onDismissRequest = { discarding = null },
+			text = { Text(stringResource(R.string.sync_discard_confirm)) },
+			confirmButton = {
+				TextButton(onClick = {
+					discarding = null
+					scope.launch { app.container.sync.discard(pr.type, pr.uid) }
+				}) { Text(stringResource(R.string.sync_discard)) }
+			},
+			dismissButton = { TextButton(onClick = { discarding = null }) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
 	if (confirmUnpair) AlertDialog(
 		onDismissRequest = { confirmUnpair = false },
 		title = { Text(stringResource(R.string.sync_unpair)) },
@@ -188,6 +215,19 @@ fun SyncRows() {
 		dismissButton = { TextButton(onClick = { confirmUnpair = false }) { Text(stringResource(R.string.action_cancel)) } },
 	)
 }
+
+/* a record type in the user's words */
+@Composable
+private fun recordLabel(type: String): String = stringResource(
+	when (type) {
+		"company" -> R.string.field_company
+		"client" -> R.string.field_client
+		"entry", "segment", "expense", "entryMaterial", "externalRef" -> R.string.sync_rec_entry
+		"attachment" -> R.string.attachments
+		"todo" -> R.string.sync_rec_todo
+		else -> R.string.sync_rec_other
+	},
+)
 
 @Composable
 private fun Info(label: String, value: String) {

@@ -732,4 +732,15 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="central_suffix">central</string>
   <string name="central_locked">Es un registro central: lo modifican el administrador o un responsable, desde la web.</string>
   <string name="plugin_not_holder">Al sistema de gestión envía otro de tus teléfonos (ActivityTrack Web): este solo importa.</string>
+  <string name="entry_needs_review">Para revisar: tras una sincronización se solapan dos periodos de esta actividad. Corrige las horas.</string>
+  <string name="entry_needs_review_locked">Para revisar: tras una sincronización se solapan dos periodos de esta actividad. Aquí las horas no se pueden modificar: las corrige en la web un administrador o tu responsable.</string>
+  <string name="ch_sync">Sincronización con el servidor</string>
+  <string name="sync_concurrent_title">Había dos actividades en curso</string>
+  <string name="sync_concurrent_text">Tras la sincronización con el servidor, suspendida: %1$s</string>
+  <string name="sync_problems">No sincronizados</string>
+  <string name="sync_discard">Descartar el cambio</string>
+  <string name="sync_discard_confirm">El cambio no enviado de este teléfono se descarta y vuelve la versión del servidor; un elemento creado aquí que nunca llegó al servidor se elimina.</string>
+  <string name="sync_rec_entry">Actividad</string>
+  <string name="sync_rec_todo">Tarea</string>
+  <string name="sync_rec_other">Registro</string>
 </resources>
