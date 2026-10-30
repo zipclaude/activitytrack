@@ -139,6 +139,8 @@ class SyncStore(
 		}
 		dropChanges(type, uid)
 		db.exec("DELETE FROM sync_error WHERE type = ? AND uid = ?", type, uid)
+		/* the last problem shown in Settings was this one */
+		db.exec("UPDATE sync_state SET last_error = NULL WHERE id = 1 AND NOT EXISTS (SELECT 1 FROM sync_error)")
 	}
 
 	/*

@@ -323,7 +323,8 @@ class SyncEngineTest {
 		sync(a)
 		server.refuse += acme
 		a.sql.exec("UPDATE company SET name = 'Rinominata' WHERE uid = ?", acme)
-		sync(a)
+		/* reported once, not once per round */
+		assertEquals(1, sync(a).errors.size)
 		assertEquals(listOf(listOf<Any?>("company", acme, "forbidden")), a.sql.rows("SELECT type, uid, message FROM sync_error"))
 		/* kept for the next try */
 		assertEquals(1L, a.one("SELECT COUNT(*) FROM sync_change"))
@@ -331,6 +332,7 @@ class SyncEngineTest {
 		assertEquals("Acme", a.one("SELECT name FROM company WHERE uid = ?", acme))
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_error"))
+		assertEquals(null, a.sql.rows("SELECT last_error FROM sync_state")[0][0])
 	}
 
 	@Test
