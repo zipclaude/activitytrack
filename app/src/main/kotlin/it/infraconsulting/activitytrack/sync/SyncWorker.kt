@@ -104,8 +104,13 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		if (app.container.policies.current.value.enabled(Feature.CONCURRENT_ENTRIES)) return
 		val active = app.container.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
 		if (active.size < 2) return
-		val older = active.sortedByDescending { it.createdUtcMs }.drop(1)
-		for (e in older) app.container.entries.apply(e.id, EntryCommand.SUSPEND)
+		/* one that cannot be suspended stays running: the sync and the policy go on */
+		val older = active.sortedByDescending { it.createdUtcMs }.drop(1).filter { e ->
+			runCatching { app.container.entries.apply(e.id, EntryCommand.SUSPEND) }
+				.onFailure { x -> if (x is kotlinx.coroutines.CancellationException) throw x else Log.w(TAG, "suspend ${e.id}", x) }
+				.isSuccess
+		}
+		if (older.isEmpty()) return
 		val names = older.joinToString { it.activity ?: "#${it.id}" }
 		val n = android.app.Notification.Builder(app, NotificationChannels.SYNC)
 			.setSmallIcon(R.drawable.ic_stat_timer)
