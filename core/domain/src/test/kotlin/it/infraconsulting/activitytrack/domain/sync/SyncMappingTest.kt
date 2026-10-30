@@ -40,7 +40,7 @@ class SyncMappingTest {
 				assertEquals(s["kind"]!!.jsonPrimitive.content, kind(f.kind), "${t.type}.${f.name} kind")
 				assertEquals(s["null"]!!.jsonPrimitive.boolean, f.nullable, "${t.type}.${f.name} nullable")
 				assertEquals(s["ref"]?.jsonPrimitive?.content, f.ref, "${t.type}.${f.name} ref")
-				assertEquals(false, s["readOnly"]?.jsonPrimitive?.boolean ?: false, "${t.type}.${f.name} is read-only on the server")
+				assertEquals(s["readOnly"]?.jsonPrimitive?.boolean ?: false, f.readOnly, "${t.type}.${f.name} read-only")
 			}
 			for (l in t.lists) assertEquals("json", theirs.getValue(l.name)["kind"]!!.jsonPrimitive.content, "${t.type}.${l.name}")
 			val parent = server.getValue(t.type)["parent"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.content

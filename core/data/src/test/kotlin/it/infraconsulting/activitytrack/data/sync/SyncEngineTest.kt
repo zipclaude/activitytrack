@@ -34,6 +34,21 @@ class SyncEngineTest {
 		val records = LinkedHashMap<Pair<String, String>, Record>()
 		var rev = 0L
 		var revoked = false
+		val files = HashMap<String, ByteArray>()
+
+		override suspend fun upload(path: String, bytes: ByteArray, mime: String, sha256: String): SyncTransport.Reply {
+			val uid = path.substringAfter("files/")
+			val r = records.getValue("attachment" to uid)
+			files[uid] = bytes
+			r.fields["hasFile"] = JsonPrimitive(true)
+			r.fields["sha256"] = JsonPrimitive(sha256)
+			r.fields["size"] = JsonPrimitive(bytes.size)
+			r.rev = ++rev
+			return SyncTransport.Reply(200, JsonObject(mapOf("record" to wire("attachment", uid, r))).toString())
+		}
+
+		override suspend fun download(path: String): Pair<Int, ByteArray?> =
+			files[path.substringAfter("files/")]?.let { 200 to it } ?: (404 to null)
 
 		fun put(type: String, uid: String, fields: Map<String, JsonElement>, central: Boolean = false) {
 			records[type to uid] = Record(fields.toMutableMap(), false, central, ++rev)
@@ -52,6 +67,7 @@ class SyncEngineTest {
 
 		override suspend fun send(method: String, path: String, body: String?): SyncTransport.Reply {
 			if (revoked) return SyncTransport.Reply(401, """{"error":"revoked"}""")
+			if (path == "sync/head") return SyncTransport.Reply(200, """{"rev":$rev,"serverTime":0,"filesMaxMb":1}""")
 			val out: JsonObject = if (path == "sync/push") {
 				val changes = Json.parseToJsonElement(body!!).jsonObject["changes"]!!.jsonArray.map { it.jsonObject }
 				JsonObject(
@@ -88,7 +104,7 @@ class SyncEngineTest {
 	}
 
 	private class Phone {
-		val c: Connection = JdbcSql.create(16)
+		val c: Connection = JdbcSql.create(17)
 		val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 		val db = object : SyncDb {
 			override suspend fun <T> run(block: (SyncStore) -> T): T {
@@ -102,6 +118,13 @@ class SyncEngineTest {
 			}
 		}
 		val records = SyncRecords(sql)
+		val stored = HashMap<String, ByteArray>()
+		val files = object : SyncFiles {
+			override suspend fun read(relPath: String) = stored[relPath]
+
+			override suspend fun write(entryId: Long, uid: String, mime: String, bytes: ByteArray): String =
+				"attachments/2026/$entryId/$uid".also { stored[it] = bytes }
+		}
 
 		fun one(q: String, vararg args: Any?) = sql.rows(q, *args).firstOrNull()?.get(0)
 	}
@@ -114,7 +137,7 @@ class SyncEngineTest {
 	@AfterTest
 	fun close() = phones.forEach { it.c.close() }
 
-	private fun sync(p: Phone) = runBlocking { SyncEngine(p.db, server).sync() }
+	private fun sync(p: Phone, downloads: Boolean = false) = runBlocking { SyncEngine(p.db, server, files = p.files, downloads = downloads).sync() }
 
 	private fun company(p: Phone, name: String): String {
 		val uid = SyncIds.random()
@@ -217,6 +240,35 @@ class SyncEngineTest {
 		assertEquals(JsonPrimitive(central), server.records["entry" to e]!!.fields["companyUid"])
 		assertTrue(server.records["company" to mine]!!.deleted)
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
+	}
+
+	@Test
+	fun attachmentFilesTravelAfterTheirRecords() {
+		val a = phone()
+		val acme = company(a, "Acme")
+		val e = entry(a, acme, "Patching")
+		val att = SyncIds.random()
+		val big = SyncIds.random()
+		a.stored["attachments/2026/1/receipt.jpg"] = "receipt".toByteArray()
+		a.stored["attachments/2026/1/video.mp4"] = ByteArray(2 * 1024 * 1024)
+		for ((uid, path) in listOf(att to "attachments/2026/1/receipt.jpg", big to "attachments/2026/1/video.mp4"))
+			a.sql.exec("INSERT INTO attachment (entry_id, kind, rel_path, mime, created_utc_ms, uid) VALUES (1, 'RECEIPT', ?, 'image/jpeg', 1, ?)", path, uid)
+		val r = sync(a)
+		assertEquals("receipt", String(server.files.getValue(att)))
+		assertEquals(JsonPrimitive(true), server.records["attachment" to att]!!.fields["hasFile"])
+		/* above the server's limit (1 MB here): not sent, reported */
+		assertNull(server.files[big])
+		assertTrue(r.errors.any { big in it && "larger" in it }, r.errors.toString())
+		assertEquals(1L, a.one("SELECT has_file FROM attachment WHERE uid = ?", att))
+		val b = phone()
+		sync(b)
+		assertEquals("", b.one("SELECT rel_path FROM attachment WHERE uid = ?", att))
+		sync(b, downloads = true)
+		val path = b.one("SELECT rel_path FROM attachment WHERE uid = ?", att) as String
+		assertEquals("receipt", String(b.stored.getValue(path)))
+		/* the file's path is the phone's own business: nothing to push */
+		assertEquals(0L, b.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(e, b.one("SELECT t.uid FROM time_entry t JOIN attachment a ON a.entry_id = t.id WHERE a.uid = ?", att))
 	}
 
 	@Test

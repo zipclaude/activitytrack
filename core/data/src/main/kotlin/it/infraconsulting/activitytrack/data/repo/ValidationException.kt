@@ -27,6 +27,7 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		INVALID_TIME,			/* a single time of day, not a range */
 		STORAGE,			/* the user data folder cannot be read or written */
 		NO_VIEWER,			/* no app can open the file */
+		FILE_COMING,			/* the file is on the server, being fetched (issue #116) */
 		INVALID_AMOUNT,			/* expense amount missing or not positive */
 		TOO_SHORT,			/* a segment or entry under one minute (backlog 10) */
 		INVALID_VALUE,

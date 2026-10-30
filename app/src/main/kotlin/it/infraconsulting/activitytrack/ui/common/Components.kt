@@ -391,6 +391,7 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.INVALID_TIME -> R.string.err_invalid_time
 		Reason.STORAGE -> R.string.err_storage
 		Reason.NO_VIEWER -> R.string.err_no_viewer
+		Reason.FILE_COMING -> R.string.err_file_coming
 		Reason.INVALID_AMOUNT -> R.string.err_invalid_amount
 		Reason.TOO_SHORT -> R.string.err_too_short
 		Reason.LAST_SEGMENT -> R.string.err_last_segment

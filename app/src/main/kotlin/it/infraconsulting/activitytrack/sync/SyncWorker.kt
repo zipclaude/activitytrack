@@ -44,9 +44,22 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 				val r = http.send(method, "api/v1/$path", body, token)
 				return SyncTransport.Reply(r.status, r.body)
 			}
+
+			override suspend fun upload(path: String, bytes: ByteArray, mime: String, sha256: String): SyncTransport.Reply {
+				val (status, body) = http.exchange("PUT", "api/v1/$path", bytes, mime, token, mapOf("X-Sha256" to sha256))
+				return SyncTransport.Reply(status, body.toString(Charsets.UTF_8))
+			}
+
+			override suspend fun download(path: String): Pair<Int, ByteArray?> {
+				val (status, body) = http.exchange("GET", "api/v1/$path", null, null, token)
+				return status to body.takeIf { status == 200 }
+			}
 		}
+		/* files come down on Wi-Fi (unmetered), or when an attachment was opened */
+		val connectivity = applicationContext.getSystemService(android.net.ConnectivityManager::class.java)
+		val downloads = inputData.getBoolean(FILES, false) || !connectivity.isActiveNetworkMetered
 		return try {
-			val r = SyncEngine(app.container.sync, transport).sync()
+			val r = SyncEngine(app.container.sync, transport, files = AttachmentFiles(app), downloads = downloads).sync()
 			Log.i(TAG, "sync: ${r.pushed} pushed, ${r.pulled} pulled, ${r.errors.size} errors")
 			r.errors.take(5).forEach { Log.w(TAG, it) }
 			Result.success()
@@ -65,13 +78,15 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		private const val TAG = "SyncWorker"
 		private const val NOW = "sync-now"
 		private const val PERIODIC = "sync-periodic"
+		private const val FILES = "files"
 
 		private val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
 		/* soon, once: after a change, at the app's start, on "Sync now" */
-		fun now(context: Context, delaySec: Long = 0) {
+		fun now(context: Context, delaySec: Long = 0, files: Boolean = false) {
 			val request = OneTimeWorkRequestBuilder<SyncWorker>()
 				.setConstraints(network)
+				.setInputData(androidx.work.workDataOf(FILES to files))
 				.setInitialDelay(delaySec, TimeUnit.SECONDS)
 				.setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
 				.build()

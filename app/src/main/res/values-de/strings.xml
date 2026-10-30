@@ -727,4 +727,5 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_last_error">Letztes Problem</string>
   <string name="sync_now">Jetzt synchronisieren</string>
   <string name="sync_revoked">Der Server hat die Verbindung dieses Telefons widerrufen: Die Daten bleiben hier; zum Synchronisieren neu verbinden.</string>
+  <string name="err_file_coming">Die Datei kommt vom Server: gleich noch einmal öffnen.</string>
 </resources>

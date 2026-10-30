@@ -395,6 +395,11 @@ data class AttachmentEntity(
 	@ColumnInfo(name = "created_utc_ms") val createdUtcMs: Long,
 	/* sync identity (issue #111), the same on every node; never changes */
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* the file as ActivityTrack Web has it (issue #116): its SHA-256 and size, set by the server on upload */
+	@ColumnInfo(defaultValue = "") val sha256: String = "",
+	val size: Long? = null,
+	/* the server has the file; with an empty rel_path the file waits to be downloaded */
+	@ColumnInfo(name = "has_file", defaultValue = "0") val hasFile: Boolean = false,
 )
 
 @Entity(
