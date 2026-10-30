@@ -109,29 +109,35 @@ class SettingSpec(
 	val kind: Kind,
 	val check: (Any) -> String?,
 	val apply: (AppSettings, Any) -> AppSettings,
+	/* what [check] accepts, for the web editor (issue #117): a range, a list, or free text */
+	val min: Number? = null,
+	val max: Number? = null,
+	val allowed: List<Any>? = null,
+	/* a comma list of [allowed] values */
+	val multiple: Boolean = false,
 ) {
 	enum class Kind { BOOLEAN, INT, DOUBLE, STRING }
 }
 
 object SettingsCatalog {
 	private fun bool(key: String, apply: (AppSettings, Boolean) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.BOOLEAN, { null }) { s, v -> apply(s, v as Boolean) }
+		SettingSpec(key, SettingSpec.Kind.BOOLEAN, { null }, { s, v -> apply(s, v as Boolean) })
 
 	private fun int(key: String, range: IntRange, apply: (AppSettings, Int) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.INT, { v -> if ((v as Int) in range) null else "must be in ${range.first}..${range.last}" }) { s, v -> apply(s, v as Int) }
+		SettingSpec(key, SettingSpec.Kind.INT, { v -> if ((v as Int) in range) null else "must be in ${range.first}..${range.last}" }, { s, v -> apply(s, v as Int) }, min = range.first, max = range.last)
 
 	private fun oneOf(key: String, allowed: Collection<Int>, apply: (AppSettings, Int) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.INT, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }) { s, v -> apply(s, v as Int) }
+		SettingSpec(key, SettingSpec.Kind.INT, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as Int) }, allowed = allowed.toList())
 
 	private fun string(key: String, allowed: Collection<String>, apply: (AppSettings, String) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.STRING, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }) { s, v -> apply(s, v as String) }
+		SettingSpec(key, SettingSpec.Kind.STRING, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as String) }, allowed = allowed.toList())
 
 	private fun double(key: String, range: ClosedFloatingPointRange<Double>, apply: (AppSettings, Double) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.DOUBLE, { v -> if ((v as Double) in range) null else "must be in ${range.start}..${range.endInclusive}" }) { s, v -> apply(s, v as Double) }
+		SettingSpec(key, SettingSpec.Kind.DOUBLE, { v -> if ((v as Double) in range) null else "must be in ${range.start}..${range.endInclusive}" }, { s, v -> apply(s, v as Double) }, min = range.start, max = range.endInclusive)
 
 	/* a free text the [check] accepts (an endpoint URL, a list of names) */
 	private fun text(key: String, check: (String) -> String?, apply: (AppSettings, String) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.STRING, { v -> check(v as String) }) { s, v -> apply(s, v as String) }
+		SettingSpec(key, SettingSpec.Kind.STRING, { v -> check(v as String) }, { s, v -> apply(s, v as String) })
 
 	private fun url(v: String, tiles: Boolean = false): String? = when {
 		!v.trim().startsWith("https://") -> "must be an https:// URL"
@@ -203,9 +209,12 @@ object SettingsCatalog {
 		bool("gestureFullSwipe") { s, v -> s.copy(gestures = s.gestures.copy(fullSwipe = v)) },
 		/* the views the screens remember */
 		oneOf("homeWindow", HOME_WINDOWS) { s, v -> s.copy(homeWindow = v) },
-		text("homeShow", { v -> v.split(',').map(String::trim).firstOrNull { it.isNotEmpty() && it !in HOME_STATES }?.let { "unknown state $it (allowed: ${HOME_STATES.joinToString()})" } }) { s, v ->
-			s.copy(homeShow = v.split(',').map(String::trim).filter(String::isNotEmpty).toSet())
-		},
+		SettingSpec(
+			"homeShow", SettingSpec.Kind.STRING,
+			{ v -> (v as String).split(',').map(String::trim).firstOrNull { it.isNotEmpty() && it !in HOME_STATES }?.let { "unknown state $it (allowed: ${HOME_STATES.joinToString()})" } },
+			{ s, v -> s.copy(homeShow = (v as String).split(',').map(String::trim).filter(String::isNotEmpty).toSet()) },
+			allowed = HOME_STATES.toList(), multiple = true,
+		),
 		bool("homeFilterEntries") { s, v -> s.copy(homeFilterEntries = v) },
 		bool("todoShowIgnored") { s, v -> s.copy(todoShowIgnored = v) },
 		string("agendaView", AGENDA_VIEWS) { s, v -> s.copy(agendaView = v) },

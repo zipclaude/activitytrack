@@ -742,4 +742,7 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_rec_entry">Tätigkeit</string>
   <string name="sync_rec_todo">Aufgabe</string>
   <string name="sync_rec_other">Eintrag</string>
+  <string name="policy_from_server">die Richtlinie des Servers</string>
+  <string name="policy_file_ignored_title">policy.json ignoriert</string>
+  <string name="policy_file_ignored_text">Dieses Telefon folgt der Richtlinie des verbundenen Servers; die policy.json im Datenordner gilt nach dem Trennen wieder.</string>
 </resources>

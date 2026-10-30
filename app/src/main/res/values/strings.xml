@@ -754,4 +754,7 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="sync_rec_entry">Activity</string>
   <string name="sync_rec_todo">To-do</string>
   <string name="sync_rec_other">Record</string>
+  <string name="policy_from_server">the server\'s policy</string>
+  <string name="policy_file_ignored_title">policy.json ignored</string>
+  <string name="policy_file_ignored_text">This phone follows the policy of the server it is paired with; the policy.json in the data folder applies again after unpairing.</string>
 </resources>

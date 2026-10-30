@@ -1,0 +1,48 @@
+{
+  "format": "activitytrack-policy",
+  "schema": 1,
+  "id": "Infra",
+  "version": "1",
+  "features": {
+    "entries": true,
+    "travel": false
+  },
+  "fields": {
+    "client": {
+      "label": {
+        "it": "Cantiere",
+        "en": "Site"
+      }
+    },
+    "role": {
+      "required": true
+    }
+  },
+  "settings": {
+    "editableTimes": {
+      "value": false,
+      "locked": true
+    },
+    "roundingWorkMin": 30,
+    "kmFactor": {
+      "value": 1.3,
+      "hidden": true
+    },
+    "homeShow": "TODO,MISSING"
+  },
+  "behaviours": {
+    "minDurationSec": 120
+  },
+  "masterData": {
+    "source": "importOnly"
+  },
+  "export": {
+    "formats": [
+      "csv",
+      "json"
+    ]
+  },
+  "ui": {
+    "language": "it"
+  }
+}
