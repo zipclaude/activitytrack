@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.sync
 
+import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.JdbcSql
 import it.infraconsulting.activitytrack.data.db.SyncSchema
 import it.infraconsulting.activitytrack.domain.sync.PairApi
@@ -38,7 +39,7 @@ class SyncServerTest {
 	}
 
 	private inner class Phone(code: String) {
-		val c = JdbcSql.create(19)
+		val c = JdbcSql.create(ActivityTrackDatabase.VERSION)
 		val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 		val token = PairApi.reply(200, http("POST", "pair", PairApi.request(PairRequest(code, "jvm", "test", "0")), null).body).token
 		val db = object : SyncDb {

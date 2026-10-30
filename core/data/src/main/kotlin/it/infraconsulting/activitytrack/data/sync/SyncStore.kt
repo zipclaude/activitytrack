@@ -308,13 +308,14 @@ class SyncStore(
 
 	private companion object {
 		/* master data that can be central (issue #115) */
-		val WITH_CENTRAL = setOf("company", "companySite", "client", "clientSite", "contact", "role", "preset", "material")
+		val WITH_CENTRAL = setOf("company", "companySite", "client", "clientSite", "contact", "role", "tag", "preset", "material")
 
 		/* the unique indexes a central record could collide with */
 		val NATURAL_KEYS: Map<String, List<List<String>>> = mapOf(
 			"company" to listOf(listOf("externalCode"), listOf("name")),
 			"client" to listOf(listOf("companyUid", "externalCode"), listOf("companyUid", "name")),
 			"role" to listOf(listOf("name")),
+			"tag" to listOf(listOf("name")),
 		)
 	}
 }

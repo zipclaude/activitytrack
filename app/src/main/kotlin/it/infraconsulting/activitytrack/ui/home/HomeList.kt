@@ -252,7 +252,7 @@ internal fun HomeListRow(
 					if (missing) cs.errorContainer else cs.surfaceVariant,
 					if (missing) cs.onErrorContainer else cs.onSurfaceVariant,
 					c.title ?: stringResource(R.string.entry_no_client), subtitle, entrySpan(c),
-					band = c.companyColor, dim = !missing, strike = false, alert = missing,
+					band = c.companyColor, dim = !missing, strike = false, alert = missing, tags = c.tags,
 				) { onEntry(e.id) }
 			}
 		}
@@ -285,6 +285,8 @@ private fun RowCard(
 	dim: Boolean,
 	strike: Boolean,
 	alert: Boolean,
+	/* the entry's tags: dots at the top right (issue #133) */
+	tags: Collection<String> = emptyList(),
 	onClick: () -> Unit,
 ) {
 	val cs = MaterialTheme.colorScheme
@@ -312,7 +314,10 @@ private fun RowCard(
 						color = if (alert) cs.error else cs.onSurfaceVariant,
 					)
 				}
-				time?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = if (alert) cs.error else cs.onSurface) }
+				Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+					it.infraconsulting.activitytrack.ui.common.TagDots(tags)
+					time?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = if (alert) cs.error else cs.onSurface) }
+				}
 			}
 		}
 	}

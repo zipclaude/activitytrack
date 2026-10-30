@@ -611,6 +611,23 @@ class RepositoryTest {
 		assertEquals(mapOf(id to listOf("remoto")), entries.tagsOf(listOf(id)))
 	}
 
+	/* issue #133: a tag of the master data renamed takes the entries with it; deleted, they keep the name */
+	@Test
+	fun aRenamedTagFollowsOnTheEntries() = runBlocking<Unit> {
+		val a = entries.start(StartRequest(SegmentKind.WORK, client))
+		entries.setTags(a, listOf("urgente", "remoto"))
+		val tagId = master.saveTag(it.infraconsulting.activitytrack.data.db.TagEntity(name = "#Urgente", color = 0xD64545))
+		val tag = master.tags.first().single()
+		assertEquals("urgente", tag.name)
+		assertEquals(Reason.DUPLICATE_NAME, reason { master.saveTag(it.infraconsulting.activitytrack.data.db.TagEntity(name = "urgente")) })
+		master.saveTag(tag.copy(name = "remoto"))
+		assertEquals(listOf("remoto"), entries.tags(a).first())
+		master.saveTag(tag.copy(id = tagId, name = "critico"))
+		assertEquals(listOf("critico"), entries.tags(a).first())
+		master.deleteTag(master.tags.first().single())
+		assertEquals(listOf("critico"), entries.tags(a).first())
+	}
+
 	/* issue #28: contacts, the call log, the pause a call makes */
 	@Test
 	fun contactsAndCalls() = runBlocking<Unit> {

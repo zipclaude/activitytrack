@@ -27,6 +27,7 @@ object SyncSchema {
 		"client_site" to "clientSite",
 		"contact" to "contact",
 		"role" to "role",
+		"tag" to "tag",
 		"activity_preset" to "preset",
 		"material" to "material",
 		"place" to "place",
@@ -51,7 +52,10 @@ object SyncSchema {
 	)
 
 	/* tables that got their uid in schema 16 (todo and time_entry had one) */
-	private val NEW_UID = TYPES.keys - setOf("todo", "time_entry")
+	/* tables added after schema 16: Room creates them with their uid */
+	private val AFTER_16 = setOf("tag")
+
+	private val NEW_UID = TYPES.keys - setOf("todo", "time_entry") - AFTER_16
 
 	private const val NOW = "CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)"
 	private const val RECORDING = "(SELECT enabled AND NOT applying FROM sync_state WHERE id = 1)"
@@ -71,8 +75,9 @@ object SyncSchema {
 
 	private const val STATE_ROW = "INSERT OR IGNORE INTO sync_state (id, enabled, applying, cursor, clock_offset_ms) VALUES (1, 0, 0, 0, 0)"
 
-	fun triggers(): List<String> = buildList {
+	fun triggers(present: Set<String>? = null): List<String> = buildList {
 		for ((table, type) in TYPES) {
+			if (present != null && table !in present) continue
 			add(log(table, "insert", "INSERT", "INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('$type', NEW.uid, 'upsert', $NOW)"))
 			/* an update that also changes the uid is logged by keep_uid, under the uid kept */
 			add(
@@ -98,6 +103,7 @@ object SyncSchema {
 		}
 		for ((table, parent) in FOLDED) {
 			val (parentTable, column) = parent
+			if (present != null && (table !in present || parentTable !in present)) continue
 			val type = TYPES.getValue(parentTable)
 			fun touch(row: String) = "INSERT INTO sync_change (type, uid, op, changed_utc_ms) " +
 				"SELECT '$type', uid, 'upsert', $NOW FROM `$parentTable` WHERE id = $row.$column;"
@@ -116,7 +122,9 @@ object SyncSchema {
 	/* a new database: Room made the tables */
 	fun onCreate(db: Sql) {
 		db.exec(STATE_ROW)
-		triggers().forEach { db.exec(it) }
+		/* a migration from an older schema runs before the newer tables exist: opening adds their triggers */
+		val present = db.rows("SELECT name FROM sqlite_master WHERE type = 'table'").map { it[0] as String }.toSet()
+		triggers(present).forEach { db.exec(it) }
 	}
 
 	/* every open: the triggers a rebuilt table lost come back */

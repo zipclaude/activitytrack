@@ -203,6 +203,33 @@
       ]
     },
     {
+      "type": "tag",
+      "scope": "master",
+      "parent": null,
+      "fields": [
+        {
+          "name": "name",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "color",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "archived",
+          "kind": "bool",
+          "null": false
+        },
+        {
+          "name": "position",
+          "kind": "int",
+          "null": true
+        }
+      ]
+    },
+    {
       "type": "preset",
       "scope": "master",
       "parent": null,

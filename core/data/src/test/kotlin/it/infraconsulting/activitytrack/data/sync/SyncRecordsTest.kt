@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.sync
 
+import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.JdbcSql
 import it.infraconsulting.activitytrack.data.db.SyncSchema
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
@@ -21,7 +22,7 @@ import kotlin.test.assertNull
 
 /* Issue #112: every record type written from wire fields and read back the same, on the schema Room makes. */
 class SyncRecordsTest {
-	private val c: Connection = JdbcSql.create(19)
+	private val c: Connection = JdbcSql.create(ActivityTrackDatabase.VERSION)
 	private val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 	private val records = SyncRecords(sql)
 
@@ -101,6 +102,8 @@ class SyncRecordsTest {
 		val all = samples()
 		for ((type, uid, fields) in all) records.write(type, uid, fields)
 		val entry = all.first { it.first == "entry" }.second
+		/* the ids are kept per company: the sample's may be null */
+		sql.exec("UPDATE time_entry SET company_id = (SELECT MIN(id) FROM company) WHERE uid = ?", entry)
 		sql.exec("INSERT INTO remote_record (entry_id, plugin_id, block_key, remote_id, hash, sent_utc_ms) VALUES ((SELECT id FROM time_entry WHERE uid = ?), 'sdp', '2026-10-29#0', 'W-77', 'h', 1)", entry)
 		records.delete("entry", entry)
 		assertEquals(listOf(listOf<Any?>("sdp", "W-77")), sql.rows("SELECT plugin_id, remote_id FROM remote_deleted"))

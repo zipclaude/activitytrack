@@ -29,6 +29,8 @@ class EntryViewModel(
 	master: MasterDataRepository,
 	private val todos: TodoRepository,
 	editableTimes: Flow<Boolean> = flowOf(false),
+	/* tags typed freely besides the master data's (issue #133) */
+	tagsFreeText: Flow<Boolean> = flowOf(true),
 	/* the policy in force: the fields it makes required (issue #48) */
 	private val policy: () -> it.infraconsulting.activitytrack.domain.policy.Policy = { it.infraconsulting.activitytrack.domain.policy.Policy.NONE },
 ) : ActionViewModel() {
@@ -40,6 +42,10 @@ class EntryViewModel(
 	val tags = entries.tags(entryId).state(emptyList())
 	/* suggestions: every tag in use, most used first */
 	val allTags = entries.allTags.state(emptyList())
+	/* the tags of the master data (issue #133) */
+	val masterTags = master.tags.state(emptyList())
+	val tagsFreeText = tagsFreeText.state(true)
+	private val masterRepo = master
 	val clients = master.clients.state(emptyList())
 	val companies = master.companies.state(emptyList())
 	val roles = master.roles.state(emptyList())
@@ -176,6 +182,9 @@ class EntryViewModel(
 	fun deleteSegment(segmentId: Long, done: () -> Unit = {}) = run(done) { entries.deleteSegment(segmentId) }
 
 	fun setTags(tags: List<String>) = run { entries.setTags(entryId, tags) }
+
+	/* a free tag of this entry kept in the master data, with its colour (issue #133) */
+	fun saveTag(tag: it.infraconsulting.activitytrack.data.db.TagEntity, done: () -> Unit) = run(done) { masterRepo.saveTag(tag) }
 
 	/* Minutes of [day] taken by other segments (all entries, [except] left out): hatched in the grid. */
 	suspend fun busyOn(day: LocalDate, except: Long?, zone: ZoneId): List<IntRange> {

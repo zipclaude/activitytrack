@@ -159,6 +159,7 @@ object SettingsCatalog {
 
 	val all: List<SettingSpec> = listOf(
 		bool("editableTimes") { s, v -> s.copy(editableTimes = v) },
+		bool("tagsFreeText") { s, v -> s.copy(tagsFreeText = v) },
 		int("confirmIntervalMin", 10..240) { s, v -> s.copy(confirmIntervalMin = v) },
 		int("maxConfirmations", 0..100) { s, v -> s.copy(maxConfirmations = v) },
 		int("pauseIntervalMin", 10..120) { s, v -> s.copy(pauseIntervalMin = v) },

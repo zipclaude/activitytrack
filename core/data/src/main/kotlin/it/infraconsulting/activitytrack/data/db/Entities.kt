@@ -162,6 +162,26 @@ data class RoleEntity(
 	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
 )
 
+/*
+ * A tag of the master data (issue #133): the name is the key (the entries
+ * keep the names, entry_tag), the colour shows on the entries; central or
+ * personal like the other master data.
+ */
+@Entity(tableName = "tag", indices = [Index(value = ["uid"], unique = true), Index(value = ["name"], unique = true)])
+data class TagEntity(
+	@PrimaryKey(autoGenerate = true) val id: Long = 0,
+	val name: String,
+	/* 0xRRGGBB of the palette, null = grey */
+	val color: Int? = null,
+	val archived: Boolean = false,
+	/* manual list order, kept for the server; the list is by name */
+	@ColumnInfo(name = "sort_position") val position: Int? = null,
+	/* sync identity (issue #111), the same on every node; never changes */
+	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
+	/* central master data of ActivityTrack Web (issue #115), set by the sync; else personal */
+	@ColumnInfo(defaultValue = "0") val central: Boolean = false,
+)
+
 @Entity(
 	tableName = "activity_preset",
 	foreignKeys = [

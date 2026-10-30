@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
+import it.infraconsulting.activitytrack.ui.common.TagDots
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -448,7 +449,11 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 								color = MaterialTheme.colorScheme.onSurfaceVariant,
 							)
 						}
-						Text(hm(it.reported), style = MaterialTheme.typography.bodyMedium)
+						Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+							/* the tags' colours (issue #133) */
+							TagDots(it.tags)
+							Text(hm(it.reported), style = MaterialTheme.typography.bodyMedium)
+						}
 					}
 					}
 				}
@@ -624,6 +629,9 @@ private fun Timeline(
 										color = Color.White, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
 										overflow = TextOverflow.Ellipsis,
 									)
+									/* the tags' colours where the block is wide enough: the day view (issue #133) */
+									if (one)
+										TagDots(it.tags, Modifier.align(Alignment.TopEnd).padding(top = 2.dp), max = 3, size = 7.dp)
 								}
 							}
 							b.todo?.let {

@@ -746,4 +746,11 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="policy_from_server">la política del servidor</string>
   <string name="policy_file_ignored_title">policy.json ignorada</string>
   <string name="policy_file_ignored_text">Este teléfono sigue la política del servidor al que está vinculado; la policy.json de la carpeta de datos vuelve a valer tras desvincularlo.</string>
+  <string name="md_tags">Etiquetas</string>
+  <string name="tag_edit">Etiqueta</string>
+  <string name="tag_pick">Etiquetas de los datos maestros (p. ej. #urgente)</string>
+  <string name="tag_only_master">Solo las etiquetas de los datos maestros: %1$s no añadidas.</string>
+  <string name="tag_keep">Guardar en los datos maestros</string>
+  <string name="set_tags_free_text">También etiquetas libres</string>
+  <string name="set_tags_free_text_hint">Activado: se puede escribir cualquier etiqueta. Desactivado: solo las de los datos maestros; las libres ya en las actividades se quedan.</string>
 </resources>

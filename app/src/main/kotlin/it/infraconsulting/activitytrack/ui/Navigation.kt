@@ -43,6 +43,7 @@ sealed interface Screen {
 	data object Clients : Screen
 	data class Client(val id: Long) : Screen
 	data object Roles : Screen
+	data object Tags : Screen
 	data object Presets : Screen
 	data object Places : Screen
 	data object Schedule : Screen

@@ -746,4 +746,11 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="policy_from_server">la policy del server</string>
   <string name="policy_file_ignored_title">policy.json ignorata</string>
   <string name="policy_file_ignored_text">Questo telefono segue la policy del server a cui è associato; il policy.json della cartella dati torna a valere dopo la dissociazione.</string>
+  <string name="md_tags">Tag</string>
+  <string name="tag_edit">Tag</string>
+  <string name="tag_pick">Tag dell\'anagrafica (es. #urgente)</string>
+  <string name="tag_only_master">Solo i tag dell\'anagrafica: %1$s non aggiunti.</string>
+  <string name="tag_keep">Tieni in anagrafica</string>
+  <string name="set_tags_free_text">Anche tag liberi</string>
+  <string name="set_tags_free_text_hint">Acceso: si può scrivere qualsiasi tag. Spento: solo i tag dell\'anagrafica; i tag liberi già sulle attività restano.</string>
 </resources>

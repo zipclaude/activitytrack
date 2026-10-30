@@ -158,6 +158,7 @@ are written back at every read, so they cannot drift.
 | Key | Type | Values |
 |---|---|---|
 | `editableTimes` | true/false | |
+| `tagsFreeText` | true/false | false: only the tags of the master data (issue #133) |
 | `confirmIntervalMin` | minutes | 10–240 |
 | `maxConfirmations` | number | 0–100 (0 = unlimited) |
 | `pauseIntervalMin` | minutes | 10–120 |

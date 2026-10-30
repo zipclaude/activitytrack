@@ -757,4 +757,11 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="policy_from_server">the server\'s policy</string>
   <string name="policy_file_ignored_title">policy.json ignored</string>
   <string name="policy_file_ignored_text">This phone follows the policy of the server it is paired with; the policy.json in the data folder applies again after unpairing.</string>
+  <string name="md_tags">Tags</string>
+  <string name="tag_edit">Tag</string>
+  <string name="tag_pick">Tags of the master data (e.g. #urgent)</string>
+  <string name="tag_only_master">Only the tags of the master data: %1$s not added.</string>
+  <string name="tag_keep">Keep in the master data</string>
+  <string name="set_tags_free_text">Free tags too</string>
+  <string name="set_tags_free_text_hint">On: any tag can be typed. Off: only the tags of the master data; the free tags already on the activities stay.</string>
 </resources>
