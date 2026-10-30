@@ -738,7 +738,7 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="sync_concurrent_text">Dopo la sincronizzazione con il server, sospesa: %1$s</string>
   <string name="sync_problems">Non sincronizzati</string>
   <string name="sync_discard">Scarta la modifica</string>
-  <string name="sync_discard_confirm">La modifica non inviata di questo telefono viene scartata e torna la versione del server.</string>
+  <string name="sync_discard_confirm">La modifica non inviata di questo telefono viene scartata e torna la versione del server; un elemento creato qui e mai arrivato al server viene eliminato.</string>
   <string name="sync_rec_entry">Attività</string>
   <string name="sync_rec_todo">Da fare</string>
   <string name="sync_rec_other">Record</string>

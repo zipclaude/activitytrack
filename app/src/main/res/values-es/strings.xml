@@ -738,7 +738,7 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="sync_concurrent_text">Tras la sincronización con el servidor, suspendida: %1$s</string>
   <string name="sync_problems">No sincronizados</string>
   <string name="sync_discard">Descartar el cambio</string>
-  <string name="sync_discard_confirm">Se descarta el cambio no enviado de este teléfono y vuelve la versión del servidor.</string>
+  <string name="sync_discard_confirm">El cambio no enviado de este teléfono se descarta y vuelve la versión del servidor; un elemento creado aquí que nunca llegó al servidor se elimina.</string>
   <string name="sync_rec_entry">Actividad</string>
   <string name="sync_rec_todo">Tarea</string>
   <string name="sync_rec_other">Registro</string>

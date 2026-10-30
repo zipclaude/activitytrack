@@ -75,11 +75,14 @@ class SyncEngine(
 			var pushed = 0
 			/* a pull may log changes of its own (adoption): they go out in the same sync */
 			for (round in 1..3) {
-				pushed += push(errors) { offset = it }
-				pulled += pull(errors) { offset = it }
+				val out = push(errors) { offset = it }
+				val came = pull(errors) { offset = it }
+				pushed += out
+				pulled += came
 				/* a merge may leave overlapping segments: the mark travels too */
 				db.run { it.review() }
-				if (db.run { it.pending(1).isEmpty() }) break
+				/* only refused changes left: another round would send them again */
+				if (db.run { it.pending(1).isEmpty() } || (out == 0 && came == 0)) break
 			}
 			files?.let { transferFiles(it, errors) }
 			db.run { it.finished(offset, errors.firstOrNull()) }

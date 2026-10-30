@@ -749,7 +749,7 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="sync_concurrent_text">After the sync with the server, suspended: %1$s</string>
   <string name="sync_problems">Not synced</string>
   <string name="sync_discard">Discard the change</string>
-  <string name="sync_discard_confirm">This phone\'s unsent change to the record is dropped and the server\'s version comes back.</string>
+  <string name="sync_discard_confirm">This phone\'s unsent change is dropped and the server\'s version comes back; a record created here that never reached the server is deleted.</string>
   <string name="sync_rec_entry">Activity</string>
   <string name="sync_rec_todo">To-do</string>
   <string name="sync_rec_other">Record</string>

@@ -737,7 +737,7 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_concurrent_text">Nach der Synchronisierung mit dem Server angehalten: %1$s</string>
   <string name="sync_problems">Nicht synchronisiert</string>
   <string name="sync_discard">Änderung verwerfen</string>
-  <string name="sync_discard_confirm">Die nicht gesendete Änderung dieses Telefons wird verworfen, die Version des Servers kehrt zurück.</string>
+  <string name="sync_discard_confirm">Die nicht gesendete Änderung dieses Telefons wird verworfen und die Version des Servers kehrt zurück; ein hier erstellter Eintrag, der den Server nie erreicht hat, wird gelöscht.</string>
   <string name="sync_rec_entry">Tätigkeit</string>
   <string name="sync_rec_todo">Aufgabe</string>
   <string name="sync_rec_other">Eintrag</string>
