@@ -98,6 +98,8 @@ enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = tr
 	CALENDAR(R.string.sec_calendar, R.drawable.ic_calendar, form = false, feature = Feature.CALENDAR),
 	DICTATION(R.string.sec_dictation, R.drawable.ic_mic, feature = Feature.DICTATION),
 	REPORTS(R.string.sec_reports, R.drawable.ic_nav_report),
+	/* ActivityTrack Web (issue #113) */
+	SYNC(R.string.sec_sync, R.drawable.ic_menu_sync, form = false, essential = true),
 	ONLINE(R.string.sec_online, R.drawable.ic_menu_public),
 	STORAGE(R.string.sec_storage, R.drawable.ic_menu_folder),
 	ADVANCED(R.string.sec_advanced, R.drawable.ic_menu_tune),
@@ -315,6 +317,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal, key = "kmFactor")
 				}
 				SettingsSection.CALENDAR -> CalendarRows()
+				SettingsSection.SYNC -> SyncRows()
 				/* language names in their own language, as in the system pickers */
 				SettingsSection.DICTATION -> PolicySetting("dictationLanguage") {
 					ChoiceField(

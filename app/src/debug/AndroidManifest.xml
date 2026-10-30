@@ -8,7 +8,7 @@
       android:name="android.permission.ACCESS_MOCK_LOCATION"
       tools:ignore="MockLocation,ProtectedPermissions" />
 
-  <application>
+  <application android:networkSecurityConfig="@xml/network_security_debug">
     <!-- DUMP is held by the adb shell only: no other app can move the position. -->
     <receiver
         android:name=".debug.MockLocationReceiver"

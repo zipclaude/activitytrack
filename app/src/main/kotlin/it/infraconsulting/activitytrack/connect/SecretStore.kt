@@ -21,8 +21,16 @@ import javax.crypto.spec.GCMParameterSpec
 class SecretStore(context: Context) {
 	private val prefs = context.applicationContext.getSharedPreferences("connector_secrets", Context.MODE_PRIVATE)
 
-	fun put(companyId: Long, field: String, value: String?) {
-		val name = "$companyId/$field"
+	fun put(companyId: Long, field: String, value: String?) = store("$companyId/$field", value)
+
+	fun get(companyId: Long, field: String): String? = load("$companyId/$field")
+
+	/* the app's own secrets (the sync token, issue #113), apart from the companies' */
+	fun putApp(field: String, value: String?) = store("app/$field", value)
+
+	fun getApp(field: String): String? = load("app/$field")
+
+	private fun store(name: String, value: String?) {
 		if (value.isNullOrEmpty()) {
 			prefs.edit { remove(name) }
 			return
@@ -32,8 +40,8 @@ class SecretStore(context: Context) {
 		prefs.edit { putString(name, b64(cipher.iv) + ":" + b64(data)) }
 	}
 
-	fun get(companyId: Long, field: String): String? {
-		val stored = prefs.getString("$companyId/$field", null) ?: return null
+	private fun load(name: String): String? {
+		val stored = prefs.getString(name, null) ?: return null
 		val (iv, data) = stored.split(':').map { Base64.decode(it, Base64.NO_WRAP) }
 		val cipher = Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv)) }
 		return String(cipher.doFinal(data), Charsets.UTF_8)

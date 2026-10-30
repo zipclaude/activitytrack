@@ -703,4 +703,35 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
     <item quantity="one">%d planned to-do not worked today</item>
     <item quantity="other">%d planned to-dos not worked today</item>
   </plurals>
+
+  <!-- Sync with ActivityTrack Web (issue #113) -->
+  <string name="sec_sync">Sync</string>
+  <string name="sync_intro">Pair this phone with an ActivityTrack Web server: the data stay in sync both ways, and you can also work from the browser.</string>
+  <string name="sync_scan">Scan the QR code</string>
+  <string name="sync_paste">Paste the link</string>
+  <string name="sync_scan_hint">Point at the QR code on the web page (Phones → Pair a phone).</string>
+  <string name="sync_camera_denied">The camera is needed to read the code; you can paste the link instead.</string>
+  <string name="sync_confirm_title">Pair with this server?</string>
+  <string name="sync_confirm_replace">The phone is now paired with %1$s: that pairing ends.</string>
+  <string name="sync_confirm_pinned">The server\'s certificate is not from an authority the phone knows: from now on the phone trusts only the key in this code.</string>
+  <string name="sync_pair">Pair</string>
+  <string name="sync_pairing">Pairing…</string>
+  <string name="sync_paired_ok">Paired with %1$s.</string>
+  <string name="sync_server">Server</string>
+  <string name="sync_pinned">pinned key</string>
+  <string name="sync_user">User</string>
+  <string name="sync_org">Organisation</string>
+  <string name="sync_paired_since">Paired on</string>
+  <string name="sync_pending">Changes waiting to be sent</string>
+  <string name="sync_unpair">Unpair</string>
+  <string name="sync_unpair_confirm">The phone keeps all its data. To sync again, pair it again from the web page.</string>
+  <string name="sync_err_link">This is not an ActivityTrack pairing code.</string>
+  <string name="sync_err_version">This code is for a newer app: update ActivityTrack.</string>
+  <string name="sync_err_https">The server must be reached over https.</string>
+  <string name="sync_err_pin">The key in the code is damaged: make a new code.</string>
+  <string name="sync_err_code">The code has expired or was already used: make a new one on the web page.</string>
+  <string name="sync_err_user">This user cannot pair phones.</string>
+  <string name="sync_err_network">The server cannot be reached.</string>
+  <string name="sync_err_cert">The server\'s certificate is not trusted, or does not match the code.</string>
+  <string name="sync_err_server">The server answered with an error.</string>
 </resources>

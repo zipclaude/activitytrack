@@ -77,6 +77,12 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
 - `scripts/sample-db.py` builds an invented DB (schema of
   `ActivityTrackDatabase.VERSION`, times relative to now) and
   `scripts/screenshots.py` takes the manual's screenshots.
+- Sync against a development server (ActivityTrack Web `runserver` on the
+  computer): `adb reverse tcp:8765 tcp:8765`, server `base_url =
+  http://localhost:8765`; debug builds allow plain http to localhost only
+  (`app/src/debug/res/xml/network_security_debug.xml`). A pairing link can
+  be opened with `adb shell am start -a android.intent.action.VIEW -n
+  <debug package>/it.infraconsulting.activitytrack.MainActivity -d '<link>'`.
 - `docs/samples/` holds interchange and policy samples for device tests, and
   `sync-schema.json`: the output of ActivityTrack Web's `manage.py sync_schema`.
   `SyncMappingTest` compares it with `SyncMapping`; refresh it whenever the
