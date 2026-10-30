@@ -56,7 +56,15 @@ data class PairUser(val username: String, val name: String = "", val profile: St
 data class PairOrg(val name: String)
 
 @Serializable
-data class PairReply(val deviceId: String, val token: String, val user: PairUser, val org: PairOrg, val serverTime: Long)
+data class PairReply(
+	val deviceId: String,
+	val token: String,
+	val user: PairUser,
+	val org: PairOrg,
+	val serverTime: Long,
+	/* this phone sends to the management systems (issue #118) */
+	val pluginHolder: Boolean = true,
+)
 
 @Serializable
 data class ApiError(val error: String, val detail: String = "")
@@ -73,6 +81,8 @@ data class SyncAccountInfo(
 	/* the server's key is pinned (self-signed certificate) */
 	val pinned: Boolean,
 	val pairedUtcMs: Long,
+	/* this phone sends to the management systems; the others of the user only import (issue #118) */
+	val pluginHolder: Boolean = true,
 )
 
 object PairApi {

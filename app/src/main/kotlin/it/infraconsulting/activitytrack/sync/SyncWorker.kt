@@ -39,6 +39,9 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		val http = account.http() ?: return Result.success()
 		val token = account.token() ?: return Result.success()
 		if (account.revoked.value) return Result.success()
+		/* the plugin holder may have moved (issue #118) */
+		account.head()
+		if (account.revoked.value) return Result.success()
 		val transport = object : SyncTransport {
 			override suspend fun send(method: String, path: String, body: String?): SyncTransport.Reply {
 				val r = http.send(method, "api/v1/$path", body, token)

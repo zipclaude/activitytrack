@@ -97,6 +97,16 @@ class SyncRecordsTest {
 	}
 
 	@Test
+	fun aDeletedEntryLeavesItsRemoteIdsForThePlugin() {
+		val all = samples()
+		for ((type, uid, fields) in all) records.write(type, uid, fields)
+		val entry = all.first { it.first == "entry" }.second
+		sql.exec("INSERT INTO remote_record (entry_id, plugin_id, block_key, remote_id, hash, sent_utc_ms) VALUES ((SELECT id FROM time_entry WHERE uid = ?), 'sdp', '2026-10-29#0', 'W-77', 'h', 1)", entry)
+		records.delete("entry", entry)
+		assertEquals(listOf(listOf<Any?>("sdp", "W-77")), sql.rows("SELECT plugin_id, remote_id FROM remote_deleted"))
+	}
+
+	@Test
 	fun deletingAnEntryTakesItsChildren() {
 		val all = samples()
 		for ((type, uid, fields) in all) records.write(type, uid, fields)

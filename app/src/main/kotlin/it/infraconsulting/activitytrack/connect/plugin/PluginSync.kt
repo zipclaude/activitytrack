@@ -164,7 +164,8 @@ class PluginSync(private val app: ActivityTrackApp) {
 	 */
 	suspend fun sync(companyId: Long, send: Boolean = true, entryId: Long? = null): PluginSyncReport {
 		val down = download(companyId)
-		if (!send)
+		/* another phone of the user sends (ActivityTrack Web, issue #118): this one only imports */
+		if (!send || !app.syncAccount.sendsToPlugins())
 			return down
 		return lock.withLock { upload(companyId, entryId, down) }
 	}

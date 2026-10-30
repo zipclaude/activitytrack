@@ -18,6 +18,7 @@ import javax.net.ssl.SSLException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -40,17 +41,34 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		_revoked.value = true
 	}
 
-	/* true when the server has changes after [cursor] (the cheap check while the app is in front) */
-	suspend fun serverAhead(cursor: Long): Boolean {
-		val http = http() ?: return false
-		val r = runCatching { http.send("GET", "api/v1/sync/head", token = token()) }.getOrNull() ?: return false
+	/* sends to the management systems: not paired, or the phone the server names (issue #118) */
+	fun sendsToPlugins(): Boolean = _info.value?.pluginHolder ?: true
+
+	/*
+	 * The server's head: its revision (null when unreachable), and the
+	 * plugin holder kept up to date (the web page may move it).
+	 */
+	suspend fun head(): Long? {
+		val http = http() ?: return null
+		val r = runCatching { http.send("GET", "api/v1/sync/head", token = token()) }.getOrNull() ?: return null
 		if (r.status == 401) {
 			markRevoked()
-			return false
+			return null
 		}
-		val rev = runCatching { PairApi.json.parseToJsonElement(r.body).jsonObject["rev"]?.jsonPrimitive?.long }.getOrNull() ?: return false
-		return rev > cursor
+		val o = runCatching { PairApi.json.parseToJsonElement(r.body).jsonObject }.getOrNull() ?: return null
+		o["pluginHolder"]?.jsonPrimitive?.booleanOrNull?.let { holder ->
+			val info = _info.value
+			if (info != null && info.pluginHolder != holder) {
+				val updated = info.copy(pluginHolder = holder)
+				secrets.putApp(INFO, PairApi.json.encodeToString(SyncAccountInfo.serializer(), updated))
+				_info.value = updated
+			}
+		}
+		return o["rev"]?.jsonPrimitive?.long
 	}
+
+	/* true when the server has changes after [cursor] (the cheap check while the app is in front) */
+	suspend fun serverAhead(cursor: Long): Boolean = (head() ?: return false) > cursor
 
 	/* a pairing link that opened the app, waiting for the user to confirm it */
 	val pendingLink = MutableStateFlow<String?>(null)
@@ -91,6 +109,7 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 			org = answer.org.name,
 			pinned = link.pin != null,
 			pairedUtcMs = System.currentTimeMillis(),
+			pluginHolder = answer.pluginHolder,
 		)
 		dao.forgetServer()
 		secrets.putApp(TOKEN, answer.token)

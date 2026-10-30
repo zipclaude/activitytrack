@@ -742,4 +742,5 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="err_file_coming">The file is coming from the server: open it again in a moment.</string>
   <string name="central_suffix">central</string>
   <string name="central_locked">A central record: the administrator or a manager changes it, on the web.</string>
+  <string name="plugin_not_holder">Another phone of yours sends to the management system (ActivityTrack Web): this one only imports.</string>
 </resources>

@@ -85,6 +85,17 @@ class SyncRecords(private val db: SyncSchema.Sql) {
 	/* removes the record; the database's cascades remove its children */
 	fun delete(type: String, uid: String) {
 		val t = typeOf(type)
+		/*
+		 * what a plugin sent for an entry is deleted on the management system
+		 * at its next sync, as for an entry deleted by hand (issue #118)
+		 */
+		if (type == "entry")
+			db.exec(
+				"INSERT OR REPLACE INTO remote_deleted (company_id, plugin_id, remote_id, deleted_utc_ms) " +
+					"SELECT t.company_id, r.plugin_id, r.remote_id, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER) " +
+					"FROM remote_record r JOIN time_entry t ON t.id = r.entry_id WHERE t.uid = ? AND t.company_id IS NOT NULL",
+				uid,
+			)
 		db.exec("DELETE FROM `${t.table}` WHERE uid = ?", uid)
 	}
 

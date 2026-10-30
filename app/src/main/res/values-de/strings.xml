@@ -730,4 +730,5 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="err_file_coming">Die Datei kommt vom Server: gleich noch einmal öffnen.</string>
   <string name="central_suffix">zentral</string>
   <string name="central_locked">Ein zentraler Eintrag: Ihn ändern der Administrator oder ein Verantwortlicher im Web.</string>
+  <string name="plugin_not_holder">An das Verwaltungssystem sendet ein anderes deiner Telefone (ActivityTrack Web): dieses importiert nur.</string>
 </resources>
