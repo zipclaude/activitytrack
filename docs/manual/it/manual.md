@@ -1,7 +1,14 @@
-Versione 0.9.0 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.1**
+- Con ActivityTrack Web: le voci **Da fare assegnate** da un responsabile
+  arrivano sul telefono come le proprie; se vengono riassegnate a un altro,
+  spariscono (§11).
+- Nessuna notifica push né servizi Google: il telefono sincronizza come
+  descritto in §11 (entro 15 minuti in background, subito ad app aperta).
 
 **Novità della 0.9.0** (provata sul telefono di debug)
 - **Sincronizzazione con ActivityTrack Web**, il server dell'organizzazione:
@@ -813,8 +820,14 @@ stesso nome non si raddoppiano: diventano uno solo, con i dati del server.
 modifica, ogni 30 secondi mentre l'app è aperta (per ciò che arriva dal web
 o da un altro telefono) e ogni 15 minuti in background, appena c'è rete.
 Senza rete le modifiche aspettano e partono al ritorno della connessione.
-I file degli allegati si scaricano su Wi-Fi, o quando apri l'allegato. Le
+Non ci sono notifiche push: una modifica fatta sul web arriva entro 15
+minuti, subito se l'app è aperta. I file degli allegati si scaricano su Wi-Fi, o quando apri l'allegato. Le
 posizioni GPS restano sul telefono: viaggiano km e tempi.
+
+**Da fare assegnate.** Un responsabile (o un amministratore) può creare
+dal web una voce *Da fare* e assegnarla a te: arriva sul telefono come le
+tue, la lavori e la chiudi come sempre. Se la riassegna a un'altra persona,
+sparisce dal tuo telefono alla sincronizzazione successiva.
 
 ![Impostazioni → Sincronizzazione](img/sync.png)
 
