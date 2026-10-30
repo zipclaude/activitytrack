@@ -48,6 +48,16 @@ class EntryInvariantsTest {
 	}
 
 	@Test
+	fun overlapsFromASyncAllowedWhenAsked() {
+		/* the device case: a closed segment from the server inside the running one (issue #119) */
+		val segs = listOf(seg(WORK, 0, null), seg(WORK, 60, 120))
+		assertTrue(EntryInvariants.violations(ACTIVE, WORK, segs).isNotEmpty())
+		assertEquals(emptyList(), EntryInvariants.violations(ACTIVE, WORK, segs, overlaps = true))
+		/* the other rules still hold */
+		assertTrue(EntryInvariants.violations(SUSPENDED, null, segs, overlaps = true).isNotEmpty())
+	}
+
+	@Test
 	fun overlapDetection() {
 		assertNull(EntryInvariants.firstOverlap(listOf(seg(WORK, 0, 30), seg(TRAVEL, 30, 40))))
 		assertNotNull(EntryInvariants.firstOverlap(listOf(seg(WORK, 0, 31), seg(TRAVEL, 30, 40))))
