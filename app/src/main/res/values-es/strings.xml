@@ -729,4 +729,6 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="sync_now">Sincronizar ahora</string>
   <string name="sync_revoked">El servidor revocó la vinculación de este teléfono: los datos se quedan aquí; para volver a sincronizar, vincúlalo de nuevo.</string>
   <string name="err_file_coming">El archivo está llegando del servidor: vuelve a abrirlo en un momento.</string>
+  <string name="central_suffix">central</string>
+  <string name="central_locked">Es un registro central: lo modifican el administrador o un responsable, desde la web.</string>
 </resources>

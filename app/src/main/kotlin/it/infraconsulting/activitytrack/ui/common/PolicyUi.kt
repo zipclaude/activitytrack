@@ -18,6 +18,9 @@ import it.infraconsulting.activitytrack.domain.policy.Policy
  */
 val LocalPolicy = staticCompositionLocalOf { Policy.NONE }
 
+/* central master data are read-only for this user (paired as User, issue #115) */
+val LocalCentralLocked = staticCompositionLocalOf { false }
+
 /* The colours of the field being drawn (policy fields.<f>.colors); null = the app's own. */
 data class FieldColors(val invalid: Color? = null, val valid: Color? = null)
 

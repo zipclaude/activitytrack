@@ -728,4 +728,6 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_now">Jetzt synchronisieren</string>
   <string name="sync_revoked">Der Server hat die Verbindung dieses Telefons widerrufen: Die Daten bleiben hier; zum Synchronisieren neu verbinden.</string>
   <string name="err_file_coming">Die Datei kommt vom Server: gleich noch einmal öffnen.</string>
+  <string name="central_suffix">zentral</string>
+  <string name="central_locked">Ein zentraler Eintrag: Ihn ändern der Administrator oder ein Verantwortlicher im Web.</string>
 </resources>

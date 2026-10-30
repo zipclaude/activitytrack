@@ -111,6 +111,28 @@ internal fun confirmDelete(name: String, action: () -> Unit): () -> Unit {
 @Composable
 internal fun archivedSuffix(archived: Boolean) = if (archived) stringResource(R.string.archived_suffix) else null
 
+/* "archived", "central" (issue #115) after a master-data name */
+@Composable
+internal fun masterSuffix(archived: Boolean, central: Boolean, extra: String? = null): String? =
+	listOfNotNull(extra, archivedSuffix(archived), if (central) stringResource(R.string.central_suffix) else null).joinToString(" · ").ifEmpty { null }
+
+/*
+ * Runs an edit, unless the record is central and this user may not change
+ * it (issue #115): then a note says who does.
+ */
+@Composable
+internal fun centralGuard(): (central: Boolean, action: () -> Unit) -> Unit {
+	val locked = it.infraconsulting.activitytrack.ui.common.LocalCentralLocked.current
+	var show by remember { mutableStateOf(false) }
+	if (show)
+		AlertDialog(
+			onDismissRequest = { show = false },
+			text = { Text(stringResource(R.string.central_locked)) },
+			confirmButton = { TextButton(onClick = { show = false }) { Text(stringResource(R.string.action_ok)) } },
+		)
+	return { central, action -> if (locked && central) show = true else action() }
+}
+
 @Composable
 fun MasterDataScreen(onBack: () -> Unit, onOpen: (Screen) -> Unit) {
 	val withCompanies = companiesShown()
@@ -171,7 +193,7 @@ fun CompaniesScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 			if (companies.isEmpty())
 				item { EmptyText() }
 			items(shown(companies, reorder), key = { it.id }) { c ->
-				ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id, c.color) { onOpen(c.id) }
+				ReorderRow(c.name, masterSuffix(c.archived, c.central), reorder, c.id, c.color) { onOpen(c.id) }
 			}
 		}
 	}
@@ -188,18 +210,19 @@ fun CompanyScreen(id: Long, onBack: () -> Unit) {
 	val error by vm.error.collectAsState()
 	var editing by remember { mutableStateOf(false) }
 	var site by remember { mutableStateOf<CompanySiteEntity?>(null) }
+	val guard = centralGuard()
 
 	ScreenScaffold(
 		title = company?.name.orEmpty(),
 		onBack = onBack,
 		actions = {
-			TextButton(onClick = { vm.clearError(); editing = true }) { Text(stringResource(R.string.action_edit)) }
+			TextButton(onClick = { guard(company?.central == true) { vm.clearError(); editing = true } }) { Text(stringResource(R.string.action_edit)) }
 		},
 	) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
 			company?.let { c ->
 				item { SectionHeader(stringResource(R.string.sec_color)) }
-				item { ColorPalette(c.color) { vm.save(c.copy(color = it)) {} } }
+				item { ColorPalette(c.color) { color -> guard(c.central) { vm.save(c.copy(color = color)) {} } } }
 			}
 			company?.let { c -> item { ConnectorSection(c, vm) } }
 			item {
@@ -214,7 +237,7 @@ fun CompanyScreen(id: Long, onBack: () -> Unit) {
 			if (sites.isEmpty())
 				item { EmptyText() }
 			items(sites, key = { it.id }) { s ->
-				ClickableRow(s.label, s.address ?: "${s.radiusM} m") { vm.clearError(); site = s }
+				ClickableRow(s.label, masterSuffix(false, s.central, s.address ?: "${s.radiusM} m")) { guard(s.central) { vm.clearError(); site = s } }
 			}
 		}
 	}
@@ -295,7 +318,7 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 			/* without companies (policy, issue #48): one list */
 			if (!withCompanies)
 				items(list, key = { it.id }) { c ->
-					ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id, c.color) { onOpen(c.id) }
+					ReorderRow(c.name, masterSuffix(c.archived, c.central), reorder, c.id, c.color) { onOpen(c.id) }
 				}
 			/* grouped by company, in company order; manual order within each company */
 			else for (co in companies) {
@@ -304,7 +327,7 @@ fun ClientsScreen(onBack: () -> Unit, onOpen: (Long) -> Unit) {
 					continue
 				item(key = "h${co.id}") { SectionHeader(co.name) }
 				items(own, key = { it.id }) { c ->
-					ReorderRow(c.name, archivedSuffix(c.archived), reorder, c.id, c.color) { onOpen(c.id) }
+					ReorderRow(c.name, masterSuffix(c.archived, c.central), reorder, c.id, c.color) { onOpen(c.id) }
 				}
 			}
 		}
@@ -326,12 +349,13 @@ fun ClientScreen(id: Long, onBack: () -> Unit) {
 	val error by vm.error.collectAsState()
 	var editing by remember { mutableStateOf(false) }
 	var site by remember { mutableStateOf<ClientSiteEntity?>(null) }
+	val guard = centralGuard()
 
 	ScreenScaffold(
 		title = client?.name.orEmpty(),
 		onBack = onBack,
 		actions = {
-			TextButton(onClick = { vm.clearError(); editing = true }) { Text(stringResource(R.string.action_edit)) }
+			TextButton(onClick = { guard(client?.central == true) { vm.clearError(); editing = true } }) { Text(stringResource(R.string.action_edit)) }
 		},
 	) { padding ->
 		LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -343,7 +367,7 @@ fun ClientScreen(id: Long, onBack: () -> Unit) {
 			}
 			client?.let { c ->
 				item { SectionHeader(stringResource(R.string.sec_color)) }
-				item { ColorPalette(c.color) { vm.save(c.copy(color = it)) {} } }
+				item { ColorPalette(c.color) { color -> guard(c.central) { vm.save(c.copy(color = color)) {} } } }
 			}
 			item {
 				Row {
@@ -357,7 +381,7 @@ fun ClientScreen(id: Long, onBack: () -> Unit) {
 			if (sites.isEmpty())
 				item { EmptyText() }
 			items(sites, key = { it.id }) { s ->
-				ClickableRow(s.label, s.address ?: "${s.radiusM} m") { vm.clearError(); site = s }
+				ClickableRow(s.label, masterSuffix(false, s.central, s.address ?: "${s.radiusM} m")) { guard(s.central) { vm.clearError(); site = s } }
 			}
 			/* issue #28: the calls with this client */
 			item { ClientCalls(id) }
@@ -392,6 +416,7 @@ fun RolesScreen(onBack: () -> Unit) {
 	var editing by remember { mutableStateOf<RoleEntity?>(null) }
 	val listState = rememberLazyListState()
 	val (order, reorder) = orderedList(vm, OrderedList.ROLES, listState, roles, { it.id }, { it.archived })
+	val guard = centralGuard()
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_roles),
@@ -403,7 +428,7 @@ fun RolesScreen(onBack: () -> Unit) {
 			if (roles.isEmpty())
 				item { EmptyText() }
 			items(shown(roles, reorder), key = { it.id }) { r ->
-				ReorderRow(r.name, archivedSuffix(r.archived), reorder, r.id) { vm.clearError(); editing = r }
+				ReorderRow(r.name, masterSuffix(r.archived, r.central), reorder, r.id) { guard(r.central) { vm.clearError(); editing = r } }
 			}
 		}
 	}
@@ -430,6 +455,7 @@ fun PresetsScreen(onBack: () -> Unit) {
 	val none = stringResource(R.string.field_none)
 	val listState = rememberLazyListState()
 	val (order, reorder) = orderedList(vm, OrderedList.PRESETS, listState, presets, { it.id })
+	val guard = centralGuard()
 
 	ScreenScaffold(
 		title = stringResource(R.string.md_presets),
@@ -445,7 +471,7 @@ fun PresetsScreen(onBack: () -> Unit) {
 					roles.firstOrNull { it.id == p.defaultRoleId }?.name,
 					companies.firstOrNull { it.id == p.companyId }?.name,
 				).joinToString(" · ").ifEmpty { null }
-				ReorderRow(p.text, extra, reorder, p.id) { vm.clearError(); editing = p }
+				ReorderRow(p.text, masterSuffix(false, p.central, extra), reorder, p.id) { guard(p.central) { vm.clearError(); editing = p } }
 			}
 		}
 	}

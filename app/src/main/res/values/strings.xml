@@ -740,4 +740,6 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="sync_now">Sync now</string>
   <string name="sync_revoked">The server revoked this phone\'s pairing: the data stay here; to sync again, pair it again.</string>
   <string name="err_file_coming">The file is coming from the server: open it again in a moment.</string>
+  <string name="central_suffix">central</string>
+  <string name="central_locked">A central record: the administrator or a manager changes it, on the web.</string>
 </resources>

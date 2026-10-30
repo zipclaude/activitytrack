@@ -61,6 +61,12 @@ class ActivityTrackApp : Application() {
 		pluginWatcher = it.infraconsulting.activitytrack.connect.plugin.PluginWatcher(this).also { it.start(appScope) }
 		/* ActivityTrack Web: periodic and after-change syncs while paired (issue #114) */
 		it.infraconsulting.activitytrack.sync.SyncWorker.start(this, appScope)
+		/* only admins and managers change central master data (issue #115) */
+		appScope.launch {
+			syncAccount.info.collect { info ->
+				container.sync.canEditCentral = info == null || info.profile in it.infraconsulting.activitytrack.sync.SyncAccount.CENTRAL_EDITORS
+			}
+		}
 		/* a UI language forced by the policy (ui.language, issue #48) */
 		appScope.launch {
 			container.policies.current.map { it.ui.language }.distinctUntilChanged().collect { lang ->

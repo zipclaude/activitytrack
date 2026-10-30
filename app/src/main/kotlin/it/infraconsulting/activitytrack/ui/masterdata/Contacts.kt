@@ -63,6 +63,7 @@ fun ContactsScreen(onBack: () -> Unit) {
 	val clients by md.clients.collectAsState()
 	val error by vm.error.collectAsState()
 	var editing by remember { mutableStateOf<Pair<ContactEntity, List<String>>?>(null) }
+	val guard = centralGuard()
 	/* a new contact of the client last chosen in a dialog, else the first (issue #106) */
 	val last = it.infraconsulting.activitytrack.ui.common.lastPickViewModel()
 	val lastClient = it.infraconsulting.activitytrack.ui.common.lastPick().second
@@ -99,9 +100,11 @@ fun ContactsScreen(onBack: () -> Unit) {
 				val owner = clients.firstOrNull { it.id == c.contact.clientId }
 				val client = owner?.name.orEmpty()
 				/* the dot of the contact's client (issue #44) */
-				ClickableRow(c.contact.name, (listOf(client) + c.phones.map { it.number }).joinToString(" · "), dot = owner?.color) {
-					vm.clearError()
-					editing = c.contact to c.phones.map { it.number }
+				ClickableRow(c.contact.name, masterSuffix(false, c.contact.central, (listOf(client) + c.phones.map { it.number }).joinToString(" · ")), dot = owner?.color) {
+					guard(c.contact.central) {
+						vm.clearError()
+						editing = c.contact to c.phones.map { it.number }
+					}
 				}
 			}
 		}
