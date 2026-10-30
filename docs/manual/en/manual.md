@@ -1,7 +1,13 @@
-Version 0.9.0 (October 2026). Please report any difference between this
+Version 0.9.1 (October 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.1**
+- With ActivityTrack Web: **to-dos assigned** by a manager reach the phone
+  like your own; reassigned to someone else, they leave it (§11).
+- No push notifications and no Google services: the phone syncs as told in
+  §11 (within 15 minutes in the background, at once with the app open).
 
 **New in 0.9.0** (tested on the debug phone)
 - **Sync with ActivityTrack Web**, the organisation's server: pair the phone
@@ -791,8 +797,14 @@ same name are not doubled: they become one, with the server's data.
 change, every 30 seconds while the app is open (for what comes from the web
 or another phone) and every 15 minutes in the background, whenever there is
 a network. Without a network the changes wait and leave when the connection
-is back. Attachment files download on Wi-Fi, or when you open the
+is back. There are no push notifications: a change made on the web arrives
+within 15 minutes, at once with the app open. Attachment files download on Wi-Fi, or when you open the
 attachment. GPS positions stay on the phone: km and times travel.
+
+**Assigned to-dos.** A manager (or an administrator) can create a *To-do*
+on the web and assign it to you: it reaches the phone like your own, you
+work it and close it as usual. Reassigned to someone else, it leaves your
+phone at the next sync.
 
 ![Settings → Sync](img/sync.png)
 
