@@ -752,4 +752,19 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="tag_keep">In den Stammdaten behalten</string>
   <string name="set_tags_free_text">Auch freie Tags</string>
   <string name="set_tags_free_text_hint">An: jeder Tag kann eingegeben werden. Aus: nur die Tags der Stammdaten; freie Tags auf bestehenden Tätigkeiten bleiben.</string>
+  <string name="sec_updates">Aktualisierungen</string>
+  <string name="ch_updates">App-Aktualisierungen</string>
+  <string name="update_title">ActivityTrack-Aktualisierung</string>
+  <string name="update_text">Version %1$s ist verfügbar.</string>
+  <string name="update_text_beta">Betaversion %1$s ist verfügbar.</string>
+  <string name="update_installed">Installierte Version: %1$s</string>
+  <string name="update_from_store">Aus einem Store installiert: Der Store aktualisiert sie.</string>
+  <string name="update_download">Herunterladen</string>
+  <string name="update_none">Keine neuere Version (geprüft %1$s).</string>
+  <string name="update_check_now">Jetzt prüfen</string>
+  <string name="set_update_check">Nach neuen Versionen suchen (einmal täglich, auf GitHub)</string>
+  <string name="set_update_betas">Betaversionen einbeziehen</string>
+  <string name="sync_incompatible_title">Synchronisierung angehalten</string>
+  <string name="sync_incompatible_app">Der ActivityTrack-Web-Server akzeptiert diese App-Version nicht mehr: Aktualisiere ActivityTrack. Die Daten bleiben hier und werden nach der Aktualisierung synchronisiert.</string>
+  <string name="sync_incompatible_server">Diese App ist neuer als der ActivityTrack-Web-Server: Der Server muss aktualisiert werden (sag dem Administrator Bescheid). Die Daten bleiben hier und werden nach der Aktualisierung synchronisiert.</string>
 </resources>

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.sync
 
+import it.infraconsulting.activitytrack.domain.sync.WireVersion
 import android.content.Context
 import android.util.Log
 import androidx.work.BackoffPolicy
@@ -45,9 +46,14 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		val http = account.http() ?: return Result.success()
 		val token = account.token() ?: return Result.success()
 		if (account.revoked.value) return Result.success()
-		/* the plugin holder may have moved (issue #118) */
+		/* the plugin holder may have moved (issue #118); a server that no longer speaks this app's schema says so (SYNC.md §12) */
+		val before = account.incompatible.value
 		account.head()
 		if (account.revoked.value) return Result.success()
+		account.incompatible.value?.let { code ->
+			if (code != before) incompatible(app, code)
+			return Result.success()
+		}
 		val transport = object : SyncTransport {
 			override suspend fun send(method: String, path: String, body: String?): SyncTransport.Reply {
 				val r = http.send(method, "api/v1/$path", body, token)
@@ -77,6 +83,10 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		} catch (e: SyncRevoked) {
 			account.markRevoked()
 			Result.success()
+		} catch (e: it.infraconsulting.activitytrack.data.sync.SyncIncompatible) {
+			/* the periodic sync keeps asking: it goes on once the versions match again */
+			if (account.markIncompatible(e.code)) incompatible(app, e.code)
+			Result.success()
 		} catch (e: IOException) {
 			app.container.sync.run { it.failed("network: ${e.message}") }
 			Result.retry()
@@ -93,6 +103,19 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		val text = (o["policy"] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content ?: return
 		val sig = (o["signature"] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content
 		it.infraconsulting.activitytrack.policy.PolicyLoader.fromServer(app, text.toByteArray(Charsets.UTF_8), sig?.toByteArray(Charsets.UTF_8))
+	}
+
+	/* the sync stops until the app or the server is updated: once per change */
+	private fun incompatible(app: ActivityTrackApp, code: String) {
+		val text = app.getString(if (code == WireVersion.SERVER_TOO_OLD) R.string.sync_incompatible_server else R.string.sync_incompatible_app)
+		val n = android.app.Notification.Builder(app, NotificationChannels.SYNC)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(app.getString(R.string.sync_incompatible_title))
+			.setContentText(text)
+			.setStyle(android.app.Notification.BigTextStyle().bigText(text))
+			.setAutoCancel(true)
+			.build()
+		app.getSystemService(android.app.NotificationManager::class.java).notify(INCOMPATIBLE_NOTICE, n)
 	}
 
 	/*
@@ -125,6 +148,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 	companion object {
 		private const val TAG = "SyncWorker"
 		private const val CONCURRENT_NOTICE = 7301
+		private const val INCOMPATIBLE_NOTICE = 7302
 		private const val NOW = "sync-now"
 		private const val PERIODIC = "sync-periodic"
 		private const val FILES = "files"

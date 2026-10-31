@@ -798,7 +798,14 @@ change, every 30 seconds while the app is open (for what comes from the web
 or another phone) and every 15 minutes in the background, whenever there is
 a network. Without a network the changes wait and leave when the connection
 is back. There are no push notifications: a change made on the web arrives
-within 15 minutes, at once with the app open. Attachment files download on Wi-Fi, or when you open the
+within 15 minutes, at once with the app open.
+
+**Versions.** App and server stay compatible with the two previous versions
+of each other. When the server no longer accepts this version of the app,
+or the app is newer than the server, the sync stops: a notification and the
+Sync page say what to update (the app, or the server through the
+administrator). The data stay on the phone and sync as soon as the versions
+match again. Attachment files download on Wi-Fi, or when you open the
 attachment. GPS positions stay on the phone: km and times travel.
 
 **Assigned to-dos.** A manager (or an administrator) can create a *To-do*
@@ -1107,6 +1114,20 @@ public servers.
 ### Storage
 Data folder, daily backups kept (1–365, default 14). "Back up now" and the
 restore are in More → Import / export.
+
+### Updates
+The installed version and, for the app installed from GitHub, the check of
+newer versions: once a day the app looks at the published releases and,
+when there is a new one, shows it here with **"Download"** and sends a
+notification (one per version). **"Check now"** does not wait for the next
+day. With **"Include the betas"** it shows the test versions too. An app
+installed from a store (Play, F-Droid…) does not check: the store updates
+it.
+
+| Item | Effect | Default |
+|---|---|---|
+| Check for new versions | Once a day, on GitHub. Policy: `updateCheck`. | On |
+| Include the betas | Shows the beta versions too. Policy: `updateBetas`. | Off |
 
 ### Advanced
 

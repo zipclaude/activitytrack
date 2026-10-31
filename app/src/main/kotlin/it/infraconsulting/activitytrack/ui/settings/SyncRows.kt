@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.settings
 
+import it.infraconsulting.activitytrack.domain.sync.WireVersion
 import android.Manifest
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -56,6 +57,7 @@ fun SyncRows() {
 	val pending by app.container.sync.observePending().collectAsState(initial = 0)
 	val state by app.container.sync.observeState().collectAsState(initial = null)
 	val revoked by account.revoked.collectAsState()
+	val incompatible by account.incompatible.collectAsState()
 	val problems by app.container.sync.observeErrors().collectAsState(initial = emptyList())
 	var discarding by remember { mutableStateOf<it.infraconsulting.activitytrack.data.db.SyncErrorEntity?>(null) }
 	val scope = rememberCoroutineScope()
@@ -117,6 +119,12 @@ fun SyncRows() {
 		Info(stringResource(R.string.sync_last), state?.lastSyncUtcMs?.let(::format) ?: stringResource(R.string.sync_never))
 		Info(stringResource(R.string.sync_pending), pending.toString())
 		if (!paired.pluginHolder) Text(stringResource(R.string.plugin_not_holder), style = MaterialTheme.typography.bodySmall)
+		incompatible?.let { code ->
+			Text(
+				stringResource(if (code == WireVersion.SERVER_TOO_OLD) R.string.sync_incompatible_server else R.string.sync_incompatible_app),
+				color = MaterialTheme.colorScheme.error,
+			)
+		}
 		if (revoked) {
 			Text(stringResource(R.string.sync_revoked), color = MaterialTheme.colorScheme.error)
 		} else {
@@ -255,6 +263,8 @@ private fun errorTexts(): (PairException) -> String {
 				PairError.NETWORK -> R.string.sync_err_network
 				PairError.CERTIFICATE -> R.string.sync_err_cert
 				PairError.SERVER -> R.string.sync_err_server
+				PairError.APP_TOO_OLD -> R.string.sync_incompatible_app
+				PairError.SERVER_TOO_OLD -> R.string.sync_incompatible_server
 			},
 		)
 	}

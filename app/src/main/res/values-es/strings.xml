@@ -753,4 +753,19 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="tag_keep">Guardar en los datos maestros</string>
   <string name="set_tags_free_text">También etiquetas libres</string>
   <string name="set_tags_free_text_hint">Activado: se puede escribir cualquier etiqueta. Desactivado: solo las de los datos maestros; las libres ya en las actividades se quedan.</string>
+  <string name="sec_updates">Actualizaciones</string>
+  <string name="ch_updates">Actualizaciones de la app</string>
+  <string name="update_title">Actualización de ActivityTrack</string>
+  <string name="update_text">Está disponible la versión %1$s.</string>
+  <string name="update_text_beta">Está disponible la versión beta %1$s.</string>
+  <string name="update_installed">Versión instalada: %1$s</string>
+  <string name="update_from_store">Instalada desde una tienda: la tienda la actualiza.</string>
+  <string name="update_download">Descargar</string>
+  <string name="update_none">No hay una versión más reciente (comprobado %1$s).</string>
+  <string name="update_check_now">Comprobar ahora</string>
+  <string name="set_update_check">Buscar versiones nuevas (una vez al día, en GitHub)</string>
+  <string name="set_update_betas">Incluir las beta</string>
+  <string name="sync_incompatible_title">Sincronización detenida</string>
+  <string name="sync_incompatible_app">El servidor ActivityTrack Web ya no acepta esta versión de la app: actualiza ActivityTrack. Los datos se quedan aquí y se sincronizan después de la actualización.</string>
+  <string name="sync_incompatible_server">Esta app es más reciente que el servidor ActivityTrack Web: hay que actualizar el servidor (avisa al administrador). Los datos se quedan aquí y se sincronizan después de la actualización.</string>
 </resources>

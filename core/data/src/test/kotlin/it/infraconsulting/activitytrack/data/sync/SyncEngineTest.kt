@@ -35,6 +35,8 @@ class SyncEngineTest {
 		val records = LinkedHashMap<Pair<String, String>, Record>()
 		var rev = 0L
 		var revoked = false
+		/* a server outside this app's schema window (SYNC.md §12) */
+		var incompatible: String? = null
 		/* uids whose changes are refused, as ActivityTrack Web does for a forbidden one */
 		val refuse = HashSet<String>()
 		val files = HashMap<String, ByteArray>()
@@ -70,6 +72,7 @@ class SyncEngineTest {
 
 		override suspend fun send(method: String, path: String, body: String?): SyncTransport.Reply {
 			if (revoked) return SyncTransport.Reply(401, """{"error":"revoked"}""")
+			incompatible?.let { return SyncTransport.Reply(426, """{"error":"$it","server":"2.0.0","schema":4,"minSchema":2}""") }
 			if (path == "sync/head") return SyncTransport.Reply(200, """{"rev":$rev,"serverTime":0,"filesMaxMb":1}""")
 			val out: JsonObject = if (path == "sync/push") {
 				val changes = Json.parseToJsonElement(body!!).jsonObject["changes"]!!.jsonArray.map { it.jsonObject }
@@ -346,5 +349,22 @@ class SyncEngineTest {
 		assertEquals("revoked", a.one("SELECT last_error FROM sync_state"))
 		/* the cursor stays where the last good sync left it */
 		assertEquals(server.rev, a.one("SELECT cursor FROM sync_state") as Long)
+	}
+
+	@Test
+	fun anIncompatibleServerStopsTheSyncAndKeepsTheData() {
+		val a = phone()
+		company(a, "Acme")
+		sync(a)
+		company(a, "Beta")
+		server.incompatible = "app_too_old"
+		val e = assertFailsWith<SyncIncompatible> { sync(a) }
+		assertEquals("app_too_old", e.code)
+		assertEquals("incompatible: app_too_old", a.one("SELECT last_error FROM sync_state"))
+		/* the change waits for the update */
+		assertEquals(1L, a.one("SELECT COUNT(*) FROM sync_change"))
+		server.incompatible = null
+		sync(a)
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
 	}
 }

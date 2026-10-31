@@ -46,11 +46,11 @@ class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	val sync: it.infraconsulting.activitytrack.data.repo.SyncRepository by lazy { it.infraconsulting.activitytrack.data.repo.SyncRepository(database) }
 	val attachments: AttachmentRepository by lazy { AttachmentRepository(database, userDataDir, clock) }
 
+	/* the installed version ("0.9.3", "0.9.3-debug") */
+	val appVersion: String by lazy { appContext.packageManager.getPackageInfo(appContext.packageName, 0).versionName.orEmpty() }
+
 	/* Nominatim policy: identify the application (no personal contact). */
-	val userAgent: String by lazy {
-		val version = appContext.packageManager.getPackageInfo(appContext.packageName, 0).versionName.orEmpty()
-		"ActivityTrack/$version (+https://github.com/zipclaude/activitytrack)"
-	}
+	val userAgent: String by lazy { "ActivityTrack/$appVersion (+https://github.com/zipclaude/activitytrack)" }
 	val nominatim: Nominatim by lazy { Nominatim(userAgent) }
 	val exporter: Exporter by lazy { Exporter(database) }
 	val todos: TodoRepository by lazy { TodoRepository(database, clock) }

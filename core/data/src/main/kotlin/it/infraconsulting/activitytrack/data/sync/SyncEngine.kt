@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.sync
 
+import it.infraconsulting.activitytrack.domain.sync.WireVersion
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -42,6 +43,15 @@ interface SyncDb {
 class SyncRevoked : Exception("revoked")
 
 class SyncFailed(message: String) : Exception(message)
+
+/* the server does not speak this app's schema (426, SYNC.md §12): [code] says which side to update */
+class SyncIncompatible(val code: String) : Exception(code) {
+	companion object {
+		fun of(body: String): SyncIncompatible = SyncIncompatible(
+			runCatching { Json.parseToJsonElement(body).jsonObject["error"]?.jsonPrimitive?.contentOrNull }.getOrNull() ?: WireVersion.APP_TOO_OLD,
+		)
+	}
+}
 
 /*
  * One sync with ActivityTrack Web (issue #114, server SYNC.md §5, §7): the
@@ -90,6 +100,9 @@ class SyncEngine(
 		} catch (e: SyncRevoked) {
 			db.run { it.failed("revoked") }
 			throw e
+		} catch (e: SyncIncompatible) {
+			db.run { it.failed("incompatible: ${e.code}") }
+			throw e
 		} catch (e: SyncFailed) {
 			db.run { it.failed(e.message ?: "error") }
 			throw e
@@ -99,6 +112,7 @@ class SyncEngine(
 	private suspend fun call(method: String, path: String, body: String? = null): JsonObject {
 		val reply = server.send(method, path, body)
 		if (reply.status == 401) throw SyncRevoked()
+		if (reply.status == 426) throw SyncIncompatible.of(reply.body)
 		if (reply.status != 200) throw SyncFailed("HTTP ${reply.status} on $path")
 		return runCatching { json.parseToJsonElement(reply.body).jsonObject }.getOrNull() ?: throw SyncFailed("bad answer on $path")
 	}
@@ -185,6 +199,7 @@ class SyncEngine(
 			val sha = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 			val reply = server.upload("files/${f.uid}", bytes, f.mime, sha)
 			if (reply.status == 401) throw SyncRevoked()
+			if (reply.status == 426) throw SyncIncompatible.of(reply.body)
 			if (reply.status != 200) {
 				errors += "attachment ${f.uid}: upload HTTP ${reply.status}"
 				db.run { it.recordError("attachment", f.uid, "upload HTTP ${reply.status}") }
@@ -199,6 +214,7 @@ class SyncEngine(
 			if ((f.size ?: 0) > budget) continue
 			val (status, bytes) = server.download("files/${f.uid}")
 			if (status == 401) throw SyncRevoked()
+			if (status == 426) throw SyncIncompatible(WireVersion.APP_TOO_OLD)
 			if (bytes == null) {
 				errors += "attachment ${f.uid}: download HTTP $status"
 				continue

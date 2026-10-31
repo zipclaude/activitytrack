@@ -821,7 +821,14 @@ modifica, ogni 30 secondi mentre l'app è aperta (per ciò che arriva dal web
 o da un altro telefono) e ogni 15 minuti in background, appena c'è rete.
 Senza rete le modifiche aspettano e partono al ritorno della connessione.
 Non ci sono notifiche push: una modifica fatta sul web arriva entro 15
-minuti, subito se l'app è aperta. I file degli allegati si scaricano su Wi-Fi, o quando apri l'allegato. Le
+minuti, subito se l'app è aperta.
+
+**Versioni.** App e server restano compatibili con le due versioni
+precedenti l'una dell'altro. Se il server non accetta più questa versione
+dell'app, o se l'app è più recente del server, la sincronizzazione si
+sospende: una notifica e la pagina Sincronizzazione dicono cosa aggiornare
+(l'app, o il server tramite l'amministratore). I dati restano sul telefono e
+si sincronizzano appena le versioni tornano compatibili. I file degli allegati si scaricano su Wi-Fi, o quando apri l'allegato. Le
 posizioni GPS restano sul telefono: viaggiano km e tempi.
 
 **Da fare assegnate.** Un responsabile (o un amministratore) può creare
@@ -1138,6 +1145,19 @@ Predefinito: attivi, server pubblici.
 ### Archiviazione
 Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14).
 "Esegui backup ora" e il ripristino sono in Altro → Importa / esporta.
+
+### Aggiornamenti
+La versione installata e, per l'app installata da GitHub, il controllo delle
+versioni più recenti: una volta al giorno l'app guarda le release pubblicate
+e, se ce n'è una nuova, la mostra qui con **"Scarica"** e manda una notifica
+(una per versione). **"Controlla ora"** non aspetta il giorno dopo. Con
+**"Includi le beta"** mostra anche le versioni di prova. Un'app installata da
+uno store (Play, F-Droid…) non controlla: la aggiorna lo store.
+
+| Voce | Effetto | Predefinito |
+|---|---|---|
+| Controlla le nuove versioni | Una volta al giorno, su GitHub. Policy: `updateCheck`. | Acceso |
+| Includi le beta | Mostra anche le versioni beta. Policy: `updateBetas`. | Spento |
 
 ### Avanzate
 

@@ -36,7 +36,7 @@ data class PairLink(val server: String, val code: String, val pin: String?) {
 	}
 }
 
-enum class PairError { NOT_A_LINK, VERSION, NOT_HTTPS, BAD_PIN, INVALID_CODE, USER_DISABLED, NETWORK, CERTIFICATE, SERVER }
+enum class PairError { NOT_A_LINK, VERSION, NOT_HTTPS, BAD_PIN, INVALID_CODE, USER_DISABLED, NETWORK, CERTIFICATE, SERVER, APP_TOO_OLD, SERVER_TOO_OLD }
 
 class PairException(val error: PairError, detail: String? = null) : Exception(detail ?: error.name)
 
@@ -97,6 +97,8 @@ object PairApi {
 		throw when (error) {
 			"invalid_code" -> PairException(PairError.INVALID_CODE)
 			"user_disabled" -> PairException(PairError.USER_DISABLED)
+			WireVersion.APP_TOO_OLD -> PairException(PairError.APP_TOO_OLD)
+			WireVersion.SERVER_TOO_OLD -> PairException(PairError.SERVER_TOO_OLD)
 			else -> PairException(PairError.SERVER, "HTTP $status ${error.orEmpty()}")
 		}
 	}
