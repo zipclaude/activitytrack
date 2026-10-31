@@ -38,7 +38,8 @@ class ActivityTrackApp : Application() {
 	val secrets: SecretStore by lazy { SecretStore(this) }
 
 	/* pairing with ActivityTrack Web (issue #113) */
-	val syncAccount by lazy { it.infraconsulting.activitytrack.sync.SyncAccount(this, secrets, container.sync, container.userAgent) }
+	val updates by lazy { it.infraconsulting.activitytrack.update.Updates(this) }
+	val syncAccount by lazy { it.infraconsulting.activitytrack.sync.SyncAccount(this, secrets, container.sync, container.userAgent, container.appVersion) }
 
 	/* integration plugins of the data folder and their OAuth logins (issue #48) */
 	val plugins by lazy { it.infraconsulting.activitytrack.connect.plugin.PluginRegistry(this) }
@@ -79,6 +80,11 @@ class ActivityTrackApp : Application() {
 		}
 		/* a new policy.json in the data folder (issue #48) */
 		appScope.launch { it.infraconsulting.activitytrack.policy.PolicyLoader.check(this@ActivityTrackApp) }
+		/* the daily check of newer releases (SYNC.md §12.4), for an app not from a store */
+		appScope.launch {
+			container.settings.settings.map { it.updateCheck && updates.applies }.distinctUntilChanged()
+				.collect { on -> it.infraconsulting.activitytrack.update.Updates.schedule(this@ActivityTrackApp, on) }
+		}
 		/* the backup follows its frequency and hour (issue #44) */
 		appScope.launch {
 			container.settings.settings.map { it.backupEveryHours to it.backupHour }.distinctUntilChanged()

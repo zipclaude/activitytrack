@@ -159,6 +159,8 @@ are written back at every read, so they cannot drift.
 |---|---|---|
 | `editableTimes` | true/false | |
 | `tagsFreeText` | true/false | false: only the tags of the master data (issue #133) |
+| `updateCheck` | true/false | daily check of newer releases on GitHub, apps not installed from a store (0.9.3) |
+| `updateBetas` | true/false | the check shows betas (pre-releases) too (0.9.3) |
 | `confirmIntervalMin` | minutes | 10–240 |
 | `maxConfirmations` | number | 0–100 (0 = unlimited) |
 | `pauseIntervalMin` | minutes | 10–120 |

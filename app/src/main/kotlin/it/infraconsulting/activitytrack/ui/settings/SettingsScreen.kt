@@ -102,6 +102,8 @@ enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = tr
 	SYNC(R.string.sec_sync, R.drawable.ic_menu_sync, form = false, essential = true),
 	ONLINE(R.string.sec_online, R.drawable.ic_menu_public),
 	STORAGE(R.string.sec_storage, R.drawable.ic_menu_folder),
+	/* newer releases on GitHub (SYNC.md §12.4) */
+	UPDATES(R.string.sec_updates, R.drawable.ic_restore),
 	ADVANCED(R.string.sec_advanced, R.drawable.ic_menu_tune),
 }
 
@@ -188,6 +190,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var compact by remember { mutableStateOf(initial.compactDisplay) }
 	var editableTimes by remember { mutableStateOf(initial.editableTimes) }
 	var tagsFreeText by remember { mutableStateOf(initial.tagsFreeText) }
+	var updateCheck by remember { mutableStateOf(initial.updateCheck) }
+	var updateBetas by remember { mutableStateOf(initial.updateBetas) }
 	var callsIn by remember { mutableStateOf(initial.callsIncoming) }
 	var callsOut by remember { mutableStateOf(initial.callsOutgoing) }
 	var callPause by remember { mutableStateOf(initial.callAutoPause) }
@@ -235,6 +239,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		compactDisplay = compact,
 		editableTimes = editableTimes,
 		tagsFreeText = tagsFreeText,
+		updateCheck = updateCheck,
+		updateBetas = updateBetas,
 		callsIncoming = callsIn,
 		callsOutgoing = callsOut,
 		callAutoPause = callPause,
@@ -326,6 +332,11 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				}
 				SettingsSection.CALENDAR -> CalendarRows()
 				SettingsSection.SYNC -> SyncRows()
+				SettingsSection.UPDATES -> {
+					UpdateRows()
+					PolicySetting("updateCheck") { SwitchRow(stringResource(R.string.set_update_check), updateCheck) { updateCheck = it } }
+					PolicySetting("updateBetas") { SwitchRow(stringResource(R.string.set_update_betas), updateBetas) { updateBetas = it } }
+				}
 				/* language names in their own language, as in the system pickers */
 				SettingsSection.DICTATION -> PolicySetting("dictationLanguage") {
 					ChoiceField(
