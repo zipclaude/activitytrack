@@ -52,6 +52,7 @@ object PolicyCatalogJson {
 								s.max?.let { put("max", JsonPrimitive(it)) }
 								s.allowed?.let { a -> put("allowed", JsonArray(a.map { v -> if (v is Number) JsonPrimitive(v) else JsonPrimitive(v.toString()) })) }
 								if (s.multiple) put("multiple", JsonPrimitive(true))
+								if (s.since != SettingSpec.SINCE_SYNC) put("since", JsonPrimitive(s.since))
 								put("doc", describe("settings", s.key))
 							},
 						)

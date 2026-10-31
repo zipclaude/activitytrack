@@ -19,7 +19,13 @@ import kotlinx.coroutines.withContext
  * trusted by its public key alone, whatever its certificate or host name;
  * without one, the system's trust store and host name check apply.
  */
-class SyncHttp(private val server: String, private val pin: String?, private val userAgent: String) {
+class SyncHttp(
+	private val server: String,
+	private val pin: String?,
+	private val userAgent: String,
+	/* the app's version and wire schema, on every request (SYNC.md §12) */
+	private val always: Map<String, String> = emptyMap(),
+) {
 	class Reply(val status: Int, val body: String)
 
 	suspend fun send(method: String, path: String, body: String? = null, token: String? = null): Reply {
@@ -48,7 +54,7 @@ class SyncHttp(private val server: String, private val pin: String?, private val
 			c.instanceFollowRedirects = false
 			c.setRequestProperty("User-Agent", userAgent)
 			if (token != null) c.setRequestProperty("Authorization", "Bearer $token")
-			for ((k, v) in headers) c.setRequestProperty(k, v)
+			for ((k, v) in always + headers) c.setRequestProperty(k, v)
 			if (body != null) {
 				c.doOutput = true
 				c.setFixedLengthStreamingMode(body.size)

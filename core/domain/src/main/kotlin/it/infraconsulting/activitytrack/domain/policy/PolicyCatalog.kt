@@ -115,13 +115,20 @@ class SettingSpec(
 	val allowed: List<Any>? = null,
 	/* a comma list of [allowed] values */
 	val multiple: Boolean = false,
+	/* the first app version that knows the key: an older one refuses a policy with it (SYNC.md §12.3) */
+	val since: String = SINCE_SYNC,
 ) {
+	companion object {
+		/* the keys as old as the sync with ActivityTrack Web */
+		const val SINCE_SYNC = "0.9.0"
+	}
+
 	enum class Kind { BOOLEAN, INT, DOUBLE, STRING }
 }
 
 object SettingsCatalog {
-	private fun bool(key: String, apply: (AppSettings, Boolean) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.BOOLEAN, { null }, { s, v -> apply(s, v as Boolean) })
+	private fun bool(key: String, since: String = SettingSpec.SINCE_SYNC, apply: (AppSettings, Boolean) -> AppSettings) =
+		SettingSpec(key, SettingSpec.Kind.BOOLEAN, { null }, { s, v -> apply(s, v as Boolean) }, since = since)
 
 	private fun int(key: String, range: IntRange, apply: (AppSettings, Int) -> AppSettings) =
 		SettingSpec(key, SettingSpec.Kind.INT, { v -> if ((v as Int) in range) null else "must be in ${range.first}..${range.last}" }, { s, v -> apply(s, v as Int) }, min = range.first, max = range.last)
@@ -160,6 +167,8 @@ object SettingsCatalog {
 	val all: List<SettingSpec> = listOf(
 		bool("editableTimes") { s, v -> s.copy(editableTimes = v) },
 		bool("tagsFreeText") { s, v -> s.copy(tagsFreeText = v) },
+		bool("updateCheck", since = "0.9.3") { s, v -> s.copy(updateCheck = v) },
+		bool("updateBetas", since = "0.9.3") { s, v -> s.copy(updateBetas = v) },
 		int("confirmIntervalMin", 10..240) { s, v -> s.copy(confirmIntervalMin = v) },
 		int("maxConfirmations", 0..100) { s, v -> s.copy(maxConfirmations = v) },
 		int("pauseIntervalMin", 10..120) { s, v -> s.copy(pauseIntervalMin = v) },

@@ -139,4 +139,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" "ActivityTrack-${TAG#v}.apk" build/manual/*.pdf --title "ActivityTrack ${TAG#v}" --generate-notes
+        # a tag with a suffix (v1.1.0-beta.1) is a beta: a pre-release, shown only to who subscribed (SYNC.md §12.4)
+        run: |
+          case "$TAG" in *-*) pre=--prerelease ;; *) pre= ;; esac
+          gh release create "$TAG" "ActivityTrack-${TAG#v}.apk" build/manual/*.pdf --title "ActivityTrack ${TAG#v}" --generate-notes $pre

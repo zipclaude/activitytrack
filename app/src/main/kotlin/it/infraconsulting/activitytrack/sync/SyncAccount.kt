@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.sync
 
+import it.infraconsulting.activitytrack.domain.sync.WireVersion
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
@@ -28,7 +29,13 @@ import kotlinx.serialization.json.long
  * SecretStore (Keystore-encrypted, never in backups), the server address
  * also in sync_state for the engine (issue #114).
  */
-class SyncAccount(private val context: Context, private val secrets: SecretStore, private val dao: SyncRepository, private val userAgent: String) {
+class SyncAccount(
+	private val context: Context,
+	private val secrets: SecretStore,
+	private val dao: SyncRepository,
+	private val userAgent: String,
+	private val appVersion: String,
+) {
 	private val _info = MutableStateFlow(load())
 	val info: StateFlow<SyncAccountInfo?> = _info.asStateFlow()
 
@@ -39,6 +46,22 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 	fun markRevoked() {
 		secrets.putApp(REVOKED, "1")
 		_revoked.value = true
+	}
+
+	/*
+	 * The server does not speak this app's schema (426, SYNC.md §12):
+	 * WireVersion.APP_TOO_OLD or SERVER_TOO_OLD until a sync goes through
+	 * again. The data stay; the periodic sync keeps asking.
+	 */
+	private val _incompatible = MutableStateFlow(secrets.getApp(INCOMPATIBLE))
+	val incompatible: StateFlow<String?> = _incompatible.asStateFlow()
+
+	/* true when [code] is new: one notification per change */
+	fun markIncompatible(code: String?): Boolean {
+		if (_incompatible.value == code) return false
+		secrets.putApp(INCOMPATIBLE, code)
+		_incompatible.value = code
+		return code != null
 	}
 
 	/* a policy from the server is in force: policy.json in the data folder is ignored (issue #117) */
@@ -67,6 +90,11 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 			markRevoked()
 			return null
 		}
+		if (r.status == 426) {
+			markIncompatible(it.infraconsulting.activitytrack.data.sync.SyncIncompatible.of(r.body).code)
+			return null
+		}
+		if (r.status == 200) markIncompatible(null)
 		val o = runCatching { PairApi.json.parseToJsonElement(r.body).jsonObject }.getOrNull() ?: return null
 		o["pluginHolder"]?.jsonPrimitive?.booleanOrNull?.let { holder ->
 			val info = _info.value
@@ -89,7 +117,7 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 
 	fun pin(): String? = secrets.getApp(PIN)
 
-	fun http(): SyncHttp? = _info.value?.let { SyncHttp(it.server, pin(), userAgent) }
+	fun http(): SyncHttp? = _info.value?.let { SyncHttp(it.server, pin(), userAgent, WireVersion.headers(appVersion)) }
 
 	private fun load(): SyncAccountInfo? = runCatching {
 		secrets.getApp(INFO)?.let { PairApi.json.decodeFromString(SyncAccountInfo.serializer(), it) }
@@ -100,10 +128,9 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 
 	/* pairs with the server of [link]; throws PairException */
 	suspend fun pair(link: PairLink): SyncAccountInfo {
-		val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
-		val request = PairRequest(link.code, deviceName(), "${Build.MANUFACTURER} ${Build.MODEL}".trim(), version)
+		val request = PairRequest(link.code, deviceName(), "${Build.MANUFACTURER} ${Build.MODEL}".trim(), appVersion)
 		val reply = try {
-			SyncHttp(link.server, link.pin, userAgent).send("POST", "api/v1/pair", PairApi.request(request))
+			SyncHttp(link.server, link.pin, userAgent, WireVersion.headers(appVersion)).send("POST", "api/v1/pair", PairApi.request(request))
 		} catch (e: SSLException) {
 			throw PairException(PairError.CERTIFICATE, e.message)
 		} catch (e: GeneralSecurityException) {
@@ -130,6 +157,7 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		dao.setServer(link.server)
 		secrets.putApp(REVOKED, null)
 		_revoked.value = false
+		markIncompatible(null)
 		_info.value = info
 		return info
 	}
@@ -140,6 +168,7 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		secrets.putApp(PIN, null)
 		secrets.putApp(INFO, null)
 		secrets.putApp(REVOKED, null)
+		markIncompatible(null)
 		/* the policy.json of the data folder applies again */
 		secrets.putApp(SERVER_POLICY, null)
 		secrets.putApp(IGNORED_FILE, null)
@@ -156,6 +185,7 @@ class SyncAccount(private val context: Context, private val secrets: SecretStore
 		private const val PIN = "sync.pin"
 		private const val INFO = "sync.info"
 		private const val REVOKED = "sync.revoked"
+		private const val INCOMPATIBLE = "sync.incompatible"
 		private const val SERVER_POLICY = "sync.policy"
 		private const val IGNORED_FILE = "sync.policyFileIgnored"
 	}
