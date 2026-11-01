@@ -1,7 +1,24 @@
-Versione 0.9.1 (ottobre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.4-beta1 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.4-beta1** (provata sul telefono di debug)
+- Impostazioni: il pulsante **"Salva"** resta sopra la tastiera mentre si
+  scrive in un campo (§14).
+- Con ActivityTrack Web 0.9.4 la pagina del web si chiama **Dispositivi**: oltre
+  ai telefoni si associano anche i PC con **ActivityTrack Desktop**, l'app per
+  l'area di notifica di Linux e Windows (§11).
+
+**Novità della 0.9.3** (provata sul telefono di debug, tranne il controllo degli
+aggiornamenti)
+- **Versioni compatibili**: a ogni sincronizzazione app e server si dicono la
+  versione. Se il server non accetta più questa versione, o è il server a
+  essere indietro, la sincronizzazione si sospende con una notifica che dice
+  cosa aggiornare; i dati restano sul telefono (§11).
+- **Aggiornamenti**: l'app installata da GitHub controlla una volta al giorno
+  se c'è una versione nuova e la segnala; le beta solo a chi le sceglie (§17,
+  *Aggiornamenti*).
 
 **Novità della 0.9.1**
 - Con ActivityTrack Web: le voci **Da fare assegnate** da un responsabile
@@ -800,8 +817,9 @@ dati del telefono, li mostra nel browser (anche a chi rendiconta, in sola
 lettura) e li allinea fra i telefoni dello stesso utente. Senza server l'app
 funziona come sempre.
 
-**Associare il telefono.** Sul web: *Telefoni* → **"Associa un telefono"**
-mostra un codice QR, valido 10 minuti e per una sola volta. Nell'app:
+**Associare il telefono.** Sul web: *Dispositivi* → **"Associa un dispositivo"**
+(fino ad ActivityTrack Web 0.9.3: *Telefoni* → "Associa un telefono") mostra
+un codice QR, valido 10 minuti e per una sola volta. Nell'app:
 Impostazioni → **Sincronizzazione** → **"Inquadra il codice QR"** (la prima
 volta chiede il permesso della fotocamera), oppure **"Incolla il
 collegamento"** se il codice è arrivato come testo. Il telefono chiede
@@ -811,6 +829,12 @@ un'autorità che il telefono conosce, da quel momento il telefono si fida
 solo della chiave contenuta nel codice (**"chiave fissata"**). Un codice
 scaduto o già usato dà "Il codice è scaduto o già usato: generane uno nuovo
 dalla pagina web".
+
+**Il PC.** Dalla stessa pagina si associa anche un PC con **ActivityTrack
+Desktop**, l'app per l'area di notifica di Linux e Windows: si incolla il
+collegamento mostrato sotto il codice. Attività e *Da fare* avviati sul PC
+compaiono sul telefono alla sincronizzazione successiva, e viceversa; i
+promemoria arrivano su entrambi. Un PC non manda mai ai gestionali.
 
 **La prima sincronizzazione** manda al server tutto ciò che il telefono ha
 e riceve ciò che il server ha già. Aziende, clienti, ruoli e tag con lo
