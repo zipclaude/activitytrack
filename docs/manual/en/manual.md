@@ -1,7 +1,22 @@
-Version 0.9.1 (October 2026). Please report any difference between this
+Version 0.9.4-beta1 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.4-beta1** (tested on the debug phone)
+- Settings: the **"Save"** button stays above the keyboard while typing in a
+  field (§14).
+- With ActivityTrack Web 0.9.4 the web page is called **Dispositivi**
+  (devices): besides phones, PCs with **ActivityTrack Desktop**, the app for
+  the notification area of Linux and Windows, pair there too (§11).
+
+**New in 0.9.3** (tested on the debug phone, except the update check)
+- **Compatible versions**: at every sync app and server tell each other their
+  version. When the server no longer accepts this version, or the server is
+  the one behind, the sync stops with a notification saying what to update;
+  the data stay on the phone (§11).
+- **Updates**: the app installed from GitHub checks once a day for a new
+  version and tells it; betas only to who chooses them (§17, *Updates*).
 
 **New in 0.9.1**
 - With ActivityTrack Web: **to-dos assigned** by a manager reach the phone
@@ -779,8 +794,9 @@ phone's data, shows it in the browser (also, read-only, to whoever does the
 accounting) and keeps the same user's phones in step. Without a server the
 app works as always.
 
-**Pairing the phone.** On the web: *Phones* → **"Pair a phone"** shows a QR
-code, valid for 10 minutes and for one use. In the app: Settings →
+**Pairing the phone.** On the web: *Dispositivi* → **"Associa un dispositivo"**
+(devices → pair a device; up to ActivityTrack Web 0.9.3: *Phones* → "Pair a
+phone") shows a QR code, valid for 10 minutes and for one use. In the app: Settings →
 **Sync** → **"Scan the QR code"** (the first time it asks for the camera
 permission), or **"Paste the link"** if the code came as text. The phone
 asks **"Pair with this server?"**: if it was paired with another server,
@@ -788,6 +804,12 @@ that pairing ends; if the server's certificate is not from an authority the
 phone knows, from then on the phone trusts only the key in the code
 (**"pinned key"**). An expired or used code gives "The code has expired or
 was already used: make a new one on the web page".
+
+**The PC.** A PC with **ActivityTrack Desktop**, the app for the
+notification area of Linux and Windows, pairs from the same page: paste the
+link shown below the code. Activities and *to-dos* started on the PC show on
+the phone at the next sync, and the other way round; the reminders come on
+both. A PC never sends to the management systems.
 
 **The first sync** sends the server everything the phone has and receives
 what the server already has. Companies, clients, roles and tags with the
