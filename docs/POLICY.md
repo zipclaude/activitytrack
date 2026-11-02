@@ -84,7 +84,7 @@ cannot be switched off.
 | `ignoreTodos` | ignoring to-dos (swipe, button) |
 | `deleteTodos` | deleting to-dos made by hand |
 | `deleteEntries` | deleting activities |
-| `concurrentEntries` | leaving an activity running when another starts (it is closed or suspended) |
+| `concurrentEntries` | leaving an activity running when another starts or resumes (off: the others are suspended, a paused one stopped; issue #132) |
 | `travel` | travels (start buttons, "+ Travel") |
 | `expenses` | expenses |
 | `materials` | consumables |
