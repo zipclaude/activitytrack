@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.14 (2026-10-19, release 0.5.0: M14–M19, private calendar events). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.15 (2026-11-02, release 0.9.4: sync with ActivityTrack Web, M25). Application ID `it.infraconsulting.activitytrack`.
 
 Android app for freelancers who work for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -20,6 +20,7 @@ produce reports without having to remember anything afterwards.
 | Backup | daily: `VACUUM INTO` snapshot, zipped in `backup/`, retention N |
 | UI languages | it, en, de, es (per-app language) |
 | Online services | Nominatim (reverse geocoding), OSRM (road distance), OSM tiles — each optional, endpoint configurable |
+| Sync server | optional: ActivityTrack Web (own server, Debian packages), paired by QR or link; periodic sync, no push services (§8.3) |
 | Speech-to-text | Android `SpeechRecognizer` (on-device when available); offline option Vosk / whisper.cpp |
 | OCR | Tesseract (tesseract4android) |
 
@@ -235,6 +236,43 @@ Planned open to-dos become tentative events ("Client – Title") up to a year
 ahead; done ones leave the calendar. The last description line carries
 hashtags per kind of time (#lavoro #viaggio #pausa, #pianificata; always Italian).
 
+### 8.3 Sync with ActivityTrack Web (M25, 0.9)
+
+Optional: without a server the app works alone, as before.
+
+- **Pairing**: on the web *Dispositivi → Associa un dispositivo* shows a QR
+  code and a link (one use, short-lived); the app scans or pastes it. The
+  server keeps only a hash of the device's token; a revoked device stops
+  syncing and keeps its data.
+- **What travels**: master data, entries with segments, expenses, tags,
+  references and attachments, to-dos, days off, plugin lists. Never: GPS
+  samples, the call log, the plugins' export bookkeeping.
+- **When**: a few seconds after a change, every 30 s (`sync/head`) while
+  the app is open, every 15 min in background; no push services.
+- **Records** keep a canonical UUID; changes are logged by SQLite triggers
+  and pushed with only the fields that differ from the last known server
+  version; pulls go by cursor. Per field the latest change wins; a change
+  still pending on the phone is kept.
+- **Master data**: central ones (organisation, edited by administrators and
+  managers) and personal ones (the user's, if the policy allows); at the
+  first sync a personal record of the same name takes the central one's uid.
+- **Conflicts**: overlapping segments after a sync mark the entry "to
+  check"; what the server refuses is listed with "discard the change".
+  Without `concurrentEntries` two running entries after a pull: the older
+  ones are suspended, with a notification.
+- **Attachments**: the record first, the file apart; downloads on unmetered
+  networks or when opened; files above the server's limit stay on the phone.
+- **Policy** from the server (organisation, profile, user, merged); the
+  local `policy.json` is ignored while paired (docs/POLICY.md §1).
+- **Plugins** with more devices: only the one chosen on the web (*Invia ai
+  gestionali*) sends to the management systems.
+- **Versions**: requests carry the app and wire-schema versions; a server
+  too old or an app too old answers 426 and the sync stops with a message
+  until one is updated (web docs/SYNC.md §12).
+
+Protocol: `activitytrack-web` docs/SYNC.md. Implementation: docs/DESIGN.md
+§4 (schemas 16–20).
+
 ### 8.2 Consultation and navigation
 
 **Home (M10)**: the big card always shows: the most recent open entry, or the
@@ -327,6 +365,7 @@ plans a new to-do there.
 | M6 | consultation of saved entries: list, day agenda, week and month calendars |
 | M7 | user interface polish |
 | M8 | review fixes, backup restore, user manual |
+| M25 | sync with ActivityTrack Web (§8.3; issues #111–#119, #133), version checks and update check (0.9.x) |
 | M19 | tag filters: agenda (all views), day report, export (CSV and interchange entries) |
 | M18 | time grid (backlog 3, mockup B): 5-minute cells, 12-hour window, range by drag or two taps with other segments hatched; exact time via the clock |
 | M17 | editable times setting: chosen start and end, segment editing only when on |

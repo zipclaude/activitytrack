@@ -136,7 +136,11 @@ pushed and give way to the server's next version. v19 (issue #119): `time_entry.
 once fixed, shown on the entry; `sync_error` lists what the last sync could
 not send or take, with "discard the change" (back to the server's version);
 two running activities after a sync, without `concurrentEntries`: the older
-ones are suspended and a notification on the "sync" channel says so.
+ones are suspended and a notification on the "sync" channel says so. v20 (issue #133): predefined `tag` master data
+(name, colour, archived, central) beside the entry tags. Without
+`concurrentEntries` every command that puts an entry to work or travel
+suspends the other active ones, a paused one stops (`EntryRepository.apply`,
+issue #132): the Start screen, Home, widget, tile and notification alike.
 `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)
