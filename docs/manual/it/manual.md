@@ -922,6 +922,18 @@ suoi collaboratori, o per usarla in un altro settore ("Cantiere" al posto di
   salva la policy precedente in `policy_old.json`, poi la applica e lo
   notifica. Se non è valida, la notifica elenca gli errori con la riga e la
   ignora finché il file non cambia.
+- **Policy non firmata: prima la conferma.** Una nuova `policy.json` non
+  firmata non viene applicata da sola: una notifica ("Applicare la nuova
+  policy?") porta a una finestra, che compare anche ogni volta che l'app
+  torna in primo piano, con il nome della policy, cosa cambia rispetto a
+  quella in vigore (una riga per chiave: `+` aggiunta, `−` tolta,
+  `vecchio → nuovo`) e la sua impronta SHA-256 (l'inizio, **"Mostrala
+  tutta"** per l'intera; la stessa di `sha256sum policy.json` su un
+  computer). **"Applica"** la applica come sopra; **"Rifiuta"** lascia la
+  policy in vigore e il file non viene più chiesto finché non cambia
+  (compare come rifiutato nella cronologia delle policy); **"Più tardi"**
+  la richiede la volta successiva. Una policy firmata, e quella del
+  server, non chiedono conferma.
 - **Firma** (facoltativa): `policy.json.sig`, creata con
   `scripts/sign-policy.sh` e un certificato di una CA di cui il telefono si
   fida. La prima policy firmata fissa il nome (CN) del firmatario: da lì in
@@ -958,6 +970,16 @@ nella cartella `plugins` del repository; formato in `docs/PLUGINS.md`).
   invia sempre o mai, secondo le opzioni del plugin; senza rete aspetta.
 - Con una policy firmata anche i plugin devono essere firmati con lo stesso
   nome (`<nome>.json.sig`).
+- **Plugin non firmato: prima la conferma.** Un file di plugin nuovo, o con
+  indirizzi (URL di base, indirizzi di login e dei token, ogni altro
+  indirizzo nel file) cambiati rispetto alla versione confermata, non viene
+  usato finché non lo confermi: una notifica porta a una finestra, che
+  compare anche quando l'app torna in primo piano, con gli indirizzi (`+`
+  nuovi, `−` non più usati) e l'impronta SHA-256 del file. **"Usa"** lo
+  attiva; **"Rifiuta"** lo lascia inutilizzato e non viene più chiesto
+  finché il file non cambia; **"Più tardi"** lo richiede la volta
+  successiva. Un file cambiato con gli stessi indirizzi viene usato subito.
+  I plugin configurati prima di questa versione vengono chiesti una volta.
 - Ogni gestionale ha una guida a parte (per Antares: *Integrazione Antares*).
 
 ---

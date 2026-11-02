@@ -649,6 +649,24 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="policy_applied_unsigned">Non firmata. Prima è stato fatto un backup; la policy precedente è in policy_old.json.</string>
   <string name="policy_more_errors">… e altri %1$d</string>
   <string name="policy_too_large">più grande di 1 MB</string>
+  <!-- security review: confirmation of unsigned policy and plugins -->
+  <string name="trust_policy_title">Applicare la nuova policy?</string>
+  <string name="trust_policy_notice">policy.json non è firmata (impronta %1$s…): tocca per controllarla. Non viene applicata finché non confermi.</string>
+  <string name="trust_policy_intro">policy.json nella cartella dati non è firmata. Applicala solo se sai da dove viene: cambia impostazioni, funzioni e gli indirizzi usati dall\'app.</string>
+  <string name="trust_policy_name">Policy: %1$s</string>
+  <string name="trust_no_changes">Nulla cambia rispetto alla policy in vigore.</string>
+  <string name="trust_plugin_title_new">Usare il nuovo plugin %1$s?</string>
+  <string name="trust_plugin_title_changed">Plugin %1$s: indirizzi cambiati</string>
+  <string name="trust_plugin_notice">plugins/%1$s non è firmato (impronta %2$s…): tocca per controllarlo. Non viene usato finché non confermi.</string>
+  <string name="trust_plugin_intro_new">plugins/%1$s nella cartella dati non è firmato. Usalo solo se sai da dove viene: l\'app manda attività e credenziali a questi indirizzi.</string>
+  <string name="trust_plugin_intro_changed">plugins/%1$s ora manda attività e credenziali ad altri indirizzi rispetto alla versione che hai confermato. Conferma solo se ti aspettavi questa modifica.</string>
+  <string name="trust_fingerprint">Impronta SHA-256</string>
+  <string name="trust_show_full">Mostrala tutta</string>
+  <string name="trust_apply">Applica</string>
+  <string name="trust_use">Usa</string>
+  <string name="trust_refuse">Rifiuta</string>
+  <string name="trust_later">Più tardi</string>
+  <string name="trust_refused_error">rifiutata sul telefono</string>
   <!-- issue #48 plugins -->
   <string name="plugin_refused_title">Plugin %1$s rifiutato</string>
   <string name="plugin_logged_in">Accesso a %1$s eseguito</string>

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.connect.plugin
 
+import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import androidx.core.content.edit
@@ -15,11 +16,13 @@ import it.infraconsulting.activitytrack.domain.plugin.PluginClient
 import it.infraconsulting.activitytrack.domain.plugin.PluginEnv
 import it.infraconsulting.activitytrack.domain.plugin.PluginParser
 import it.infraconsulting.activitytrack.domain.plugin.PluginResult
+import it.infraconsulting.activitytrack.domain.plugin.PluginTrust
 import it.infraconsulting.activitytrack.domain.plugin.StaticAuthorizer
 import it.infraconsulting.activitytrack.domain.policy.PolicyError
 import it.infraconsulting.activitytrack.domain.policy.PolicyGate
 import it.infraconsulting.activitytrack.domain.policy.PolicySignature
 import it.infraconsulting.activitytrack.policy.PolicyLoader
+import it.infraconsulting.activitytrack.policy.TrustPrompts
 import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -36,7 +39,10 @@ import kotlinx.serialization.json.JsonObject
  * read with the policy check (start, foreground). A policy listing
  * integrations allows only those, enabled; with a signed policy in force
  * every plugin must carry <file>.sig by the same CN (owner, answer 2).
- * A refused file is notified once, until it changes.
+ * A refused file is notified once, until it changes. An unsigned plugin,
+ * new or with other addresses than the version last confirmed, waits for
+ * the user's confirmation (PluginTrust, TrustPrompts) and is not used
+ * until then.
  */
 class PluginRegistry(private val app: ActivityTrackApp) {
 	private val _plugins = MutableStateFlow<Map<String, Plugin>>(emptyMap())
@@ -44,6 +50,9 @@ class PluginRegistry(private val app: ActivityTrackApp) {
 
 	/* files refused, by fingerprint: notified once */
 	private val seen = app.getSharedPreferences("plugins_refused", Context.MODE_PRIVATE)
+
+	/* the user's answers per file: "confirmed/<file>" (PluginTrust.Confirmed), "refused/<file>" and "asked/<file>" (fingerprints) */
+	private val trust = app.getSharedPreferences("plugins_trust", Context.MODE_PRIVATE)
 
 	fun plugin(id: String): Plugin? = _plugins.value[id]
 
@@ -59,6 +68,7 @@ class PluginRegistry(private val app: ActivityTrackApp) {
 		val pinned = c.policies.gateState().pinnedCn
 		val files = c.userDataDir.list(tree, UserDataDir.Sub.PLUGINS).associateBy { it.name }
 		val out = LinkedHashMap<String, Plugin>()
+		val asks = ArrayList<TrustPrompts.PluginPrompt>()
 		for ((name, file) in files.toSortedMap()) {
 			if (!name.endsWith(".json") || (allowed != null && name !in allowed))
 				continue
@@ -83,11 +93,50 @@ class PluginRegistry(private val app: ActivityTrackApp) {
 				continue
 			}
 			seen.edit { remove(name) }
-			val p = (PluginParser.parse(bytes.toString(Charsets.UTF_8), name.removeSuffix(".json")) as PluginResult.Valid).plugin
-			out[p.id] = p
+			val text = bytes.toString(Charsets.UTF_8)
+			val p = (PluginParser.parse(text, name.removeSuffix(".json")) as PluginResult.Valid).plugin
+			/* past check(), a pinned signer means this file is signed by it */
+			val endpoints = PluginTrust.endpoints(text)
+			when (val d = PluginTrust.decide(fingerprint, endpoints, PluginTrust.decode(trust.getString("confirmed/$name", null)), trust.getString("refused/$name", null), pinned != null)) {
+				is PluginTrust.Decision.Use -> {
+					if (d.record)
+						trust.edit { putString("confirmed/$name", PluginTrust.encode(PluginTrust.Confirmed(fingerprint, endpoints))) }
+					out[p.id] = p
+				}
+				is PluginTrust.Decision.Ask -> {
+					asks += TrustPrompts.PluginPrompt(name, p.name.ifEmpty { p.id }, fingerprint, endpoints, d.isNew, d.added, d.removed)
+					if (trust.getString("asked/$name", null) != fingerprint) {
+						trust.edit { putString("asked/$name", fingerprint) }
+						PolicyLoader.notify(app, app.getString(if (d.isNew) R.string.trust_plugin_title_new else R.string.trust_plugin_title_changed, p.name.ifEmpty { p.id }),
+							app.getString(R.string.trust_plugin_notice, name, fingerprint.take(16)), name.hashCode())
+					}
+					Log.i(TAG, "$name waits for confirmation")
+				}
+				PluginTrust.Decision.Refused -> Log.i(TAG, "$name refused by the user")
+			}
 		}
 		_plugins.value = out
+		app.trust.plugins.value = asks
 		Log.i(TAG, "plugins: ${out.keys.joinToString().ifEmpty { "none" }}")
+	}
+
+	/* The user confirmed [p]: its addresses become the ones confirmed for the file. */
+	suspend fun confirm(p: TrustPrompts.PluginPrompt) {
+		trust.edit {
+			putString("confirmed/${p.file}", PluginTrust.encode(PluginTrust.Confirmed(p.fingerprint, p.endpoints)))
+			remove("refused/${p.file}")
+		}
+		app.getSystemService(NotificationManager::class.java).cancel(p.file.hashCode())
+		Log.i(TAG, "${p.file} ${p.fingerprint} confirmed by the user")
+		PolicyLoader.reloadPlugins(app)
+	}
+
+	/* The user refused [p]: not used, not asked again until the file changes. */
+	suspend fun decline(p: TrustPrompts.PluginPrompt) {
+		trust.edit { putString("refused/${p.file}", p.fingerprint) }
+		app.getSystemService(NotificationManager::class.java).cancel(p.file.hashCode())
+		Log.i(TAG, "${p.file} ${p.fingerprint} refused by the user")
+		PolicyLoader.reloadPlugins(app)
 	}
 
 	private fun check(name: String, bytes: ByteArray, sig: ByteArray?, pinned: String?): List<PolicyError> {

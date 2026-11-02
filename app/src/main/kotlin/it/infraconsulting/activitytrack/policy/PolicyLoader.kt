@@ -6,11 +6,13 @@ import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.backup.BackupWorker
 import it.infraconsulting.activitytrack.data.storage.DatabaseBackup
+import it.infraconsulting.activitytrack.domain.policy.PolicyChanges
 import it.infraconsulting.activitytrack.domain.policy.PolicyError
 import it.infraconsulting.activitytrack.domain.policy.PolicyGate
 import it.infraconsulting.activitytrack.domain.policy.PolicyParser
@@ -34,7 +36,10 @@ import kotlinx.coroutines.withContext
  * extra backup (kept), the policy in force dumped to policy_old.json, the
  * new one stored and its settings written, a notification with the
  * summary. A refused file: a notification with the reasons, then ignored
- * until it changes.
+ * until it changes. An unsigned file waits for the user's confirmation
+ * (TrustPrompts; a notification leads there); refused by the user, it is
+ * recorded as refused. The server's policy needs none (trusted through the
+ * pairing).
  */
 object PolicyLoader {
 	private const val TAG = "PolicyLoader"
@@ -42,13 +47,21 @@ object PolicyLoader {
 	const val SIGNATURE = "policy.json.sig"
 	const val OLD = "policy_old.json"
 	private const val NOTIFICATION_ID = 48_000
+	private const val TRUST_PREFS = "policy_trust"
+	private const val ASKED = "asked"
 
 	private val lock = Mutex()
 
-	suspend fun check(context: Context) = lock.withLock {
+	/* the unsigned policy.json waiting for the user, found by the run under way */
+	private var asking: TrustPrompts.PolicyPrompt? = null
+
+	/* [confirmed]: the fingerprint of the unsigned policy.json the user has just confirmed */
+	suspend fun check(context: Context, confirmed: String? = null) = lock.withLock {
 		val app = context.applicationContext as ActivityTrackApp
+		asking = null
 		try {
-			run(app)
+			run(app, confirmed)
+			app.trust.policy.value = asking
 		} catch (e: CancellationException) {
 			throw e
 		} catch (e: Exception) {
@@ -64,7 +77,31 @@ object PolicyLoader {
 		}
 	}
 
-	private suspend fun run(app: Context) {
+	/* The user refused the unsigned policy.json [fingerprint]: refused like a bad file, not asked again until it changes. */
+	suspend fun decline(context: Context, fingerprint: String) = lock.withLock {
+		val app = context.applicationContext as ActivityTrackApp
+		val c = app.container
+		if (c.policies.gateState().lastFingerprint != fingerprint)
+			c.policies.recordRefused(listOf(PolicyError("", null, app.getString(R.string.trust_refused_error))), fingerprint)
+		if (app.trust.policy.value?.fingerprint == fingerprint)
+			app.trust.policy.value = null
+		app.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
+		Log.i(TAG, "unsigned policy $fingerprint refused by the user")
+	}
+
+	/* The plugins again, after the user answered for one. */
+	suspend fun reloadPlugins(context: Context) = lock.withLock {
+		val app = context.applicationContext as ActivityTrackApp
+		try {
+			app.plugins.reload()
+		} catch (e: CancellationException) {
+			throw e
+		} catch (e: Exception) {
+			Log.w(TAG, "plugin check failed", e)
+		}
+	}
+
+	private suspend fun run(app: Context, confirmed: String?) {
 		val c = (app as ActivityTrackApp).container
 		val tree = c.settings.current().rootUri?.toUri() ?: return
 		if (!c.userDataDir.isAccessible(tree))
@@ -78,7 +115,7 @@ object PolicyLoader {
 				notify(app, app.getString(R.string.policy_file_ignored_title), app.getString(R.string.policy_file_ignored_text))
 			return
 		}
-		handle(app, tree, policy, sig, FILE)
+		handle(app, tree, policy, sig, FILE, confirmed)
 	}
 
 	/*
@@ -90,8 +127,11 @@ object PolicyLoader {
 		val app = context.applicationContext as ActivityTrackApp
 		val tree = app.container.settings.current().rootUri?.toUri()?.takeIf(app.container.userDataDir::isAccessible) ?: return@withLock
 		try {
-			if (handle(app, tree, policy, sig, app.getString(R.string.policy_from_server)))
+			if (handle(app, tree, policy, sig, app.getString(R.string.policy_from_server))) {
 				app.syncAccount.markServerPolicy()
+				/* the file no longer counts: nothing to confirm */
+				app.trust.policy.value = null
+			}
 			app.plugins.reload()
 		} catch (e: CancellationException) {
 			throw e
@@ -101,7 +141,7 @@ object PolicyLoader {
 	}
 
 	/* true when the policy is (or already was) in force */
-	private suspend fun handle(app: ActivityTrackApp, tree: Uri, policy: ByteArray, sig: ByteArray?, source: String): Boolean {
+	private suspend fun handle(app: ActivityTrackApp, tree: Uri, policy: ByteArray, sig: ByteArray?, source: String, confirmed: String? = null): Boolean {
 		val c = app.container
 		val state = c.policies.gateState()
 		val outcome = if (policy.size > MAX_BYTES || (sig?.size ?: 0) > MAX_BYTES) {
@@ -109,7 +149,7 @@ object PolicyLoader {
 			if (fp == state.lastFingerprint) PolicyGate.Outcome.Unchanged
 			else PolicyGate.Outcome.Refuse(listOf(PolicyError("", null, app.getString(R.string.policy_too_large))), fp)
 		} else {
-			PolicyGate.decide(policy, sig, state, ::trustAnchors)
+			PolicyGate.decide(policy, sig, state, ::trustAnchors, askUnsigned = source == FILE, confirmed = confirmed)
 		}
 		when (val o = outcome) {
 			/* handled before: in force or refused, as it was */
@@ -118,6 +158,18 @@ object PolicyLoader {
 				c.policies.recordRefused(o.errors, o.fingerprint)
 				notify(app, app.getString(R.string.policy_refused_title), o.errors.take(8).joinToString("\n") + more(app, o.errors))
 				Log.w(TAG, "$source refused: ${o.errors.joinToString("; ")}")
+				return false
+			}
+			is PolicyGate.Outcome.Confirm -> {
+				val name = listOf(o.policy.id, o.policy.version).filter { it.isNotEmpty() }.joinToString(" ").ifEmpty { FILE }
+				asking = TrustPrompts.PolicyPrompt(o.fingerprint, name, PolicyChanges.of(c.policies.inForceText(), policy.toString(Charsets.UTF_8)))
+				/* one notification per file; tapping it opens the app, where the confirmation waits */
+				val prefs = app.getSharedPreferences(TRUST_PREFS, Context.MODE_PRIVATE)
+				if (prefs.getString(ASKED, null) != o.fingerprint) {
+					prefs.edit { putString(ASKED, o.fingerprint) }
+					notify(app, app.getString(R.string.trust_policy_title), app.getString(R.string.trust_policy_notice, o.fingerprint.take(16)))
+				}
+				Log.i(TAG, "unsigned $source ${o.fingerprint} waits for confirmation")
 				return false
 			}
 			is PolicyGate.Outcome.Apply -> {

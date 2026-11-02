@@ -660,6 +660,24 @@ Tap the green play button below to start one.</string>
   <string name="policy_applied_unsigned">Not signed. A backup was made first; the previous policy is in policy_old.json.</string>
   <string name="policy_more_errors">… and %1$d more</string>
   <string name="policy_too_large">larger than 1 MB</string>
+  <!-- security review: confirmation of unsigned policy and plugins -->
+  <string name="trust_policy_title">Apply the new policy?</string>
+  <string name="trust_policy_notice">policy.json is not signed (fingerprint %1$s…): tap to review it. It is not applied until you confirm.</string>
+  <string name="trust_policy_intro">policy.json in the data folder is not signed. Apply it only if you know where it comes from: it changes settings, features and the addresses the app uses.</string>
+  <string name="trust_policy_name">Policy: %1$s</string>
+  <string name="trust_no_changes">Nothing changes against the policy in force.</string>
+  <string name="trust_plugin_title_new">Use the new plugin %1$s?</string>
+  <string name="trust_plugin_title_changed">Plugin %1$s: addresses changed</string>
+  <string name="trust_plugin_notice">plugins/%1$s is not signed (fingerprint %2$s…): tap to review it. It is not used until you confirm.</string>
+  <string name="trust_plugin_intro_new">plugins/%1$s in the data folder is not signed. Use it only if you know where it comes from: the app sends activities and credentials to these addresses.</string>
+  <string name="trust_plugin_intro_changed">plugins/%1$s now sends activities and credentials to other addresses than the version you confirmed. Confirm only if you expected this change.</string>
+  <string name="trust_fingerprint">SHA-256 fingerprint</string>
+  <string name="trust_show_full">Show it all</string>
+  <string name="trust_apply">Apply</string>
+  <string name="trust_use">Use</string>
+  <string name="trust_refuse">Refuse</string>
+  <string name="trust_later">Later</string>
+  <string name="trust_refused_error">refused on the phone</string>
   <!-- issue #48 plugins -->
   <string name="plugin_refused_title">Plugin %1$s refused</string>
   <string name="plugin_logged_in">Logged in to %1$s</string>

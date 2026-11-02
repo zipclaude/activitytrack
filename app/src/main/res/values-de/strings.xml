@@ -648,6 +648,24 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="policy_applied_unsigned">Nicht signiert. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>
   <string name="policy_more_errors">… und %1$d weitere</string>
   <string name="policy_too_large">größer als 1 MB</string>
+  <!-- security review: confirmation of unsigned policy and plugins -->
+  <string name="trust_policy_title">Neue Richtlinie anwenden?</string>
+  <string name="trust_policy_notice">policy.json ist nicht signiert (Fingerabdruck %1$s…): zum Prüfen tippen. Sie wird erst nach deiner Bestätigung angewendet.</string>
+  <string name="trust_policy_intro">policy.json im Datenordner ist nicht signiert. Wende sie nur an, wenn du weißt, woher sie kommt: Sie ändert Einstellungen, Funktionen und die Adressen, die die App verwendet.</string>
+  <string name="trust_policy_name">Richtlinie: %1$s</string>
+  <string name="trust_no_changes">Gegenüber der geltenden Richtlinie ändert sich nichts.</string>
+  <string name="trust_plugin_title_new">Neues Plugin %1$s verwenden?</string>
+  <string name="trust_plugin_title_changed">Plugin %1$s: Adressen geändert</string>
+  <string name="trust_plugin_notice">plugins/%1$s ist nicht signiert (Fingerabdruck %2$s…): zum Prüfen tippen. Es wird erst nach deiner Bestätigung verwendet.</string>
+  <string name="trust_plugin_intro_new">plugins/%1$s im Datenordner ist nicht signiert. Verwende es nur, wenn du weißt, woher es kommt: Die App sendet Aktivitäten und Zugangsdaten an diese Adressen.</string>
+  <string name="trust_plugin_intro_changed">plugins/%1$s sendet Aktivitäten und Zugangsdaten jetzt an andere Adressen als die bestätigte Version. Bestätige nur, wenn du diese Änderung erwartet hast.</string>
+  <string name="trust_fingerprint">SHA-256-Fingerabdruck</string>
+  <string name="trust_show_full">Ganz anzeigen</string>
+  <string name="trust_apply">Anwenden</string>
+  <string name="trust_use">Verwenden</string>
+  <string name="trust_refuse">Ablehnen</string>
+  <string name="trust_later">Später</string>
+  <string name="trust_refused_error">auf dem Telefon abgelehnt</string>
   <!-- issue #48 plugins -->
   <string name="plugin_refused_title">Plugin %1$s abgelehnt</string>
   <string name="plugin_logged_in">Bei %1$s angemeldet</string>

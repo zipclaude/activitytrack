@@ -45,6 +45,9 @@ class ActivityTrackApp : Application() {
 	val plugins by lazy { it.infraconsulting.activitytrack.connect.plugin.PluginRegistry(this) }
 	val oauth by lazy { it.infraconsulting.activitytrack.connect.plugin.OAuthPkce(this, secrets) }
 
+	/* unsigned policy.json and plugins waiting for the user's confirmation */
+	val trust by lazy { it.infraconsulting.activitytrack.policy.TrustPrompts() }
+
 	/* plugins: send on closing, periodic download */
 	lateinit var pluginWatcher: it.infraconsulting.activitytrack.connect.plugin.PluginWatcher
 		private set
