@@ -18,6 +18,9 @@ data class Release(val version: String, val url: String, val beta: Boolean)
 object UpdateCheck {
 	const val RELEASES = "https://api.github.com/repos/zipclaude/activitytrack/releases?per_page=20"
 
+	/* the releases page, for a release without its own address */
+	const val RELEASES_PAGE = "https://github.com/zipclaude/activitytrack/releases"
+
 	/* the newest release after [current] the user wants, or null */
 	fun newer(releasesJson: String, current: String, betas: Boolean): Release? {
 		val list = runCatching { Json.parseToJsonElement(releasesJson) as JsonArray }.getOrNull() ?: return null
@@ -27,7 +30,8 @@ object UpdateCheck {
 			val tag = o["tag_name"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
 			val beta = o["prerelease"]?.jsonPrimitive?.booleanOrNull == true
 			if (beta && !betas) return@mapNotNull null
-			Release(tag.removePrefix("v"), o["html_url"]?.jsonPrimitive?.contentOrNull ?: "", beta)
+			val url = o["html_url"]?.jsonPrimitive?.contentOrNull?.trim()?.takeIf { it.startsWith("https://") } ?: RELEASES_PAGE
+			Release(tag.removePrefix("v"), url, beta)
 		}.filter { Versions.compare(it.version, current) > 0 }
 			.maxWithOrNull { a, b -> Versions.compare(a.version, b.version) }
 	}

@@ -98,7 +98,9 @@ class Updates(private val context: Context) {
 		/* updated meanwhile: nothing to offer */
 		val installed = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }.getOrDefault("")
 		if (it.infraconsulting.activitytrack.domain.update.Versions.compare(v, installed) <= 0) return null
-		return Release(v, prefs.getString(URL_KEY, null).orEmpty(), prefs.getBoolean(BETA, false))
+		/* no address stored (older preferences): the releases page */
+		val url = prefs.getString(URL_KEY, null)?.takeIf { it.isNotBlank() } ?: it.infraconsulting.activitytrack.domain.update.UpdateCheck.RELEASES_PAGE
+		return Release(v, url, prefs.getBoolean(BETA, false))
 	}
 
 	companion object {

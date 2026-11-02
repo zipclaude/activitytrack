@@ -33,4 +33,13 @@ class UpdateCheckTest {
 		assertEquals("1.2.0", UpdateCheck.newer("[" + release("v1.2.0") + "]", "1.2.0-beta.1", betas = true)?.version)
 		assertNull(UpdateCheck.newer("not json", "1.0.0", betas = false))
 	}
+
+	@Test
+	fun releaseWithoutAddressOpensTheReleasesPage() {
+		val blank = """[{"tag_name": "v2.0.0", "prerelease": false, "draft": false, "html_url": " "}]"""
+		assertEquals(UpdateCheck.RELEASES_PAGE, UpdateCheck.newer(blank, "1.0.0", betas = false)?.url)
+		val missing = """[{"tag_name": "v2.0.0", "prerelease": false, "draft": false}]"""
+		assertEquals(UpdateCheck.RELEASES_PAGE, UpdateCheck.newer(missing, "1.0.0", betas = false)?.url)
+		assertEquals("https://github.com/zipclaude/activitytrack/releases/tag/v1.1.0", UpdateCheck.newer(list, "1.0.0", betas = false)?.url)
+	}
 }
