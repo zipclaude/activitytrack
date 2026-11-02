@@ -3,10 +3,14 @@ package it.infraconsulting.activitytrack.connect
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import androidx.core.content.edit
+import java.security.GeneralSecurityException
 import java.security.KeyStore
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -40,11 +44,35 @@ class SecretStore(context: Context) {
 		prefs.edit { putString(name, b64(cipher.iv) + ":" + b64(data)) }
 	}
 
+	/*
+	 * Null when the value cannot be read back: a Keystore key lost (OS
+	 * update, restore on another phone) or a damaged entry. Not a crash at
+	 * start; the caller treats it as not logged in and asks again. A value
+	 * the key cannot open (bad tag) never will: it is removed.
+	 */
 	private fun load(name: String): String? {
 		val stored = prefs.getString(name, null) ?: return null
-		val (iv, data) = stored.split(':').map { Base64.decode(it, Base64.NO_WRAP) }
-		val cipher = Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv)) }
-		return String(cipher.doFinal(data), Charsets.UTF_8)
+		return try {
+			val parts = stored.split(':')
+			if (parts.size != 2)
+				throw IllegalArgumentException("not iv:data")
+			val (iv, data) = parts.map { Base64.decode(it, Base64.NO_WRAP) }
+			val cipher = Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv)) }
+			String(cipher.doFinal(data), Charsets.UTF_8)
+		} catch (e: GeneralSecurityException) {
+			Log.w(TAG, "$name: cannot decrypt (${e.javaClass.simpleName})")
+			if (e is AEADBadTagException || e is KeyPermanentlyInvalidatedException)
+				prefs.edit { remove(name) }
+			null
+		} catch (e: java.security.ProviderException) {
+			/* the Keystore itself failed: maybe for now only, the value stays */
+			Log.w(TAG, "$name: keystore failed", e)
+			null
+		} catch (e: IllegalArgumentException) {
+			Log.w(TAG, "$name: damaged value")
+			prefs.edit { remove(name) }
+			null
+		}
 	}
 
 	fun has(companyId: Long, field: String): Boolean = prefs.contains("$companyId/$field")
@@ -53,6 +81,8 @@ class SecretStore(context: Context) {
 		prefs.edit { prefs.all.keys.filter { it.startsWith("$companyId/") }.forEach { remove(it) } }
 	}
 
+	/* one at a time: two first writes would each make a key under the alias, the second replacing the first */
+	@Synchronized
 	private fun key(): SecretKey {
 		val ks = KeyStore.getInstance(KEYSTORE).apply { load(null) }
 		(ks.getKey(ALIAS, null) as? SecretKey)?.let { return it }
@@ -70,6 +100,7 @@ class SecretStore(context: Context) {
 	private fun b64(b: ByteArray) = Base64.encodeToString(b, Base64.NO_WRAP)
 
 	private companion object {
+		const val TAG = "SecretStore"
 		const val KEYSTORE = "AndroidKeyStore"
 		const val ALIAS = "connector-secrets"
 		const val TRANSFORMATION = "AES/GCM/NoPadding"

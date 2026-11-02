@@ -894,6 +894,17 @@ another trade ("Site" instead of "Client").
   the previous policy saved as `policy_old.json`, then it is applied and
   notified. An invalid one: the notification lists the errors with their
   line, and the file is ignored until it changes.
+- **Unsigned policy: confirm first.** A new unsigned `policy.json` is not
+  applied by itself: a notification ("Apply the new policy?") leads to a
+  window, shown also whenever the app comes to the foreground, with the
+  policy's name, what it changes against the policy in force (one line per
+  key: `+` added, `−` removed, `old → new`) and its SHA-256 fingerprint
+  (the start, **"Show it all"** for the whole one; the same as
+  `sha256sum policy.json` on a computer). **"Apply"** applies it as above;
+  **"Refuse"** leaves the policy in force and the file is not asked again
+  until it changes (it shows as refused in the policy history);
+  **"Later"** asks again next time. A signed policy, and the one from the
+  server, need no confirmation.
 - **Signature** (optional): `policy.json.sig`, made by
   `scripts/sign-policy.sh` with a certificate of a CA the phone trusts. The
   first signed policy fixes the signer's name (CN): from then on only
@@ -929,6 +940,15 @@ plugins are in the repository's `plugins` folder; format in
   never does, as the plugin's options say; without network it waits.
 - With a signed policy, plugins must be signed with the same name too
   (`<name>.json.sig`).
+- **Unsigned plugin: confirm first.** A new plugin file, or one whose
+  addresses (base URL, login and token addresses, any other address in the
+  file) changed since the version confirmed, is not used until confirmed: a
+  notification leads to a window, shown also when the app comes to the
+  foreground, with the addresses (`+` new, `−` no longer used) and the
+  SHA-256 fingerprint of the file. **"Use"** enables it; **"Refuse"**
+  leaves it unused and not asked again until the file changes; **"Later"**
+  asks again next time. A changed file with the same addresses is used at
+  once. Plugins configured before this version are asked once.
 - Every management system has a guide of its own (for Antares: *Antares
   integration*).
 

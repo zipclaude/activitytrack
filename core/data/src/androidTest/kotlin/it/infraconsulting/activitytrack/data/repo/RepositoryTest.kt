@@ -28,6 +28,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -587,6 +589,33 @@ class RepositoryTest {
 		assertFailsWith<it.infraconsulting.activitytrack.data.storage.DatabaseBackup.InvalidBackup> {
 			backup.stage(empty.toByteArray().inputStream(), ActivityTrackDatabase.VERSION)
 		}
+	}
+
+	@Test
+	fun backupLimitsAndConcurrentSnapshots() = runBlocking<Unit> {
+		entries.start(StartRequest(SegmentKind.WORK, client))
+		val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+		val backup = it.infraconsulting.activitytrack.data.storage.DatabaseBackup(db, ctx.cacheDir)
+		/* two backups at once (daily and before a policy): both complete */
+		val zips = kotlinx.coroutines.coroutineScope {
+			(1..2).map { async(kotlinx.coroutines.Dispatchers.IO) { java.io.ByteArrayOutputStream().also { backup.writeZip("test", clock.instant(), it) }.toByteArray() } }.awaitAll()
+		}
+		for (z in zips)
+			assertEquals(ActivityTrackDatabase.VERSION, backup.stage(z.inputStream(), ActivityTrackDatabase.VERSION).dbVersion)
+		kotlin.test.assertTrue(ctx.cacheDir.listFiles()!!.none { it.name.startsWith("snapshot") })
+		/* a manifest over 64 KiB is refused */
+		val big = java.io.ByteArrayOutputStream()
+		java.util.zip.ZipOutputStream(big).use { z -> z.putNextEntry(java.util.zip.ZipEntry("manifest.json")); z.write(ByteArray(70_000) { ' '.code.toByte() }); z.closeEntry() }
+		val m = assertFailsWith<it.infraconsulting.activitytrack.data.storage.DatabaseBackup.InvalidBackup> {
+			backup.stage(big.toByteArray().inputStream(), ActivityTrackDatabase.VERSION)
+		}
+		kotlin.test.assertTrue(m.message!!.contains("manifest.json"))
+		/* a database over the cap is refused, nothing left in the cache */
+		val d = assertFailsWith<it.infraconsulting.activitytrack.data.storage.DatabaseBackup.InvalidBackup> {
+			backup.stage(zips[0].inputStream(), ActivityTrackDatabase.VERSION, maxDbBytes = 1024)
+		}
+		kotlin.test.assertTrue(d.message!!.contains("larger"))
+		kotlin.test.assertFalse(java.io.File(ctx.cacheDir, "restore.db").exists())
 	}
 
 	@Test

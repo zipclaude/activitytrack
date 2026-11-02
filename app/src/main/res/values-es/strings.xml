@@ -649,6 +649,24 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="policy_applied_unsigned">Sin firma. Antes se hizo una copia; la política anterior está en policy_old.json.</string>
   <string name="policy_more_errors">… y %1$d más</string>
   <string name="policy_too_large">mayor de 1 MB</string>
+  <!-- security review: confirmation of unsigned policy and plugins -->
+  <string name="trust_policy_title">¿Aplicar la nueva política?</string>
+  <string name="trust_policy_notice">policy.json no está firmada (huella %1$s…): toca para revisarla. No se aplica hasta que confirmes.</string>
+  <string name="trust_policy_intro">policy.json en la carpeta de datos no está firmada. Aplícala solo si sabes de dónde viene: cambia ajustes, funciones y las direcciones que usa la app.</string>
+  <string name="trust_policy_name">Política: %1$s</string>
+  <string name="trust_no_changes">Nada cambia respecto a la política vigente.</string>
+  <string name="trust_plugin_title_new">¿Usar el nuevo plugin %1$s?</string>
+  <string name="trust_plugin_title_changed">Plugin %1$s: direcciones cambiadas</string>
+  <string name="trust_plugin_notice">plugins/%1$s no está firmado (huella %2$s…): toca para revisarlo. No se usa hasta que confirmes.</string>
+  <string name="trust_plugin_intro_new">plugins/%1$s en la carpeta de datos no está firmado. Úsalo solo si sabes de dónde viene: la app envía actividades y credenciales a estas direcciones.</string>
+  <string name="trust_plugin_intro_changed">plugins/%1$s ahora envía actividades y credenciales a otras direcciones que la versión que confirmaste. Confirma solo si esperabas este cambio.</string>
+  <string name="trust_fingerprint">Huella SHA-256</string>
+  <string name="trust_show_full">Mostrarla entera</string>
+  <string name="trust_apply">Aplicar</string>
+  <string name="trust_use">Usar</string>
+  <string name="trust_refuse">Rechazar</string>
+  <string name="trust_later">Más tarde</string>
+  <string name="trust_refused_error">rechazada en el teléfono</string>
   <!-- issue #48 plugins -->
   <string name="plugin_refused_title">Plugin %1$s rechazado</string>
   <string name="plugin_logged_in">Sesión iniciada en %1$s</string>

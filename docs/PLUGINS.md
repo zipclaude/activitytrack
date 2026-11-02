@@ -11,6 +11,19 @@ this repository, copied by the user into `plugins/` of the data folder.
 With a signed policy in force, a plugin must be signed with the same CN
 (`<name>.json.sig`, made by `scripts/sign-policy.sh`).
 
+Otherwise (no signer pinned) the user confirms a plugin before it is used
+(security review, 2026-11): a new file, or one whose **addresses** changed
+since the version last confirmed, waits; a notification opens the app,
+where a window (shown too when the app comes to the foreground) lists the
+addresses (`+` new, `−` gone) and the file's SHA-256 fingerprint. The
+addresses compared are `http.baseUrl`, `auth.type`, `auth.issuer`,
+`auth.authorizeUrl`, `auth.tokenUrl` (their JSON, so a reference such as
+`"@option.apiUrl"` counts) and every other string of the file holding
+`://` (option defaults, absolute paths). A changed file with the same
+addresses is used at once and becomes the confirmed version; a refused one
+is not used and not asked again until the file changes. Plugins signed by
+the pinned signer need no confirmation.
+
 An integration is a JSON file `plugins/<name>.json` in the data folder,
 enabled by the policy (`"integrations": { "<name>": { "plugin": "<name>.json" } }`)
 or, without a policy, from Settings → Integrations. The file describes the

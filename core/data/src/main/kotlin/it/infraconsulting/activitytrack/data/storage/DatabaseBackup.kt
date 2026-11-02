@@ -37,7 +37,9 @@ class DatabaseBackup(
 
 	/* Snapshot + zip into [out]; returns the manifest written. */
 	suspend fun writeZip(appVersion: String, now: Instant, out: OutputStream): Manifest = withContext(Dispatchers.IO) {
-		val snapshot = File(cacheDir, "snapshot.db")
+		/* a file of its own: the daily backup and the one before a policy may run together */
+		val snapshot = File.createTempFile("snapshot", ".db", cacheDir)
+		/* VACUUM INTO wants a file that does not exist yet */
 		snapshot.delete()
 		try {
 			/* VACUUM cannot run inside a transaction; Room's writer connection is used directly */
@@ -72,21 +74,47 @@ class DatabaseBackup(
 	 * header, integrity, schema not newer than this app. The caller closes
 	 * the database, swaps the file and restarts (Room migrates older ones).
 	 */
-	suspend fun stage(input: InputStream, currentVersion: Int): Staged = withContext(Dispatchers.IO) {
+	suspend fun stage(input: InputStream, currentVersion: Int, maxDbBytes: Long = maxDatabase()): Staged = withContext(Dispatchers.IO) {
 		val target = File(cacheDir, "restore.db")
 		target.delete()
+		try {
+			check(input, currentVersion, maxDbBytes, target)
+		} catch (e: Throwable) {
+			target.delete()
+			throw e
+		}
+	}
+
+	private fun check(input: InputStream, currentVersion: Int, maxDbBytes: Long, target: File): Staged {
 		var manifest: JSONObject? = null
+		var database = false
 		ZipInputStream(input).use { zip ->
 			while (true) {
 				val e = zip.nextEntry ?: break
 				when (e.name) {
-					ActivityTrackDatabase.FILE_NAME -> target.outputStream().use { zip.copyTo(it) }
-					"manifest.json" -> manifest = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
+					ActivityTrackDatabase.FILE_NAME -> {
+						/* a capped copy: a huge entry fails instead of filling the phone */
+						target.outputStream().use { out ->
+							if (BoundedCopy.copy(zip, out, maxDbBytes) < 0)
+								throw InvalidBackup("the database in the backup is larger than ${maxDbBytes / MIB} MB (or the free space)")
+						}
+						database = true
+					}
+					"manifest.json" -> {
+						val bytes = zip.readNBytes(MAX_MANIFEST + 1)
+						if (bytes.size > MAX_MANIFEST)
+							throw InvalidBackup("manifest.json larger than ${MAX_MANIFEST / 1024} KB")
+						manifest = try {
+							JSONObject(bytes.toString(Charsets.UTF_8))
+						} catch (e: org.json.JSONException) {
+							throw InvalidBackup("manifest.json unreadable: ${e.message}")
+						}
+					}
 				}
 			}
 		}
 		val m = manifest ?: throw InvalidBackup("no manifest.json")
-		if (!target.exists())
+		if (!database || !target.exists())
 			throw InvalidBackup("no database in the backup")
 		val header = target.inputStream().use { it.readNBytes(16) }
 		if (!header.contentEquals("SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)))
@@ -101,8 +129,11 @@ class DatabaseBackup(
 		}
 		if (version > currentVersion)
 			throw InvalidBackup("backup of a newer app version (database $version > $currentVersion)")
-		Staged(target, version, m.optString("createdUtc"), m.optString("appVersion"))
+		return Staged(target, version, m.optString("createdUtc"), m.optString("appVersion"))
 	}
+
+	/* the largest database a restore unpacks: 2 GiB, less when the cache has less room */
+	private fun maxDatabase(): Long = minOf(MAX_DATABASE, cacheDir.usableSpace)
 
 	/*
 	 * Closes Room and puts [staged] in place of [dbFile] (WAL and SHM of the
@@ -120,6 +151,9 @@ class DatabaseBackup(
 		const val PREFIX = "activitytrack-"
 		const val SUFFIX = ".zip"
 		private val STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
+		private const val MIB = 1L shl 20
+		const val MAX_MANIFEST = 64 * 1024
+		const val MAX_DATABASE = 2L shl 30
 
 		/* the extra backup before a new policy (issue #48): never removed automatically */
 		const val POLICY_SUFFIX = "-policy$SUFFIX"

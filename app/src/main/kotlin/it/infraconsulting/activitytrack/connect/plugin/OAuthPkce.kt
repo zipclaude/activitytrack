@@ -73,7 +73,12 @@ class OAuthPkce(private val context: Context, private val secrets: SecretStore) 
 		val e = endpoints(c)
 		val verifier = Pkce.verifier()
 		val state = Pkce.state()
+		val now = System.currentTimeMillis()
 		pending.edit {
+			/* logins left unfinished (browser closed): their verifiers go */
+			for (old in Pkce.expiredStates(pending.all, now))
+				listOf("client", "verifier", "at").forEach { remove("$old/$it") }
+			putLong("$state/at", now)
 			putString("$state/client", JSONObject()
 				.put("company", c.companyId).put("plugin", c.pluginId).put("issuer", c.issuer).put("authorize", c.authorizeUrl)
 				.put("token", c.tokenUrl).put("clientId", c.clientId).put("scopes", c.scopes).toString())
@@ -88,9 +93,12 @@ class OAuthPkce(private val context: Context, private val secrets: SecretStore) 
 		redirect.getQueryParameter("error")?.let { throw OAuthException(redirect.getQueryParameter("error_description") ?: it) }
 		val state = redirect.getQueryParameter("state") ?: throw OAuthException("no state")
 		val code = redirect.getQueryParameter("code") ?: throw OAuthException("no code")
+		val expired = state in Pkce.expiredStates(pending.all.filterKeys { it.startsWith("$state/") }, System.currentTimeMillis())
 		val stored = pending.getString("$state/client", null) ?: throw OAuthException("unknown login")
 		val verifier = pending.getString("$state/verifier", null) ?: throw OAuthException("unknown login")
-		pending.edit { remove("$state/client"); remove("$state/verifier") }
+		pending.edit { remove("$state/client"); remove("$state/verifier"); remove("$state/at") }
+		if (expired)
+			throw OAuthException("login expired, start it again")
 		val o = JSONObject(stored)
 		fun s(k: String) = if (o.isNull(k)) null else o.optString(k).ifEmpty { null }
 		val c = Client(o.getLong("company"), o.getString("plugin"), s("issuer"), s("authorize"), s("token"), o.getString("clientId"), o.optString("scopes"))

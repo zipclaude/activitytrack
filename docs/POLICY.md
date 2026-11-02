@@ -25,6 +25,17 @@ A complete example: [`docs/samples/policy-example.json`](samples/policy-example.
   written, a notification on the "Policy" channel.
 - An invalid file: a notification with the errors (path and line), the
   file ignored until it changes.
+- An unsigned valid file (no `policy.json.sig`, no signer pinned) is not
+  applied until the user confirms it: a notification "Apply the new
+  policy?" opens the app, where a window (shown too whenever the app comes
+  to the foreground while one waits) gives the policy's id and version,
+  what it changes against the policy in force (one line per key of a
+  section, or per top-level value) and the SHA-256 fingerprint of the file
+  (`sha256sum policy.json`; the start, the whole on request). Apply = the
+  steps above; Refuse = recorded as a refused file ("refused on the
+  phone"), not asked again until the file changes; Later = asked again at
+  the next foreground. A signed policy (§2) is applied without asking, as
+  is the policy from ActivityTrack Web (trusted through the pairing).
 - Removing the file does not remove the policy (it is in the database):
   apply an empty policy instead.
 

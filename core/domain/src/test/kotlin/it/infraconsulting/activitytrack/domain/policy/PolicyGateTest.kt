@@ -75,6 +75,25 @@ class PolicyGateTest {
 	}
 
 	@Test
+	fun unsignedFileWaitsForConfirmation() {
+		val p = res("policy.json")
+		val c = assertIs<PolicyGate.Outcome.Confirm>(PolicyGate.decide(p, null, fresh, { error("no anchors needed") }, askUnsigned = true))
+		assertEquals(PolicyParser.fingerprint(p), c.fingerprint)
+		/* another file than the one confirmed: asked again */
+		assertIs<PolicyGate.Outcome.Confirm>(PolicyGate.decide(p, null, fresh, { anchors }, askUnsigned = true, confirmed = "0".repeat(64)))
+		val a = assertIs<PolicyGate.Outcome.Apply>(PolicyGate.decide(p, null, fresh, { anchors }, askUnsigned = true, confirmed = c.fingerprint))
+		assertEquals(null, a.signerCn)
+		/* refused by the user = recorded as handled: not asked again until the file changes */
+		assertIs<PolicyGate.Outcome.Unchanged>(PolicyGate.decide(p, null, PolicyGate.State(c.fingerprint, null), { anchors }, askUnsigned = true))
+		assertIs<PolicyGate.Outcome.Confirm>(PolicyGate.decide(p + ' '.code.toByte(), null, PolicyGate.State(c.fingerprint, null), { anchors }, askUnsigned = true))
+		/* signed ones as before, invalid ones refused without asking */
+		assertIs<PolicyGate.Outcome.Apply>(PolicyGate.decide(p, res("policy.json.sig"), fresh, { anchors }, askUnsigned = true))
+		assertIs<PolicyGate.Outcome.Refuse>(PolicyGate.decide("{}".toByteArray(), null, fresh, { anchors }, askUnsigned = true))
+		/* with a pinned signer an unsigned file is refused, never asked */
+		assertIs<PolicyGate.Outcome.Refuse>(PolicyGate.decide(p, null, PolicyGate.State(null, "ACME, Inc. Policies"), { anchors }, askUnsigned = true))
+	}
+
+	@Test
 	fun invalidPolicyIsRefusedOnceThenIgnoredUntilChanged() {
 		val bad = "{ \"format\": \"activitytrack-policy\" }".toByteArray()
 		val r = assertIs<PolicyGate.Outcome.Refuse>(PolicyGate.decide(bad, null, fresh, { anchors }))

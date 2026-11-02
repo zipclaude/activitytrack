@@ -129,6 +129,8 @@ class MainActivity : ComponentActivity() {
 					Root(deepLink.value) { deepLink.value = null }
 				}
 				it.infraconsulting.activitytrack.connect.plugin.PluginCloseDialog((application as ActivityTrackApp).pluginWatcher)
+				/* an unsigned policy.json or plugin waiting for the user (its notification leads here) */
+				it.infraconsulting.activitytrack.policy.TrustDialog(application as ActivityTrackApp)
 			}
 		}
 	}
@@ -140,8 +142,11 @@ class MainActivity : ComponentActivity() {
 	override fun onStart() {
 		super.onStart()
 		(application as ActivityTrackApp).notificationSync.refresh()
-		/* a policy.json dropped while the app was running (issue #48) */
-		(application as ActivityTrackApp).let { app -> app.appScope.launch { PolicyLoader.check(app) } }
+		/* a policy.json dropped while the app was running (issue #48); what was put off is asked again */
+		(application as ActivityTrackApp).let { app ->
+			app.trust.foreground()
+			app.appScope.launch { PolicyLoader.check(app) }
+		}
 		/* in front: sync at once, then a cheap look at the server every 30 s (issue #114) */
 		val app = application as ActivityTrackApp
 		if (app.syncAccount.info.value != null && !app.syncAccount.revoked.value) it.infraconsulting.activitytrack.sync.SyncWorker.now(app)
