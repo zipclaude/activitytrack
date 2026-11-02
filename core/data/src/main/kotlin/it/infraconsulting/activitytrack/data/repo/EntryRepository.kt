@@ -87,6 +87,8 @@ class EntryRepository(
 	private val clock: Clock,
 	/* the choices a policy may change (issue #48): shortest segment, closing on Stop */
 	private val behaviours: () -> it.infraconsulting.activitytrack.domain.policy.Behaviours = { it.infraconsulting.activitytrack.domain.policy.Behaviours() },
+	/* whether more activities may run at once (policy concurrentEntries, issue #132) */
+	private val concurrent: () -> Boolean = { true },
 ) {
 	private fun minLengthMs(): Long = behaviours().minDurationSec * 1000L
 
@@ -222,6 +224,17 @@ class EntryRepository(
 				),
 			)
 			verify(entryId)
+			/*
+			 * Without concurrent entries (policy) whatever puts this one to work
+			 * or travel suspends the others, as a new start does (issue #48) and
+			 * the sync after a pull (#119): Riprendi on the Home, the widget, the
+			 * tile, the notification (issue #132). A pause cannot be suspended:
+			 * it stops, as the Start screen offers.
+			 */
+			if (next.status == EntryStatus.ACTIVE && next.mode != SegmentKind.PAUSE && !concurrent())
+				dao.activeEntries().filter { it.id != entryId }.forEach { other ->
+					apply(other.id, if (other.mode == SegmentKind.PAUSE) EntryCommand.STOP else EntryCommand.SUSPEND, atUtcMs)
+				}
 		}
 	}
 

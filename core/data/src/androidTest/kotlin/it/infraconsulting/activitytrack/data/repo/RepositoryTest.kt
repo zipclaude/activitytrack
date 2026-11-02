@@ -256,6 +256,33 @@ class RepositoryTest {
 	}
 
 	@Test
+	fun resumeSuspendsTheOthersWithoutConcurrentEntries() = runBlocking<Unit> {
+		var concurrent = true
+		val repo = EntryRepository(db, clock, concurrent = { concurrent })
+		val dao = db.entryDao()
+		val a = repo.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(10)
+		repo.apply(a, EntryCommand.SUSPEND)
+		val b = repo.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(10)
+		/* allowed: both run */
+		repo.apply(a, EntryCommand.WORK)
+		assertEquals(EntryStatus.ACTIVE, dao.entry(b)?.status)
+		repo.apply(a, EntryCommand.SUSPEND)
+		clock.advance(10)
+		/* not allowed (issue #132): resuming a suspends b, a pause stops */
+		concurrent = false
+		repo.apply(a, EntryCommand.WORK)
+		assertEquals(EntryStatus.ACTIVE, dao.entry(a)?.status)
+		assertEquals(EntryStatus.SUSPENDED, dao.entry(b)?.status)
+		repo.apply(a, EntryCommand.PAUSE)
+		clock.advance(10)
+		repo.apply(b, EntryCommand.TRAVEL)
+		assertEquals(EntryStatus.ACTIVE, dao.entry(b)?.status)
+		assertEquals(EntryStatus.TO_COMPLETE, dao.entry(a)?.status)
+	}
+
+	@Test
 	fun clientDefaultsWithinThirtyDays() = runBlocking<Unit> {
 		val role = master.saveRole(it.infraconsulting.activitytrack.data.db.RoleEntity(name = "Consultant"))
 		val id = entries.start(StartRequest(SegmentKind.WORK, client, roleId = role, activity = "Firewall review"))
