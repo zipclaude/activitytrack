@@ -1,7 +1,17 @@
-Version 0.9.4-beta4 (November 2026). Please report any difference between this
+Version 0.9.4-beta5 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.4-beta5** (tested on the debug phone, except the policy confirmation)
+- An **unsigned policy** in the data folder, a **new plugin** or a plugin whose
+  **addresses changed** are used only after a confirmation: the app shows what
+  changes and the file's SHA-256 fingerprint (§11, "Policy and integrations").
+  Plugins already in use ask once, at the first start after the update.
+- Restoring a backup refuses files too large or damaged; two backups at once no
+  longer overwrite each other (§11).
+- Minor fixes: a lost encryption key no longer closes the app, notifications
+  always open the right screen.
 
 **New in 0.9.4-beta4** (tested on the debug phone)
 - Without concurrent activities (policy), **Resume** on a suspended activity

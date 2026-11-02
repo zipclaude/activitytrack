@@ -1,7 +1,17 @@
-Versione 0.9.4-beta4 (novembre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.4-beta5 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.4-beta5** (provata sul telefono di debug, tranne la conferma della policy)
+- Una **policy non firmata** nella cartella dati, un **plugin nuovo** o un plugin
+  con **indirizzi cambiati** si usano solo dopo una conferma: l'app mostra cosa
+  cambia e l'impronta SHA-256 del file (§11, "Policy e integrazioni"). I plugin
+  già in uso lo chiedono una volta, al primo avvio dopo l'aggiornamento.
+- Il ripristino di un backup rifiuta file troppo grandi o danneggiati; due backup
+  insieme non si sovrascrivono più (§11).
+- Correzioni minori: una chiave di cifratura persa non fa più chiudere l'app,
+  le notifiche aprono sempre la schermata giusta.
 
 **Novità della 0.9.4-beta4** (provata sul telefono di debug)
 - Senza attività contemporanee (policy), **Riprendi** su un'attività sospesa
