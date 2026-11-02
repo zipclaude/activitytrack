@@ -4,6 +4,7 @@ package it.infraconsulting.activitytrack.notify
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.ui.Screen
 
@@ -16,6 +17,7 @@ object EntryLinks {
 			context,
 			(entryId * 16 + 10).toInt(),
 			Intent(context, MainActivity::class.java)
+				.setData(link("entry", entryId.toString()))
 				.putExtra(EXTRA_ENTRY, entryId)
 				.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
 			PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
@@ -29,10 +31,22 @@ object EntryLinks {
 			context,
 			requestCode,
 			Intent(context, MainActivity::class.java)
+				.setData(link("screen", screen.key(), requestCode.toString()))
 				.putExtra(EXTRA_SCREEN, screen.key())
 				.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
 			PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
 		)
+
+	/*
+	 * A data URI of its own per link: PendingIntents that differ only in
+	 * extras are the same one, and a request code of another notification
+	 * could otherwise land on it (security review B3). MainActivity reads
+	 * the extras; the URI only keeps the links apart.
+	 */
+	private fun link(vararg parts: String): Uri =
+		Uri.Builder().scheme(SCHEME).authority("link").apply { parts.forEach(::appendPath) }.build()
+
+	private const val SCHEME = "activitytrack-notification"
 
 	/* Screen carried by [intent], if any. */
 	fun screenOf(intent: Intent?): Screen? {
