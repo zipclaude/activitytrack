@@ -53,6 +53,10 @@ interface EntryDao {
 	@Query("SELECT COUNT(*) FROM attachment WHERE entry_id = :entryId")
 	suspend fun attachmentCount(entryId: Long): Int
 
+	/* The entries running now: without concurrent entries only one may (issue #132). */
+	@Query("SELECT * FROM time_entry WHERE status = 'ACTIVE'")
+	suspend fun activeEntries(): List<TimeEntryEntity>
+
 	/* Entries that still need user attention: active, suspended or to complete. */
 	@Query("SELECT * FROM time_entry WHERE status != 'CLOSED' ORDER BY updated_utc_ms DESC")
 	fun observeOpenEntries(): Flow<List<TimeEntryEntity>>
