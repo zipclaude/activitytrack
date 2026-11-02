@@ -31,6 +31,7 @@ import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
 import it.infraconsulting.activitytrack.domain.start.KnownSite
 import it.infraconsulting.activitytrack.domain.start.StartDefaults
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import it.infraconsulting.activitytrack.domain.start.StartProposal
 import java.time.Clock
 import java.time.Duration
@@ -624,7 +625,8 @@ class EntryRepository(
 				is SpanChange.Resize -> dao.updateSegment(o.copy(startUtcMs = c.start, endUtcMs = c.end))
 				is SpanChange.Split -> {
 					dao.updateSegment(o.copy(endUtcMs = c.firstEnd))
-					dao.insertSegment(o.copy(id = 0, startUtcMs = c.secondStart, kmDeclared = null, kmEstimated = null))
+					/* the second half is a new segment: a new sync identity too (unique since schema v16) */
+					dao.insertSegment(o.copy(id = 0, uid = SyncIds.random(), startUtcMs = c.secondStart, kmDeclared = null, kmEstimated = null))
 				}
 			}
 		}

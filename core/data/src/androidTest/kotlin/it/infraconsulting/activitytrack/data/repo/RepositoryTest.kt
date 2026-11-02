@@ -633,7 +633,9 @@ class RepositoryTest {
 	fun contactsAndCalls() = runBlocking<Unit> {
 		val calls = CallRepository(db)
 		assertEquals(Reason.BLANK_NAME, reason { calls.saveContact(ContactEntity(clientId = client, name = " "), listOf("333 1234567")) })
-		assertEquals(Reason.BLANK_VALUE, reason { calls.saveContact(ContactEntity(clientId = client, name = "Rossi"), listOf("", "12")) })
+		/* a contact may have no number (issue #44, e-mail only): too short ones are dropped */
+		val bare = calls.saveContact(ContactEntity(clientId = client, name = "Bianchi"), listOf("", "12"))
+		assertEquals(emptyList(), db.callDao().allContacts().first { it.contact.id == bare }.phones)
 		val id = calls.saveContact(ContactEntity(clientId = client, name = " Rossi "), listOf("+39 333 123 4567", "0461 123456"))
 		assertEquals(id, calls.contactOf("3331234567")?.contact?.id)
 		assertEquals("Rossi", calls.contactOf("+390461123456")?.contact?.name)
