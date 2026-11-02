@@ -1,7 +1,13 @@
-Version 0.9.4-beta1 (November 2026). Please report any difference between this
+Version 0.9.4-beta4 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.4-beta4** (tested on the debug phone)
+- Without concurrent activities (policy), **Resume** on a suspended activity
+  suspends the running one, as starting a new one does (§4).
+- A pause or travel inserted inside a work stretch, confirming the overlap,
+  is now saved: before, the change was lost (§6).
 
 **New in 0.9.4-beta1** (tested on the debug phone)
 - Settings: the **"Save"** button stays above the keyboard while typing in a
@@ -409,6 +415,10 @@ In the "New activity" screen (0.7.8):
 - working: close, suspend or leave it running;
 - travelling: "is the travel over?" (yes = stop, no = leave, or suspend);
 - paused: close or leave it.
+
+When the policy does not allow **concurrent activities**, "leave it" is not
+offered; and **Resume** on a suspended activity (Home, widget, tile,
+notification) also suspends the running one, or stops it when paused.
 
 **Other ways to start**
 - from the day-start notification ("Start activity");

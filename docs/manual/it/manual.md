@@ -1,7 +1,13 @@
-Versione 0.9.4-beta1 (novembre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.4-beta4 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.4-beta4** (provata sul telefono di debug)
+- Senza attività contemporanee (policy), **Riprendi** su un'attività sospesa
+  sospende quella in corso, come quando se ne avvia una nuova (§4).
+- Una pausa o un viaggio inseriti dentro un tratto di lavoro, confermando la
+  sovrapposizione, ora si salvano: prima la modifica andava persa (§6).
 
 **Novità della 0.9.4-beta1** (provata sul telefono di debug)
 - Impostazioni: il pulsante **"Salva"** resta sopra la tastiera mentre si
@@ -420,6 +426,10 @@ Nella schermata "Nuova attività" (0.7.8):
 - in lavoro: chiudere, sospendere o lasciarla andare;
 - in viaggio: "il viaggio è finito?" (sì = ferma, no = lascia, oppure sospendi);
 - in pausa: chiudere o lasciarla.
+
+Se la policy non consente **attività contemporanee**, "lasciarla" non c'è; e
+anche **Riprendi** su un'attività sospesa (Home, widget, riquadro, notifica)
+sospende quella in corso, o la ferma se è in pausa.
 
 **Altri modi per partire**
 - dalla notifica dell'avviso di inizio giornata ("Avvia attività");
