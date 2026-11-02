@@ -27,4 +27,18 @@ object Pkce {
 			"&redirect_uri=" + e(redirectUri) + "&scope=" + e(scopes) + "&state=" + e(state) +
 			"&code_challenge=" + e(challenge) + "&code_challenge_method=S256"
 	}
+
+	/* a login not finished within this time is dropped */
+	const val PENDING_MAX_MS = 15 * 60_000L
+
+	/*
+	 * The states of the stored logins ("<state>/client", "<state>/verifier",
+	 * "<state>/at" = start time in ms) older than [PENDING_MAX_MS] at [now],
+	 * or without a start time (stored before it was kept).
+	 */
+	fun expiredStates(stored: Map<String, *>, now: Long): Set<String> =
+		stored.keys.map { it.substringBefore('/') }.toSet().filter { state ->
+			val at = stored["$state/at"] as? Long
+			at == null || now - at > PENDING_MAX_MS || at > now + PENDING_MAX_MS
+		}.toSet()
 }
