@@ -1,4 +1,4 @@
-Version 0.9.4-beta4 · for everyday use; the *User manual* explains everything else.
+Version 0.9.4-beta5 · for everyday use; the *User manual* explains everything else.
 
 ## 1. First time
 1. Install `ActivityTrack-<version>.apk` from the GitHub *Releases*.
