@@ -159,12 +159,27 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
 ## 6. Location
 
 - Foreground service of type `location` only while an entry is ACTIVE.
-- One fix every 5 min; `TYPE_SIGNIFICANT_MOTION` triggers an extra fix.
+- One fix every 5 min while working and every 1 min while travelling (settings
+  `workSampleMin` 1–60 min, `travelSampleSec` 15 s–30 min; issue #155);
+  `TYPE_SIGNIFICANT_MOTION` triggers an extra fix.
 - TRAVEL: fix at start, every 5 min, at stop; km estimated via OSRM routing
   between consecutive fixes, fallback straight-line distance × configurable
   factor. `km_declared` overrides `km_estimated` in exports.
 - Uses: locality proposal (Nominatim), company/client proposal (site within radius),
   location kind, travel track and km, movement alerts.
+- **Track map and export** (issue #155): the map of the movements of an activity, a day, a
+  week or a month (setting `trackMapEnabled` and the OSM tile service; policy feature
+  `trackMap`); export as GPX 1.1 or KML 2.2, with the activity done at each place and
+  every sample as recorded, no filtering by accuracy or place (policy feature `trackExport`,
+  which also needs `export`); clean-up of the recorded samples (all, older than a month,
+  one day) and an option to delete the exported ones. Positions leave the phone only
+  with this explicit export.
+- **Offline maps** (docs/OFFLINE-MAPS.md): vector maps of areas of about 100 km, a few MB
+  each, any number; the track map shows the one covering the track when the OSM tiles are off
+  or there is no network (`offlineMapsEnabled`). They come from ActivityTrack Web with the sync
+  (the areas and zoom an administrator chose; Wi-Fi only, kept in step with the server) or from
+  the `maps` folder of the data folder, imported on request. Never downloaded from
+  tile.openstreetmap.org, whose policy forbids it.
 
 ## 7. Quick interaction
 
@@ -196,7 +211,8 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
 
 - **Interchange model** (docs/INTERCHANGE.md): companies, clients, sites,
   roles, presets, to-dos, entries with segments, expenses and references,
-  absences, days off; every section optional; never location samples.
+  absences, days off; every section optional; never location samples (only the
+  explicit GPX / KML track export carries them, §6).
 - **Connectors**: plugins compiled into the app, one per company (management
   system); the generic XML / JSON plugin first, API or web-service plugins
   later. Settings per company; secrets encrypted with the Android keystore.

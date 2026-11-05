@@ -79,6 +79,11 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 			r.errors.take(5).forEach { Log.w(TAG, it) }
 			concurrent(app)
 			policy(app, http, token)
+			/* the offline maps the server offers (issue #155): fetched when the head's fingerprint changed, on Wi-Fi */
+			account.mapsRev?.let { rev ->
+				runCatching { app.container.offlineMaps.syncFromServer(http, token, rev, downloads) }
+					.onFailure { x -> if (x is kotlinx.coroutines.CancellationException) throw x else Log.w(TAG, "maps", x) }
+			}
 			Result.success()
 		} catch (e: SyncRevoked) {
 			account.markRevoked()

@@ -377,7 +377,7 @@ data class SegmentEntity(
 	@ColumnInfo(defaultValue = "") val uid: String = SyncIds.random(),
 )
 
-/* Coordinates are displayed only; they are never exported. */
+/* Coordinates are displayed; they leave the phone only with the explicit GPX / KML track export (issue #155). */
 @Entity(
 	tableName = "location_sample",
 	foreignKeys = [

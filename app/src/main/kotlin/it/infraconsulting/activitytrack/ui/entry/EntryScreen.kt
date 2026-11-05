@@ -118,7 +118,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 @Composable
-fun EntryScreen(entryId: Long, onBack: () -> Unit) {
+fun EntryScreen(entryId: Long, onBack: () -> Unit, onOpenTrack: (Long) -> Unit = {}) {
 	val vm = appViewModel { c -> EntryViewModel(entryId, c.entries, c.masterData, c.todos, c.settings.settings.map { s -> s.editableTimes }, c.settings.settings.map { s -> s.tagsFreeText }, { c.policies.current.value }) }
 	val entry by vm.entry.collectAsState()
 	ScreenScaffold(
@@ -126,7 +126,12 @@ fun EntryScreen(entryId: Long, onBack: () -> Unit) {
 		onBack = onBack,
 		/* the whole entry (issue #40), in the ⋮ menu (issue #94) */
 		actions = {
-			if (LocalPolicy.current.enabled(Feature.DELETE_ENTRIES)) {
+			val policy = LocalPolicy.current
+			/* the route of this activity (issue #155): its map or export, as the policy allows */
+			val route = policy.enabled(Feature.LOCATION) &&
+				(policy.enabled(Feature.TRACK_MAP) || (policy.enabled(Feature.TRACK_EXPORT) && policy.enabled(Feature.EXPORT)))
+			val canDelete = policy.enabled(Feature.DELETE_ENTRIES)
+			if (canDelete || route) {
 				var menu by remember { mutableStateOf(false) }
 				val menuLabel = stringResource(R.string.nav_more)
 				androidx.compose.foundation.layout.Box {
@@ -134,10 +139,16 @@ fun EntryScreen(entryId: Long, onBack: () -> Unit) {
 						Text("⋮", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { contentDescription = menuLabel })
 					}
 					androidx.compose.material3.DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-						androidx.compose.material3.DropdownMenuItem(
-							text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
-							onClick = { menu = false; vm.askDelete() },
-						)
+						if (route)
+							androidx.compose.material3.DropdownMenuItem(
+								text = { Text(stringResource(R.string.track_entry)) },
+								onClick = { menu = false; onOpenTrack(entryId) },
+							)
+						if (canDelete)
+							androidx.compose.material3.DropdownMenuItem(
+								text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
+								onClick = { menu = false; vm.askDelete() },
+							)
 					}
 				}
 			}

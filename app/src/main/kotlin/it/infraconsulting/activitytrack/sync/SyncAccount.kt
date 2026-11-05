@@ -84,6 +84,7 @@ class SyncAccount(
 	 * plugin holder kept up to date (the web page may move it).
 	 */
 	suspend fun head(): Long? {
+		mapsRev = null
 		val http = http() ?: return null
 		val r = runCatching { http.send("GET", "api/v1/sync/head", token = token()) }.getOrNull() ?: return null
 		if (r.status == 401) {
@@ -104,8 +105,15 @@ class SyncAccount(
 				_info.value = updated
 			}
 		}
+		/* the fingerprint of the offline maps on offer ("" = none); absent from an older server (issue #155) */
+		mapsRev = o["mapsRev"]?.jsonPrimitive?.takeIf { it.isString }?.content
 		return o["rev"]?.jsonPrimitive?.long
 	}
+
+	/* `mapsRev` of the last head answer: null when the server did not say (unreachable, or too old to offer maps) */
+	@Volatile
+	var mapsRev: String? = null
+		private set
 
 	/* true when the server has changes after [cursor] (the cheap check while the app is in front) */
 	suspend fun serverAhead(cursor: Long): Boolean = (head() ?: return false) > cursor

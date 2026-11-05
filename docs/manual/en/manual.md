@@ -476,7 +476,7 @@ when you reopen the app.
 - **Summary** at the end of working hours: the day's total.
 
 ### Location (automatic)
-- One point every 5 minutes, plus one when the phone moves; never exported.
+- One point every 5 minutes (settable), every minute while travelling (settable), plus one when the phone moves. Positions leave the phone only with an explicit track export (see *Tracks*).
 - **"Away from …?"** — while working, beyond 100 m: "Travel since hh:mm"
   (the travel starts when you left), "Ignore", "Stop at hh:mm".
 - **"Arrived?"** — while travelling, after 15 minutes standing within 100 m:
@@ -494,6 +494,27 @@ At the top of the activity screen, below the state, a row of buttons adds an
 **Expense**, a **Photo**, a **Voice** note, a **File** and a **Material**; the
 "Expenses", "Materials" and "Attachments" sections further down list them
 (they appear once there is one).
+
+### Tracks: map, export and clean-up
+**More → Tracks**, or **⋮ → Route of the activity** in an activity.
+- **Map** of the movements of a day, a week or a month (or of one activity):
+  green lines for work, blue for travel, a green dot where an activity starts and a red one
+  where it ends; tap a line to see the activity. The map is shown if
+  **Settings → Location → Movement map** is on, there is a base map (the map tiles of
+  **Settings → Online services**, or a downloaded *offline map*), and the policy allows it. "Travels only" hides the rest.
+- **Export track**: a **GPX** (routes and tools such as QGIS) or **KML** (Google Earth Pro) file, with every
+  recorded position as recorded (time and accuracy) and, for each activity, client, company,
+  role, activity, locality, tags, times and km. It goes to the *export* folder and can be shared. The
+  box **"Delete the tracks once exported"** removes exactly the exported positions after the file is written. If you can see the
+  map, you can export, unless the policy (`trackExport`) forbids it.
+- **Offline maps**: basic maps (roads, rivers, borders, place names) of areas of about 100 km, a few MB each.
+  A phone paired with ActivityTrack Web receives those the administrator prepared, with the sync, on Wi-Fi.
+  Without a server, copy `.pmtiles` files into the **maps** folder of the data folder and use
+  *Settings → Location → Offline maps → Import from the data folder*. The map that covers your track is shown instead of
+  the OSM tiles when those are off or there is no network; each map has a *Delete* button.
+- **Clean up tracking**: deletes the positions older than one month, those of a day, or all of them.
+  Activities, times and km stay; the positions of a running activity and of a travel whose km are
+  still being computed are kept.
 
 ### Expenses
 In the activity screen, the **Expense** button: amount in euro,
@@ -1062,8 +1083,10 @@ Out-of-range values are adjusted when saving.
 ## 15. Data and privacy
 
 - Everything stays on the phone and in the data folder you chose.
-- The **coordinates** of your movements are never exported nor sent to the
-  calendar; only the locality (e.g. "Milano").
+- The **coordinates** of your movements are never sent to the calendar, to the
+  management systems or to the server; only the locality (e.g. "Milano"). They
+  leave the phone only if you export the track (GPX / KML) yourself. To record no
+  positions at all, switch tracking off (policy `location`).
 - Calendar events are private: people sharing the calendar see only "busy".
 - Online services (addresses, distances, maps) receive only the coordinates
   of single points; they can be switched off or pointed to your own servers.
@@ -1143,6 +1166,9 @@ choose banner, sound and vibration.
 | Arrival radius | within how many metres you count as standing | 25–1000 m | 100 |
 | Arrival time | after how many minutes standing, while travelling, "Arrived?" comes | 5–120 min | 15 |
 | Road distance factor | road km = straight line × factor, when OSRM is not available | 1.0–3.0 | 1.25 |
+| Position sampling while working | how often a position is recorded | 1, 2, 5, 10, 15, 20, 30, 60 min | 5 min |
+| Position sampling while travelling | finer, to draw the route taken (more battery) | 15, 30, 60 s; 2, 5, 10, 15, 30 min | 1 min |
+| Movement map | shows the Tracks map; it needs the map tiles of *Online services* | on / off | on |
 
 ### Calendar
 Calendar access, the activities calendar (Google or CalDAV through DAVx5, or
@@ -1308,15 +1334,16 @@ never go below 10 minutes (Android limits alarms in Doze).
 | Planned to-do | *minutes before* the plan, also outside working hours | Start, Postpone, Re-plan |
 
 ### Location
-- One point every 5 minutes, plus one when the phone moves, only while an
-  activity is running (also paused).
+- One point every 5 minutes while working and every minute while travelling
+  (both settable), plus one when the phone moves, only while an activity is
+  running (also paused).
 - Working, beyond the *movement threshold*: "Away from …?" with "Travel since
   HH:MM" (from the first point beyond the threshold).
 - Travelling, standing within the *radius* for the *arrival time*:
   "Arrived?"; at a client's site it proposes work for that client, at home to
   stop.
 - Km: OSRM when on, otherwise straight line × factor; locality from
-  Nominatim. Coordinates never leave the phone.
+  Nominatim. Coordinates leave the phone only with the track export (GPX / KML).
 
 ### Report and export
 - *Total*: the sum of rounded work and travel (Report and evening summary).

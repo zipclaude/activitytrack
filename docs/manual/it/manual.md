@@ -487,7 +487,7 @@ ricompare quando riapri l'app.
 - **Riepilogo** a fine orario di lavoro: il totale del giorno.
 
 ### Posizione (automatica)
-- Un punto ogni 5 minuti, più uno quando il telefono si muove; mai esportati.
+- Un punto ogni 5 minuti (impostabile), ogni minuto in viaggio (impostabile), più uno quando il telefono si muove. Le posizioni escono dal telefono solo con un'esportazione esplicita del tracciato (vedi *Tracciati*).
 - **"Lontano da …?"** — durante il lavoro, se ti allontani più di 100 m:
   "Viaggio dalle hh:mm" (il viaggio parte dall'ora in cui sei partito),
   "Ignora", "Stop alle hh:mm".
@@ -506,6 +506,27 @@ In cima alla schermata dell'attività, sotto lo stato, una riga di pulsanti
 aggiunge **Spesa**, **Foto**, **Nota voc.**, **File** e **Materiale**; le
 sezioni "Spese", "Materiali" e "Allegati" più in basso li elencano (compaiono
 quando ce n'è almeno uno).
+
+### Tracciati: mappa, esportazione e pulizia
+**Altro → Tracciati**, oppure **⋮ → Percorso dell'attività** in un'attività.
+- **Mappa** degli spostamenti di un giorno, di una settimana o di un mese (o di una sola attività):
+  linee verdi per il lavoro, blu per i viaggi, un punto verde dove un'attività inizia e uno rosso
+  dove finisce; tocca una linea per vedere l'attività. La mappa compare se è attiva
+  **Impostazioni → Posizione → Mappa degli spostamenti**, c'è una mappa di base (le mappe online di
+  **Impostazioni → Servizi online**, oppure una *mappa offline* scaricata) e se la policy lo consente. "Solo viaggi" nasconde il resto.
+- **Esporta tracciato**: un file **GPX** (percorsi e strumenti come QGIS) o **KML** (Google Earth Pro), con ogni
+  posizione registrata così com'è (ora e precisione) e, per ogni attività, cliente, azienda,
+  ruolo, attività, località, tag, orari e km. Va nella cartella *export* e si può condividere. La
+  casella **"Elimina i tracciati dopo l'esportazione"** cancella esattamente le posizioni esportate dopo aver scritto il file. Se puoi vedere la
+  mappa puoi esportare, salvo che la policy (`trackExport`) lo vieti.
+- **Mappe offline**: mappe basilari (strade, fiumi, confini, nomi dei luoghi) di aree di circa 100 km, pochi MB ciascuna.
+  Un telefono associato ad ActivityTrack Web riceve quelle che l'amministratore ha preparato, con la sincronizzazione,
+  su Wi-Fi. Senza server, copia file `.pmtiles` nella cartella **maps** della cartella dati e usa
+  *Impostazioni → Posizione → Mappe offline → Importa dalla cartella dati*. Compare la mappa che copre il tuo tracciato, al
+  posto dei tile OSM quando questi sono spenti o manca la rete; ogni mappa ha il suo pulsante *Elimina*.
+- **Pulizia tracciamento**: elimina le posizioni più vecchie di un mese, quelle di un giorno o tutte.
+  Attività, orari e km restano; le posizioni di un'attività in corso e di un viaggio di cui si
+  stanno ancora calcolando i km vengono conservate.
 
 ### Spese
 Nella schermata dell'attività, pulsante **Spesa**: importo in
@@ -1096,8 +1117,10 @@ I valori fuori intervallo vengono corretti al salvataggio.
 ## 15. Dati e privacy
 
 - Tutto resta sul telefono e nella cartella dati che hai scelto.
-- Le **coordinate** dei tuoi spostamenti non vengono mai esportate né mandate
-  al calendario; solo la località (es. "Milano").
+- Le **coordinate** dei tuoi spostamenti non vengono mai mandate al calendario,
+  ai gestionali né al server; solo la località (es. "Milano"). Escono dal
+  telefono solo se esporti tu il tracciato (GPX / KML). Per non registrare
+  nessuna posizione, disattiva il tracciamento (policy `location`).
 - Gli eventi nel calendario sono privati: chi lo condivide vede solo "occupato".
 - I servizi online (indirizzi, distanze, mappe) ricevono solo coordinate di
   singoli punti; si possono disattivare o puntare a server propri.
@@ -1177,6 +1200,9 @@ dove scegliere banner, suono e vibrazione.
 | Raggio di arrivo | entro quanti metri si considera fermo | 25–1000 m | 100 |
 | Tempo di arrivo | dopo quanti minuti fermo, in viaggio, arriva "Arrivo?" | 5–120 min | 15 |
 | Fattore distanza stradale | km stradali = linea d'aria × fattore, quando OSRM non è disponibile | 1,0–3,0 | 1,25 |
+| Campionamento durante il lavoro | ogni quanto si registra una posizione | 1, 2, 5, 10, 15, 20, 30, 60 min | 5 min |
+| Campionamento durante il viaggio | più fitto, per disegnare il percorso fatto (più batteria) | 15, 30, 60 s; 2, 5, 10, 15, 30 min | 1 min |
+| Mappa degli spostamenti | mostra la mappa dei Tracciati; richiede le mappe di *Servizi online* | sì / no | sì |
 
 ### Calendario
 Accesso al calendario, calendario delle attività (Google o CalDAV tramite
@@ -1345,15 +1371,16 @@ allarmi in Doze).
 | *Da fare* pianificata | *minuti prima* della pianificazione, anche fuori orario | Avvia, Posticipa, Ripianifica |
 
 ### Posizione
-- Un punto ogni 5 minuti, più uno quando il telefono si muove, solo mentre
-  un'attività è in corso (anche in pausa).
+- Un punto ogni 5 minuti in lavoro e ogni minuto in viaggio (entrambi
+  impostabili), più uno quando il telefono si muove, solo mentre un'attività è
+  in corso (anche in pausa).
 - In lavoro, oltre la *soglia di spostamento*: "Lontano da …?" con "Viaggio
   dalle HH:MM" (dal primo punto oltre la soglia).
 - In viaggio, fermo entro il *raggio* per il *tempo di arrivo*: "Arrivo?";
   presso la sede di un cliente propone il lavoro per quel cliente, a casa lo
   stop.
 - Km: OSRM se attivo, altrimenti linea d'aria × fattore; località da
-  Nominatim. Le coordinate non escono mai dal telefono.
+  Nominatim. Le coordinate escono dal telefono solo con l'esportazione del tracciato (GPX / KML).
 
 ### Report ed esportazione
 - *Totale*: somma di lavoro e viaggio arrotondati (Report e riepilogo

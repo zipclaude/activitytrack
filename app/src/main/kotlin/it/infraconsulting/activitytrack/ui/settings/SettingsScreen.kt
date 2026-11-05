@@ -189,7 +189,11 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var nominatimOn by remember { mutableStateOf(initial.nominatim.enabled) }
 	var osrmOn by remember { mutableStateOf(initial.osrm.enabled) }
 	var tilesOn by remember { mutableStateOf(initial.tiles.enabled) }
+	var offlineMapsOn by remember { mutableStateOf(initial.offlineMapsEnabled) }
 	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
+	var trackMap by remember { mutableStateOf(initial.trackMapEnabled) }
+	var workSample by remember { mutableStateOf(initial.workSampleMin) }
+	var travelSample by remember { mutableStateOf(initial.travelSampleSec) }
 	var compact by remember { mutableStateOf(initial.compactDisplay) }
 	var editableTimes by remember { mutableStateOf(initial.editableTimes) }
 	var tagsFreeText by remember { mutableStateOf(initial.tagsFreeText) }
@@ -238,7 +242,11 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		nominatim = OnlineService(nominatimOn, text[F.NOMINATIM].orEmpty()),
 		osrm = OnlineService(osrmOn, text[F.OSRM].orEmpty()),
 		tiles = OnlineService(tilesOn, text[F.TILES].orEmpty()),
+		offlineMapsEnabled = offlineMapsOn,
 		dictationLanguage = dictation,
+		trackMapEnabled = trackMap,
+		workSampleMin = workSample,
+		travelSampleSec = travelSample,
 		compactDisplay = compact,
 		editableTimes = editableTimes,
 		tagsFreeText = tagsFreeText,
@@ -332,6 +340,39 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					field(F.ST_RADIUS, R.string.set_stationary_radius, key = "stationaryRadiusM")
 					field(F.ST_MIN, R.string.set_stationary_min, key = "stationaryMin")
 					field(F.KM_FACTOR, R.string.set_km_factor, KeyboardType.Decimal, key = "kmFactor")
+					/* how often a position is recorded: finer while travelling, to draw the route (issue #155) */
+					PolicySetting("workSampleMin") {
+						ChoiceField(
+							stringResource(R.string.set_work_sample),
+							AppSettings.WORK_SAMPLE_MIN.map { it to stringResource(R.string.sample_min, it) },
+							workSample,
+						) { workSample = it }
+					}
+					PolicySetting("travelSampleSec") {
+						ChoiceField(
+							stringResource(R.string.set_travel_sample),
+							AppSettings.TRAVEL_SAMPLE_SEC.map { s ->
+								s to if (s < 60) stringResource(R.string.sample_sec, s) else stringResource(R.string.sample_min, s / 60)
+							},
+							travelSample,
+						) { travelSample = it }
+					}
+					Text(stringResource(R.string.set_sample_hint), style = MaterialTheme.typography.bodySmall)
+					/* the map needs the tile service of Settings → Online services */
+					if (LocalPolicy.current.enabled(Feature.TRACK_MAP))
+						PolicySetting("trackMapEnabled") {
+							SwitchRow(stringResource(R.string.set_track_map), trackMap) { trackMap = it }
+							Text(
+								stringResource(if (initial.tiles.enabled) R.string.set_track_map_hint else R.string.set_track_map_needs_tiles),
+								style = MaterialTheme.typography.bodySmall,
+							)
+						}
+					/* the offline maps (issue #155): the track map without the OSM tiles or the network */
+					if (LocalPolicy.current.enabled(Feature.TRACK_MAP)) {
+						PolicySetting("offlineMapsEnabled") { SwitchRow(stringResource(R.string.set_offline_maps), offlineMapsOn) { offlineMapsOn = it } }
+						if (initial.offlineMapsEnabled)
+							OfflineMapRows(initial.rootUri)
+					}
 				}
 				SettingsSection.CALENDAR -> CalendarRows()
 				SettingsSection.SYNC -> SyncRows()

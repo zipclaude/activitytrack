@@ -48,6 +48,8 @@ class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	val userDataDir: UserDataDir by lazy { UserDataDir(appContext) }
 	val backup: DatabaseBackup by lazy { DatabaseBackup(database, appContext.cacheDir) }
 	val locations: LocationRepository by lazy { LocationRepository(database) }
+	/* the offline map of the track map (issue #155) */
+	val offlineMaps: it.infraconsulting.activitytrack.maps.OfflineMaps by lazy { it.infraconsulting.activitytrack.maps.OfflineMaps(appContext, settings, scope) }
 	val sync: it.infraconsulting.activitytrack.data.repo.SyncRepository by lazy { it.infraconsulting.activitytrack.data.repo.SyncRepository(database) }
 	val attachments: AttachmentRepository by lazy { AttachmentRepository(database, userDataDir, clock) }
 
