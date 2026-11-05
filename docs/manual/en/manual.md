@@ -1,7 +1,23 @@
-Version 0.9.4-beta5 (November 2026). Please report any difference between this
+Version 0.9.5 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.5** (tested on the debug phone, except the GPX export, the week and month views and the policy switches)
+- The **track map** (*More → Tracks*, and *⋮ → Route of the activity* in an activity): the
+  movements of an activity, a day, a week or a month on a map, with a "Travels only" filter;
+  tap a line to see the activity (*Tracks: map, export and clean-up*, under *Location*).
+- **Export of the track** as **GPX** or **KML** (Google Earth Pro), with every position as
+  recorded and the activity done there; **Clean up tracking** deletes the positions of a day,
+  those older than a month, or all of them; "Delete the tracks once exported".
+- **Position sampling**: every 5 minutes while working and every minute while travelling by
+  default, both settable (*Settings → Location*), to draw the route taken.
+- **Offline maps**: basic maps of areas of about 100 km, a few MB each, from ActivityTrack Web
+  (with the sync, on Wi-Fi) or from the *maps* folder of the data folder; they show instead of
+  the OSM tiles when those are off or there is no network.
+- Policy: `trackMap`, `trackExport`, `trackMapEnabled`, `workSampleMin`, `travelSampleSec`,
+  `offlineMapsEnabled`. With ActivityTrack Web 0.9.5 an administrator chooses the areas and the
+  zoom on the *Mappe* page.
 
 **New in 0.9.4-beta5** (tested on the debug phone, except the policy confirmation)
 - An **unsigned policy** in the data folder, a **new plugin** or a plugin whose
