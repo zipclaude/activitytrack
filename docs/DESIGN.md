@@ -82,7 +82,7 @@ Source: `core/data/src/main/kotlin/it/infraconsulting/activitytrack/data/db/Enti
 | `activity_preset` | id, text, default_role_id?, company_id? | |
 | `time_entry` | id, company_id?, client_id?, role_id?, activity?, status, mode?, locality?, location_kind?, notes?, zone_id, last_confirmed_utc_ms?, unanswered_reminders, created/updated | company known before client is allowed; client null only before the client is chosen |
 | `segment` | id, entry_id → time_entry (CASCADE), kind WORK/TRAVEL/PAUSE, start_utc_ms, end_utc_ms?, zone_id, source TRACKED/MANUAL, km_estimated?, km_declared? | |
-| `location_sample` | id, entry_id, segment_id?, ts_utc_ms, lat, lon, accuracy_m, provider | never exported |
+| `location_sample` | id, entry_id, segment_id?, ts_utc_ms, lat, lon, accuracy_m, provider | exported only by the explicit track export (GPX / KML) |
 | `attachment` | id, entry_id, kind PHOTO/AUDIO/RECEIPT/FILE, rel_path, mime, transcript?, created | path relative to SAF root |
 | `expense` | id, entry_id, segment_id?, amount_cents, description, attachment_id?, created | EUR |
 | `external_ref` | id, entry_id, kind TICKET/URL/UUID/OTHER, value | kind auto-classified |
@@ -205,8 +205,11 @@ Algorithms to add:
   fixes, time of the first) during WORK, stop (stationary run, time of its
   first fix) during TRAVEL; commands are backdated to those times.
 - Provider: `LocationManager.FUSED_PROVIDER` when present, else GPS + network.
-  `LocationRequestCompat` interval 5 min, quality balanced; temporary
-  high-accuracy request for start/stop fixes of TRAVEL.
+  `SamplingPlan` (domain) gives the request: working interval (default 5 min,
+  balanced quality), or the travel interval (default 1 min, high accuracy) while any
+  ACTIVE entry has an open TRAVEL segment; `LocationService` follows the settings
+  and re-requests when the plan changes. Temporary high-accuracy request for
+  start/stop fixes of TRAVEL.
 - `TYPE_SIGNIFICANT_MOTION` (`TriggerEventListener`, one-shot, re-armed) asks
   for an immediate fix.
 - Permissions: `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION` (sideload
@@ -220,6 +223,32 @@ Algorithms to add:
 - `BackupWorker` (WorkManager, 24 h, constraint battery-not-low).
 - `GeoEnrichWorker` (network constraint): reverse geocoding and OSRM km for
   samples recorded offline.
+
+### 6.4 Track map, export and clean-up (issue #155)
+- `:core:domain` `track`: `TrackEntry` / `TrackSegment` / `TrackPoint` (the samples
+  grouped by entry and segment, with what was done), `TrackPeriod` (day, week from
+  Monday, month; bounds are local midnights), `TrackGeometry` (Douglas–Peucker for
+  drawing, nearest entry for a tap), `GpxWriter` (GPX 1.1, own `at:` extension
+  namespace) and `KmlWriter` (KML 2.2: a folder per day, a placemark per segment, TimeSpan,
+  ExtendedData; the balloon text is escaped for HTML and again for XML).
+- `:core:data`: `LocationDao` queries by period and entry, and the deletes; those never
+  remove the samples of an ACTIVE entry nor of a closed tracked TRAVEL whose km the
+  `GeoEnrichWorker` has yet to compute (the `NOT IN` is wrapped in `COALESCE`: a sample without
+  segment would make it NULL, never true). `LocationRepository.track` builds the entries,
+  `deleteSamplesOf` deletes exactly the exported sample ids.
+- `:app` `ui/track`: `TrackScreen` (period chips, map, summary, export and clean-up dialogs)
+  and `TrackMap` (MapLibre, the track as a GeoJSON source over the raster tiles, restyled
+  on each change). Reached from More → Tracks and the ⋮ menu of an activity.
+- Policy: features `trackMap` and `trackExport` (the latter also needs `export`), settings
+  `trackMapEnabled`, `workSampleMin`, `travelSampleSec`, `offlineMapsEnabled`.
+- Offline maps (docs/OFFLINE-MAPS.md): `OfflineMapCatalog` (domain: the server's catalog,
+  validated) and `PmtilesHeader` (domain: the header of a file copied in by hand), `OfflineMaps`
+  (app: any number of maps in `files/maps/` with an index; `syncFromServer` called by the
+  `SyncWorker` when the head's `mapsRev` changes, streamed downloads with size and SHA-256
+  checks; `importFromFolder` for `<data folder>/maps`), `Basemap.Online` / `Basemap.Offline`
+  in `TrackMap`; the offline style reads the PMTiles file in place (`pmtiles://file://`,
+  MapLibre 11.8+) and the glyphs from the assets. The server side is ActivityTrack Web's
+  `maps` app; `scripts/build-offline-maps.py` makes files for a phone without a server.
 
 ## 7. Notifications
 

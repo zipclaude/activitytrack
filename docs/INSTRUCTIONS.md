@@ -84,8 +84,17 @@ reference, locality.
 - Purposes: propose the locality (OSM), propose the client when within 100 m of
   a client site, know where the work was done (company / client / home),
   estimate travel km and remember the route, movement alerts.
-- Coordinates are stored and displayed, **never exported**; reports, exports and
-  integrations carry only the locality text.
+- Coordinates are stored and displayed; reports, interchange files, the sync and the
+  integrations carry only the locality text. They leave the phone **only with the
+  explicit track export (GPX / KML, issue #155)**, which a policy can forbid. Who does
+  not want positions recorded switches location tracking off.
+- Sampling: every 5 min while working, every 1 min while travelling by default, both
+  settable; the samples keep the accuracy the provider gave and are never filtered.
+- Offline maps: vector PMTiles files, a few MB per area, from ActivityTrack Web with the sync
+  or copied into the data folder (the OSM tile server forbids offline use); the track map needs
+  the OSM tiles or such a map.
+- The track map and the track export follow the same rule: who may see the movements may
+  export them unless the policy forbids it; the map needs the OSM tile service.
 - Online services (OSM-based) are accepted but must be individually disableable.
 
 ### 2.8 Attachments and input
@@ -118,7 +127,7 @@ reference, locality.
 | A6 | User data directory via SAF tree (attachments, backups) | externally accessible, survives uninstall |
 | A7 | Timing without a running service: state and timestamps in DB, notification chronometer | battery |
 | A8 | Reminders via inexact `AlarmManager` (`setWindow` / `setAndAllowWhileIdle`) | no exact-alarm permission, Doze-compatible |
-| A9 | Location: `LocationManager` (fused provider from API 31), foreground service of type `location` only while an entry is ACTIVE, 5 min interval, significant-motion trigger | precision with bounded battery cost, no GMS |
+| A9 | Location: `LocationManager` (fused provider from API 31), foreground service of type `location` only while an entry is ACTIVE, 5 min interval working / 1 min travelling (settable), significant-motion trigger | precision with bounded battery cost, no GMS |
 | A10 | OSM ecosystem: Nominatim, OSRM, osmdroid/MapLibre; each optional with configurable endpoint | free, self-hostable, disableable |
 | A11 | Speech: `SpeechRecognizer`; offline Vosk / whisper.cpp later. OCR: Tesseract | free software |
 | A12 | Multi-module Gradle: `:core:domain` (pure JVM), `:core:data`, `:app`, later feature modules | testable business rules on host JVM |

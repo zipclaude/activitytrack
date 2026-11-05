@@ -34,6 +34,9 @@ sealed interface Screen {
 	data class Entry(val id: Long) : Screen
 	data object Day : Screen
 	data object Export : Screen
+	/* map, export and clean-up of the recorded tracks (issue #155): all, or one activity's */
+	data object Tracks : Screen
+	data class EntryTrack(val id: Long) : Screen
 	data object Settings : Screen
 	/* one settings section (backlog 2): [name] is a SettingsSection */
 	data class SettingsPage(val name: String) : Screen
@@ -83,7 +86,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Agenda, More, Start, StartTravel, Day, Export, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures, Contacts, Materials)
+			listOf(Home, Agenda, More, Start, StartTravel, Day, Export, Tracks, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures, Contacts, Materials)
 				.associateBy { it.key() }
 		}
 

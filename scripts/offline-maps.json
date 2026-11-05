@@ -1,0 +1,29 @@
+{
+  "source": null,
+  "maxzoom": 10,
+  "regions": [
+    {"id": "torino", "name": "Torino e Piemonte", "lat": 45.07, "lon": 7.69},
+    {"id": "aosta", "name": "Aosta e Valle d'Aosta", "lat": 45.74, "lon": 7.32},
+    {"id": "milano", "name": "Milano e Lombardia", "lat": 45.46, "lon": 9.19},
+    {"id": "genova", "name": "Genova e Liguria", "lat": 44.41, "lon": 8.93},
+    {"id": "trento", "name": "Trento e Alto Adige", "lat": 46.07, "lon": 11.12},
+    {"id": "venezia", "name": "Venezia e Veneto", "lat": 45.44, "lon": 12.32},
+    {"id": "udine", "name": "Udine e Friuli", "lat": 46.06, "lon": 13.24},
+    {"id": "bologna", "name": "Bologna e Emilia", "lat": 44.49, "lon": 11.34},
+    {"id": "firenze", "name": "Firenze e Toscana", "lat": 43.77, "lon": 11.25},
+    {"id": "ancona", "name": "Ancona e Marche", "lat": 43.62, "lon": 13.52},
+    {"id": "perugia", "name": "Perugia e Umbria", "lat": 43.11, "lon": 12.39},
+    {"id": "roma", "name": "Roma e Lazio", "lat": 41.90, "lon": 12.50},
+    {"id": "pescara", "name": "Pescara e Abruzzo", "lat": 42.46, "lon": 14.21},
+    {"id": "napoli", "name": "Napoli e Campania", "lat": 40.85, "lon": 14.27},
+    {"id": "bari", "name": "Bari e Puglia", "lat": 41.12, "lon": 16.87},
+    {"id": "lecce", "name": "Lecce e Salento", "lat": 40.35, "lon": 18.17},
+    {"id": "potenza", "name": "Potenza e Basilicata", "lat": 40.64, "lon": 15.80},
+    {"id": "cosenza", "name": "Cosenza e Calabria", "lat": 39.30, "lon": 16.25},
+    {"id": "reggio-calabria", "name": "Reggio Calabria e stretto", "lat": 38.11, "lon": 15.65},
+    {"id": "catania", "name": "Catania e Sicilia orientale", "lat": 37.50, "lon": 15.09},
+    {"id": "palermo", "name": "Palermo e Sicilia occidentale", "lat": 38.12, "lon": 13.36},
+    {"id": "cagliari", "name": "Cagliari e Sardegna meridionale", "lat": 39.22, "lon": 9.12},
+    {"id": "sassari", "name": "Sassari e Sardegna settentrionale", "lat": 40.73, "lon": 8.56}
+  ]
+}

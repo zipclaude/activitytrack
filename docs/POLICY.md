@@ -103,6 +103,8 @@ cannot be switched off.
 | `voiceNotes` | voice notes |
 | `dictation` | dictation (microphone in text fields; its settings) |
 | `location` | location tracking (its settings) |
+| `trackMap` | the map of the movements of an activity, day, week or month |
+| `trackExport` | the GPX / KML export of the track and the clean-up of the recorded tracks (a person who can see the map can export it unless this is off) |
 | `calls` | call recognition (its settings) |
 | `calendar` | the external calendar (its settings, sync) |
 | `import` | importing files |
@@ -199,6 +201,10 @@ are written back at every read, so they cannot drift.
 | `nominatimEnabled` | true/false | |
 | `osrmEnabled` | true/false | |
 | `tilesEnabled` | true/false | |
+| `trackMapEnabled` | true/false | the track map; it needs `tilesEnabled` or a downloaded offline map |
+| `offlineMapsEnabled` | true/false | the offline maps (the server's and those in the data folder) for the track map |
+| `workSampleMin` | minutes | 1, 2, 5, 10, 15, 20, 30, 60 |
+| `travelSampleSec` | seconds | 15, 30, 60, 120, 300, 600, 900, 1800 |
 | `stationaryRadiusM` | metres | 25–1000 |
 | `stationaryMin` | minutes | 5–120 |
 | `kmFactor` | number | 1.0–3.0 (road km per straight-line km) |

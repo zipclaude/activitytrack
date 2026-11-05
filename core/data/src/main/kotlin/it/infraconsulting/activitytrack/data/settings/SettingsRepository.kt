@@ -109,6 +109,10 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val callAutoPause = booleanPreferencesKey("call_auto_pause")
 		val callProposeEntry = booleanPreferencesKey("call_propose_entry")
 		val callsAlways = booleanPreferencesKey("calls_always")
+		val trackMapEnabled = booleanPreferencesKey("track_map_enabled")
+		val offlineMapsEnabled = booleanPreferencesKey("offline_maps_enabled")
+		val workSampleMin = intPreferencesKey("work_sample_min")
+		val travelSampleSec = intPreferencesKey("travel_sample_sec")
 		fun order(list: OrderedList) = stringPreferencesKey("order_${list.name.lowercase()}")
 		val editableTimes = booleanPreferencesKey("editable_times")
 		val tagsFreeText = booleanPreferencesKey("tags_free_text")
@@ -181,9 +185,13 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			callAutoPause = p[K.callAutoPause] ?: d.callAutoPause,
 			callProposeEntry = p[K.callProposeEntry] ?: d.callProposeEntry,
 			callsAlways = p[K.callsAlways] ?: d.callsAlways,
+			trackMapEnabled = p[K.trackMapEnabled] ?: d.trackMapEnabled,
+			workSampleMin = p[K.workSampleMin] ?: d.workSampleMin,
+			travelSampleSec = p[K.travelSampleSec] ?: d.travelSampleSec,
 			nominatim = readService(p, "nominatim", d.nominatim),
 			osrm = readService(p, "osrm", d.osrm),
 			tiles = readService(p, "tiles", d.tiles),
+			offlineMapsEnabled = p[K.offlineMapsEnabled] ?: d.offlineMapsEnabled,
 			rounding = ReportRounding(
 				readRule(p, "work", d.rounding.work),
 				readRule(p, "travel", d.rounding.travel),
@@ -246,9 +254,13 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		p[K.callAutoPause] = s.callAutoPause
 		p[K.callProposeEntry] = s.callProposeEntry
 		p[K.callsAlways] = s.callsAlways
+		p[K.trackMapEnabled] = s.trackMapEnabled
+		p[K.workSampleMin] = s.workSampleMin
+		p[K.travelSampleSec] = s.travelSampleSec
 		writeService(p, "nominatim", s.nominatim)
 		writeService(p, "osrm", s.osrm)
 		writeService(p, "tiles", s.tiles)
+		p[K.offlineMapsEnabled] = s.offlineMapsEnabled
 		writeRule(p, "work", s.rounding.work)
 		writeRule(p, "travel", s.rounding.travel)
 		writeRule(p, "pause", s.rounding.pause)

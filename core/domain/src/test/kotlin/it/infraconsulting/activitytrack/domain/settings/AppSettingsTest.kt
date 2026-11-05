@@ -71,4 +71,22 @@ class AppSettingsTest {
 		assertEquals(72, AppSettings(widgetTodoWindowHours = 72).validated().widgetTodoWindowHours)
 		assertEquals(24, AppSettings(widgetTodoWindowHours = 48).validated().widgetTodoWindowHours)
 	}
+
+	@Test
+	fun sampleIntervalsAreOneOfTheOffered() {
+		val s = AppSettings(workSampleMin = 7, travelSampleSec = 45).validated()
+		assertEquals(5, s.workSampleMin)
+		assertEquals(60, s.travelSampleSec)
+		assertEquals(30, AppSettings(travelSampleSec = 30).validated().travelSampleSec)
+		assertEquals(60, AppSettings(workSampleMin = 60).validated().workSampleMin)
+	}
+
+	@Test
+	fun trackMapNeedsTheTilesOrAnOfflineMap() {
+		assertEquals(true, AppSettings().trackMapAvailable(offlineMap = false))
+		val noTiles = AppSettings(tiles = OnlineService(false, "x"))
+		assertEquals(false, noTiles.trackMapAvailable(offlineMap = false))
+		assertEquals(true, noTiles.trackMapAvailable(offlineMap = true))
+		assertEquals(false, AppSettings(trackMapEnabled = false).trackMapAvailable(offlineMap = true))
+	}
 }

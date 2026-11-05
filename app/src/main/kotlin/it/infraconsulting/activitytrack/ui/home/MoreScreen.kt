@@ -24,6 +24,8 @@ fun MoreScreen(onOpen: (Screen) -> Unit) {
 			/* what the policy keeps (issue #48) */
 			val rows = listOfNotNull(
 				Triple(Screen.Export, R.string.export_title, R.drawable.ic_menu_import_export).takeIf { policy.enabled(Feature.IMPORT) || policy.enabled(Feature.EXPORT) || policy.enabled(Feature.RESTORE) },
+				/* tracks: the map, the export or the clean-up are there for the policy */
+				Triple(Screen.Tracks, R.string.track_title, R.drawable.ic_menu_place).takeIf { policy.enabled(Feature.LOCATION) },
 				Triple(Screen.MasterData, R.string.md_title, R.drawable.ic_menu_folder),
 				Triple(Screen.Settings, R.string.settings_title, R.drawable.ic_menu_settings),
 			)

@@ -18,7 +18,9 @@ Management-system plugins map their own APIs or files to this model
   company (app used without companies, policy `fields.company.visible: false`).
 - Instants: ISO-8601 UTC (`2026-10-17T07:00:00Z`) with `zone` apart; dates
   `yyyy-mm-dd`; times `HH:MM`; amounts decimal strings in EUR (`"12.50"`).
-- Location samples never travel. Site coordinates are optional master data.
+- Location samples never travel in this format, nor in the sync. Site coordinates are
+  optional master data. The only file carrying samples is the explicit GPX / KML track
+  export (issue #155), which is not an interchange file and is not imported.
 - Import is idempotent (same file twice = no duplicates). When a record
   already exists and differs, **the app data wins** and the import report
   lists the conflict; nothing is blocked.

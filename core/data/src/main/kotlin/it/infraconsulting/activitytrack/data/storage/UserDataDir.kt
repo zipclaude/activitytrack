@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 
 /*
  * User data directory chosen through SAF (decision A6, DESIGN §8.1).
- * Layout: <root>/attachments, <root>/backup, <root>/export.
+ * Layout: <root>/attachments, <root>/backup, <root>/export, <root>/plugins, <root>/maps.
  * Uses DocumentsContract directly, without androidx.documentfile.
  */
 class UserDataDir(context: Context) {
@@ -22,6 +22,7 @@ class UserDataDir(context: Context) {
 		BACKUP("backup"),
 		EXPORT("export"),
 		PLUGINS("plugins"),		/* integration descriptors (issue #48) */
+		MAPS("maps"),			/* offline maps (.pmtiles) copied in by hand (issue #155) */
 	}
 
 	/* Keeps read/write access to [tree] across reboots. */

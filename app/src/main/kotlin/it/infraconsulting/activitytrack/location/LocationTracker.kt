@@ -15,13 +15,15 @@ import android.location.LocationManager
 import android.location.LocationRequest
 import it.infraconsulting.activitytrack.domain.geo.Fix
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
+import it.infraconsulting.activitytrack.domain.geo.SamplingPlan
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 /*
- * Fix sources while an entry is ACTIVE (DESIGN §6.2): periodic updates every
- * 5 min at balanced accuracy, an immediate fix on significant motion, and
- * one-shot high-accuracy fixes asked by the service (TRAVEL start/stop).
+ * Fix sources while an entry is ACTIVE (DESIGN §6.2): periodic updates at the
+ * [SamplingPlan] interval (5 min working, 1 min travelling by default; issue
+ * #155), an immediate fix on significant motion, and one-shot high-accuracy
+ * fixes asked by the service (TRAVEL start/stop).
  * [onFix] gets the segment to tag for one-shot fixes, null otherwise.
  */
 class LocationTracker(context: Context, private val onFix: (Fix, String?, Long?) -> Unit) {
@@ -30,6 +32,7 @@ class LocationTracker(context: Context, private val onFix: (Fix, String?, Long?)
 	private val sensors = appContext.getSystemService(SensorManager::class.java)
 	private val motionSensor: Sensor? = sensors.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION)
 	private var running = false
+	private var plan: SamplingPlan? = null
 
 	private val listener = LocationListener { deliver(it, null) }
 
@@ -43,23 +46,38 @@ class LocationTracker(context: Context, private val onFix: (Fix, String?, Long?)
 		}
 	}
 
+	/* Starts the periodic updates, or moves a running tracker to the new [plan]. */
 	@SuppressLint("MissingPermission")
-	fun start() {
-		if (running || !hasPermission(appContext))
+	fun start(plan: SamplingPlan) {
+		if (!hasPermission(appContext))
 			return
+		if (running) {
+			if (plan != this.plan) {
+				lm.removeUpdates(listener)
+				request(plan)
+			}
+			return
+		}
 		running = true
-		val request = LocationRequest.Builder(INTERVAL_MS)
-			.setQuality(LocationRequest.QUALITY_BALANCED_POWER_ACCURACY)
-			.setMinUpdateIntervalMillis(MIN_INTERVAL_MS)
+		request(plan)
+		armMotion()
+	}
+
+	@SuppressLint("MissingPermission")
+	private fun request(plan: SamplingPlan) {
+		this.plan = plan
+		val request = LocationRequest.Builder(plan.intervalMs)
+			.setQuality(if (plan.highAccuracy) LocationRequest.QUALITY_HIGH_ACCURACY else LocationRequest.QUALITY_BALANCED_POWER_ACCURACY)
+			.setMinUpdateIntervalMillis(minOf(MIN_INTERVAL_MS, plan.intervalMs))
 			.build()
 		lm.requestLocationUpdates(provider(), request, executor, listener)
-		armMotion()
 	}
 
 	fun stop() {
 		if (!running)
 			return
 		running = false
+		plan = null
 		lm.removeUpdates(listener)
 		motionSensor?.let { sensors.cancelTriggerSensor(motion, it) }
 	}
@@ -97,7 +115,6 @@ class LocationTracker(context: Context, private val onFix: (Fix, String?, Long?)
 	companion object {
 		/* one delivery thread for the process: the service (and its tracker) may be recreated */
 		private val executor: Executor = Executors.newSingleThreadExecutor()
-		private const val INTERVAL_MS = 5 * 60_000L
 		private const val MIN_INTERVAL_MS = 60_000L
 		private const val CURRENT_TIMEOUT_MS = 60_000L
 		private const val UNKNOWN_ACCURACY_M = 100.0

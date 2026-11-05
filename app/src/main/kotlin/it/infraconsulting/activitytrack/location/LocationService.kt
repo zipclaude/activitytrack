@@ -14,6 +14,8 @@ import android.util.Log
 import androidx.core.app.ServiceCompat
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.domain.geo.SamplingPlan
+import it.infraconsulting.activitytrack.domain.settings.AppSettings
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
@@ -21,6 +23,8 @@ import it.infraconsulting.activitytrack.notify.EntryInfo
 import it.infraconsulting.activitytrack.notify.EntryNotifications
 import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.notify.NotificationIds
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /*
@@ -37,6 +41,8 @@ class LocationService : Service() {
 	private lateinit var tracker: LocationTracker
 	private var fgsEntry: Long? = null
 	private var openTravel: Set<Long> = emptySet()
+	private var settings: AppSettings = AppSettings()
+	private var settingsJob: Job? = null
 
 	override fun onBind(intent: Intent?): IBinder? = null
 
@@ -51,6 +57,17 @@ class LocationService : Service() {
 			}
 		}
 		instance = this
+		/* the sampling intervals follow the settings (and the policy) while the service runs */
+		settingsJob = app.appScope.launch {
+			app.container.settings.settings.collect { s ->
+				main.post {
+					if (instance === this@LocationService && s != settings) {
+						settings = s
+						update()
+					}
+				}
+			}
+		}
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -59,6 +76,7 @@ class LocationService : Service() {
 
 	override fun onDestroy() {
 		instance = null
+		settingsJob?.cancel()
 		tracker.stop()
 		super.onDestroy()
 	}
@@ -89,7 +107,9 @@ class LocationService : Service() {
 		/* the previous entry left ACTIVE: its notification lost the service and must go */
 		fgsEntry?.let { old -> if (old != chosen.id) cancelOngoing(old) }
 		fgsEntry = chosen.id
-		tracker.start()
+		/* travelling: any ACTIVE entry whose open segment is a travel (issue #155) */
+		val travelling = active.any { it.entry.mode == SegmentKind.TRAVEL }
+		tracker.start(SamplingPlan.of(settings, travelling))
 		return true
 	}
 

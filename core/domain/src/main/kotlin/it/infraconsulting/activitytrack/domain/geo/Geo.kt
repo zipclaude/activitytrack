@@ -16,7 +16,7 @@ data class GeoPoint(val lat: Double, val lon: Double) {
 
 object Geo {
 	/* IUGG mean Earth radius (m). */
-	private const val EARTH_RADIUS_M = 6_371_008.8
+	const val EARTH_RADIUS_M = 6_371_008.8
 
 	/* Great-circle distance in metres (haversine). */
 	fun distanceM(a: GeoPoint, b: GeoPoint): Double {

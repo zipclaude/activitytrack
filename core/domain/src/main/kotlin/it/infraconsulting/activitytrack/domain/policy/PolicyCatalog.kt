@@ -37,6 +37,8 @@ enum class Feature(val key: String, val essential: Boolean = false) {
 	VOICE_NOTES("voiceNotes"),
 	DICTATION("dictation"),
 	LOCATION("location"),
+	TRACK_MAP("trackMap"),			/* the map of the movements (issue #155) */
+	TRACK_EXPORT("trackExport"),		/* GPX / KML export of the track */
 	CALLS("calls"),
 	CALENDAR("calendar"),
 	IMPORT("import"),
@@ -133,8 +135,8 @@ object SettingsCatalog {
 	private fun int(key: String, range: IntRange, apply: (AppSettings, Int) -> AppSettings) =
 		SettingSpec(key, SettingSpec.Kind.INT, { v -> if ((v as Int) in range) null else "must be in ${range.first}..${range.last}" }, { s, v -> apply(s, v as Int) }, min = range.first, max = range.last)
 
-	private fun oneOf(key: String, allowed: Collection<Int>, apply: (AppSettings, Int) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.INT, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as Int) }, allowed = allowed.toList())
+	private fun oneOf(key: String, allowed: Collection<Int>, since: String = SettingSpec.SINCE_SYNC, apply: (AppSettings, Int) -> AppSettings) =
+		SettingSpec(key, SettingSpec.Kind.INT, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as Int) }, allowed = allowed.toList(), since = since)
 
 	private fun string(key: String, allowed: Collection<String>, apply: (AppSettings, String) -> AppSettings) =
 		SettingSpec(key, SettingSpec.Kind.STRING, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as String) }, allowed = allowed.toList())
@@ -196,6 +198,10 @@ object SettingsCatalog {
 		bool("nominatimEnabled") { s, v -> s.copy(nominatim = s.nominatim.copy(enabled = v)) },
 		bool("osrmEnabled") { s, v -> s.copy(osrm = s.osrm.copy(enabled = v)) },
 		bool("tilesEnabled") { s, v -> s.copy(tiles = s.tiles.copy(enabled = v)) },
+		bool("offlineMapsEnabled", since = "0.9.4") { s, v -> s.copy(offlineMapsEnabled = v) },
+		bool("trackMapEnabled", since = "0.9.4") { s, v -> s.copy(trackMapEnabled = v) },
+		oneOf("workSampleMin", AppSettings.WORK_SAMPLE_MIN, since = "0.9.4") { s, v -> s.copy(workSampleMin = v) },
+		oneOf("travelSampleSec", AppSettings.TRAVEL_SAMPLE_SEC, since = "0.9.4") { s, v -> s.copy(travelSampleSec = v) },
 		/* settings the policy could not reach before (owner, 2026-10-28: every option settable, lockable, hideable) */
 		int("stationaryRadiusM", 25..1_000) { s, v -> s.copy(stationaryRadiusM = v) },
 		int("stationaryMin", 5..120) { s, v -> s.copy(stationaryMin = v) },

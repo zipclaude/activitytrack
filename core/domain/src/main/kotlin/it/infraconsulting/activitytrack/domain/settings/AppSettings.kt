@@ -41,6 +41,8 @@ data class AppSettings(
 	val nominatim: OnlineService = OnlineService(true, "https://nominatim.openstreetmap.org"),
 	val osrm: OnlineService = OnlineService(true, "https://router.project-osrm.org"),
 	val tiles: OnlineService = OnlineService(true, "https://tile.openstreetmap.org/{z}/{x}/{y}.png"),
+	/* offline maps (issue #155): the ones the server sends and the ones copied into the data folder are used */
+	val offlineMapsEnabled: Boolean = true,
 	val rounding: ReportRounding = ReportRounding.DEFAULT,
 	/* speech recognition language, independent of the phone language (owner decision 2026-10-17) */
 	val dictationLanguage: String = "it-IT",
@@ -125,7 +127,18 @@ data class AppSettings(
 	val callProposeEntry: Boolean = true,
 	/* also outside working hours, holidays and days off (on call); default working hours only */
 	val callsAlways: Boolean = false,
+	/*
+	 * Track map (issue #155): shown only with the tile service enabled too.
+	 * Sampling interval of the location fixes while working (minutes) and
+	 * while travelling (seconds): the finer one draws the route taken.
+	 */
+	val trackMapEnabled: Boolean = true,
+	val workSampleMin: Int = 5,
+	val travelSampleSec: Int = 60,
 ) {
+	/* the map needs the OSM tiles or a downloaded offline map, which asks nothing of the network */
+	fun trackMapAvailable(offlineMap: Boolean): Boolean = trackMapEnabled && (tiles.enabled || offlineMap)
+
 	/* Calendar for the entries of [companyId]; null = not synced. */
 	fun calendarFor(companyId: Long?): Long? = companyId?.let { companyCalendars[it] } ?: calendarId
 
@@ -156,9 +169,15 @@ data class AppSettings(
 		tiles = tiles.copy(endpoint = tiles.endpoint.trim()),
 		rounding = ReportRounding(rule(rounding.work), rule(rounding.travel), rule(rounding.pause)),
 		dictationLanguage = dictationLanguage.takeIf { it in DICTATION_LANGUAGES } ?: "it-IT",
+		workSampleMin = workSampleMin.takeIf { it in WORK_SAMPLE_MIN } ?: 5,
+		travelSampleSec = travelSampleSec.takeIf { it in TRAVEL_SAMPLE_SEC } ?: 60,
 	)
 
 	companion object {
+		/* sampling intervals offered (issue #155): while working, minutes; while travelling, seconds */
+		val WORK_SAMPLE_MIN = listOf(1, 2, 5, 10, 15, 20, 30, 60)
+		val TRAVEL_SAMPLE_SEC = listOf(15, 30, 60, 120, 300, 600, 900, 1800)
+
 		/* Quanta accepted by export profiles (SPEC §4.3). */
 		val QUANTA_MIN = listOf(1L, 5L, 15L, 30L, 60L)
 
