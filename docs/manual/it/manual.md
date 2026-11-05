@@ -1,7 +1,24 @@
-Versione 0.9.4-beta5 (novembre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.5 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.5** (provata sul telefono di debug, tranne l'esportazione GPX, le viste settimana e mese e gli interruttori della policy)
+- La **mappa degli spostamenti** (*Altro → Tracciati*, e *⋮ → Percorso dell'attività* in un'attività):
+  gli spostamenti di un'attività, di un giorno, di una settimana o di un mese su una mappa, con il
+  filtro "Solo viaggi"; tocca una linea per vedere l'attività (*Tracciati: mappa, esportazione e
+  pulizia*, sotto *Posizione*).
+- **Esportazione del tracciato** in **GPX** o **KML** (Google Earth Pro), con ogni posizione così
+  com'è registrata e l'attività svolta in quel luogo; **Pulizia tracciamento** elimina le posizioni
+  di un giorno, quelle più vecchie di un mese o tutte; "Elimina i tracciati dopo l'esportazione".
+- **Campionamento della posizione**: ogni 5 minuti in lavoro e ogni minuto in viaggio, di
+  predefinito, entrambi impostabili (*Impostazioni → Posizione*), per disegnare il percorso fatto.
+- **Mappe offline**: mappe basilari di aree di circa 100 km, pochi MB ciascuna, da ActivityTrack
+  Web (con la sincronizzazione, su Wi-Fi) o dalla cartella *maps* della cartella dati; compaiono
+  al posto dei tile OSM quando questi sono spenti o manca la rete.
+- Policy: `trackMap`, `trackExport`, `trackMapEnabled`, `workSampleMin`, `travelSampleSec`,
+  `offlineMapsEnabled`. Con ActivityTrack Web 0.9.5 l'amministratore sceglie le aree e lo zoom
+  nella pagina *Mappe*.
 
 **Novità della 0.9.4-beta5** (provata sul telefono di debug, tranne la conferma della policy)
 - Una **policy non firmata** nella cartella dati, un **plugin nuovo** o un plugin
