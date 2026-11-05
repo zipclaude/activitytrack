@@ -845,4 +845,9 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="offline_map_err_failed">The operation failed.</string>
   <string name="offline_map_hint_server">A basic map (roads, rivers, borders, place names) of the areas your administrator prepared on ActivityTrack Web: it arrives with the sync, on Wi-Fi. You can also copy .pmtiles files into the «maps» folder of the data folder and import them. It shows in place of the OSM tiles when those are off or there is no network. © OpenStreetMap contributors · Protomaps.</string>
   <string name="offline_map_hint_folder">Copy the .pmtiles map files (vector, Protomaps) into the «maps» folder of the data folder and import them here; docs/OFFLINE-MAPS.md tells how to make them. A map shows in place of the OSM tiles when those are off or there is no network. © OpenStreetMap contributors · Protomaps.</string>
+  <string name="todo_kind_task">To-do</string>
+  <string name="todo_absence">Absence</string>
+  <string name="todo_absence_until">Until (last day, optional)</string>
+  <string name="todo_absence_label">Label (optional)</string>
+  <string name="todo_field_color">Colour</string>
 </resources>

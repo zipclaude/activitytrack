@@ -710,6 +710,16 @@ notes, references (one per line).
 
 ![To-dos with the quick filters](img/todos.png)
 
+**Planned absences.** When planning is on, "Add" offers **Absence** besides
+**To-do**: a day (or several, with "Until"), whole-day or from–to, an
+optional label and a **colour**. It follows the to-do policies (edit, delete,
+done) and is drawn in the Agenda as a block in that colour, red by default:
+over the working hours of each day it covers, or the whole day when none are
+set. It sends no reminders, is never overdue and stays visible once done.
+Any to-do can take a colour, which then replaces the company's in the Agenda.
+The absences recorded from the day-start prompt ("Absent today", "Late
+entry") are the same thing: done absences.
+
 States: **open** (no plan) → **planned** (a date) → **done**. The plan is
 separate from the due date: re-planning does not change the management
 system's due date; but saving a plan after the due date asks whether to

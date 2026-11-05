@@ -11,6 +11,7 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
+import it.infraconsulting.activitytrack.domain.todo.AbsenceSpan
 
 @Database(
 	entities = [
@@ -70,6 +71,7 @@ import it.infraconsulting.activitytrack.domain.sync.SyncIds
 		AutoMigration(from = 17, to = 18),	/* issue #115: central master data */
 		AutoMigration(from = 18, to = 19),	/* issue #119: entries to review, sync errors */
 		AutoMigration(from = 19, to = 20),	/* issue #133: tags of the master data */
+		AutoMigration(from = 20, to = 21, spec = ActivityTrackDatabase.AbsencesBecomeTodos::class),	/* issue #158: absences are to-dos */
 	],
 )
 abstract class ActivityTrackDatabase : RoomDatabase() {
@@ -88,7 +90,7 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 20
+		const val VERSION = 21
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =
@@ -137,6 +139,44 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 	class FillDoneTimes : AutoMigrationSpec {
 		override fun onPostMigrate(db: SupportSQLiteDatabase) {
 			db.execSQL("UPDATE todo SET done_utc_ms = updated_utc_ms WHERE done != 0")
+		}
+	}
+
+	/*
+	 * 20 -> 21 (issue #158): the absences recorded so far become to-dos of kind ABSENCE, done, on
+	 * their day: a full day stays a whole day (shown over the working hours of the day, or all of
+	 * it), a late entry runs from the start of the day's working hours to the time, an early exit
+	 * from the time to the end of the working hours. The sync triggers log the deletions and the
+	 * new to-dos. Absences that arrive later from an older app stay in their table.
+	 */
+	class AbsencesBecomeTodos : AutoMigrationSpec {
+		override fun onPostMigrate(db: SupportSQLiteDatabase) {
+			val intervals = HashMap<Int, MutableList<Pair<Int, Int>>>()
+			db.query("SELECT day_of_week, start_min, end_min FROM work_schedule").use { c ->
+				while (c.moveToNext())
+					intervals.getOrPut(c.getInt(0)) { mutableListOf() } += c.getInt(1) to c.getInt(2)
+			}
+			val rows = ArrayList<Array<Any?>>()
+			db.query("SELECT id, date_epoch_day, kind, time_min FROM absence").use { c ->
+				while (c.moveToNext())
+					rows += arrayOf(c.getLong(0), c.getLong(1), c.getString(2), if (c.isNull(3)) null else c.getInt(3))
+			}
+			val now = System.currentTimeMillis()
+			for ((id, day, kind, time) in rows.map { listOf(it[0], it[1], it[2], it[3]) }) {
+				val weekday = java.time.LocalDate.ofEpochDay(day as Long).dayOfWeek.value
+				val from = intervals[weekday]?.minOf { it.first } ?: 0
+				val to = intervals[weekday]?.maxOf { it.second } ?: 1440
+				val t = time as Int?
+				/* null: the time is outside the working hours, nothing was absent */
+				val span = AbsenceSpan.Kind.of(kind as String)?.let { AbsenceSpan.of(it, t, from, to) }
+				if (span != null)
+					db.execSQL(
+						"INSERT INTO todo (uid, title, refs, done, done_utc_ms, created_utc_ms, updated_utc_ms, plan_epoch_day, plan_start_min, duration_min, kind) " +
+							"VALUES (?, '', '', 1, ?, ?, ?, ?, ?, ?, 'ABSENCE')",
+						arrayOf<Any?>(SyncIds.random(), now, now, now, day, span.startMin, span.durationMin),
+					)
+				db.execSQL("DELETE FROM absence WHERE id = ?", arrayOf(id))
+			}
 		}
 	}
 

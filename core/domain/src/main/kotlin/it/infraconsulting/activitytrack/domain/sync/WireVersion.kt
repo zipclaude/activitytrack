@@ -8,7 +8,7 @@ package it.infraconsulting.activitytrack.domain.sync
  * travels changes; the server keeps speaking the two schemas before.
  */
 object WireVersion {
-	const val SCHEMA = 1
+	const val SCHEMA = 2
 	const val APP_HEADER = "X-ActivityTrack-App"
 	const val SCHEMA_HEADER = "X-ActivityTrack-Schema"
 

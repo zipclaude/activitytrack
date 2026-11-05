@@ -38,6 +38,9 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import it.infraconsulting.activitytrack.data.db.TodoEntity
+import it.infraconsulting.activitytrack.data.db.TodoKind
+import it.infraconsulting.activitytrack.domain.todo.AbsenceSpan
 import java.util.UUID
 import kotlinx.coroutines.flow.first
 
@@ -327,8 +330,11 @@ class EntryRepository(
 	suspend fun attachment(id: Long): AttachmentEntity? = dao.attachment(id)
 
 	/*
-	 * Absence of [date]: FULL_DAY without time, LATE_ENTRY / EARLY_EXIT with
-	 * a local time; recording a kind again replaces it.
+	 * Absence of [date] (issue #158: a done absence to-do): FULL_DAY without
+	 * time, LATE_ENTRY (from the first working start to the time) / EARLY_EXIT
+	 * (from the time to the last working end) with a local time; recording the
+	 * same span again replaces it. A time outside the working hours is no
+	 * absence and records nothing.
 	 */
 	suspend fun recordAbsence(date: LocalDate, kind: AbsenceKind, timeMin: Int?) = db.withTransaction {
 		val valid = when (kind) {
@@ -337,8 +343,21 @@ class EntryRepository(
 		}
 		if (!valid)
 			throw ValidationException(Reason.INVALID_TIME)
-		dao.deleteAbsence(date.toEpochDay(), kind)
-		dao.insertAbsence(AbsenceEntity(dateEpochDay = date.toEpochDay(), kind = kind, timeMin = timeMin))
+		val hours = master.scheduleOf(date.dayOfWeek.value)
+		val first = hours.minOfOrNull { it.startMin } ?: 0
+		val last = hours.maxOfOrNull { it.endMin } ?: 24 * 60
+		val (start, duration) = AbsenceSpan.of(AbsenceSpan.Kind.valueOf(kind.name), timeMin, first, last) ?: return@withTransaction
+		val todos = db.todoDao()
+		val day = date.toEpochDay()
+		todos.all().filter { it.kind == TodoKind.ABSENCE && it.planEpochDay == day && it.planEndEpochDay == null && it.planStartMin == start && it.durationMin == duration }
+			.forEach { todos.delete(it.id) }
+		val now = clock.millis()
+		todos.insert(
+			TodoEntity(
+				uid = UUID.randomUUID().toString(), companyId = null, title = "", kind = TodoKind.ABSENCE, done = true, doneUtcMs = now,
+				createdUtcMs = now, updatedUtcMs = now, planEpochDay = day, planStartMin = start, durationMin = duration,
+			),
+		)
 	}
 
 	/*
@@ -349,6 +368,10 @@ class EntryRepository(
 	suspend fun handledDays(from: LocalDate, to: LocalDate, zone: ZoneId): Set<LocalDate> {
 		val out = HashSet<LocalDate>()
 		dao.absencesBetween(from.toEpochDay(), to.toEpochDay()).forEach { out += LocalDate.ofEpochDay(it.dateEpochDay) }
+		/* planned or recorded absences (issue #158), whatever their state */
+		db.todoDao().all().filter { it.kind == TodoKind.ABSENCE && it.ignoredUtcMs == null }.mapNotNull { it.plan() }.forEach { p ->
+			generateSequence(maxOf(p.day, from)) { it.plusDays(1) }.takeWhile { it <= minOf(p.endDay ?: p.day, to) }.forEach { out += it }
+		}
 		val fromMs = from.atStartOfDay(zone).toInstant().toEpochMilli()
 		val toMs = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
 		dao.entryStartsBetween(fromMs, toMs).forEach { out += Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }

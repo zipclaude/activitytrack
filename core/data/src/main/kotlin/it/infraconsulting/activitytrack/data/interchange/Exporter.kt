@@ -98,6 +98,8 @@ class Exporter(private val db: ActivityTrackDatabase) {
 						plannedTime = it.planStartMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },
 						durationMin = it.durationMin,
 						ignored = it.ignoredUtcMs != null,
+						kind = it.kind.name, color = XColor.format(it.color),
+						plannedEndDate = it.planEndEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
 					)
 				},
 			)

@@ -729,6 +729,17 @@ fare"** della barra in basso → "Aggiungi", oppure dall'Agenda): titolo, client
 
 ![Da fare con i filtri rapidi](img/todos.png)
 
+**Assenze pianificate.** Con la pianificazione attiva, «Aggiungi» offre
+**Assenza** accanto a **Da fare**: un giorno (o più, con «Fino al»), tutto il
+giorno o dalle–alle, un'etichetta facoltativa e un **colore**. Segue le policy
+dei Da fare (modifica, eliminazione, fatto) ed è disegnata nell'Agenda come un
+blocco di quel colore, rosso se non scelto: sulle ore lavorative di ogni giorno
+che copre, o sull'intera giornata se non sono impostate. Non manda promemoria,
+non è mai in ritardo e resta visibile da fatta. Anche un Da fare può avere un
+colore, che nell'Agenda sostituisce quello dell'azienda. Le assenze registrate
+dall'avviso di inizio giornata («Assente oggi», «Entro più tardi») sono la
+stessa cosa: assenze fatte.
+
 Stati: **aperta** (senza pianificazione) → **pianificata** (una data) →
 **fatta**. La pianificazione è separata dalla scadenza: ripianificare non
 cambia la scadenza del gestionale; se però si salva una pianificazione

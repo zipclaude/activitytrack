@@ -15,10 +15,12 @@ import java.time.temporal.ChronoUnit
  *   reminder, overdue from the next day);
  * - a start without [durationMin]: a point in time, no length;
  * - a start and a duration: a block.
+ * A whole-day plan may last several days ([endDay], inclusive: an absence, issue #158).
  * A to-do is open (no plan), planned (a plan) or done.
  */
-data class TodoPlan(val day: LocalDate, val startMin: Int? = null, val durationMin: Int? = null) {
+data class TodoPlan(val day: LocalDate, val startMin: Int? = null, val durationMin: Int? = null, val endDay: LocalDate? = null) {
 	init {
+		require(endDay == null || (startMin == null && !endDay.isBefore(day))) { "a last day needs a whole-day plan and a day not before the first: $endDay" }
 		require(startMin == null || startMin in 0 until 1440) { "start minute out of range: $startMin" }
 		require(durationMin == null || (startMin != null && durationMin in 1..MAX_DURATION_MIN)) { "duration out of range: $durationMin" }
 	}
@@ -29,9 +31,14 @@ data class TodoPlan(val day: LocalDate, val startMin: Int? = null, val durationM
 	/* The planned start; the start of the day for a whole-day plan. */
 	fun start(zone: ZoneId): Instant = day.atMinute(startMin ?: 0, zone)
 
-	/* The end: start + duration; the start itself for a point; the next midnight for a whole day. */
+	/* The days it covers: the first to the last (inclusive). */
+	val days: ClosedRange<LocalDate> get() = day..(endDay ?: day)
+
+	fun covers(date: LocalDate): Boolean = date in days
+
+	/* The end: start + duration; the start itself for a point; the next midnight after the last day for a whole day. */
 	fun end(zone: ZoneId): Instant = when {
-		startMin == null -> day.plusDays(1).atStartOfDay(zone).toInstant()
+		startMin == null -> (endDay ?: day).plusDays(1).atStartOfDay(zone).toInstant()
 		durationMin != null -> start(zone) + Duration.ofMinutes(durationMin.toLong())
 		else -> start(zone)
 	}
@@ -41,8 +48,10 @@ data class TodoPlan(val day: LocalDate, val startMin: Int? = null, val durationM
 
 	/* The same plan [minutes] later, across midnight if needed (DST-safe wall clock); a whole day moves by days. */
 	fun postponed(minutes: Int): TodoPlan {
-		if (startMin == null)
-			return copy(day = day.plusDays(maxOf(1L, (minutes + 1439L) / 1440)))
+		if (startMin == null) {
+			val by = maxOf(1L, (minutes + 1439L) / 1440)
+			return copy(day = day.plusDays(by), endDay = endDay?.plusDays(by))
+		}
 		val t = day.atTime(startMin / 60, startMin % 60).plusMinutes(minutes.toLong())
 		return copy(day = t.toLocalDate(), startMin = t.hour * 60 + t.minute)
 	}
@@ -64,8 +73,13 @@ data class TodoPlan(val day: LocalDate, val startMin: Int? = null, val durationM
 		const val MAX_DURATION_MIN = 24 * 60
 
 		/* A day makes a plan; the start and the duration are optional (a duration needs a start). */
-		fun of(epochDay: Long?, startMin: Int?, durationMin: Int?): TodoPlan? =
-			epochDay?.let { TodoPlan(LocalDate.ofEpochDay(it), startMin, durationMin?.takeIf { startMin != null }) }
+		fun of(epochDay: Long?, startMin: Int?, durationMin: Int?, endEpochDay: Long? = null): TodoPlan? =
+			epochDay?.let {
+				TodoPlan(
+					LocalDate.ofEpochDay(it), startMin, durationMin?.takeIf { startMin != null },
+					endEpochDay?.takeIf { e -> startMin == null && e >= it }?.let(LocalDate::ofEpochDay),
+				)
+			}
 	}
 }
 

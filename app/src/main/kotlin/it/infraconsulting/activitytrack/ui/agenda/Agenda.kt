@@ -73,6 +73,10 @@ import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.LaunchedEffect
 import it.infraconsulting.activitytrack.ui.common.rgb
+import it.infraconsulting.activitytrack.data.repo.isAbsence
+import it.infraconsulting.activitytrack.data.repo.isOpen
+import it.infraconsulting.activitytrack.domain.time.atMinute
+import it.infraconsulting.activitytrack.ui.todo.ABSENCE_COLOR
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
 import it.infraconsulting.activitytrack.ui.todo.todoSwipeActions
@@ -154,6 +158,10 @@ data class AgendaTodo(
 	val planned get() = start != null || allDay
 }
 
+/* the title; an absence without one is just "Absence" (issue #158) */
+@Composable
+private fun AgendaTodo.label(): String = title.ifBlank { if (todo.isAbsence()) stringResource(R.string.todo_absence) else "" }
+
 data class AgendaData(
 	val from: LocalDate,
 	val to: LocalDate,
@@ -188,7 +196,7 @@ class AgendaViewModel(
 		}
 	}
 
-	val data = combine(mode, anchor, reports.changes, todos.open) { m, a, _, open -> Triple(m, a, open) }
+	val data = combine(mode, anchor, reports.changes, todos.all) { m, a, _, open -> Triple(m, a, open) }
 		.mapLatest { (m, a, open) -> load(m, a, open) }
 		.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -231,16 +239,26 @@ class AgendaViewModel(
 			}
 		}
 		val now = Instant.now()
-		val todos = open.mapNotNull { t ->
-			val p = t.plan()
-			val item = if (p != null)
-				AgendaTodo(t, p.day, p.startMin, p.start(zone).takeIf { !p.allDay }, p.end(zone).takeIf { !p.allDay }, allDay = p.allDay)
-			else
-				AgendaTodo(t, t.dueEpochDay?.let(LocalDate::ofEpochDay) ?: return@mapNotNull null, t.dueTimeMin)
-			item.takeIf { it.day in from..to }
-		}
 		val weekdays = generateSequence(from) { it.plusDays(1) }.takeWhile { it <= to }.map { it.dayOfWeek.value }.toSet()
 		val work = master.schedule.first().filter { it.dayOfWeek in weekdays }
+		val schedule = master.schedule.first().groupBy { it.dayOfWeek }
+		val todos = open.filter { it.isOpen() || it.isAbsence() }.flatMap { t ->
+			val p = t.plan()
+			when {
+				/* an absence stays visible once done (issue #158); each day it covers, over the working hours of that day, else the whole day */
+				p != null && t.isAbsence() -> p.days.let { r -> generateSequence(maxOf(r.start, from)) { it.plusDays(1) }.takeWhile { it <= minOf(r.endInclusive, to) } }.map { day ->
+					if (p.allDay) {
+						val hours = schedule[day.dayOfWeek.value].orEmpty()
+						val first = hours.minOfOrNull { it.startMin } ?: 0
+						val last = hours.maxOfOrNull { it.endMin } ?: 1440
+						AgendaTodo(t, day, first, day.atMinute(first, zone), day.atMinute(last, zone))
+					} else
+						AgendaTodo(t, day, p.startMin, p.start(zone), p.end(zone))
+				}.toList()
+				p != null -> listOf(AgendaTodo(t, p.day, p.startMin, p.start(zone).takeIf { !p.allDay }, p.end(zone).takeIf { !p.allDay }, allDay = p.allDay))
+				else -> listOfNotNull(t.dueEpochDay?.let { AgendaTodo(t, LocalDate.ofEpochDay(it), t.dueTimeMin) })
+			}.filter { it.day in from..to }
+		}
 		return AgendaData(
 			from, to, items, todos, report.days.associate { it.day to it.reported },
 			work.minOfOrNull { it.startMin }, work.maxOfOrNull { it.endMin },
@@ -469,7 +487,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 					Text(
 						"☐ " + listOfNotNull(
 							t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.takeIf { e -> e != t.start }?.let { e -> "–${clock(e, zone)}" } ?: "") },
-							t.title,
+							t.label(),
 						).joinToString(" "),
 						modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
 						color = MaterialTheme.colorScheme.primary,
@@ -544,7 +562,7 @@ private fun Timeline(
 		val dayTodos = d.todos.filter { it.day in days && (!it.planned || it.allDay) }
 		for (t in dayTodos)
 			Text(
-				(if (t.allDay) "▭ " else "☐ ") + "${t.day.dayOfMonth} · " + t.title,
+				(if (t.allDay) "▭ " else "☐ ") + "${t.day.dayOfMonth} · " + t.label(),
 				modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 2.dp),
 				style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
 			)
@@ -635,14 +653,15 @@ private fun Timeline(
 								}
 							}
 							b.todo?.let {
-								val c = colorOf(it.todo.companyId)
+								val absence = it.todo.isAbsence()
+								val c = it.todo.color?.let(::rgb) ?: if (absence) rgb(ABSENCE_COLOR) else colorOf(it.todo.companyId)
 								Box(
-									place.clip(RoundedCornerShape(4.dp)).background(c.copy(alpha = 0.15f))
+									place.clip(RoundedCornerShape(4.dp)).background(c.copy(alpha = if (absence) 0.35f else 0.15f))
 										.border(1.dp, c, RoundedCornerShape(4.dp))
 										.clickable { onTodo(it.todo) }.padding(horizontal = 3.dp, vertical = 1.dp),
 								) {
 									Text(
-										if (one) "☐ ${it.title}\n$span" else "☐ ${it.title}",
+										(if (absence) (if (it.todo.done) "✓ " else "") else "☐ ") + it.label() + (if (one) "\n$span" else ""),
 										color = MaterialTheme.colorScheme.onSurface, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
 										overflow = TextOverflow.Ellipsis,
 									)

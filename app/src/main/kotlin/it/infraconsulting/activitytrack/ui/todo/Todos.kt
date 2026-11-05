@@ -76,6 +76,10 @@ import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
 import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
 import it.infraconsulting.activitytrack.data.db.TodoEntity
+import it.infraconsulting.activitytrack.data.db.TodoKind
+import it.infraconsulting.activitytrack.data.repo.isAbsence
+import it.infraconsulting.activitytrack.ui.common.ColorPalette
+import it.infraconsulting.activitytrack.ui.common.NO_COLOR
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.repo.ValidationException
@@ -170,7 +174,8 @@ class TodosViewModel(
 	) { todos.setState(t.id, done = state == TodoState.DONE, ignored = state == TodoState.IGNORED) }
 	fun clearPlan(t: TodoEntity) = undoable(t, R.string.undo_todo_unplanned) { todos.clearPlan(t.id) }
 	fun save(t: TodoEntity, done: () -> Unit) {
-		policy().missingRequired(
+		/* an absence has none of the fields a policy may require (issue #158) */
+		if (t.kind == TodoKind.TASK) policy().missingRequired(
 			mapOf(
 				PField.CLIENT to (t.clientId != null), PField.NOTES to !t.notes.isNullOrBlank(), PField.REFS to t.refs.isNotBlank(),
 				PField.TODO_PRIORITY to (t.priority != null), PField.TODO_DUE to (t.dueEpochDay != null), PField.TODO_PLAN to (t.planEpochDay != null),
@@ -188,6 +193,9 @@ class TodosViewModel(
 @Composable
 internal fun todosViewModel() = appViewModel(key = "todos") { c -> TodosViewModel(c.todos, c.masterData, c.settings, { c.policies.current.value }) }
 
+/* the default colour of an absence (issue #158): the palette's red */
+internal const val ABSENCE_COLOR = 0xD64545
+
 /* A new to-do, planned at [day] [startMin] when given (agenda). */
 internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = TodoEntity(
 	uid = "", companyId = null, title = "", createdUtcMs = 0, updatedUtcMs = 0,
@@ -203,7 +211,7 @@ internal fun moment(t: TodoEntity, zone: ZoneId): Instant? =
 	todoMoment(t.plan(), t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, zone)
 
 internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean {
-	if (t.done || t.ignoredUtcMs != null)
+	if (t.done || t.ignoredUtcMs != null || t.isAbsence())
 		return false
 	val zone = ZoneId.systemDefault()
 	return t.plan()?.over(now, zone) == true ||
@@ -288,6 +296,9 @@ private fun Chip(text: String, container: Color, content: Color) {
 @Composable
 fun TodoCard(t: TodoEntity, clientName: String?, band: Int? = null, onClick: () -> Unit) {
 	val state = todoState(t)
+	/* its own colour wins over the company's; an absence is red unless chosen (issue #158) */
+	val band = t.color ?: if (t.isAbsence()) ABSENCE_COLOR else band
+	val title = t.title.ifBlank { if (t.isAbsence()) stringResource(R.string.todo_absence) else "" }
 	val ignored = state == TodoState.IGNORED
 	val compact = LocalCompact.current
 	val body: @Composable () -> Unit = {
@@ -297,7 +308,7 @@ fun TodoCard(t: TodoEntity, clientName: String?, band: Int? = null, onClick: () 
 		) {
 			Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 				Text(
-					(if (t.done) "✓ " else "") + t.title,
+					(if (t.done) "✓ " else "") + title,
 					style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
 					textDecoration = if (ignored) TextDecoration.LineThrough else null,
 					maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
@@ -711,6 +722,10 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	/* without companies (policy, issue #48) a to-do belongs to none */
 	val withCompanies = companiesShown()
 	val companyId = if (withCompanies) picked ?: companies.firstOrNull()?.id else null
+	var absence by remember { mutableStateOf(initial.isAbsence()) }
+	var color by remember { mutableStateOf(initial.color) }
+	/* the last day of an absence of several days, empty = the plan day only */
+	var lastDay by remember { mutableStateOf(initial.planEndEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var planDay by remember { mutableStateOf(initial.planEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var planTime by remember { mutableStateOf(initial.planStartMin?.let(::formatMin).orEmpty()) }
 	var planEnd by remember {
@@ -764,8 +779,8 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 		error = error,
 		onDismiss = onClose,
 		onConfirm = {
-			val company = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
-			if (company == null && withCompanies) {
+			val company = if (absence) null else clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
+			if (!absence && company == null && withCompanies) {
 				vm.missingCompany()
 				return@EditDialog
 			}
@@ -774,8 +789,10 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				return@EditDialog
 			}
 			val pd = optional(planDay) { parseDate(it)?.toEpochDay() }
-			val dd = optional(due) { parseDate(it)?.toEpochDay() }
-			if (pd.isFailure || dd.isFailure) {
+			val dd = if (absence) Result.success(null) else optional(due) { parseDate(it)?.toEpochDay() }
+			/* several days only for a whole-day plan (the repository checks the order) */
+			val ld = if (absence && planTime.isBlank()) optional(lastDay) { parseDate(it)?.toEpochDay() } else Result.success(null)
+			if (pd.isFailure || dd.isFailure || ld.isFailure || (absence && pd.getOrNull() == null)) {
 				vm.invalid(ValidationException.Reason.INVALID_DATE)
 				return@EditDialog
 			}
@@ -797,6 +814,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				planEpochDay = pd.getOrNull(), planStartMin = pt.getOrNull(), durationMin = dur.getOrNull(),
 				dueEpochDay = dd.getOrNull(), dueTimeMin = dt.getOrNull(),
 				priority = priority.trim().toIntOrNull(), notes = notes, refs = refs,
+				kind = if (absence) TodoKind.ABSENCE else TodoKind.TASK, color = color, planEndEpochDay = ld.getOrNull()?.takeIf { it != pd.getOrNull() },
 			)
 			/* the plan starts past the due date (also later the same day): ask before saving (issue #71) */
 			if (startsAfterDue(todo.plan(), todo.dueEpochDay?.let(LocalDate::ofEpochDay), todo.dueTimeMin, ZoneId.systemDefault())) {
@@ -808,7 +826,13 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 	) {
 		/* order and fields of the approved mockup (owner, issue #47) */
 		val shownCompany = clientId?.let { id -> clients.firstOrNull { it.id == id }?.companyId } ?: companyId
-		if (fieldShown(Field.COMPANY)) WithAddButton(stringResource(R.string.quick_company), { addCompany = true }, masterData = true) { PolicyField(Field.COMPANY) {
+		/* a new entry is a to-do or, with planning, an absence (issue #158) */
+		if (isNew && enabled(Feature.PLANNING))
+			Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+				FilterChip(selected = !absence, onClick = { absence = false }, label = { Text(stringResource(R.string.todo_kind_task)) })
+				FilterChip(selected = absence, onClick = { absence = true }, label = { Text(stringResource(R.string.todo_absence)) })
+			}
+		if (!absence && fieldShown(Field.COMPANY)) WithAddButton(stringResource(R.string.quick_company), { addCompany = true }, masterData = true) { PolicyField(Field.COMPANY) {
 			ChoiceField(
 				fieldLabel(Field.COMPANY, R.string.field_company), companies.map { it.id to it.name }, shownCompany,
 				importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
@@ -819,7 +843,7 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 					clientId = null
 			}
 		} }
-		if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {
+		if (!absence && fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {
 			SearchableChoiceField(
 				fieldLabel(Field.CLIENT, R.string.field_client),
 				listOf<Pair<Long?, String>>(null to stringResource(R.string.field_none)) +
@@ -840,8 +864,16 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				stringResource(R.string.todo_plan_time_optional), planTime, planEnd, { planGrid = true }, { planTime = ""; planEnd = "" },
 				error = stringResource(R.string.todo_plan_time_missing).takeIf { planTimeMissing }, importance = fieldImportance(Field.TODO_PLAN, Importance.IMPORTANT),
 			)
+			if (absence && planTime.isBlank())
+				DateField(stringResource(R.string.todo_absence_until), lastDay, { lastDay = it }, clearable = true, importance = Importance.OPTIONAL)
 		}
-		TextInput(stringResource(R.string.todo_field_title), title, { title = it }, singleLine = false, minLines = 3, importance = Importance.REQUIRED)
+		if (absence)
+			TextInput(stringResource(R.string.todo_absence_label), title, { title = it }, importance = Importance.OPTIONAL)
+		else
+			TextInput(stringResource(R.string.todo_field_title), title, { title = it }, singleLine = false, minLines = 3, importance = Importance.REQUIRED)
+		Text(stringResource(R.string.todo_field_color), style = MaterialTheme.typography.labelMedium)
+		ColorPalette(color, swatch = 32.dp, inset = 0.dp) { color = it }
+		if (absence) return@EditDialog
 		PolicyField(Field.TODO_DUE) {
 			DateTimeField(fieldLabel(Field.TODO_DUE, R.string.todo_field_due), due, time, { d, t -> due = d; time = t }, importance = fieldImportance(Field.TODO_DUE, Importance.OPTIONAL))
 			/* planned after the due date: it would come out overdue — say it now
