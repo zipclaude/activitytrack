@@ -4,6 +4,7 @@ package it.infraconsulting.activitytrack.data.repo
 import androidx.room.withTransaction
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.TodoEntity
+import it.infraconsulting.activitytrack.data.db.TodoKind
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.todo.TodoPlan
 import java.time.Clock
@@ -39,10 +40,19 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 	/*
 	 * Create ([id] 0) or edit; the client must belong to the company; a plan
 	 * needs a day (issue #52: the time is optional), a duration needs a start
-	 * and stays within a day.
+	 * and stays within a day. An absence (issue #158) is always planned, has
+	 * no company, client, due date, priority or references, may have no title,
+	 * and may last several days (a whole-day plan with a last day).
 	 */
 	suspend fun save(t: TodoEntity): Long = db.withTransaction {
-		val title = t.title.trim().ifEmpty { throw ValidationException(Reason.BLANK_VALUE) }
+		val absence = t.kind == TodoKind.ABSENCE
+		val title = t.title.trim().let { if (absence) it else it.ifEmpty { throw ValidationException(Reason.BLANK_VALUE) } }
+		if (absence && t.planEpochDay == null)
+			throw ValidationException(Reason.INVALID_DATE)
+		if (t.planEndEpochDay != null && (t.planEpochDay == null || t.planStartMin != null || t.planEndEpochDay < t.planEpochDay ||
+				t.planEndEpochDay - t.planEpochDay >= MAX_ABSENCE_DAYS)
+		)
+			throw ValidationException(Reason.INVALID_TIME_RANGE)
 		if (t.planEpochDay == null && t.planStartMin != null)
 			throw ValidationException(Reason.INVALID_DATE)
 		if (t.durationMin != null && t.planStartMin == null)
@@ -51,12 +61,13 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 			throw ValidationException(Reason.INVALID_TIME)
 		if (t.durationMin != null && t.durationMin !in 1..TodoPlan.MAX_DURATION_MIN)
 			throw ValidationException(Reason.INVALID_TIME_RANGE)
-		t.clientId?.let { c ->
+		t.clientId?.takeIf { !absence }?.let { c ->
 			if (master.client(c)?.companyId != t.companyId)
 				throw ValidationException(Reason.CLIENT_COMPANY_MISMATCH)
 		}
 		val now = clock.millis()
 		val clean = t.copy(title = title, notes = t.notes?.trim()?.ifEmpty { null }, refs = t.refs.lines().map(String::trim).filter(String::isNotEmpty).joinToString("\n"), updatedUtcMs = now)
+			.let { if (absence) it.copy(companyId = null, clientId = null, dueEpochDay = null, dueTimeMin = null, priority = null, refs = "", externalKey = null) else it.copy(planEndEpochDay = null) }
 		if (t.id == 0L)
 			dao.insert(clean.copy(uid = UUID.randomUUID().toString(), createdUtcMs = now))
 		else {
@@ -101,8 +112,11 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 	/* The plan removed (issue #89): the to-do stays, with no day and no reminder. */
 	suspend fun clearPlan(id: Long) = db.withTransaction {
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
+		/* an absence without a plan would be nothing: it is deleted instead */
+		if (t.kind == TodoKind.ABSENCE)
+			throw ValidationException(Reason.INVALID_DATE)
 		dao.update(
-			t.copy(planEpochDay = null, planStartMin = null, durationMin = null, planRemindedUtcMs = null, updatedUtcMs = clock.millis()),
+			t.copy(planEpochDay = null, planStartMin = null, durationMin = null, planEndEpochDay = null, planRemindedUtcMs = null, updatedUtcMs = clock.millis()),
 		)
 	}
 
@@ -117,14 +131,15 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 	suspend fun postpone(id: Long, minutes: Int) = db.withTransaction {
 		val t = dao.byId(id) ?: throw ValidationException(Reason.NOT_FOUND, "todo $id")
 		val p = t.plan()?.postponed(minutes, clock.instant(), ZoneId.systemDefault()) ?: return@withTransaction
-		dao.update(t.copy(planEpochDay = p.day.toEpochDay(), planStartMin = p.startMin, updatedUtcMs = clock.millis()))
+		dao.update(t.copy(planEpochDay = p.day.toEpochDay(), planStartMin = p.startMin, planEndEpochDay = p.endDay?.toEpochDay(), updatedUtcMs = clock.millis()))
 	}
 
 	/* Open to-dos planned on [day] that nobody worked on that day (issue #52: asked at the end of the working hours). */
 	suspend fun unworked(day: java.time.LocalDate, zone: ZoneId): List<TodoEntity> {
 		val from = day.atStartOfDay(zone).toInstant().toEpochMilli()
 		val to = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-		return dao.all().filter { it.isOpen() && it.planEpochDay == day.toEpochDay() && dao.workedBetween(it.id, from, to) == 0 }
+		/* an absence is not worked on: nothing to re-plan */
+		return dao.all().filter { it.kind == TodoKind.TASK && it.isOpen() && it.planEpochDay == day.toEpochDay() && dao.workedBetween(it.id, from, to) == 0 }
 	}
 
 	/* The plans of [ids] moved to [day], their time kept; their reminders may come again. */
@@ -141,6 +156,11 @@ class TodoRepository(private val db: ActivityTrackDatabase, private val clock: C
 	suspend fun markPlanReminded(id: Long, startMs: Long) = dao.markPlanReminded(id, startMs)
 
 	suspend fun entriesOf(id: Long): Int = dao.entriesOf(id)
+
+	companion object {
+		/* the longest absence: a year (issue #158) */
+		const val MAX_ABSENCE_DAYS = 366
+	}
 }
 
 /* Done or open again at [now]: an already done one keeps its time (issue #89). */
@@ -151,4 +171,7 @@ fun TodoEntity.markedDone(done: Boolean, now: Long): TodoEntity =
 fun TodoEntity.isOpen(): Boolean = !done && ignoredUtcMs == null
 
 /* The planned slot of a to-do, if any. */
-fun TodoEntity.plan(): TodoPlan? = TodoPlan.of(planEpochDay, planStartMin, durationMin)
+fun TodoEntity.plan(): TodoPlan? = TodoPlan.of(planEpochDay, planStartMin, durationMin, planEndEpochDay)
+
+/* An absence (issue #158): planned like a to-do, never worked time. */
+fun TodoEntity.isAbsence(): Boolean = kind == TodoKind.ABSENCE

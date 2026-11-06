@@ -122,6 +122,8 @@ object SyncMapping {
 				instant("createdUtcMs"), instant("updatedUtcMs"), date("planDate", "plan_epoch_day", nullable = true),
 				int("planStartMin", nullable = true), int("durationMin", nullable = true), instant("ignoredUtcMs", nullable = true),
 				json("pluginFields"),
+				/* schema 2 (issue #158) */
+				text("kind"), int("color", nullable = true), date("planEndDate", "plan_end_epoch_day", nullable = true),
 			),
 		),
 		RecordType(

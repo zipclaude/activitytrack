@@ -834,4 +834,9 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="offline_map_err_failed">L\'operazione non è riuscita.</string>
   <string name="offline_map_hint_server">Una mappa basilare (strade, fiumi, confini, nomi dei luoghi) delle aree che l\'amministratore ha preparato su ActivityTrack Web: arriva con la sincronizzazione, su Wi-Fi. Puoi anche copiare file .pmtiles nella cartella «maps» della cartella dati e importarli. Compare al posto dei tile OSM quando questi sono spenti o manca la rete. © OpenStreetMap contributors · Protomaps.</string>
   <string name="offline_map_hint_folder">Copia i file di mappa .pmtiles (vettoriali, Protomaps) nella cartella «maps» della cartella dati e importali qui; docs/OFFLINE-MAPS.md spiega come prepararli. Una mappa compare al posto dei tile OSM quando questi sono spenti o manca la rete. © OpenStreetMap contributors · Protomaps.</string>
+  <string name="todo_kind_task">Da fare</string>
+  <string name="todo_absence">Assenza</string>
+  <string name="todo_absence_until">Fino al (ultimo giorno, facoltativo)</string>
+  <string name="todo_absence_label">Etichetta (facoltativa)</string>
+  <string name="todo_field_color">Colore</string>
 </resources>

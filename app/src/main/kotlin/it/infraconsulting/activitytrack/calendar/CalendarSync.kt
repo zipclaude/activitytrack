@@ -15,6 +15,7 @@ import android.util.Log
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.calendar.CalendarEvents
+import it.infraconsulting.activitytrack.data.repo.isAbsence
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.calendar.EventLabels
 import it.infraconsulting.activitytrack.domain.calendar.EventTags
@@ -158,7 +159,7 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		val clients = container.masterData.clients.first().associateBy { it.id }
 		val companies = container.masterData.companies.first().associateBy { it.id }
 		return container.todos.planned().mapNotNull { t ->
-			val p = t.plan() ?: return@mapNotNull null
+			val p = t.plan()?.takeIf { !t.isAbsence() } ?: return@mapNotNull null
 			if (p.day < from)
 				return@mapNotNull null
 			TodoEvent(

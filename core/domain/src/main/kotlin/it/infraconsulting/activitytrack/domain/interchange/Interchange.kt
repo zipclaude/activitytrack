@@ -76,7 +76,8 @@ data class XTodo(
 	/* null: a to-do of no company (issue #48) */
 	val companyKey: String? = null,
 	val clientKey: String? = null,
-	val title: String,
+	/* an absence may have no title (issue #158) */
+	val title: String = "",
 	val notes: String? = null,
 	val refs: List<String> = emptyList(),
 	val dueDate: String? = null,
@@ -89,6 +90,12 @@ data class XTodo(
 	val durationMin: Int? = null,
 	/* set aside in the app (M10); an import never re-creates or restores an ignored to-do */
 	val ignored: Boolean = false,
+	/* TASK, or ABSENCE: a planned absence, with no company, client or due date (issue #158) */
+	val kind: String = "TASK",
+	/* "#RRGGBB" of the agenda block and the card */
+	val color: String? = null,
+	/* last day of a whole-day plan lasting several days */
+	val plannedEndDate: String? = null,
 )
 
 @Serializable

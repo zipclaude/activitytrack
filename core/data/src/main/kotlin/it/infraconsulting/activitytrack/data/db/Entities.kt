@@ -29,6 +29,9 @@ enum class AttachmentKind { PHOTO, AUDIO, RECEIPT, FILE }
 
 enum class AbsenceKind { FULL_DAY, LATE_ENTRY, EARLY_EXIT }
 
+/* What a to-do is (issue #158): a thing to do, or an absence planned like one (leave, sick day), never worked time. */
+enum class TodoKind { TASK, ABSENCE }
+
 @Entity(
 	tableName = "company",
 	indices = [Index(value = ["uid"], unique = true), Index(value = ["name"], unique = true), Index(value = ["external_code"], unique = true)],
@@ -272,6 +275,12 @@ data class TodoEntity(
 	@ColumnInfo(name = "ignored_utc_ms") val ignoredUtcMs: Long? = null,
 	/* entry fields of the company's plugin pre-filled by this imported to-do (issue #48), JSON object */
 	@ColumnInfo(name = "plugin_fields") val pluginFields: String? = null,
+	/* issue #158: an absence has no company or client, may last several days and is shown in its colour */
+	@ColumnInfo(defaultValue = "TASK") val kind: TodoKind = TodoKind.TASK,
+	/* 0xRRGGBB of the palette, for the agenda block and the card of any to-do; null = the default (red for an absence) */
+	val color: Int? = null,
+	/* last day (inclusive) of a whole-day plan lasting more than one day; null = the plan's day only */
+	@ColumnInfo(name = "plan_end_epoch_day") val planEndEpochDay: Long? = null,
 )
 
 @Entity(

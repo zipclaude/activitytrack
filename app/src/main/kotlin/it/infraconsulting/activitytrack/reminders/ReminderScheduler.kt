@@ -21,6 +21,7 @@ import it.infraconsulting.activitytrack.domain.reminder.ReminderEntry
 import it.infraconsulting.activitytrack.domain.reminder.ReminderPlanner
 import it.infraconsulting.activitytrack.domain.reminder.ReminderTodo
 import it.infraconsulting.activitytrack.data.repo.isOpen
+import it.infraconsulting.activitytrack.data.repo.isAbsence
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.notify.EntryInfo
@@ -115,8 +116,8 @@ class ReminderScheduler(
 		val started = container.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }.mapNotNull { it.todoId }.toSet()
 		val out = ArrayList<ReminderTodo>()
 		for (t in container.todos.all.first()) {
-			/* no reminder for a plan by day only (issue #52, answer 3) */
-			val p = t.plan()?.takeIf { !it.allDay }
+			/* no reminder for a plan by day only (issue #52, answer 3), nor for an absence (issue #158) */
+			val p = t.plan()?.takeIf { !it.allDay && !t.isAbsence() }
 			val start = p?.start(zone)
 			/* after the block (a point: its first hour) a reminder is moot */
 			val end = p?.let { maxOf(it.end(zone), it.start(zone).plus(java.time.Duration.ofHours(1))) }

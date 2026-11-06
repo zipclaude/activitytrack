@@ -20,6 +20,8 @@ import it.infraconsulting.activitytrack.data.db.RoleEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.db.TodoEntity
+import it.infraconsulting.activitytrack.data.db.TodoKind
+import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.domain.interchange.Interchange
 import it.infraconsulting.activitytrack.domain.interchange.XClient
 import it.infraconsulting.activitytrack.domain.interchange.XCompany
@@ -243,8 +245,10 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			?: master.insertRole(RoleEntity(name = name.trim()))
 
 	private suspend fun todo(r: Run, x: XTodo) {
-		val companyId = x.companyKey?.let { companyId(r, it) ?: return r.skip("todos", x.key, "unknown company $it") }
-		val clientId = x.clientKey?.let { clientId(r, companyId, it) ?: return r.skip("todos", x.key, "unknown client ${x.clientKey}") }
+		val kind = runCatching { TodoKind.valueOf(x.kind) }.getOrNull() ?: return r.skip("todos", x.key, "kind ${x.kind}")
+		val absence = kind == TodoKind.ABSENCE
+		val companyId = x.companyKey?.takeIf { !absence }?.let { companyId(r, it) ?: return r.skip("todos", x.key, "unknown company $it") }
+		val clientId = x.clientKey?.takeIf { !absence }?.let { clientId(r, companyId, it) ?: return r.skip("todos", x.key, "unknown client ${x.clientKey}") }
 		val due = x.dueDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "due date $it") }
 		val time = x.dueTime?.let { minutes(it) ?: return r.skip("todos", x.key, "due time $it") }
 		val planDay = x.plannedDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "planned date $it") }
@@ -254,6 +258,12 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			return r.skip("todos", x.key, "planned time without date")
 		val duration = x.durationMin?.takeIf { it in 1..TodoPlan.MAX_DURATION_MIN }
 			?: x.durationMin?.let { return r.skip("todos", x.key, "duration $it") }
+		val planEnd = x.plannedEndDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "planned end date $it") }
+		if (absence && planDay == null)
+			return r.skip("todos", x.key, "absence without planned date")
+		if (planEnd != null && (planDay == null || planTime != null || planEnd < planDay || planEnd - planDay >= TodoRepository.MAX_ABSENCE_DAYS))
+			return r.skip("todos", x.key, "planned end date ${x.plannedEndDate}")
+		val color = XColor.parse(x.color)
 		val refs = x.refs.map(String::trim).filter(String::isNotEmpty).joinToString("\n")
 		val existing = todos.byExternalKey(companyId, x.key) ?: todos.byUid(SyncIds.canonical(x.key))
 		if (existing == null) {
@@ -264,7 +274,8 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 					title = x.title.trim(), notes = x.notes?.trim()?.ifEmpty { null }, refs = refs, dueEpochDay = due,
 					dueTimeMin = time, priority = x.priority, done = x.done, doneUtcMs = now.takeIf { x.done },
 					createdUtcMs = now, updatedUtcMs = now,
-					planEpochDay = planDay, planStartMin = planTime, durationMin = duration,
+					planEpochDay = planDay, planStartMin = planTime, durationMin = duration, planEndEpochDay = planEnd,
+					kind = kind, color = color,
 					ignoredUtcMs = now.takeIf { x.ignored },
 				),
 			)
@@ -278,7 +289,8 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			"refs".takeIf { existing.refs != refs },
 			"due".takeIf { existing.dueEpochDay != due || existing.dueTimeMin != time },
 			"priority".takeIf { existing.priority != x.priority },
-			"plan".takeIf { existing.planEpochDay != planDay || existing.planStartMin != planTime || existing.durationMin != duration },
+			"plan".takeIf { existing.planEpochDay != planDay || existing.planStartMin != planTime || existing.durationMin != duration || existing.planEndEpochDay != planEnd },
+			"colour".takeIf { x.color != null && existing.color != color },
 			"done".takeIf { existing.done != x.done },
 			"ignored".takeIf { (existing.ignoredUtcMs != null) != x.ignored },
 		)

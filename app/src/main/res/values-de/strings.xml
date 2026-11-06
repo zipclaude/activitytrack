@@ -833,4 +833,9 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="offline_map_err_failed">Der Vorgang ist fehlgeschlagen.</string>
   <string name="offline_map_hint_server">Eine einfache Karte (Straßen, Flüsse, Grenzen, Ortsnamen) der Gebiete, die dein Administrator auf ActivityTrack Web vorbereitet hat: sie kommt mit der Synchronisierung, im WLAN. Du kannst auch .pmtiles-Dateien in den Ordner «maps» des Datenordners kopieren und importieren. Sie erscheint anstelle der OSM-Kacheln, wenn diese aus sind oder kein Netz da ist. © OpenStreetMap contributors · Protomaps.</string>
   <string name="offline_map_hint_folder">Kopiere die .pmtiles-Kartendateien (Vektor, Protomaps) in den Ordner «maps» des Datenordners und importiere sie hier; docs/OFFLINE-MAPS.md erklärt, wie man sie erstellt. Eine Karte erscheint anstelle der OSM-Kacheln, wenn diese aus sind oder kein Netz da ist. © OpenStreetMap contributors · Protomaps.</string>
+  <string name="todo_kind_task">Aufgabe</string>
+  <string name="todo_absence">Abwesenheit</string>
+  <string name="todo_absence_until">Bis (letzter Tag, optional)</string>
+  <string name="todo_absence_label">Bezeichnung (optional)</string>
+  <string name="todo_field_color">Farbe</string>
 </resources>

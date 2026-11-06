@@ -419,6 +419,21 @@
           "name": "pluginFields",
           "kind": "json",
           "null": true
+        },
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "color",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "planEndDate",
+          "kind": "date",
+          "null": true
         }
       ]
     },

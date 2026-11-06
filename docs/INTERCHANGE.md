@@ -95,3 +95,5 @@ required, quantity, unit and unitCost in EUR optional).
 | `sites.ownerKind` | company, client |
 | `todos.plannedDate` / `plannedTime` | local date and hh:mm of the planned start (added 2026-10-18, still version 1: older apps ignore them); the date alone plans the whole day, the time needs the date (2026-10-22) |
 | `todos.durationMin` | 1..1440; absent = one hour, growing hour by hour in the app while the to-do is open |
+| `todos.kind` | `TASK` (default) or `ABSENCE` (issue #158): a planned absence needs `plannedDate`, has no company, client, due date or priority, and `title` may be empty |
+| `todos.color` / `plannedEndDate` | `#RRGGBB` of the agenda block and the card (any to-do); the last day of a whole-day plan lasting several days (at most 366 days from `plannedDate`, no `plannedTime`) |
