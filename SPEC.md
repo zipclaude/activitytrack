@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.16 (2026-11-05, release 0.9.5: track map and export, sampling intervals, offline maps). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.17 (2026-11-06, release 0.9.6: planned absences, site map on the current position). Application ID `it.infraconsulting.activitytrack`.
 
 Android app for freelancers who work for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
