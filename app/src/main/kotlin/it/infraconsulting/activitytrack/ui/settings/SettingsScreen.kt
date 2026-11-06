@@ -73,6 +73,13 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 	val settings = repo.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+	/*
+	 * "Altre impostazioni" unfolded. Here, not in the composition: the list
+	 * leaves it while a section is open on top, and its ViewModel stays with
+	 * its place in the back stack, so the list is as it was left on return.
+	 */
+	var showAll by mutableStateOf(false)
+
 	fun save(s: AppSettings, onDone: () -> Unit) {
 		viewModelScope.launch {
 			/* data folder, calendars and gestures change through their own rows, not this form */
@@ -136,7 +143,6 @@ fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen:
 		)
 	}
 	val dots = if (dirty && section?.form == true) " •" else ""
-	var showAll by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 	ScreenScaffold(title = stringResource(section?.label ?: R.string.settings_title) + dots, onBack = ::guardedBack) { padding ->
 		if (section == null)
 			LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -149,9 +155,9 @@ fun SettingsScreen(onBack: () -> Unit, section: SettingsSection? = null, onOpen:
 					item { ClickableRow(stringResource(R.string.gestures_title), icon = R.drawable.ic_menu_touch) { onOpen(Screen.Gestures) } }
 				/* the rest, folded (issue #99) */
 				item {
-					ClickableRow(stringResource(R.string.settings_more) + if (showAll) " ▴" else " ▾", icon = R.drawable.ic_menu_tune) { showAll = !showAll }
+					ClickableRow(stringResource(R.string.settings_more) + if (vm.showAll) " ▴" else " ▾", icon = R.drawable.ic_menu_tune) { vm.showAll = !vm.showAll }
 				}
-				if (showAll)
+				if (vm.showAll)
 					items(offered.filter { !it.essential }) { sec ->
 						ClickableRow(stringResource(sec.label), icon = sec.icon) { onOpen(Screen.SettingsPage(sec.name)) }
 					}
