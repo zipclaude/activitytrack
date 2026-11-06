@@ -57,6 +57,13 @@ interface LocationDao {
 	)
 	suspend fun travelWithoutKm(): List<SegmentEntity>
 
+	/* Closed tracked TRAVEL segments that still hold at least two samples, whatever their km (one-off recount). */
+	@Query(
+		"SELECT * FROM segment WHERE kind = 'TRAVEL' AND source = 'TRACKED' AND end_utc_ms IS NOT NULL " +
+			"AND (SELECT COUNT(*) FROM location_sample WHERE segment_id = segment.id) >= 2",
+	)
+	suspend fun travelWithFixes(): List<SegmentEntity>
+
 	@Query("UPDATE segment SET km_estimated = :km WHERE id = :segmentId")
 	suspend fun setKmEstimated(segmentId: Long, km: Double)
 

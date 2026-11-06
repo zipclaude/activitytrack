@@ -63,6 +63,9 @@ class ActivityTrackApp : Application() {
 		it.infraconsulting.activitytrack.quick.QuickWidgets.start(this, container, appScope)
 		calendarSync = CalendarSync(this, container).also { it.start(appScope) }
 		pluginWatcher = it.infraconsulting.activitytrack.connect.plugin.PluginWatcher(this).also { it.start(appScope) }
+		/* the km of the recorded trips are computed again once (0.9.7), when the network allows */
+		if (it.infraconsulting.activitytrack.location.GeoEnrichWorker.kmAgainDue(this))
+			it.infraconsulting.activitytrack.location.GeoEnrichWorker.enqueue(this)
 		/* ActivityTrack Web: periodic and after-change syncs while paired (issue #114) */
 		it.infraconsulting.activitytrack.sync.SyncWorker.start(this, appScope)
 		/* only admins and managers change central master data (issue #115) */

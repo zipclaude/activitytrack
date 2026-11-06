@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.17 (2026-11-06, release 0.9.6: planned absences, site map on the current position). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.18 (2026-11-06, release 0.9.7-beta1: travel km from the recorded positions; before it 0.9.6: planned absences, site map on the current position). Application ID `it.infraconsulting.activitytrack`.
 
 Android app for freelancers who work for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and
@@ -162,9 +162,9 @@ Absences: FULL_DAY, LATE_ENTRY (time), EARLY_EXIT (time).
 - One fix every 5 min while working and every 1 min while travelling (settings
   `workSampleMin` 1–60 min, `travelSampleSec` 15 s–30 min; issue #155);
   `TYPE_SIGNIFICANT_MOTION` triggers an extra fix.
-- TRAVEL: fix at start, every 5 min, at stop; km estimated via OSRM routing
-  between consecutive fixes, fallback straight-line distance × configurable
-  factor. `km_declared` overrides `km_estimated` in exports.
+- TRAVEL: fix at start, every 5 min, at stop; km estimated per leg between consecutive fixes: the straight line when they are at most 2 min apart,
+  else OSRM routing (a road leg over 3 × the straight line is discarded), fallback straight-line distance ×
+  configurable factor; a fix implying more than 250 km/h is left out. `km_declared` overrides `km_estimated` in exports.
 - Uses: locality proposal (Nominatim), company/client proposal (site within radius),
   location kind, travel track and km, movement alerts.
 - **Track map and export** (issue #155): the map of the movements of an activity, a day, a

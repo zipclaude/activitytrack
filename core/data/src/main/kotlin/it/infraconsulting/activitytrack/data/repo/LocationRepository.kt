@@ -61,6 +61,8 @@ class LocationRepository(db: ActivityTrackDatabase) {
 
 	suspend fun travelWithoutKm(): List<SegmentEntity> = dao.travelWithoutKm()
 
+	suspend fun travelWithFixes(): List<SegmentEntity> = dao.travelWithFixes()
+
 	suspend fun setKmEstimated(segmentId: Long, km: Double) = dao.setKmEstimated(segmentId, km)
 
 	suspend fun entriesWithoutLocality(): List<Long> = dao.entriesWithoutLocality()
