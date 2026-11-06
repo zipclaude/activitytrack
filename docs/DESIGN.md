@@ -167,8 +167,10 @@ Algorithms to add:
   segment; alert when `distance − accuracy > threshold` on 2 consecutive fixes.
 - **Stationarity** (TRAVEL): all fixes in the last 15 min within 100 m of their
   centroid.
-- **Km estimate**: OSRM route distance between consecutive fixes, fallback
-  Σ haversine × factor (default 1.25, configurable).
+- **Km estimate** (`KmEstimate`): per leg between consecutive fixes, the haversine
+  distance when they are ≤ 2 min apart; else the OSRM route distance (discarded above 3 × the
+  haversine), fallback haversine × factor (default 1.25, configurable). Fixes implying
+  > 250 km/h are dropped first (`plausible`).
 
 ## 6. Background execution
 

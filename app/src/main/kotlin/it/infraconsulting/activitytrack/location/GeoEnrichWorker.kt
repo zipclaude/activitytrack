@@ -19,8 +19,11 @@ import org.json.JSONException
 /*
  * Network enrichment of recorded samples (DESIGN §6.3), never blocking the
  * tracking itself:
- * - km of closed TRAVEL segments: OSRM road distance per leg when enabled,
- *   else (or where no route exists) straight line times the factor;
+ * - km of closed TRAVEL segments ([KmEstimate]): the straight line between
+ *   fixes at most 2 min apart, the OSRM road distance (when enabled) or the
+ *   straight line times the factor where they are farther apart; stray
+ *   fixes are left out. Once, after the update that changed this (0.9.7),
+ *   the km of the trips still holding their fixes are computed again;
  * - locality proposal for entries without one: Nominatim at the first WORK
  *   sample. Network failures retry the whole pass later.
  */
@@ -30,11 +33,20 @@ class GeoEnrichWorker(context: Context, params: WorkerParameters) : CoroutineWor
 		val s = c.settings.current()
 		val locations = c.locations
 		try {
-			for (seg in locations.travelWithoutKm()) {
-				val fixes = locations.fixesOfSegment(seg.id)
-				val road = if (s.osrm.enabled) c.osrm.legsM(s.osrm.endpoint, fixes.map { it.point }) else null
-				locations.setKmEstimated(seg.id, KmEstimate.km(fixes, s.kmFactor, road ?: List(fixes.size - 1) { null }))
+			val again = !prefs.getBoolean(KM_AGAIN, false)
+			for (seg in if (again) locations.travelWithFixes() else locations.travelWithoutKm()) {
+				val fixes = KmEstimate.plausible(locations.fixesOfSegment(seg.id))
+				val road = HashMap<Int, Double>()
+				if (s.osrm.enabled)
+					for (run in KmEstimate.roadRuns(fixes)) {
+						val legs = c.osrm.legsM(s.osrm.endpoint, fixes.subList(run.first, run.last + 2).map { it.point }) ?: continue
+						for ((k, leg) in legs.withIndex())
+							road[run.first + k] = leg
+					}
+				locations.setKmEstimated(seg.id, KmEstimate.km(fixes, s.kmFactor, road))
 			}
+			if (again)
+				prefs.edit().putBoolean(KM_AGAIN, true).apply()
 			if (s.nominatim.enabled) {
 				for (entryId in locations.entriesWithoutLocality()) {
 					val p = locations.localityPoint(entryId) ?: continue
@@ -52,9 +64,16 @@ class GeoEnrichWorker(context: Context, params: WorkerParameters) : CoroutineWor
 		return Result.success()
 	}
 
+	private val prefs get() = applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
 	companion object {
 		private const val TAG = "GeoEnrichWorker"
 		private const val NAME = "geo-enrich"
+		private const val PREFS = "geo"
+		private const val KM_AGAIN = "km_again_0_9_7"
+
+		/* the one-off pass of the update is still due: the app asks for it when it starts */
+		fun kmAgainDue(context: Context) = !context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KM_AGAIN, false)
 
 		/*
 		 * After a travel closes or tracking stops; the delay lets the stop fix

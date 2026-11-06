@@ -1,7 +1,14 @@
-Versione 0.9.6 (novembre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.7-beta1 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.7-beta1** (una beta: solo test automatici, non ancora provata su un viaggio lungo)
+- I **km dei viaggi** non si gonfiano più sui percorsi lunghi. Le posizioni distanti al più 2 minuti si
+  congiungono direttamente; solo dove sono più distanti si usa la distanza su strada (OSRM) o la linea d'aria
+  × fattore, e una distanza su strada molto più lunga della linea d'aria viene scartata. Le posizioni che
+  implicano più di 250 km/h (un punto isolato) non entrano nel conto. I km dei viaggi di cui il telefono
+  conserva ancora le posizioni vengono ricalcolati una volta, quando la rete lo permette.
 
 **Novità della 0.9.6** (solo test automatici: non ancora provata sul telefono, tranne la mappa delle sedi sulla posizione corrente)
 - **Assenze pianificate**: in *Da fare* e *Agenda*, «Aggiungi → Assenza» pianifica uno o più giorni, tutto il
@@ -520,7 +527,8 @@ ricompare quando riapri l'app.
   presso la sede di un cliente propone "Lavoro da … dalle hh:mm" (assegna quel
   cliente al viaggio se non ne aveva uno); a casa propone lo stop; altrimenti
   "Lavoro dalle hh:mm" o "Sono ancora in viaggio".
-- I km del viaggio sono calcolati sulla strada (OSRM) e la località proposta
+- I km del viaggio sono la distanza tra le posizioni registrate (a 2 minuti o meno l'una dall'altra) o la
+  distanza su strada (OSRM) dove sono più distanti, e la località proposta
   dal servizio di indirizzi (Nominatim), quando la rete è disponibile.
 
 Tocca i **pulsanti** delle notifiche, non il testo: il testo apre l'app e
@@ -1235,7 +1243,7 @@ dove scegliere banner, suono e vibrazione.
 | Soglia avviso spostamento | distanza oltre la quale, in lavoro, arriva "Lontano da …?" | 50–5000 m | 100 |
 | Raggio di arrivo | entro quanti metri si considera fermo | 25–1000 m | 100 |
 | Tempo di arrivo | dopo quanti minuti fermo, in viaggio, arriva "Arrivo?" | 5–120 min | 15 |
-| Fattore distanza stradale | km stradali = linea d'aria × fattore, quando OSRM non è disponibile | 1,0–3,0 | 1,25 |
+| Fattore distanza stradale | km stradali = linea d'aria × fattore, tra posizioni a più di 2 min quando OSRM non è disponibile | 1,0–3,0 | 1,25 |
 | Campionamento durante il lavoro | ogni quanto si registra una posizione | 1, 2, 5, 10, 15, 20, 30, 60 min | 5 min |
 | Campionamento durante il viaggio | più fitto, per disegnare il percorso fatto (più batteria) | 15, 30, 60 s; 2, 5, 10, 15, 30 min | 1 min |
 | Mappa degli spostamenti | mostra la mappa dei Tracciati; richiede le mappe di *Servizi online* | sì / no | sì |
@@ -1415,7 +1423,7 @@ allarmi in Doze).
 - In viaggio, fermo entro il *raggio* per il *tempo di arrivo*: "Arrivo?";
   presso la sede di un cliente propone il lavoro per quel cliente, a casa lo
   stop.
-- Km: OSRM se attivo, altrimenti linea d'aria × fattore; località da
+- Km: posizioni a 2 min o meno congiunte direttamente; più distanti OSRM se attivo, altrimenti linea d'aria × fattore; località da
   Nominatim. Le coordinate escono dal telefono solo con l'esportazione del tracciato (GPX / KML).
 
 ### Report ed esportazione

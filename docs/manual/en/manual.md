@@ -1,7 +1,14 @@
-Version 0.9.6 (November 2026). Please report any difference between this
+Version 0.9.7-beta1 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.7-beta1** (a beta: unit tests only, not yet tried on a long trip)
+- **Travel km** are no longer inflated on long trips. Positions at most 2 minutes apart are joined
+  directly; only where they are farther apart the road distance (OSRM) or the straight line × factor is used,
+  and a road distance far longer than the straight line is discarded. Positions that imply more than
+  250 km/h (a stray point) are left out of the count. The km of the trips whose positions are still on the
+  phone are computed again once, when the network allows.
 
 **New in 0.9.6** (unit tests only: not yet tried on the phone, except the site map on the current position)
 - **Planned absences**: in *To-dos* and the *Agenda*, "Add → Absence" plans a day or several, whole-day or
@@ -507,7 +514,8 @@ when you reopen the app.
   at a client's site it proposes "Work for … since hh:mm" (it assigns that
   client to the travel if it had none); at home it proposes to stop;
   otherwise "Work since hh:mm" or "Still travelling".
-- Travel km are road distances (OSRM) and the locality comes from the address
+- Travel km are the distance between the recorded positions (2 minutes apart or less) or road
+  distances (OSRM) where they are farther apart, and the locality comes from the address
   service (Nominatim), when the network is available.
 
 Tap the notification **buttons**, not the text: the text opens the app and
@@ -1199,7 +1207,7 @@ choose banner, sound and vibration.
 | Movement alert threshold | distance beyond which, while working, "Away from …?" comes | 50–5000 m | 100 |
 | Arrival radius | within how many metres you count as standing | 25–1000 m | 100 |
 | Arrival time | after how many minutes standing, while travelling, "Arrived?" comes | 5–120 min | 15 |
-| Road distance factor | road km = straight line × factor, when OSRM is not available | 1.0–3.0 | 1.25 |
+| Road distance factor | road km = straight line × factor, between positions more than 2 min apart when OSRM is not available | 1.0–3.0 | 1.25 |
 | Position sampling while working | how often a position is recorded | 1, 2, 5, 10, 15, 20, 30, 60 min | 5 min |
 | Position sampling while travelling | finer, to draw the route taken (more battery) | 15, 30, 60 s; 2, 5, 10, 15, 30 min | 1 min |
 | Movement map | shows the Tracks map; it needs the map tiles of *Online services* | on / off | on |
@@ -1376,7 +1384,7 @@ never go below 10 minutes (Android limits alarms in Doze).
 - Travelling, standing within the *radius* for the *arrival time*:
   "Arrived?"; at a client's site it proposes work for that client, at home to
   stop.
-- Km: OSRM when on, otherwise straight line × factor; locality from
+- Km: positions 2 min apart or less joined directly; farther apart OSRM when on, otherwise straight line × factor; locality from
   Nominatim. Coordinates leave the phone only with the track export (GPX / KML).
 
 ### Report and export
