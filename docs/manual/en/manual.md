@@ -1,7 +1,15 @@
-Version 0.9.5 (November 2026). Please report any difference between this
+Version 0.9.6 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.6** (unit tests only: not yet tried on the phone, except the site map on the current position)
+- **Planned absences**: in *To-dos* and the *Agenda*, "Add → Absence" plans a day or several, whole-day or
+  from–to, with a label and a **colour** (red by default). It follows the to-do policies and shows in the
+  Agenda over the working hours (or the whole day), also once done. Any to-do can take a colour too.
+  The absences recorded from the day-start prompt are now done absences, converted when the app updates.
+  Needs ActivityTrack Web 0.9.6 to sync (wire schema 2).
+- The **map of a site** opens on the typed coordinates, else on your current position (zoom 13).
 
 **New in 0.9.5** (tested on the debug phone, except the GPX export, the week and month views and the policy switches)
 - The **track map** (*More → Tracks*, and *⋮ → Route of the activity* in an activity): the

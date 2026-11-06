@@ -1,7 +1,15 @@
-Versione 0.9.5 (novembre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.6 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.6** (solo test automatici: non ancora provata sul telefono, tranne la mappa delle sedi sulla posizione corrente)
+- **Assenze pianificate**: in *Da fare* e *Agenda*, «Aggiungi → Assenza» pianifica uno o più giorni, tutto il
+  giorno o dalle–alle, con etichetta e **colore** (rosso se non scelto). Segue le policy dei Da fare e compare
+  nell'Agenda sulle ore lavorative (o sull'intera giornata), anche da fatta. Anche un Da fare può avere un colore.
+  Le assenze registrate dall'avviso di inizio giornata sono ora assenze fatte, convertite all'aggiornamento.
+  Per sincronizzare serve ActivityTrack Web 0.9.6 (schema 2).
+- La **mappa di una sede** si apre sulle coordinate scritte, altrimenti sulla posizione corrente (zoom 13).
 
 **Novità della 0.9.5** (provata sul telefono di debug, tranne l'esportazione GPX, le viste settimana e mese e gli interruttori della policy)
 - La **mappa degli spostamenti** (*Altro → Tracciati*, e *⋮ → Percorso dell'attività* in un'attività):
