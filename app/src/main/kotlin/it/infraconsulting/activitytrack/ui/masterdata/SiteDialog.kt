@@ -23,6 +23,7 @@ import it.infraconsulting.activitytrack.domain.settings.OnlineService
 import it.infraconsulting.activitytrack.location.CurrentPosition
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.MapPickerDialog
+import it.infraconsulting.activitytrack.ui.common.POSITION_ZOOM
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.parseDecimal
 import java.util.Locale
@@ -60,6 +61,9 @@ fun SiteDialog(
 	var locating by remember { mutableStateOf(false) }
 	var unavailable by remember { mutableStateOf(false) }
 	var picking by remember { mutableStateOf(false) }
+	/* where the map opens: the typed point, else the current position at zoom 13 */
+	var mapStart by remember { mutableStateOf<GeoPoint?>(null) }
+	var mapZoom by remember { mutableStateOf(POSITION_ZOOM) }
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 	val container = (context.applicationContext as ActivityTrackApp).container
@@ -104,7 +108,23 @@ fun SiteDialog(
 				}
 			}) { Text(stringResource(R.string.site_current_position)) }
 			if (tiles?.enabled == true)
-				TextButton(onClick = { picking = true }) { Text(stringResource(R.string.site_map)) }
+				TextButton(enabled = !locating, onClick = {
+					/* the coordinates already there, else the current position, else the country */
+					if (typed != null) {
+						mapStart = typed
+						mapZoom = 17.0
+						picking = true
+						return@TextButton
+					}
+					locating = true
+					scope.launch {
+						val here = CurrentPosition.get(context)
+						mapStart = here
+						mapZoom = if (here != null) POSITION_ZOOM else 5.0
+						locating = false
+						picking = true
+					}
+				}) { Text(stringResource(R.string.site_map)) }
 		}
 		if (unavailable)
 			Text(stringResource(R.string.position_unavailable), color = MaterialTheme.colorScheme.error)
@@ -114,7 +134,7 @@ fun SiteDialog(
 		Text(stringResource(R.string.site_hint))
 	}
 	if (picking && tiles != null)
-		MapPickerDialog(tiles.endpoint, typed, onDismiss = { picking = false }) {
+		MapPickerDialog(tiles.endpoint, mapStart, mapZoom, onDismiss = { picking = false }) {
 			setPoint(it)
 			picking = false
 		}

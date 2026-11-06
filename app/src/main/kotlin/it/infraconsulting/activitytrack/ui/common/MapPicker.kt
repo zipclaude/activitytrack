@@ -43,15 +43,20 @@ import org.maplibre.android.maps.Style
 /* Centre of Italy at country zoom, when nothing better is known. */
 private val FALLBACK = GeoPoint(42.5, 12.5)
 
+/* Zoom of a map opened on the current position: a neighbourhood. */
+const val POSITION_ZOOM = 13.0
+
 /*
  * Map picker (M2, decision A10): pan the map under a fixed cross-hair and
  * take its centre. Raster tiles from the configured endpoint; MapLibre
- * shows the OSM attribution of the source (ODbL).
+ * shows the OSM attribution of the source (ODbL). It opens on [initial] at
+ * [zoom] (a point already typed: street level), else on the country.
  */
 @Composable
 fun MapPickerDialog(
 	tilesUrl: String,
 	initial: GeoPoint?,
+	zoom: Double = if (initial != null) 17.0 else 5.0,
 	onDismiss: () -> Unit,
 	onPick: (GeoPoint) -> Unit,
 ) {
@@ -69,7 +74,7 @@ fun MapPickerDialog(
 				val start = initial ?: FALLBACK
 				m.cameraPosition = CameraPosition.Builder()
 					.target(LatLng(start.lat, start.lon))
-					.zoom(if (initial != null) 17.0 else 5.0)
+					.zoom(zoom)
 					.build()
 			}
 		}
