@@ -40,8 +40,9 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
   on `PATH` for the manual scripts.
 - Graphviz releases differ in layout: a newer `dot` rewrites every committed
   SVG with noise only; `git checkout -- docs/manual` unless a diagram changed.
-- CI errors are exposed as annotations:
-  `gh api repos/zipclaude/activitytrack/check-runs/<job-id>/annotations`.
+- CI failures: read the job log of the pipeline (project → Build → Pipelines),
+  or `curl -H "PRIVATE-TOKEN: $TOKEN" "https://gitlab.com/api/v4/projects/88636043/jobs?per_page=10"`
+  and fetch `.../jobs/<id>/trace` for the output.
 
 ## 3. Signing and release
 
@@ -177,4 +178,9 @@ app/src/debug/                  MockLocationReceiver, debug shortcuts
 End commit messages with:
 ```
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+```
+plus the session link line provided by the environment. OpenCode/GLM
+sessions (owner, 2026-10-23) use instead:
+```
+Co-Authored-By: GLM-5.3 <spam@zipman.it>
 ```
