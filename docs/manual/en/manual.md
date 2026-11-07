@@ -1,14 +1,18 @@
-Version 0.9.7-beta1 (November 2026). Please report any difference between this
+Version 0.9.8 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
 
-**New in 0.9.7-beta1** (a beta: unit tests only, not yet tried on a long trip)
+**New in 0.9.8** (the first release from GitLab; the km recount and the settings menu not yet tried on a long trip)
 - **Travel km** are no longer inflated on long trips. Positions at most 2 minutes apart are joined
   directly; only where they are farther apart the road distance (OSRM) or the straight line × factor is used,
   and a road distance far longer than the straight line is discarded. Positions that imply more than
   250 km/h (a stray point) are left out of the count. The km of the trips whose positions are still on the
   phone are computed again once, when the network allows.
+- In *Settings*, **Other settings** stays unfolded when you come back from one of its sections.
+- **ActivityTrack moved from GitHub to GitLab** (`gitlab.com/infraconsulting`): the app now looks for new
+  versions there. The versions up to 0.9.7-beta1 still ask GitHub and will not see this one: install
+  `ActivityTrack-0.9.8.apk` from the GitLab *Releases* by hand, over the old app (the data stay).
 
 **New in 0.9.6** (unit tests only: not yet tried on the phone, except the site map on the current position)
 - **Planned absences**: in *To-dos* and the *Agenda*, "Add → Absence" plans a day or several, whole-day or
