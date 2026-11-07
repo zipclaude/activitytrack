@@ -66,6 +66,17 @@ class UpdateCheckTest {
 	}
 
 	@Test
+	fun whichRunsCheck() {
+		/* "Check now": always (a store's app too), unless the build cannot check (debug) */
+		assertEquals(true, UpdateCheck.runs(manual = true, updateCheck = false, applies = false, canCheck = true))
+		assertEquals(false, UpdateCheck.runs(manual = true, updateCheck = true, applies = true, canCheck = false))
+		/* the daily run: only switched on and not a store's app, whatever the job's tags (an older install has none) */
+		assertEquals(true, UpdateCheck.runs(manual = false, updateCheck = true, applies = true, canCheck = true))
+		assertEquals(false, UpdateCheck.runs(manual = false, updateCheck = true, applies = false, canCheck = true))
+		assertEquals(false, UpdateCheck.runs(manual = false, updateCheck = false, applies = true, canCheck = true))
+	}
+
+	@Test
 	fun noPackageForThisAppNoOffer() {
 		val other = UpdateManifest.Entry("3.0.0", "prod", "", "", listOf(package_("desktop-deb", "https://example.org/d.deb")))
 		assertNull(UpdateCheck.newer(manifest(other), "1.0.0", setOf("prod"), null, false))

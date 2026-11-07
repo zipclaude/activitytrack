@@ -31,6 +31,13 @@ object UpdateCheck {
 	/* the releases page, for a release without its own address */
 	const val RELEASES_PAGE = "https://gitlab.com/infraconsulting/activitytrack/-/releases"
 
+	/*
+	 * Whether a check runs: "Check now" whenever the build can check (a store's app too, where it only tells); the daily one
+	 * only when the user wants it and the app is not left to a store.
+	 */
+	fun runs(manual: Boolean, updateCheck: Boolean, applies: Boolean, canCheck: Boolean): Boolean =
+		canCheck && (manual || (updateCheck && applies))
+
 	/* "prod,beta" as the set the user follows; prod is always among them */
 	fun channelsOf(text: String): Set<String> =
 		(text.split(',').map { it.trim().lowercase() }.filter { it in UpdateManifest.CHANNELS } + "prod").toSet()

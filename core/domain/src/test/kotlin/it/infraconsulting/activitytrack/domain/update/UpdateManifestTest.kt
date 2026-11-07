@@ -146,6 +146,19 @@ class UpdateManifestTest {
 	}
 
 	@Test
+	fun oddSizeNeverBreaksTheReading() {
+		val sha = "ab".repeat(32)
+		fun release(version: String, size: String) =
+			"""{"version":"$version","packages":[{"component":"android","url":"https://example.org/a.apk","sha256":"$sha","size":$size}]}"""
+		val releases = listOf("1.0.0" to "{}", "1.1.0" to "[1]", "1.2.0" to "\"12\"", "1.3.0" to "null", "1.4.0" to "7")
+		val p = """{"format":"${UpdateManifest.FORMAT}","issued":"2026-11-07T10:00:00Z","releases":[${releases.joinToString(",") { release(it.first, it.second) }}]}"""
+		val m = UpdateManifest.verify(sign("app", payload = p), appTrust)
+		/* an object or an array is no size, not an error: the release stays, with size 0 (a number in text still reads) */
+		assertEquals(releases.map { it.first }, m.entries.map { it.version })
+		assertEquals(listOf(0L, 0L, 12L, 0L, 7L), m.entries.map { it.packages.single().size })
+	}
+
+	@Test
 	fun signedPolicyFixesTheIdentity() {
 		/* the policy pinned "ACME, Inc. Updates": its CA-vouched signer passes, the app key and the other signer do not */
 		val policy = UpdateManifest.Trust(setOf(appPin), policyCn = "ACME, Inc. Updates", anchors = { anchors })

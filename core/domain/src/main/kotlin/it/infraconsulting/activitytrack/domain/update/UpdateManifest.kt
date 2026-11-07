@@ -21,7 +21,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 
 /* SHA-256 of a certificate (DER) as lowercase hex: what a pairing link carries and a policy or an administrator pins. */
@@ -178,7 +177,7 @@ object UpdateManifest {
 			val url = str(po["url"])?.trim() ?: return@mapNotNull null
 			val sha = UpdateFingerprint.normalize(str(po["sha256"]) ?: return@mapNotNull null)
 			if (sha.length != 64 || !(url.startsWith("https://") || url.startsWith("/"))) return@mapNotNull null
-			Package(str(po["component"]) ?: return@mapNotNull null, url, sha, po["size"]?.jsonPrimitive?.longOrNull ?: 0)
+			Package(str(po["component"]) ?: return@mapNotNull null, url, sha, (po["size"] as? JsonPrimitive)?.longOrNull ?: 0)
 		}.orEmpty()
 		if (packages.isEmpty()) return null
 		return Entry(version, str(o["channel"]) ?: "prod", str(o["published"]).orEmpty(), str(o["notes_url"]).orEmpty(), packages)

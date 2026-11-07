@@ -159,7 +159,8 @@ class Updates(private val context: Context) {
 				UpdateSource.CUSTOM -> accept(fetch(settings.updateUrl), source)
 				UpdateSource.SERVER -> {
 					if (app.syncAccount.info.value == null) throw UpdateManifest.Invalid(context.getString(R.string.update_err_not_paired))
-					app.syncAccount.head()
+					/* unreachable, revoked or incompatible is not "no update": the release known stays, the worker tries again */
+					app.syncAccount.head() ?: throw IOException("server unreachable")
 					app.syncAccount.updateManifest?.let { accept(it, source) }
 				}
 			}
@@ -370,14 +371,14 @@ class Updates(private val context: Context) {
 			val wm = WorkManager.getInstance(context)
 			if (on) wm.enqueueUniquePeriodicWork(
 				DAILY, ExistingPeriodicWorkPolicy.KEEP,
-				PeriodicWorkRequestBuilder<UpdateWorker>(1, TimeUnit.DAYS).setConstraints(network).addTag(UpdateWorker.DAILY_TAG).build(),
+				PeriodicWorkRequestBuilder<UpdateWorker>(1, TimeUnit.DAYS).setConstraints(network).build(),
 			) else wm.cancelUniqueWork(DAILY)
 		}
 
 		/* "Check now" */
 		fun now(context: Context) {
 			WorkManager.getInstance(context).enqueueUniqueWork(
-				NOW, ExistingWorkPolicy.REPLACE, OneTimeWorkRequestBuilder<UpdateWorker>().setConstraints(network).build(),
+				NOW, ExistingWorkPolicy.REPLACE, OneTimeWorkRequestBuilder<UpdateWorker>().setConstraints(network).addTag(UpdateWorker.MANUAL_TAG).build(),
 			)
 		}
 	}
@@ -387,9 +388,9 @@ class UpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 	override suspend fun doWork(): Result {
 		val app = applicationContext as ActivityTrackApp
 		val settings = app.container.settings.settings.first()
-		/* the daily run: only when the user wants it; "Check now" is the one-time work */
-		val daily = tags.contains(DAILY_TAG)
-		if (!app.updates.canCheck || (daily && !(settings.updateCheck && app.updates.applies))) return Result.success()
+		/* "Check now" carries the tag; any other run is the daily one, also of a job enqueued by an older version (no tag) */
+		val manual = tags.contains(MANUAL_TAG)
+		if (!UpdateCheck.runs(manual, settings.updateCheck, app.updates.applies, app.updates.canCheck)) return Result.success()
 		return try {
 			app.updates.check()?.let { if (app.updates.applies) app.updates.notifyOnce(it) }
 			Result.success()
@@ -399,6 +400,6 @@ class UpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 	}
 
 	companion object {
-		const val DAILY_TAG = "update-daily-run"
+		const val MANUAL_TAG = "update-manual"
 	}
 }
