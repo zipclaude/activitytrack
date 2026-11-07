@@ -65,7 +65,8 @@ An app installed from a store or a package manager keeps the check optional ("Ch
 
 ## 4. Release (CI)
 
-The tag pipeline's job `manifest` runs after `release`:
+The job `manifest` of the pipeline started by hand on the tag ("Run pipeline", ref = the tag; no pipeline starts
+on its own) runs after `release`:
 `scripts/update-manifest.py assemble` takes the packages of the tag from the six repositories' GitLab releases (the
 asset names give the component; the SHA-256 from the release's `SHA256SUMS`, else from the file), keeps the earlier
 releases of the manifest on `main`, and `sign` signs it with the release key (RS256); the result is committed to

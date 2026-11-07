@@ -1,8 +1,9 @@
 # CI of ActivityTrack on GitLab (free plan: the shared runners' minutes are limited,
-# so pipelines run for merge requests, the default branch and tags). A version tag
-# (v0.2.0) also publishes the signed release: jobs apk, manual and release. A tag
-# with a suffix (v1.1.0-beta1) is a beta (SYNC.md §12.4); the job manifest then
-# publishes the signed update manifest of all the repositories (docs/UPDATES.md).
+# so no pipeline starts on its own: "Run pipeline" by hand or the pipelines API, on a
+# branch or on a tag). A pipeline run on a version tag (v0.2.0) also publishes the signed
+# release: jobs apk, manual and release. A tag with a suffix (v1.1.0-beta1) is a beta
+# (SYNC.md §12.4); the job manifest then publishes the signed update manifest of all
+# the repositories (docs/UPDATES.md).
 
 # Shared-runner minutes are paid: no pipeline starts on its own (not on pushes,
 # merge requests or tags). Start one by hand ("Run pipeline" on a branch or tag,
