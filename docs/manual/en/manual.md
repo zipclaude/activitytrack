@@ -892,6 +892,11 @@ phone knows, from then on the phone trusts only the key in the code
 (**"pinned key"**). An expired or used code gives "The code has expired or
 was already used: make a new one on the web page".
 
+**Pair only with your own organisation's server.** The server you pair with receives all your synced
+data and can set the app's policy (settings, features, addresses) and decide which phone sends data to
+the plugins. Do not scan a QR code or open a pairing link that you did not get from your administrator.
+When the server's policy changes the app, a notification lists the first changes.
+
 **The PC.** A PC with **ActivityTrack Desktop**, the app for the
 notification area of Linux and Windows, pairs from the same page: paste the
 link shown below the code. Activities and *to-dos* started on the PC show on

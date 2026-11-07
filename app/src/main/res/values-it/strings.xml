@@ -647,6 +647,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="policy_applied_title">Policy %1$s applicata</string>
   <string name="policy_applied_signed">Firmata da %1$s. Prima è stato fatto un backup; la policy precedente è in policy_old.json.</string>
   <string name="policy_applied_unsigned">Non firmata. Prima è stato fatto un backup; la policy precedente è in policy_old.json.</string>
+  <string name="policy_more_changes">… e altre %1$d modifiche</string>
   <string name="policy_more_errors">… e altri %1$d</string>
   <string name="policy_too_large">più grande di 1 MB</string>
   <!-- security review: confirmation of unsigned policy and plugins -->

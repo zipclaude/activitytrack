@@ -647,6 +647,7 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="policy_applied_title">Política %1$s aplicada</string>
   <string name="policy_applied_signed">Firmada por %1$s. Antes se hizo una copia; la política anterior está en policy_old.json.</string>
   <string name="policy_applied_unsigned">Sin firma. Antes se hizo una copia; la política anterior está en policy_old.json.</string>
+  <string name="policy_more_changes">… y %1$d cambios más</string>
   <string name="policy_more_errors">… y %1$d más</string>
   <string name="policy_too_large">mayor de 1 MB</string>
   <!-- security review: confirmation of unsigned policy and plugins -->

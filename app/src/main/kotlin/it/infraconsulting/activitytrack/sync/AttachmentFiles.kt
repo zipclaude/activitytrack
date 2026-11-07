@@ -6,6 +6,7 @@ import androidx.core.net.toUri
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.data.storage.UserDataDir
 import it.infraconsulting.activitytrack.data.sync.SyncFiles
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import java.io.IOException
 import java.time.LocalDate
 
@@ -26,6 +27,8 @@ class AttachmentFiles(private val app: ActivityTrackApp) : SyncFiles {
 	}
 
 	override suspend fun write(entryId: Long, uid: String, mime: String, bytes: ByteArray): String {
+		/* the engine checks too: this is the last line before the uid becomes a file name */
+		if (!SyncIds.isSafe(uid)) throw IOException("attachment uid refused")
 		val ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(mime) ?: "bin"
 		val path = listOf(UserDataDir.Sub.ATTACHMENTS.dirName, LocalDate.now().year.toString(), entryId.toString())
 		val name = "$uid.$ext"

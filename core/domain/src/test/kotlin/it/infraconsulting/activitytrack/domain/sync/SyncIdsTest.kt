@@ -4,6 +4,7 @@ package it.infraconsulting.activitytrack.domain.sync
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -32,5 +33,15 @@ class SyncIdsTest {
 		/* 32 hex digits with dashes in the wrong places are a key, not a UUID */
 		assertNotEquals(u, SyncIds.canonical("6f1c0f4e1a2b-4c3d-8e9f-0a1b2c3d4e5f"))
 		assertTrue(SyncIds.isCanonical(SyncIds.random()))
+	}
+
+	@Test
+	fun safeUidsArePlainTokens() {
+		val u = SyncIds.random()
+		assertTrue(SyncIds.isSafe(u))
+		/* the uids of schema 3 (no dashes, upper case) stay valid */
+		assertTrue(SyncIds.isSafe(u.replace("-", "").uppercase()))
+		for (bad in listOf("", "../../x", "a/b", "a\\b", "a?b=1", "a#b", "a b", "a.b", "%2e%2e", "x".repeat(65), "a\u0000b"))
+			assertFalse(SyncIds.isSafe(bad), bad)
 	}
 }

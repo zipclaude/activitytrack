@@ -919,6 +919,11 @@ solo della chiave contenuta nel codice (**"chiave fissata"**). Un codice
 scaduto o già usato dà "Il codice è scaduto o già usato: generane uno nuovo
 dalla pagina web".
 
+**Associa solo il server della tua organizzazione.** Il server a cui ti associ riceve tutti i dati
+sincronizzati e può impostare la policy dell'app (impostazioni, funzioni, indirizzi) e decidere quale telefono
+invia i dati ai plugin. Non inquadrare un codice QR e non aprire un collegamento di associazione che non
+ti ha dato il tuo amministratore. Quando la policy del server cambia l'app, una notifica elenca le prime modifiche.
+
 **Il PC.** Dalla stessa pagina si associa anche un PC con **ActivityTrack
 Desktop**, l'app per l'area di notifica di Linux e Windows: si incolla il
 collegamento mostrato sotto il codice. Attività e *Da fare* avviati sul PC
