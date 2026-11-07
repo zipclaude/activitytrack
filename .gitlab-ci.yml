@@ -1,7 +1,8 @@
 # CI of ActivityTrack on GitLab (free plan: the shared runners' minutes are limited,
 # so pipelines run for merge requests, the default branch and tags). A version tag
 # (v0.2.0) also publishes the signed release: jobs apk, manual and release. A tag
-# with a suffix (v1.1.0-beta1) is a beta (SYNC.md §12.4).
+# with a suffix (v1.1.0-beta1) is a beta (SYNC.md §12.4); the job manifest then
+# publishes the signed update manifest of all the repositories (docs/UPDATES.md).
 
 workflow:
   rules:
@@ -154,3 +155,45 @@ release:
       jq -n --arg tag "$CI_COMMIT_TAG" --arg name "ActivityTrack $V" --rawfile desc notes.md --argjson links "$links" \
         '{tag_name:$tag, name:$name, description:$desc, assets:{links:$links}}' |
         curl --fail-with-body -sS -X POST --header "JOB-TOKEN: $CI_JOB_TOKEN" --header "Content-Type: application/json" --data @- "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
+
+# The signed update manifest (docs/UPDATES.md, issue #1): the packages of this tag in the six
+# repositories' releases, the earlier releases kept, signed with the key of the app and committed to
+# main, where the apps' default source reads it. The other repositories publish their releases on
+# their own: retry this job (Build → Pipelines → the tag's pipeline) once they are all out; it
+# starts from the manifest on main and is idempotent. Needs the protected variables of the APK
+# (RELEASE_KEYSTORE_BASE64, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD) and
+# MANIFEST_PUSH_TOKEN: a project access token (Maintainer, scope api; protected, masked) allowed to
+# push to main. The commit says [skip ci]: no pipeline for the file.
+manifest:
+  stage: release
+  image: eclipse-temurin:21-jdk
+  needs:
+    - release
+    - job: apk
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]/
+  interruptible: false
+  script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends python3 python3-cryptography curl jq ca-certificates > /dev/null
+    - echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > release.jks
+    - |
+      keytool -importkeystore -srckeystore release.jks -srcstorepass:env RELEASE_STORE_PASSWORD \
+        -srcalias "$RELEASE_KEY_ALIAS" -srckeypass:env RELEASE_KEY_PASSWORD \
+        -destkeystore release.p12 -deststoretype PKCS12 -deststorepass:env RELEASE_STORE_PASSWORD \
+        -destkeypass:env RELEASE_STORE_PASSWORD -noprompt > /dev/null
+    - rm -f release.jks
+    - API="$CI_API_V4_URL/projects/$CI_PROJECT_ID/repository/files/update-manifest.json"
+    - |
+      status=$(curl -sS -o previous.json -w '%{http_code}' "$API/raw?ref=$CI_DEFAULT_BRANCH")
+      case "$status" in 200) ;; 404) rm -f previous.json ;; *) echo "cannot read the manifest on $CI_DEFAULT_BRANCH: HTTP $status"; exit 1 ;; esac
+    - python3 -I scripts/update-manifest.py assemble --tag "$CI_COMMIT_TAG" --previous previous.json --apk "dist/ActivityTrack-${CI_COMMIT_TAG#v}.apk" --out payload.json
+    - P12_PASSWORD="$RELEASE_STORE_PASSWORD" python3 -I scripts/update-manifest.py sign --payload payload.json --p12 release.p12 --out update-manifest.json
+    - rm -f release.p12
+    - python3 -I scripts/update-manifest.py verify update-manifest.json
+    - |
+      method=POST
+      [ "$(curl -sS -o /dev/null -w '%{http_code}' --header "PRIVATE-TOKEN: $MANIFEST_PUSH_TOKEN" "$API?ref=$CI_DEFAULT_BRANCH")" = 200 ] && method=PUT
+      jq -n --arg branch "$CI_DEFAULT_BRANCH" --arg msg "Update manifest for $CI_COMMIT_TAG [skip ci]" --rawfile content update-manifest.json \
+        '{branch:$branch, commit_message:$msg, content:$content}' |
+        curl --fail-with-body -sS -X "$method" --header "PRIVATE-TOKEN: $MANIFEST_PUSH_TOKEN" --header "Content-Type: application/json" --data @- "$API"
