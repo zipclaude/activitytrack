@@ -646,6 +646,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="policy_applied_title">Richtlinie %1$s angewendet</string>
   <string name="policy_applied_signed">Signiert von %1$s. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>
   <string name="policy_applied_unsigned">Nicht signiert. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>
+  <string name="policy_more_changes">… und %1$d weitere Änderungen</string>
   <string name="policy_more_errors">… und %1$d weitere</string>
   <string name="policy_too_large">größer als 1 MB</string>
   <!-- security review: confirmation of unsigned policy and plugins -->

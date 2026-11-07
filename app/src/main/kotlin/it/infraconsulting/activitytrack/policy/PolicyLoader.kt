@@ -177,15 +177,18 @@ object PolicyLoader {
 				/* the backup first: without it the policy waits for the next check */
 				if (!BackupWorker.write(app, tree, DatabaseBackup.policyFileName(now, ZoneId.systemDefault()), now))
 					return false
-				writeRoot(app, tree, OLD, c.policies.inForceText() ?: EMPTY)
 				val text = policy.toString(Charsets.UTF_8)
+				/* what changes against the policy in force, for the notification (security review 0.9.8, R3) */
+				val changes = PolicyChanges.of(c.policies.inForceText(), text)
+				writeRoot(app, tree, OLD, c.policies.inForceText() ?: EMPTY)
 				c.policies.recordApplied(o.policy, text, o.fingerprint, o.signerCn)
 				c.settings.update { o.policy.applyTo(it) }
 				val name = listOf(o.policy.id, o.policy.version).filter { it.isNotEmpty() }.joinToString(" ").ifEmpty { source }
 				notify(
 					app,
 					app.getString(R.string.policy_applied_title, name),
-					o.signerCn?.let { app.getString(R.string.policy_applied_signed, it) } ?: app.getString(R.string.policy_applied_unsigned),
+					(o.signerCn?.let { app.getString(R.string.policy_applied_signed, it) } ?: app.getString(R.string.policy_applied_unsigned)) +
+						changesSummary(app, changes),
 				)
 				Log.i(TAG, "policy $name applied from $source, signer ${o.signerCn}")
 				return true
@@ -203,6 +206,8 @@ object PolicyLoader {
 	}
 
 	private const val MAX_BYTES = 1 shl 20
+	private const val CHANGE_LINES = 8
+	private const val CHANGE_LINE_MAX = 200
 
 	private suspend fun writeRoot(app: ActivityTrackApp, tree: Uri, name: String, text: String) {
 		val dir = app.container.userDataDir
@@ -215,6 +220,15 @@ object PolicyLoader {
 		val ks = KeyStore.getInstance("AndroidCAStore").apply { load(null) }
 		return ks.aliases().toList().mapNotNull { (ks.getCertificate(it) as? X509Certificate)?.let { c -> TrustAnchor(c, null) } }.toSet()
 	}
+
+	/*
+	 * The first changes, one per line, for the "applied" notification: the server may change them without the
+	 * user asking. A value is already cut to 80 characters (PolicyChanges); a line is cut again, as a key can be
+	 * long and a notification that is too big makes the system refuse it.
+	 */
+	private fun changesSummary(app: Context, changes: List<PolicyChanges.Change>) =
+		changes.take(CHANGE_LINES).joinToString("") { "\n" + changeLine(it).take(CHANGE_LINE_MAX) } +
+			if (changes.size > CHANGE_LINES) "\n" + app.getString(R.string.policy_more_changes, changes.size - CHANGE_LINES) else ""
 
 	private fun more(app: Context, errors: List<PolicyError>) =
 		if (errors.size > 8) "\n" + app.getString(R.string.policy_more_errors, errors.size - 8) else ""

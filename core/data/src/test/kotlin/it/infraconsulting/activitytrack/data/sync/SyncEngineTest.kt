@@ -321,6 +321,18 @@ class SyncEngineTest {
 	}
 
 	@Test
+	fun aRecordWhoseUidIsNotAPlainTokenIsRefused() {
+		val b = phone()
+		server.put("company", "../../etc/x", mapOf("name" to JsonPrimitive("Evil"), "archived" to JsonPrimitive(false)))
+		val ok = SyncIds.random()
+		server.put("company", ok, mapOf("name" to JsonPrimitive("Good"), "archived" to JsonPrimitive(false)))
+		val r = sync(b)
+		assertEquals("Good", b.one("SELECT name FROM company WHERE uid = ?", ok))
+		assertEquals(0L, b.one("SELECT COUNT(*) FROM company WHERE name = 'Evil'"))
+		assertTrue(r.errors.any { "uid refused" in it }, r.errors.toString())
+	}
+
+	@Test
 	fun aRefusedChangeIsListedAndCanBeDiscarded() {
 		val a = phone()
 		val acme = company(a, "Acme")

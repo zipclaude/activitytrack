@@ -76,7 +76,7 @@ fun TrustDialog(app: ActivityTrackApp) {
 			title = stringResource(R.string.trust_policy_title),
 			intro = stringResource(R.string.trust_policy_intro),
 			name = stringResource(R.string.trust_policy_name, p.name),
-			lines = p.changes.map(::line).ifEmpty { listOf(stringResource(R.string.trust_no_changes)) },
+			lines = p.changes.map(::changeLine).ifEmpty { listOf(stringResource(R.string.trust_no_changes)) },
 			fingerprint = p.fingerprint,
 			accept = stringResource(R.string.trust_apply),
 			onAccept = { app.trust.putOff(p.fingerprint); app.appScope.launch { PolicyLoader.check(app, confirmed = p.fingerprint) } },
@@ -99,7 +99,7 @@ fun TrustDialog(app: ActivityTrackApp) {
 	)
 }
 
-private fun line(c: PolicyChanges.Change): String = when {
+internal fun changeLine(c: PolicyChanges.Change): String = when {
 	c.old == null -> "+ ${c.path}: ${c.new}"
 	c.new == null -> "− ${c.path}"
 	else -> "${c.path}: ${c.old} → ${c.new}"

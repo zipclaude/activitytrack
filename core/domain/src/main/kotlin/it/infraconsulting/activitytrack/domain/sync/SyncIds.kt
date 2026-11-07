@@ -51,6 +51,16 @@ object SyncIds {
 
 	fun isCanonical(uid: String): Boolean = canonical(uid) == uid
 
+	private val SAFE = Regex("[A-Za-z0-9_-]{1,64}")
+
+	/*
+	 * A uid fit to be a file name and a URL path segment. The server sends the
+	 * uids of its records: one that is not a plain token (a "../", a "?", a
+	 * slash) is refused before it reaches a file name or a request path. Wider
+	 * than isCanonical, which the entries of schema 3 and older servers fail.
+	 */
+	fun isSafe(uid: String): Boolean = SAFE.matches(uid)
+
 	/* a day off is one per date: two phones marking the same day make one record */
 	fun dayOff(epochDay: Long): String = nameBased("dayOff:$epochDay")
 

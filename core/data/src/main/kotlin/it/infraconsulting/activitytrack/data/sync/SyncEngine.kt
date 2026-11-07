@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.sync
 
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import it.infraconsulting.activitytrack.domain.sync.WireVersion
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -212,6 +213,10 @@ class SyncEngine(
 		var budget = MAX_DOWNLOAD
 		for (f in db.run { it.filesToDownload() }) {
 			if ((f.size ?: 0) > budget) continue
+			if (!SyncIds.isSafe(f.uid)) {
+				errors += "attachment: uid refused (not a plain token)"
+				continue
+			}
 			val (status, bytes) = server.download("files/${f.uid}")
 			if (status == 401) throw SyncRevoked()
 			if (status == 426) throw SyncIncompatible(WireVersion.APP_TOO_OLD)

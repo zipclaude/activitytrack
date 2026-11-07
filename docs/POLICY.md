@@ -48,6 +48,8 @@ an unsigned policy is accepted until a signed one pinned a CN, then the
 server must sign with a certificate of that CN (`[policy] key`, `cert`,
 `chain` in its settings.ini). While the server's policy is in force
 `policy.json` in the data folder is ignored (one notification says so);
+every time the server's policy is applied, the notification lists the first eight
+changes against the policy in force (`policy_old.json` holds the previous one, for the rest);
 after unpairing it applies again. `docs/policy-catalog.json` lists every
 key for the server's editor.
 

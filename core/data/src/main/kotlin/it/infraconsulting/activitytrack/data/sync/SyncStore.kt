@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.data.sync
 
 import it.infraconsulting.activitytrack.data.db.SyncSchema
+import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import it.infraconsulting.activitytrack.domain.sync.SyncMapping
 import it.infraconsulting.activitytrack.domain.sync.WireException
 import it.infraconsulting.activitytrack.domain.sync.WireKind
@@ -188,6 +189,8 @@ class SyncStore(
 		val type = record["type"]?.jsonPrimitive?.contentOrNull ?: return "record without type"
 		val uid = record["uid"]?.jsonPrimitive?.contentOrNull ?: return "record without uid"
 		if (type !in SyncMapping.byType) return null
+		/* the uid becomes file names and request paths: a plain token or nothing (security review 0.9.8, R2) */
+		if (!SyncIds.isSafe(uid)) return "$type: uid refused (not a plain token)"
 		if (record["deleted"]?.jsonPrimitive?.booleanOrNull == true) {
 			gone(type, uid)
 			return null

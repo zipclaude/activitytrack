@@ -1,7 +1,13 @@
-Version 0.9.8 (November 2026). Please report any difference between this
+Version 0.9.9 (November 2026). Please report any difference between this
 manual and the app. The *Quick start* sums up daily use in a few pages; this
 manual covers everything: **Part I** how to use the app, **Part II** the
 reference (settings, entities, states, flows).
+
+**New in 0.9.9** (an external security review of 0.9.8)
+- A record the server sends with a strange identifier (not letters, digits, `-` and `_`) is refused and
+  reported in the sync errors instead of being used in a file name or an address.
+- When the server's policy changes the app, the notification **"Policy ... applied"** lists the first
+  eight changes. Pair only with your own organisation's server (see *Sync*).
 
 **New in 0.9.8** (the first release from GitLab; the km recount and the settings menu not yet tried on a long trip)
 - **Travel km** are no longer inflated on long trips. Positions at most 2 minutes apart are joined
@@ -891,6 +897,11 @@ that pairing ends; if the server's certificate is not from an authority the
 phone knows, from then on the phone trusts only the key in the code
 (**"pinned key"**). An expired or used code gives "The code has expired or
 was already used: make a new one on the web page".
+
+**Pair only with your own organisation's server.** The server you pair with receives all your synced
+data and can set the app's policy (settings, features, addresses) and decide which phone sends data to
+the plugins. Do not scan a QR code or open a pairing link that you did not get from your administrator.
+When the server's policy changes the app, a notification lists the first changes.
 
 **The PC.** A PC with **ActivityTrack Desktop**, the app for the
 notification area of Linux and Windows, pairs from the same page: paste the
