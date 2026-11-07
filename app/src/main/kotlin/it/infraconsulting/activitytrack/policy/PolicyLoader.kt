@@ -207,6 +207,7 @@ object PolicyLoader {
 
 	private const val MAX_BYTES = 1 shl 20
 	private const val CHANGE_LINES = 8
+	private const val CHANGE_LINE_MAX = 200
 
 	private suspend fun writeRoot(app: ActivityTrackApp, tree: Uri, name: String, text: String) {
 		val dir = app.container.userDataDir
@@ -220,9 +221,13 @@ object PolicyLoader {
 		return ks.aliases().toList().mapNotNull { (ks.getCertificate(it) as? X509Certificate)?.let { c -> TrustAnchor(c, null) } }.toSet()
 	}
 
-	/* the first changes, one per line, for the "applied" notification: the server may change them without the user asking */
+	/*
+	 * The first changes, one per line, for the "applied" notification: the server may change them without the
+	 * user asking. A value is already cut to 80 characters (PolicyChanges); a line is cut again, as a key can be
+	 * long and a notification that is too big makes the system refuse it.
+	 */
 	private fun changesSummary(app: Context, changes: List<PolicyChanges.Change>) =
-		changes.take(CHANGE_LINES).joinToString("") { "\n" + changeLine(it) } +
+		changes.take(CHANGE_LINES).joinToString("") { "\n" + changeLine(it).take(CHANGE_LINE_MAX) } +
 			if (changes.size > CHANGE_LINES) "\n" + app.getString(R.string.policy_more_changes, changes.size - CHANGE_LINES) else ""
 
 	private fun more(app: Context, errors: List<PolicyError>) =
