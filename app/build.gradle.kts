@@ -6,8 +6,8 @@ plugins {
 }
 
 /*
- * Release signing: one fixed key, so a release from GitHub updates the
- * installed one. CI passes it in RELEASE_* variables (repository secrets);
+ * Release signing: one fixed key, so a release from GitLab updates the
+ * installed one. CI passes it in RELEASE_* variables (CI/CD variables of the project);
  * locally a properties file outside the repository, named by the Gradle
  * property activitytrack.signing (e.g. in ~/.gradle/gradle.properties) or
  * the ACTIVITYTRACK_SIGNING variable. Without either, the release is built unsigned.
@@ -64,7 +64,7 @@ android {
 			applicationIdSuffix = ".debug"
 			versionNameSuffix = "-debug"
 		}
-		/* the app in use, from GitHub releases; R8 off until a minified build is device-tested */
+		/* the app in use, from GitLab releases; R8 off until a minified build is device-tested */
 		release {
 			isMinifyEnabled = false
 			isShrinkResources = false

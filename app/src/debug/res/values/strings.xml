@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Debug build (installed with adb for device tests): its own name and data
-  folder, so it coexists with the release from GitHub (owner, 2026-10-18).
+  folder, so it coexists with the release from GitLab (owner, 2026-10-18).
   The local calendar takes the app name too.
 -->
 <resources>

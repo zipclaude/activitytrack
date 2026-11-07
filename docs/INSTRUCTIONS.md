@@ -109,11 +109,11 @@ reference, locality.
 - SQLite database; attachments in a dedicated, externally accessible directory;
   daily backup.
 - Export: CSV now; later plug-ins for management systems via XML or JSON.
-- APK distributed from GitHub Releases for now. Target: Android 16; keep compatibility down
+- APK distributed from GitLab Releases for now. Target: Android 16; keep compatibility down
   to Android 13 if possible.
 - UI languages: Italian, English, German, Spanish.
 - Name **ActivityTrack**, domain `activitytrack.infraconsulting.it` → application ID
-  `it.infraconsulting.activitytrack`. Public repository on GitHub.
+  `it.infraconsulting.activitytrack`. Public repository on GitLab (group infraconsulting; on GitHub until 0.9.7-beta1).
 
 ## 3. Architectural decisions
 

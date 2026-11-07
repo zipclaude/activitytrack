@@ -1,8 +1,8 @@
-Versione 0.9.7-beta1 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
+Versione 0.9.8 · per l'uso di tutti i giorni; il *Manuale* spiega tutto il
 resto.
 
 ## 1. Prima volta
-1. Installa `ActivityTrack-<versione>.apk` dalle *Releases* di GitHub.
+1. Installa `ActivityTrack-<versione>.apk` dalle *Releases* di GitLab.
 2. Scegli la **cartella dati** (es. `ActivityTrack`): allegati, backup ed
    esportazioni vanno lì.
 3. Concedi **notifiche** e **posizione** ("Consenti sempre"); in Impostazioni

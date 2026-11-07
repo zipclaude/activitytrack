@@ -780,7 +780,7 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="update_download">Herunterladen</string>
   <string name="update_none">Keine neuere Version (geprüft %1$s).</string>
   <string name="update_check_now">Jetzt prüfen</string>
-  <string name="set_update_check">Nach neuen Versionen suchen (einmal täglich, auf GitHub)</string>
+  <string name="set_update_check">Nach neuen Versionen suchen (einmal täglich, auf GitLab)</string>
   <string name="set_update_betas">Betaversionen einbeziehen</string>
   <string name="sync_incompatible_title">Synchronisierung angehalten</string>
   <string name="sync_incompatible_app">Der ActivityTrack-Web-Server akzeptiert diese App-Version nicht mehr: Aktualisiere ActivityTrack. Die Daten bleiben hier und werden nach der Aktualisierung synchronisiert.</string>

@@ -23,7 +23,7 @@ object NotificationChannels {
 	const val POLICY = "policy"			/* policy.json applied or refused (issue #48) */
 	const val REMOTE = "remote"			/* management systems: send question, new to-dos, failures */
 	const val SYNC = "sync"				/* ActivityTrack Web: what a sync changed here (issue #119) */
-	const val UPDATES = "updates"			/* a newer release on GitHub (SYNC.md §12.4) */
+	const val UPDATES = "updates"			/* a newer release on GitLab (SYNC.md §12.4) */
 
 	/* channels in the order of the Notifications settings, with their names */
 	val LIST: List<Pair<String, Int>> by lazy {

@@ -781,7 +781,7 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="update_download">Descargar</string>
   <string name="update_none">No hay una versión más reciente (comprobado %1$s).</string>
   <string name="update_check_now">Comprobar ahora</string>
-  <string name="set_update_check">Buscar versiones nuevas (una vez al día, en GitHub)</string>
+  <string name="set_update_check">Buscar versiones nuevas (una vez al día, en GitLab)</string>
   <string name="set_update_betas">Incluir las beta</string>
   <string name="sync_incompatible_title">Sincronización detenida</string>
   <string name="sync_incompatible_app">El servidor ActivityTrack Web ya no acepta esta versión de la app: actualiza ActivityTrack. Los datos se quedan aquí y se sincronizan después de la actualización.</string>

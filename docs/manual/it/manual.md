@@ -1,14 +1,18 @@
-Versione 0.9.7-beta1 (novembre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.8 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
 
-**Novità della 0.9.7-beta1** (una beta: solo test automatici, non ancora provata su un viaggio lungo)
+**Novità della 0.9.8** (la prima versione da GitLab; il ricalcolo dei km e il menu delle impostazioni non ancora provati su un viaggio lungo)
 - I **km dei viaggi** non si gonfiano più sui percorsi lunghi. Le posizioni distanti al più 2 minuti si
   congiungono direttamente; solo dove sono più distanti si usa la distanza su strada (OSRM) o la linea d'aria
   × fattore, e una distanza su strada molto più lunga della linea d'aria viene scartata. Le posizioni che
   implicano più di 250 km/h (un punto isolato) non entrano nel conto. I km dei viaggi di cui il telefono
   conserva ancora le posizioni vengono ricalcolati una volta, quando la rete lo permette.
+- In *Impostazioni* **Altre impostazioni** resta aperto quando si torna da una delle sue sezioni.
+- **ActivityTrack è passato da GitHub a GitLab** (`gitlab.com/infraconsulting`): l'app cerca lì le nuove
+  versioni. Le versioni fino alla 0.9.7-beta1 interrogano ancora GitHub e non vedranno questa: installa
+  `ActivityTrack-0.9.8.apk` dalle *Releases* di GitLab a mano, sopra l'app (i dati restano).
 
 **Novità della 0.9.6** (solo test automatici: non ancora provata sul telefono, tranne la mappa delle sedi sulla posizione corrente)
 - **Assenze pianificate**: in *Da fare* e *Agenda*, «Aggiungi → Assenza» pianifica uno o più giorni, tutto il
@@ -64,7 +68,7 @@ aggiornamenti)
   versione. Se il server non accetta più questa versione, o è il server a
   essere indietro, la sincronizzazione si sospende con una notifica che dice
   cosa aggiornare; i dati restano sul telefono (§11).
-- **Aggiornamenti**: l'app installata da GitHub controlla una volta al giorno
+- **Aggiornamenti**: l'app installata da GitLab controlla una volta al giorno
   se c'è una versione nuova e la segnala; le beta solo a chi le sceglie (§17,
   *Aggiornamenti*).
 
@@ -242,7 +246,7 @@ viaggio arrotondati di tutte le attività, secondo le regole seguenti.
 ## 2. Primo avvio
 
 **Installazione** — l'app da usare si scarica dalle *Releases* del repository
-GitHub (file `ActivityTrack-<versione>.apk`); le versioni successive si
+GitLab (file `ActivityTrack-<versione>.apk`); le versioni successive si
 installano sopra la precedente senza perdere i dati. Sul telefono può esserci
 anche **ActivityTrackDbg**, la versione di prova installata dal PC: è un'app
 separata, con dati e cartella propri (`ActivityTrackDbg`).
@@ -1283,7 +1287,7 @@ Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14)
 "Esegui backup ora" e il ripristino sono in Altro → Importa / esporta.
 
 ### Aggiornamenti
-La versione installata e, per l'app installata da GitHub, il controllo delle
+La versione installata e, per l'app installata da GitLab, il controllo delle
 versioni più recenti: una volta al giorno l'app guarda le release pubblicate
 e, se ce n'è una nuova, la mostra qui con **"Scarica"** e manda una notifica
 (una per versione). **"Controlla ora"** non aspetta il giorno dopo. Con
@@ -1292,7 +1296,7 @@ uno store (Play, F-Droid…) non controlla: la aggiorna lo store.
 
 | Voce | Effetto | Predefinito |
 |---|---|---|
-| Controlla le nuove versioni | Una volta al giorno, su GitHub. Policy: `updateCheck`. | Acceso |
+| Controlla le nuove versioni | Una volta al giorno, su GitLab. Policy: `updateCheck`. | Acceso |
 | Includi le beta | Mostra anche le versioni beta. Policy: `updateBetas`. | Spento |
 
 ### Avanzate

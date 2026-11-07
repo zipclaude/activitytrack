@@ -396,5 +396,5 @@ M0 test vectors were cross-checked with an independent Python implementation.
 | Site coordinates typed by hand | solved in M2 (current position, MapLibre picker) |
 | Inexact reminder alarm in Doze | setWindow when awake, setAndAllowWhileIdle when idle at scheduling; a device entering Doze later may delay a reminder to the next maintenance window; verify on OxygenOS |
 | M1 steps 5–8 | implemented, host-tested; device test pending |
-| CI | GitHub Actions: domain + app unit tests, instrumented tests compiled (not run), `assembleDebug`, APK artifact |
+| CI | GitLab CI (`.gitlab-ci.yml`): domain + app unit tests, instrumented tests compiled (not run), `assembleDebug`, APK artifact |
 | `connectedDebugAndroidTest` exit status | AGP 9.4 test engine fails the task with all tests green; verify via report or `am instrument` |

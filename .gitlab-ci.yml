@@ -1,0 +1,156 @@
+# CI of ActivityTrack on GitLab (free plan: the shared runners' minutes are limited,
+# so pipelines run for merge requests, the default branch and tags). A version tag
+# (v0.2.0) also publishes the signed release: jobs apk, manual and release. A tag
+# with a suffix (v1.1.0-beta1) is a beta (SYNC.md §12.4).
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]/
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+stages: [build, package, release]
+
+default:
+  interruptible: true
+
+variables:
+  DEBIAN_FRONTEND: noninteractive
+  ANDROID_HOME: $CI_PROJECT_DIR/.android-sdk
+  GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle-home
+  # the tags' pipelines need the history (the manual check, the release notes)
+  GIT_DEPTH: "50"
+
+.android:
+  image: eclipse-temurin:21-jdk
+  cache:
+    key:
+      files: [gradle/wrapper/gradle-wrapper.properties, gradle/libs.versions.toml]
+    paths: [.android-sdk, .gradle-home/caches, .gradle-home/wrapper]
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends curl unzip git ca-certificates > /dev/null
+    # compileSdk 37: no ready-made image has it, the SDK is installed (and cached)
+    - |
+      if [ ! -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+        mkdir -p "$ANDROID_HOME/cmdline-tools"
+        curl -fsSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip
+        unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+        mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+      fi
+    - mkdir -p "$ANDROID_HOME/licenses"
+    - printf '\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n' > "$ANDROID_HOME/licenses/android-sdk-license"
+    - $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-37.0" "build-tools;36.0.0" > /dev/null
+
+build:
+  extends: .android
+  stage: build
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]/
+      when: never
+    - when: on_success
+  timeout: 40m
+  script:
+    - ./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+    # instrumented tests need a device; CI only keeps them compiling
+    - ./gradlew :core:data:assembleDebugAndroidTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+    - ./gradlew assembleDebug 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+  artifacts:
+    paths: ["app/build/outputs/apk/debug/*.apk"]
+    reports:
+      junit: ["**/build/test-results/**/TEST-*.xml"]
+    expire_in: 14 days
+  after_script:
+    # compiler and Gradle errors, short, in the job log's end
+    - |
+      if [ "$CI_JOB_STATUS" = failed ]; then
+        { grep -E '^e: |error:|FAILED$' build.log | grep -v '^> Task' || true
+          grep -A 25 '^\* What went wrong' build.log | grep -vE '^\* Try:|^> Run with|^> Get more help|^$' || true; } | head -n 80
+      fi
+
+# the tag's commit was tried by its merge request and the default branch: the
+# signed APK, the manual and the release follow
+apk:
+  extends: .android
+  stage: package
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]/
+  interruptible: false
+  timeout: 40m
+  script:
+    - echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$CI_PROJECT_DIR/release.jks"
+    - |
+      export RELEASE_STORE_FILE="$CI_PROJECT_DIR/release.jks"
+      # a pipeline number is the versionCode: the offset keeps it above the numbers GitHub's runs gave to the earlier releases
+      ./gradlew :app:assembleRelease \
+        -Pactivitytrack.versionName="${CI_COMMIT_TAG#v}" \
+        -Pactivitytrack.versionCode="$((10000 + CI_PIPELINE_IID))"
+    - rm -f release.jks
+    - mkdir dist && cp app/build/outputs/apk/release/app-release.apk "dist/ActivityTrack-${CI_COMMIT_TAG#v}.apk"
+    # signed: the key of the releases, not the debug one
+    - $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs "dist/ActivityTrack-${CI_COMMIT_TAG#v}.apk" | head -3
+  artifacts:
+    paths: ["dist/*.apk"]
+    expire_in: 30 days
+
+manual:
+  stage: package
+  image: debian:trixie
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]/
+  interruptible: false
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends git ca-certificates pandoc graphviz chromium python3 python3-venv fonts-dejavu-core fonts-liberation > /dev/null
+    # before every release: is the manual up to date (owner, 2026-10-19)
+    - scripts/check-manual.sh "$CI_COMMIT_TAG"
+    # a release without manual changes builds the PDFs of the manual's own version
+    - V="${CI_COMMIT_TAG#v}"
+    - if grep -qx "$V" scripts/manual-unchanged; then scripts/build-manual.sh; else scripts/build-manual.sh "$V"; fi
+    - python3 -m venv /tmp/pdf
+    - /tmp/pdf/bin/pip install -q pymupdf
+    - /tmp/pdf/bin/python scripts/check-pdf.py build/manual/*.pdf
+  artifacts:
+    paths: ["build/manual/*.pdf"]
+    expire_in: 30 days
+
+# the APK and the PDFs go to the project's Generic Packages and the release links them
+# (permalinks .../-/releases/<tag>/downloads/<file>)
+release:
+  stage: release
+  image: alpine:3.22
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]/
+  interruptible: false
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - apk add --no-cache curl jq git
+    - V="${CI_COMMIT_TAG#v}"
+    - mkdir artifacts && cp dist/*.apk build/manual/*.pdf artifacts/
+    - |
+      PREV=$(git describe --tags --abbrev=0 "$CI_COMMIT_TAG^" 2>/dev/null || true)
+      {
+        case "$V" in *-*) echo "ActivityTrack $V: a beta, shown only to who subscribed to the betas (Settings → Updates)." ;; *) echo "ActivityTrack $V." ;; esac
+        echo
+        echo "Install \`ActivityTrack-$V.apk\` (it updates the installed app and keeps the data); the manuals are the PDFs."
+        if [ -n "$PREV" ]; then
+          echo
+          echo "## Changes since $PREV"
+          echo
+          git log --no-merges --format='- %s' "$PREV..$CI_COMMIT_TAG" | head -n 60
+        fi
+      } > notes.md
+    - |
+      links='[]'
+      for f in artifacts/*; do
+        n=$(basename "$f")
+        u="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/activitytrack/$V/$n"
+        curl --fail -sS --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$f" "$u"
+        links=$(echo "$links" | jq -c --arg n "$n" --arg u "$u" '. + [{name:$n, url:$u, direct_asset_path:("/"+$n), link_type:"package"}]')
+      done
+      jq -n --arg tag "$CI_COMMIT_TAG" --arg name "ActivityTrack $V" --rawfile desc notes.md --argjson links "$links" \
+        '{tag_name:$tag, name:$name, description:$desc, assets:{links:$links}}' |
+        curl --fail-with-body -sS -X POST --header "JOB-TOKEN: $CI_JOB_TOKEN" --header "Content-Type: application/json" --data @- "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"

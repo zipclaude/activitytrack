@@ -11,7 +11,7 @@
 #
 # Needs pandoc, graphviz (dot) and a Chromium for the PDF (Debian packages;
 # no npm). The diagrams are regenerated into docs/manual/<lang>/diagrams/
-# (committed, so the Markdown also reads on GitHub).
+# (committed, so the Markdown also reads on GitLab).
 
 set -eu
 cd "$(dirname "$0")/.."

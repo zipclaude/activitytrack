@@ -117,7 +117,7 @@ data class AppSettings(
 	val editableTimes: Boolean = true,
 	/* tags typed freely besides the ones of the master data (issue #133); off = only the master data's */
 	val tagsFreeText: Boolean = true,
-	/* newer releases on GitHub, once a day (SYNC.md §12.4); betas too when subscribed */
+	/* newer releases on GitLab, once a day (SYNC.md §12.4); betas too when subscribed */
 	val updateCheck: Boolean = true,
 	val updateBetas: Boolean = false,
 	/* call recognition (issue #28): incoming and outgoing each, off until enabled; pause and proposal options */

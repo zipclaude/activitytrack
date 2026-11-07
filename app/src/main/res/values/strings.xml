@@ -792,7 +792,7 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="update_download">Download</string>
   <string name="update_none">No newer version (checked %1$s).</string>
   <string name="update_check_now">Check now</string>
-  <string name="set_update_check">Check for new versions (once a day, on GitHub)</string>
+  <string name="set_update_check">Check for new versions (once a day, on GitLab)</string>
   <string name="set_update_betas">Include the betas</string>
   <string name="sync_incompatible_title">Sync stopped</string>
   <string name="sync_incompatible_app">The ActivityTrack Web server no longer accepts this version of the app: update ActivityTrack. The data stay here and sync after the update.</string>
