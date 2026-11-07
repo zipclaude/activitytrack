@@ -1,7 +1,13 @@
-Versione 0.9.8 (novembre 2026). Segnalare ogni differenza tra questo manuale
+Versione 0.9.9 (novembre 2026). Segnalare ogni differenza tra questo manuale
 e l'app. La *Guida rapida* riassume in poche pagine l'uso quotidiano; questo
 manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
 (impostazioni, entità, stati, flussi).
+
+**Novità della 0.9.9** (una revisione di sicurezza esterna della 0.9.8)
+- Un record che il server manda con un identificativo strano (non lettere, cifre, `-` e `_`) viene rifiutato e
+  segnalato tra gli errori di sincronizzazione, invece di finire in un nome di file o in un indirizzo.
+- Quando la policy del server cambia l'app, la notifica **"Policy ... applicata"** elenca le prime otto
+  modifiche. Associati solo al server della tua organizzazione (vedi *Sincronizzazione*).
 
 **Novità della 0.9.8** (la prima versione da GitLab; il ricalcolo dei km e il menu delle impostazioni non ancora provati su un viaggio lungo)
 - I **km dei viaggi** non si gonfiano più sui percorsi lunghi. Le posizioni distanti al più 2 minuti si
