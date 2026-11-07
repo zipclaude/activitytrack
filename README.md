@@ -1,6 +1,6 @@
 # ActivityTrack
 
-[![CI](https://github.com/zipclaude/activitytrack/actions/workflows/ci.yml/badge.svg)](https://github.com/zipclaude/activitytrack/actions/workflows/ci.yml)
+[![pipeline status](https://gitlab.com/infraconsulting/activitytrack/badges/main/pipeline.svg)](https://gitlab.com/infraconsulting/activitytrack/-/pipelines)
 
 Time tracking for freelancers: companies, clients, roles, travel, pauses,
 expenses and attachments, with reminders designed for people who forget to

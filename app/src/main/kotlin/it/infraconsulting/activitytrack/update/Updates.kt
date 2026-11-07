@@ -32,7 +32,7 @@ import java.net.URL
 import java.util.concurrent.TimeUnit
 
 /*
- * Newer releases on GitHub (ActivityTrack Web SYNC.md §12.4): once a day,
+ * Newer releases on GitLab (ActivityTrack Web SYNC.md §12.4): once a day,
  * for an app not installed from a store (the store updates it) and not a
  * debug build; a release found shows in Settings → Updates and, once per
  * version, as a notification that opens its page.
@@ -55,13 +55,13 @@ class Updates(private val context: Context) {
 	/* debug builds go on by adb */
 	val applies: Boolean get() = !fromStore && !version.endsWith("-debug")
 
-	/* asks GitHub now; the newer release or null; throws on network errors */
+	/* asks GitLab now; the newer release or null; throws on network errors */
 	suspend fun check(betas: Boolean): Release? = withContext(Dispatchers.IO) {
 		val c = URL(UpdateCheck.RELEASES).openConnection() as HttpURLConnection
 		val body = try {
 			c.connectTimeout = 15_000
 			c.readTimeout = 30_000
-			c.setRequestProperty("Accept", "application/vnd.github+json")
+			c.setRequestProperty("Accept", "application/json")
 			c.setRequestProperty("User-Agent", "ActivityTrack/$version")
 			if (c.responseCode != 200) throw java.io.IOException("HTTP ${c.responseCode}")
 			c.inputStream.use { it.readBytes() }.toString(Charsets.UTF_8)

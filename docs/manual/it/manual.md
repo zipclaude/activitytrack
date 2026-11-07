@@ -64,7 +64,7 @@ aggiornamenti)
   versione. Se il server non accetta più questa versione, o è il server a
   essere indietro, la sincronizzazione si sospende con una notifica che dice
   cosa aggiornare; i dati restano sul telefono (§11).
-- **Aggiornamenti**: l'app installata da GitHub controlla una volta al giorno
+- **Aggiornamenti**: l'app installata da GitLab controlla una volta al giorno
   se c'è una versione nuova e la segnala; le beta solo a chi le sceglie (§17,
   *Aggiornamenti*).
 
@@ -242,7 +242,7 @@ viaggio arrotondati di tutte le attività, secondo le regole seguenti.
 ## 2. Primo avvio
 
 **Installazione** — l'app da usare si scarica dalle *Releases* del repository
-GitHub (file `ActivityTrack-<versione>.apk`); le versioni successive si
+GitLab (file `ActivityTrack-<versione>.apk`); le versioni successive si
 installano sopra la precedente senza perdere i dati. Sul telefono può esserci
 anche **ActivityTrackDbg**, la versione di prova installata dal PC: è un'app
 separata, con dati e cartella propri (`ActivityTrackDbg`).
@@ -1283,7 +1283,7 @@ Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14)
 "Esegui backup ora" e il ripristino sono in Altro → Importa / esporta.
 
 ### Aggiornamenti
-La versione installata e, per l'app installata da GitHub, il controllo delle
+La versione installata e, per l'app installata da GitLab, il controllo delle
 versioni più recenti: una volta al giorno l'app guarda le release pubblicate
 e, se ce n'è una nuova, la mostra qui con **"Scarica"** e manda una notifica
 (una per versione). **"Controlla ora"** non aspetta il giorno dopo. Con
@@ -1292,7 +1292,7 @@ uno store (Play, F-Droid…) non controlla: la aggiorna lo store.
 
 | Voce | Effetto | Predefinito |
 |---|---|---|
-| Controlla le nuove versioni | Una volta al giorno, su GitHub. Policy: `updateCheck`. | Acceso |
+| Controlla le nuove versioni | Una volta al giorno, su GitLab. Policy: `updateCheck`. | Acceso |
 | Includi le beta | Mostra anche le versioni beta. Policy: `updateBetas`. | Spento |
 
 ### Avanzate

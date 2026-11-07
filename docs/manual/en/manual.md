@@ -62,7 +62,7 @@ reference (settings, entities, states, flows).
   version. When the server no longer accepts this version, or the server is
   the one behind, the sync stops with a notification saying what to update;
   the data stay on the phone (§11).
-- **Updates**: the app installed from GitHub checks once a day for a new
+- **Updates**: the app installed from GitLab checks once a day for a new
   version and tells it; betas only to who chooses them (§17, *Updates*).
 
 **New in 0.9.1**
@@ -237,7 +237,7 @@ rounded work and travel of all activities, by the rules below.
 
 ## 2. First start
 
-**Installation** — the app in use comes from the repository's GitHub
+**Installation** — the app in use comes from the repository's GitLab
 *Releases* (file `ActivityTrack-<version>.apk`); new versions install over the
 old one and keep the data. The phone may also hold **ActivityTrackDbg**, the
 test build installed from the PC: a separate app with its own data and folder
@@ -1246,7 +1246,7 @@ Data folder, daily backups kept (1–365, default 14). "Back up now" and the
 restore are in More → Import / export.
 
 ### Updates
-The installed version and, for the app installed from GitHub, the check of
+The installed version and, for the app installed from GitLab, the check of
 newer versions: once a day the app looks at the published releases and,
 when there is a new one, shows it here with **"Download"** and sends a
 notification (one per version). **"Check now"** does not wait for the next
@@ -1256,7 +1256,7 @@ it.
 
 | Item | Effect | Default |
 |---|---|---|
-| Check for new versions | Once a day, on GitHub. Policy: `updateCheck`. | On |
+| Check for new versions | Once a day, on GitLab. Policy: `updateCheck`. | On |
 | Include the betas | Shows the beta versions too. Policy: `updateBetas`. | Off |
 
 ### Advanced

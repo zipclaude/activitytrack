@@ -104,7 +104,7 @@ enum class SettingsSection(val label: Int, val icon: Int, val form: Boolean = tr
 	SYNC(R.string.sec_sync, R.drawable.ic_menu_sync, form = false, essential = true),
 	ONLINE(R.string.sec_online, R.drawable.ic_menu_public),
 	STORAGE(R.string.sec_storage, R.drawable.ic_menu_folder),
-	/* newer releases on GitHub (SYNC.md §12.4) */
+	/* newer releases on GitLab (SYNC.md §12.4) */
 	UPDATES(R.string.sec_updates, R.drawable.ic_restore),
 	ADVANCED(R.string.sec_advanced, R.drawable.ic_menu_tune),
 }

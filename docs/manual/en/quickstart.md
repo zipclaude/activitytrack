@@ -1,7 +1,7 @@
 Version 0.9.7-beta1 · for everyday use; the *User manual* explains everything else.
 
 ## 1. First time
-1. Install `ActivityTrack-<version>.apk` from the GitHub *Releases*.
+1. Install `ActivityTrack-<version>.apk` from the GitLab *Releases*.
 2. Pick the **data folder** (e.g. `ActivityTrack`): attachments, backups and
    exports go there.
 3. Allow **notifications** and **location** ("Allow all the time"); in
