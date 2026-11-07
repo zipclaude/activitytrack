@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.policy
 
+import it.infraconsulting.activitytrack.domain.update.UpdateFingerprint
 import java.security.cert.CertificateFactory
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
@@ -99,5 +100,32 @@ class PolicyGateTest {
 		val r = assertIs<PolicyGate.Outcome.Refuse>(PolicyGate.decide(bad, null, fresh, { anchors }))
 		assertEquals("schema", r.errors.single().path)
 		assertIs<PolicyGate.Outcome.Unchanged>(PolicyGate.decide(bad, null, PolicyGate.State(r.fingerprint, null), { anchors }))
+	}
+
+	/* a policy the way the server signs it: its own self-signed certificate (fixtures of the update tests) */
+	private fun serverSigned(policy: ByteArray): ByteArray {
+		fun upd(name: String) = javaClass.getResourceAsStream("/update/$name")!!.readBytes()
+		val key = java.security.KeyFactory.getInstance("EC").generatePrivate(java.security.spec.PKCS8EncodedKeySpec(upd("server.key")))
+		val signature = java.security.Signature.getInstance("SHA256withECDSA").run { initSign(key); update(policy); sign() }
+		val pem = "-----BEGIN CERTIFICATE-----\n" + java.util.Base64.getMimeEncoder(64, "\n".toByteArray()).encodeToString(upd("server.crt")) + "\n-----END CERTIFICATE-----\n"
+		return ("""{"format": "activitytrack-policy-signature", "algorithm": "SHA256withECDSA", "chain": [${kotlinx.serialization.json.JsonPrimitive(pem)}], "signature": "${java.util.Base64.getEncoder().encodeToString(signature)}"}""").toByteArray()
+	}
+
+	@Test
+	fun selfSignedServerSignsWhenItsFingerprintIsPinned() {
+		val p = res("policy.json")
+		val sig = serverSigned(p)
+		val pin = UpdateFingerprint.of(javaClass.getResourceAsStream("/update/server.crt")!!.readBytes())
+		/* no CA vouches for it: refused, unless the pairing pinned exactly this certificate */
+		assertFailsWith<PolicySignature.Invalid> { PolicySignature.verify(p, sig, anchors) }
+		assertEquals("TEST ActivityTrack server", PolicySignature.verify(p, sig, anchors, pinned = setOf(pin)))
+		assertEquals("TEST ActivityTrack server", PolicySignature.verify(p, sig, emptySet(), pinned = setOf(pin)))
+		assertFailsWith<PolicySignature.Invalid> { PolicySignature.verify(p, sig, anchors, pinned = setOf("00".repeat(32))) }
+		/* a pin does not excuse a changed file */
+		assertFailsWith<PolicySignature.Invalid> { PolicySignature.verify(p + ' '.code.toByte(), sig, anchors, pinned = setOf(pin)) }
+		/* through the gate: applied, and its CN pinned for the policies to come */
+		val apply = assertIs<PolicyGate.Outcome.Apply>(PolicyGate.decide(p, sig, fresh, { anchors }, pinned = setOf(pin)))
+		assertEquals("TEST ActivityTrack server", apply.signerCn)
+		assertIs<PolicyGate.Outcome.Refuse>(PolicyGate.decide(p, sig, fresh, { anchors }))
 	}
 }

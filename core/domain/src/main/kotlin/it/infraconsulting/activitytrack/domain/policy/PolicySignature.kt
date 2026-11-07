@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.policy
 
+import it.infraconsulting.activitytrack.domain.update.UpdateFingerprint
 import java.io.ByteArrayInputStream
 import java.security.GeneralSecurityException
 import java.security.Signature
@@ -36,8 +37,12 @@ object PolicySignature {
 
 	class Invalid(message: String) : Exception(message)
 
-	/* Checks [sig] over [policy]; returns the signer's CN. Throws [Invalid]. */
-	fun verify(policy: ByteArray, sig: ByteArray, anchors: Set<TrustAnchor>, at: Date = Date()): String {
+	/*
+	 * Checks [sig] over [policy]; returns the signer's CN. Throws [Invalid]. A signer whose certificate has
+	 * its SHA-256 fingerprint (hex) in [pinned] needs no chain to a CA: the paired server's own certificate,
+	 * known from the pairing link, may be self-signed.
+	 */
+	fun verify(policy: ByteArray, sig: ByteArray, anchors: Set<TrustAnchor>, at: Date = Date(), pinned: Set<String> = emptySet()): String {
 		val o = try {
 			Json.parseToJsonElement(sig.toString(Charsets.UTF_8)) as? JsonObject
 		} catch (e: SerializationException) {
@@ -53,8 +58,6 @@ object PolicySignature {
 		val pems = (o["chain"] as? JsonArray)?.map { (it as? JsonPrimitive)?.content ?: "" }.orEmpty()
 		if (pems.isEmpty())
 			throw Invalid("policy.json.sig: no certificate chain")
-		if (anchors.isEmpty())
-			throw Invalid("no trusted certification authority on this phone")
 
 		val cf = CertificateFactory.getInstance("X.509")
 		val chain = try {
@@ -63,17 +66,8 @@ object PolicySignature {
 			throw Invalid("policy.json.sig: unreadable certificate (${e.message})")
 		}
 		val signer = chain.first()
-		/* a root shipped in the chain is dropped: PKIX wants the path up to, not including, the anchor */
-		val path = listOf(signer) + chain.drop(1).filter { it.subjectX500Principal != it.issuerX500Principal }
-		try {
-			val params = PKIXParameters(anchors).apply {
-				isRevocationEnabled = false
-				date = at
-			}
-			CertPathValidator.getInstance("PKIX").validate(cf.generateCertPath(path), params)
-		} catch (e: GeneralSecurityException) {
-			throw Invalid("the signer's certificate is not trusted on this phone (${e.message})")
-		}
+		if (UpdateFingerprint.of(signer) !in pinned)
+			checkChain(chain, anchors, at)
 		/* digitalSignature, when the certificate restricts its key usage */
 		if (signer.keyUsage?.getOrNull(0) == false)
 			throw Invalid("the signer's certificate is not for signatures")
@@ -89,6 +83,24 @@ object PolicySignature {
 		if (!ok)
 			throw Invalid("the signature does not match policy.json (changed after signing?)")
 		return commonName(signer.subjectX500Principal) ?: throw Invalid("the signer's certificate has no CN")
+	}
+
+	/* The chain leads to one of [anchors] (no CRL/OCSP); throws [Invalid]. */
+	fun checkChain(chain: List<X509Certificate>, anchors: Set<TrustAnchor>, at: Date = Date()) {
+		if (anchors.isEmpty())
+			throw Invalid("no trusted certification authority on this phone")
+		val cf = CertificateFactory.getInstance("X.509")
+		/* a root shipped in the chain is dropped: PKIX wants the path up to, not including, the anchor */
+		val path = listOf(chain.first()) + chain.drop(1).filter { it.subjectX500Principal != it.issuerX500Principal }
+		try {
+			val params = PKIXParameters(anchors).apply {
+				isRevocationEnabled = false
+				date = at
+			}
+			CertPathValidator.getInstance("PKIX").validate(cf.generateCertPath(path), params)
+		} catch (e: GeneralSecurityException) {
+			throw Invalid("the signer's certificate is not trusted on this phone (${e.message})")
+		}
 	}
 
 	/* The CN of an RFC 2253 name, escapes undone ("CN=Acme\, Inc.,O=Acme" -> "Acme, Inc."). */
