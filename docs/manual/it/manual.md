@@ -1030,10 +1030,15 @@ suoi collaboratori, o per usarla in un altro settore ("Cantiere" al posto di
   (compare come rifiutato nella cronologia delle policy); **"Più tardi"**
   la richiede la volta successiva. Una policy firmata, e quella del
   server, non chiedono conferma.
-- **Firma** (facoltativa): `policy.json.sig`, creata con
-  `scripts/sign-policy.sh` e un certificato di una CA di cui il telefono si
-  fida. La prima policy firmata fissa il nome (CN) del firmatario: da lì in
-  poi l'app accetta solo policy firmate con lo stesso nome.
+- **Firma** (facoltativa), in due modi. **Dal server di gestione** (dalla 0.9.9): il server genera una chiave e
+  un certificato suoi e firma con quelli le policy dei telefoni (e i manifesti degli aggiornamenti). Nessuna
+  CA garantisce per quel certificato: il telefono si fida tramite l'**associazione**, il cui collegamento ne
+  contiene l'impronta (SHA-256). Un telefono **associato prima della 0.9.9** non la conosce: **tiene la policy
+  in vigore** e una notifica dice di **associarlo di nuovo** (Impostazioni → Sincronizzazione); la policy nuova
+  viene applicata dopo la nuova associazione. **A mano**, per chi non ha un server: `policy.json.sig`, creata
+  con `scripts/sign-policy.sh` e un certificato di una CA di cui il telefono si fida. In entrambi i casi la
+  prima policy firmata fissa il nome (CN) del firmatario: da lì in poi l'app accetta solo policy firmate con lo
+  stesso nome.
 - Togliere il file non toglie la policy: serve una policy vuota (firmata, se
   la precedente lo era).
 - Cosa può fare: spegnere funzioni (pianificazione, viaggi, spese,

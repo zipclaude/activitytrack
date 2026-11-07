@@ -655,6 +655,7 @@ Tap the green play button below to start one.</string>
   <!-- issue #48 policy -->
   <string name="ch_policy">Policy</string>
   <string name="policy_refused_title">policy.json refused</string>
+  <string name="policy_repair_text">The server\'s policy is signed with the server\'s own certificate, which this phone does not know: it was paired before 0.9.9. The policy in force stays. Pair the phone again (Settings → Sync) to apply the new one.</string>
   <string name="policy_applied_title">Policy %1$s applied</string>
   <string name="policy_applied_signed">Signed by %1$s. A backup was made first; the previous policy is in policy_old.json.</string>
   <string name="policy_applied_unsigned">Not signed. A backup was made first; the previous policy is in policy_old.json.</string>

@@ -16,6 +16,7 @@ import it.infraconsulting.activitytrack.domain.policy.PolicyChanges
 import it.infraconsulting.activitytrack.domain.policy.PolicyError
 import it.infraconsulting.activitytrack.domain.policy.PolicyGate
 import it.infraconsulting.activitytrack.domain.policy.PolicyParser
+import it.infraconsulting.activitytrack.domain.policy.PolicySignature
 import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.notify.EntryLinks
@@ -49,6 +50,7 @@ object PolicyLoader {
 	private const val NOTIFICATION_ID = 48_000
 	private const val TRUST_PREFS = "policy_trust"
 	private const val ASKED = "asked"
+	private const val REPAIR = "repair"
 
 	private val lock = Mutex()
 
@@ -154,6 +156,20 @@ object PolicyLoader {
 			else PolicyGate.Outcome.Refuse(listOf(PolicyError("", null, app.getString(R.string.policy_too_large))), fp)
 		} else {
 			PolicyGate.decide(policy, sig, state, ::trustAnchors, askUnsigned = source == FILE, confirmed = confirmed, pinned = pinned)
+		}
+		/*
+		 * Signed by the server's own certificate, which this phone cannot trust because it was paired before 0.9.9 (no
+		 * `k` in its pairing): the policy in force stays, nothing is recorded (so that it is looked at again once the
+		 * phone is paired anew, and not before) and the user is told, once per file.
+		 */
+		if (outcome is PolicyGate.Outcome.Refuse && source != FILE && pinned.isEmpty() && sig != null && PolicySignature.signerIsSelfSigned(sig)) {
+			val prefs = app.getSharedPreferences(TRUST_PREFS, Context.MODE_PRIVATE)
+			if (prefs.getString(REPAIR, null) != outcome.fingerprint) {
+				prefs.edit { putString(REPAIR, outcome.fingerprint) }
+				notify(app, app.getString(R.string.policy_refused_title), app.getString(R.string.policy_repair_text))
+			}
+			Log.w(TAG, "$source signed by the server's own certificate: pair again to trust it")
+			return false
 		}
 		when (val o = outcome) {
 			/* handled before: in force or refused, as it was */

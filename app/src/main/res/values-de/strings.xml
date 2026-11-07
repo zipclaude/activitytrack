@@ -643,6 +643,7 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <!-- issue #48 policy -->
   <string name="ch_policy">Richtlinie</string>
   <string name="policy_refused_title">policy.json abgelehnt</string>
+  <string name="policy_repair_text">Die Richtlinie des Servers ist mit dem eigenen Zertifikat des Servers signiert, das dieses Telefon nicht kennt: Es wurde vor 0.9.9 gekoppelt. Die geltende Richtlinie bleibt. Koppele das Telefon erneut (Einstellungen → Synchronisierung), um die neue anzuwenden.</string>
   <string name="policy_applied_title">Richtlinie %1$s angewendet</string>
   <string name="policy_applied_signed">Signiert von %1$s. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>
   <string name="policy_applied_unsigned">Nicht signiert. Vorher wurde eine Sicherung erstellt; die vorige Richtlinie liegt in policy_old.json.</string>

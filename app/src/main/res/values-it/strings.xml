@@ -644,6 +644,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <!-- issue #48 policy -->
   <string name="ch_policy">Policy</string>
   <string name="policy_refused_title">policy.json rifiutata</string>
+  <string name="policy_repair_text">La policy del server è firmata con il certificato del server stesso, che questo telefono non conosce: è stato associato prima della 0.9.9. La policy in vigore resta. Associa di nuovo il telefono (Impostazioni → Sincronizzazione) per applicare quella nuova.</string>
   <string name="policy_applied_title">Policy %1$s applicata</string>
   <string name="policy_applied_signed">Firmata da %1$s. Prima è stato fatto un backup; la policy precedente è in policy_old.json.</string>
   <string name="policy_applied_unsigned">Non firmata. Prima è stato fatto un backup; la policy precedente è in policy_old.json.</string>

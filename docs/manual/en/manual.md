@@ -999,10 +999,14 @@ another trade ("Site" instead of "Client").
   until it changes (it shows as refused in the policy history);
   **"Later"** asks again next time. A signed policy, and the one from the
   server, need no confirmation.
-- **Signature** (optional): `policy.json.sig`, made by
-  `scripts/sign-policy.sh` with a certificate of a CA the phone trusts. The
-  first signed policy fixes the signer's name (CN): from then on only
-  policies signed with the same name are accepted.
+- **Signature** (optional), in two ways. **By the management server** (since 0.9.9): the server generates its own
+  key and certificate and signs the phones' policies with them (and the update manifests). No CA vouches for that
+  certificate: the phone trusts it through the **pairing**, whose link carries its fingerprint (SHA-256). A
+  phone **paired before 0.9.9** does not have it: it **keeps the policy in force** and a notification says to
+  **pair it again** (Settings → Sync); the new policy is applied after the new pairing. **By hand**, for who
+  has no server: `policy.json.sig`, made by `scripts/sign-policy.sh` with a certificate of a CA the phone
+  trusts. Either way the first signed policy fixes the signer's name (CN): from then on only policies signed
+  with the same name are accepted.
 - Removing the file does not remove the policy: an empty policy does
   (signed, if the previous one was).
 - What it can do: switch features off (planning, travel, expenses,

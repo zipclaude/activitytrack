@@ -85,6 +85,17 @@ object PolicySignature {
 		return commonName(signer.subjectX500Principal) ?: throw Invalid("the signer's certificate has no CN")
 	}
 
+	/*
+	 * True when the signer in [sig] is a self-signed certificate (what the management server signs with, issue #1):
+	 * no CA can vouch for it, only a pin from the pairing. False for anything unreadable or CA-issued.
+	 */
+	fun signerIsSelfSigned(sig: ByteArray): Boolean = runCatching {
+		val pem = ((Json.parseToJsonElement(sig.toString(Charsets.UTF_8)) as JsonObject)["chain"] as JsonArray)
+			.map { (it as JsonPrimitive).content }.first()
+		val cert = CertificateFactory.getInstance("X.509").generateCertificate(ByteArrayInputStream(pem.toByteArray(Charsets.US_ASCII))) as X509Certificate
+		cert.subjectX500Principal == cert.issuerX500Principal
+	}.getOrDefault(false)
+
 	/* The chain leads to one of [anchors] (no CRL/OCSP); throws [Invalid]. */
 	fun checkChain(chain: List<X509Certificate>, anchors: Set<TrustAnchor>, at: Date = Date()) {
 		if (anchors.isEmpty())
