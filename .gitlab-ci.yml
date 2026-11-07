@@ -187,10 +187,13 @@ manifest:
     - |
       status=$(curl -sS -o previous.json -w '%{http_code}' "$API/raw?ref=$CI_DEFAULT_BRANCH")
       case "$status" in 200) ;; 404) rm -f previous.json ;; *) echo "cannot read the manifest on $CI_DEFAULT_BRANCH: HTTP $status"; exit 1 ;; esac
+    # the manifest on main is the base of the new one: it must be the release key's own, not any file
+    - '[ ! -f previous.json ] || P12_PASSWORD="$RELEASE_STORE_PASSWORD" python3 -I scripts/update-manifest.py verify previous.json --p12 release.p12'
     - python3 -I scripts/update-manifest.py assemble --tag "$CI_COMMIT_TAG" --previous previous.json --apk "dist/ActivityTrack-${CI_COMMIT_TAG#v}.apk" --out payload.json
     - P12_PASSWORD="$RELEASE_STORE_PASSWORD" python3 -I scripts/update-manifest.py sign --payload payload.json --p12 release.p12 --out update-manifest.json
+    # signed by the release key, not merely by whatever key the file names (a keystore or alias mix-up stops here)
+    - P12_PASSWORD="$RELEASE_STORE_PASSWORD" python3 -I scripts/update-manifest.py verify update-manifest.json --p12 release.p12
     - rm -f release.p12
-    - python3 -I scripts/update-manifest.py verify update-manifest.json
     - |
       method=POST
       [ "$(curl -sS -o /dev/null -w '%{http_code}' --header "PRIVATE-TOKEN: $MANIFEST_PUSH_TOKEN" "$API?ref=$CI_DEFAULT_BRANCH")" = 200 ] && method=PUT

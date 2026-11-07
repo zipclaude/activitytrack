@@ -6,13 +6,15 @@ a tag in the six repositories, sign it with the release key, check it.
 
     update-manifest.py assemble --tag v0.9.9 [--previous update-manifest.json] [--apk file] --out payload.json
     update-manifest.py sign --payload payload.json --p12 release.p12 --out update-manifest.json
-    update-manifest.py verify update-manifest.json [--fingerprint <sha256 of the signer's certificate>]
+    update-manifest.py verify update-manifest.json [--fingerprint <sha256 of the signer's certificate> | --p12 release.p12]
 
 `assemble` keeps the releases of the previous manifest (all channels), replaces the entry of the same
 version and channel, and takes the packages of the tag from each repository's release: the asset names
 decide the component (see COMPONENTS in docs/UPDATES.md). The SHA-256 comes from the release's SHA256SUMS
 where there is one, else from the downloaded file. The password of the PKCS#12 file is read from the
-environment variable named by --password-env (default P12_PASSWORD). The signature is a JWS
+environment variable named by --password-env (default P12_PASSWORD). `verify` with --p12 (or
+--fingerprint) accepts only a signature of that key: CI checks the manifest on main it starts from, and
+the one it just signed, against the leaf certificate of the release key. The signature is a JWS
 (RFC 7515, JSON serialization): RS256 for an RSA key, ES256 for an EC one.
 """
 
@@ -209,12 +211,20 @@ def verify(args):
     from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.asymmetric import ec, padding, utils
+    wanted = args.fingerprint
+    if args.p12:
+        password = os.environ.get(args.password_env)
+        if password is None:
+            sys.exit(f"the password is read from ${args.password_env}")
+        from cryptography.hazmat.primitives import serialization
+        _key, certs = load_p12(args.p12, password)
+        wanted = hashlib.sha256(certs[0].public_bytes(serialization.Encoding.DER)).hexdigest()
     doc = json.loads(open(args.manifest).read())
     for s in doc["signatures"]:
         header = json.loads(b64u_decode(s["protected"]))
         der = base64.b64decode(header["x5c"][0])
         fp = hashlib.sha256(der).hexdigest()
-        if args.fingerprint and fp != re.sub(r"[^0-9a-f]", "", args.fingerprint.lower()):
+        if wanted and fp != re.sub(r"[^0-9a-f]", "", wanted.lower()):
             continue
         key = x509.load_der_x509_certificate(der).public_key()
         data = f"{s['protected']}.{doc['payload']}".encode("ascii")
@@ -235,7 +245,7 @@ def verify(args):
         print(f"ok: {header['alg']} signed by {fp}; issued {payload['issued']}; " +
               ", ".join(f"{r['version']}[{r.get('channel')}]" for r in payload["releases"]))
         return
-    sys.exit("no valid signature" + (" of that signer" if args.fingerprint else ""))
+    sys.exit("no valid signature" + (" of that signer" if wanted else ""))
 
 
 def main():
@@ -256,6 +266,8 @@ def main():
     v = sub.add_parser("verify")
     v.add_argument("manifest")
     v.add_argument("--fingerprint")
+    v.add_argument("--p12", help="accept only a signature of this PKCS#12 file's leaf certificate")
+    v.add_argument("--password-env", default="P12_PASSWORD")
     v.set_defaults(run=verify)
     args = p.parse_args()
     args.run(args)
