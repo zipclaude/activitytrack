@@ -8,6 +8,12 @@ reference (settings, entities, states, flows).
   reported in the sync errors instead of being used in a file name or an address.
 - When the server's policy changes the app, the notification **"Policy ... applied"** lists the first
   eight changes. Pair only with your own organisation's server (see *Sync*).
+- **Updates** now go through a **signed manifest**: in *Updates* choose the source (the project on GitLab,
+  the paired server or an address of your own) and the channels (beta, test, development). Without a signed
+  policy the manifest must carry the app's signature or the paired server's; with a signed policy, the
+  policy's own signature. The server can announce a new version at the first exchange. The downloaded file
+  is checked against its SHA-256 before the installation opens. To trust the server's signature the
+  0.9.9 pairing link is needed: a phone already paired pairs again once.
 
 **New in 0.9.8** (the first release from GitLab; the km recount and the settings menu not yet tried on a long trip)
 - **Travel km** are no longer inflated on long trips. Positions at most 2 minutes apart are joined
@@ -1261,18 +1267,32 @@ Data folder, daily backups kept (1–365, default 14). "Back up now" and the
 restore are in More → Import / export.
 
 ### Updates
-The installed version and, for the app installed from GitLab, the check of
-newer versions: once a day the app looks at the published releases and,
-when there is a new one, shows it here with **"Download"** and sends a
-notification (one per version). **"Check now"** does not wait for the next
-day. With **"Include the betas"** it shows the test versions too. An app
-installed from a store (Play, F-Droid…) does not check: the store updates
-it.
+The installed version and the check of newer versions: once a day the app
+downloads the **update manifest**, a signed file that lists the versions by
+channel with the address and SHA-256 of the packages. When there is a new
+version it shows it here with **"Download"** and sends a notification (one
+per version); the downloaded file is checked against its SHA-256 and handed
+to Android's installer (the first time Android asks to let ActivityTrack
+install apps). **"Check now"** does not wait for the next day.
+
+The manifest's **source** is the project (GitLab, the default), the paired
+server or an https address of your own. Who may sign it: without a signed
+policy, the app itself or the paired server (whose certificate is in the
+pairing link); with a signed policy, only the policy's own signature. The
+paired server can also announce a new version at the first exchange, whatever
+the source chosen, and offer it for download itself. A manifest that is
+unsigned, signed by someone else or older than the last one seen is refused,
+and the reason shows here.
+
+An app installed from a store (Play, F-Droid…) is updated by the store: the
+check (**"Check now"**) stays optional but offers no download.
 
 | Item | Effect | Default |
 |---|---|---|
-| Check for new versions | Once a day, on GitLab. Policy: `updateCheck`. | On |
-| Include the betas | Shows the beta versions too. Policy: `updateBetas`. | Off |
+| Check for new versions | Once a day. Policy: `updateCheck`. | On |
+| Source | The project (GitLab), the paired server, a custom address. Policy: `updateSource`. | The project |
+| Manifest address | Only with the custom address, https. Policy: `updateUrl`. | Empty |
+| Include the beta, test, development versions | The channels followed besides the stable one. Policy: `updateBetas`, `updateChannels`. | Off |
 
 ### Advanced
 

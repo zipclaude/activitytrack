@@ -8,6 +8,12 @@ manuale descrive tutto: la **Parte I** l'uso, la **Parte II** il riferimento
   segnalato tra gli errori di sincronizzazione, invece di finire in un nome di file o in un indirizzo.
 - Quando la policy del server cambia l'app, la notifica **"Policy ... applicata"** elenca le prime otto
   modifiche. Associati solo al server della tua organizzazione (vedi *Sincronizzazione*).
+- Gli **aggiornamenti** passano da un **manifesto firmato**: in *Aggiornamenti* scegli la fonte (il progetto su
+  GitLab, il server associato o un indirizzo tuo) e i canali (beta, test, sviluppo). Senza policy firmata il
+  manifesto deve portare la firma dell'app o quella del server associato; con una policy firmata, la stessa
+  firma della policy. Il server può segnalare la versione nuova al primo scambio. Il file scaricato viene
+  controllato con il suo SHA-256 prima di aprire l'installazione. Per fidarsi della firma del server serve
+  il collegamento di associazione della 0.9.9: chi era già associato si riassocia una volta.
 
 **Novità della 0.9.8** (la prima versione da GitLab; il ricalcolo dei km e il menu delle impostazioni non ancora provati su un viaggio lungo)
 - I **km dei viaggi** non si gonfiano più sui percorsi lunghi. Le posizioni distanti al più 2 minuti si
@@ -1299,16 +1305,32 @@ Cartella dati, numero di backup giornalieri conservati (1–365, predefinito 14)
 
 ### Aggiornamenti
 La versione installata e, per l'app installata da GitLab, il controllo delle
-versioni più recenti: una volta al giorno l'app guarda le release pubblicate
-e, se ce n'è una nuova, la mostra qui con **"Scarica"** e manda una notifica
-(una per versione). **"Controlla ora"** non aspetta il giorno dopo. Con
-**"Includi le beta"** mostra anche le versioni di prova. Un'app installata da
-uno store (Play, F-Droid…) non controlla: la aggiorna lo store.
+versioni più recenti: una volta al giorno l'app scarica il **manifesto degli
+aggiornamenti**, un file firmato che elenca le versioni per canale con
+l'indirizzo e lo SHA-256 dei pacchetti. Se c'è una versione nuova la mostra
+qui con **"Scarica"** e manda una notifica (una per versione); il file
+scaricato è controllato con lo SHA-256 e passato all'installazione di Android
+(la prima volta Android chiede di consentire ad ActivityTrack di installare
+app). **"Controlla ora"** non aspetta il giorno dopo.
+
+La **fonte** del manifesto è il progetto (GitLab, predefinita), il server
+associato o un indirizzo https tuo. Chi può firmarlo: senza policy firmata,
+l'app stessa o il server associato (il cui certificato è nel collegamento di
+associazione); con una policy firmata, solo la stessa firma della policy. Il
+server associato può anche segnalare una versione nuova al primo scambio,
+qualunque sia la fonte scelta, e offrirla da scaricare da sé. Un manifesto
+non firmato, firmato da altri o più vecchio dell'ultimo visto è rifiutato e il
+motivo compare qui.
+
+Un'app installata da uno store (Play, F-Droid…) la aggiorna lo store:
+il controllo (**"Controlla ora"**) resta facoltativo ma non propone il download.
 
 | Voce | Effetto | Predefinito |
 |---|---|---|
-| Controlla le nuove versioni | Una volta al giorno, su GitLab. Policy: `updateCheck`. | Acceso |
-| Includi le beta | Mostra anche le versioni beta. Policy: `updateBetas`. | Spento |
+| Controlla le nuove versioni | Una volta al giorno. Policy: `updateCheck`. | Acceso |
+| Fonte | Il progetto (GitLab), il server associato, un indirizzo personalizzato. Policy: `updateSource`. | Il progetto |
+| Indirizzo del manifesto | Solo con l'indirizzo personalizzato, https. Policy: `updateUrl`. | Vuoto |
+| Includi le versioni beta, di test, di sviluppo | I canali seguiti oltre a quello stabile. Policy: `updateBetas`, `updateChannels`. | Spenti |
 
 ### Avanzate
 

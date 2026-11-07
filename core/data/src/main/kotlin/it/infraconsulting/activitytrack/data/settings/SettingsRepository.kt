@@ -2,6 +2,8 @@
 package it.infraconsulting.activitytrack.data.settings
 
 import it.infraconsulting.activitytrack.domain.policy.Policy
+import it.infraconsulting.activitytrack.domain.update.UpdateCheck
+import it.infraconsulting.activitytrack.domain.update.UpdateSource
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,7 +119,11 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val editableTimes = booleanPreferencesKey("editable_times")
 		val tagsFreeText = booleanPreferencesKey("tags_free_text")
 		val updateCheck = booleanPreferencesKey("update_check")
+		/* before 0.9.9 only a switch for the betas: read as the beta channel */
 		val updateBetas = booleanPreferencesKey("update_betas")
+		val updateSource = stringPreferencesKey("update_source")
+		val updateUrl = stringPreferencesKey("update_url")
+		val updateChannels = stringPreferencesKey("update_channels")
 
 		fun enabled(name: String) = booleanPreferencesKey("${name}_enabled")
 		fun endpoint(name: String) = stringPreferencesKey("${name}_endpoint")
@@ -179,7 +185,10 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			editableTimes = p[K.editableTimes] ?: d.editableTimes,
 			tagsFreeText = p[K.tagsFreeText] ?: d.tagsFreeText,
 			updateCheck = p[K.updateCheck] ?: d.updateCheck,
-			updateBetas = p[K.updateBetas] ?: d.updateBetas,
+			updateSource = p[K.updateSource]?.let { n -> runCatching { UpdateSource.valueOf(n) }.getOrNull() } ?: d.updateSource,
+			updateUrl = p[K.updateUrl] ?: d.updateUrl,
+			updateChannels = p[K.updateChannels]?.let(UpdateCheck::channelsOf)
+				?: if (p[K.updateBetas] == true) setOf("prod", "beta") else d.updateChannels,
 			callsIncoming = p[K.callsIncoming] ?: d.callsIncoming,
 			callsOutgoing = p[K.callsOutgoing] ?: d.callsOutgoing,
 			callAutoPause = p[K.callAutoPause] ?: d.callAutoPause,
@@ -248,7 +257,9 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		p[K.editableTimes] = s.editableTimes
 		p[K.tagsFreeText] = s.tagsFreeText
 		p[K.updateCheck] = s.updateCheck
-		p[K.updateBetas] = s.updateBetas
+		p[K.updateSource] = s.updateSource.name
+		p[K.updateUrl] = s.updateUrl
+		p[K.updateChannels] = s.updateChannels.joinToString(",")
 		p[K.callsIncoming] = s.callsIncoming
 		p[K.callsOutgoing] = s.callsOutgoing
 		p[K.callAutoPause] = s.callAutoPause

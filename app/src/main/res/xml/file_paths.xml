@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Only the capture cache is shared, with the camera app. -->
+<!-- The capture cache is shared with the camera app, the downloaded update with the package installer. -->
 <paths>
   <cache-path name="captures" path="captures/" />
+  <cache-path name="updates" path="updates/" />
 </paths>

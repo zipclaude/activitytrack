@@ -175,7 +175,10 @@ are written back at every read, so they cannot drift.
 | `editableTimes` | true/false | |
 | `tagsFreeText` | true/false | false: only the tags of the master data (issue #133) |
 | `updateCheck` | true/false | daily check of newer releases on GitLab, apps not installed from a store (0.9.3) |
-| `updateBetas` | true/false | the check shows betas (pre-releases) too (0.9.3) |
+| `updateBetas` | true/false | the check follows the beta channel too; the same as `beta` in `updateChannels` (0.9.3) |
+| `updateSource` | `upstream`, `server`, `custom` | where the signed update manifest comes from: the project's (GitLab), the paired server's, or `updateUrl` (0.9.9, issue #1) |
+| `updateUrl` | https URL | the manifest of `custom` (0.9.9) |
+| `updateChannels` | comma-separated | the channels followed, among `prod` (always), `beta`, `test`, `dev`; e.g. `"prod,test"` (0.9.9) |
 | `confirmIntervalMin` | minutes | 10–240 |
 | `maxConfirmations` | number | 0–100 (0 = unlimited) |
 | `pauseIntervalMin` | minutes | 10–120 |

@@ -16,6 +16,8 @@
   <uses-permission android:name="android.permission.READ_CALL_LOG" />
   <!-- Optional online services (A10): Nominatim, OSRM, map tiles. -->
   <uses-permission android:name="android.permission.INTERNET" />
+  <!-- opens the system installer on the update the app downloaded and checked itself (Settings → Updates) -->
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
   <!-- M2 location (A9): foreground service while an entry is ACTIVE; background
