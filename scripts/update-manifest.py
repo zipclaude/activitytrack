@@ -57,14 +57,15 @@ def channel_of(version):
     """prod for X.Y.Z; a suffix names the channel (1.0.0-test.1 → test), anything else is a beta."""
     if "-" not in version:
         return "prod"
-    suffix = version.split("-", 1)[1].split(".")[0].lower()
+    suffix = re.split(r"[.-]", version.split("-", 1)[1])[0].lower()
     return suffix if suffix in CHANNELS else "beta"
 
 
 def version_key(v):
+    """Release order: X.Y.Z.W numbers (a security patch has a fourth), a suffix (beta-N, beta.N) before the release."""
     main, _, pre = v.partition("-")
     nums = [int(x) if x.isdigit() else 0 for x in main.split(".")]
-    return (nums + [0, 0, 0])[:3], (1, ()) if not pre else (0, tuple(int(p) if p.isdigit() else 0 for p in pre.split(".")))
+    return (nums + [0, 0, 0, 0])[:4], (1, ()) if not pre else (0, tuple((1, int(p), "") if p.isdigit() else (0, 0, p) for p in re.split(r"[.-]", pre)))
 
 
 def sha256_of_url(url):

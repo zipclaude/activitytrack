@@ -27,6 +27,15 @@ class UpdateCheckTest {
 	}
 
 	@Test
+	fun versionSchemeOfTheWorkflow() {
+		/* a security patch has a fourth number; betas are -beta-N, compared by number; a beta precedes its release */
+		val ordered = listOf("0.9.9", "0.9.9.1", "0.9.9.2", "0.9.10-beta-1", "0.9.10-beta-2", "0.9.10-beta-10", "0.9.10", "0.9.10.1", "0.10.0")
+		assertEquals(ordered, ordered.reversed().sortedWith { a, b -> Versions.compare(a, b) })
+		assertEquals(0, Versions.compare("v0.9.9.0", "0.9.9"))
+		assertEquals(0, Versions.compare("0.9.10-beta-1", "0.9.10-beta.1"))
+	}
+
+	@Test
 	fun onlyTheFollowedChannels() {
 		assertEquals("0.9.9", UpdateCheck.newer(m, "0.9.8", setOf("prod"), null, false)?.version)
 		val beta = UpdateCheck.newer(m, "0.9.9", setOf("prod", "beta"), null, false)
