@@ -55,12 +55,17 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
   `ACTIVITYTRACK_SIGNING` variable; without it the release is unsigned.
 - CI: protected CI/CD variables `RELEASE_KEYSTORE_BASE64`, `RELEASE_STORE_PASSWORD`,
   `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` (available to the protected tags `v*` only).
-- Release: tag `vX.Y.Z` on `main` and push the tag → the jobs `apk`, `manual`
-  and `release` of `.gitlab-ci.yml` sign the APK and publish the GitLab Release
+- Release: tag `vX.Y.Z` on `main`, push the tag and start a pipeline on it by hand (no
+  pipeline starts on its own) → the jobs `apk`, `manual` and `release` of `.gitlab-ci.yml` sign the APK and publish the GitLab Release
   with the manual PDFs (versionCode = pipeline number); a tag with a suffix
   (`v1.1.0-beta1`) is a beta. `scripts/check-manual.sh` checks the manual
   version line and images; versions released with the previous manual are
   listed in `scripts/manual-unchanged`.
+- Update manifest (`docs/UPDATES.md`, issue #1): after the release job, the job `manifest` assembles the
+  packages of the tag from the six repositories' releases, signs `update-manifest.json` with the same
+  key and commits it to `main` (`[skip ci]`). Needs the variable `MANIFEST_PUSH_TOKEN` (project access
+  token, Maintainer, scope api, protected + masked) besides the keystore ones. The other repositories release
+  on their own: retry the job once they are out. By hand: `scripts/update-manifest.py` (see its help).
 - The debug APK is signed with the local `~/.android/debug.keystore`; CI
   artifacts use another key (reinstall needed when switching).
 
