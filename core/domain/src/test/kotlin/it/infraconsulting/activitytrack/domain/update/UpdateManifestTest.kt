@@ -14,6 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /*
@@ -185,6 +186,18 @@ class UpdateManifestTest {
 	fun expiredCertificateOfAPinnedKeyStillCounts() {
 		/* a pin is the key's identity: the fingerprint, not the calendar */
 		assertNotNull(UpdateManifest.verify(sign("app"), appTrust, at = Date(System.currentTimeMillis() + 200L * 365 * 86_400_000)))
+	}
+
+	@Test
+	fun theRelayedManifestIsAStringOrNothing() {
+		fun head(json: String) = kotlinx.serialization.json.Json.parseToJsonElement(json) as kotlinx.serialization.json.JsonObject
+		assertEquals("a.b.c", UpdateManifest.relayed(head("""{"rev": 1, "update": "a.b.c"}""")))
+		assertNull(UpdateManifest.relayed(head("""{"rev": 1, "update": null}""")))
+		assertNull(UpdateManifest.relayed(head("""{"rev": 1}""")))
+		/* what a broken or hostile server may send instead of the text: never an exception */
+		for (odd in listOf("{}", "[1]", "7", "true", "{\"payload\": \"x\"}")) {
+			assertNull(UpdateManifest.relayed(head("""{"update": $odd}""")), odd)
+		}
 	}
 
 	@Test

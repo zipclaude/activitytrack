@@ -109,7 +109,7 @@ class SyncAccount(
 		/* the fingerprint of the offline maps on offer ("" = none); absent from an older server (issue #155) */
 		mapsRev = o["mapsRev"]?.jsonPrimitive?.takeIf { it.isString }?.content
 		/* the signed update manifest the server relays (issue #1); checked by Updates, never trusted here */
-		updateManifest = o["update"]?.jsonPrimitive?.takeIf { it.isString }?.content
+		updateManifest = it.infraconsulting.activitytrack.domain.update.UpdateManifest.relayed(o)
 		return o["rev"]?.jsonPrimitive?.long
 	}
 

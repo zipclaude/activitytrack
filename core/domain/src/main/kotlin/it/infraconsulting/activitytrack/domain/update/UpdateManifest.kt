@@ -168,6 +168,10 @@ object UpdateManifest {
 
 	private fun str(e: JsonElement?): String? = (e as? JsonPrimitive)?.takeIf { it.isString }?.content
 
+	/* the manifest a server relays in its `head` answer (`update`): the text, or null when it has none or sends
+	   something else than a string (an object, a list, a number): untrusted input is read as "no manifest" */
+	fun relayed(head: JsonObject): String? = str(head["update"])
+
 	/* a malformed release is left out, the others stay */
 	private fun entry(e: JsonElement): Entry? {
 		val o = e as? JsonObject ?: return null
