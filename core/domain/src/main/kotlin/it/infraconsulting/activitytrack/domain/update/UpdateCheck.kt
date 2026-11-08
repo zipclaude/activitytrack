@@ -57,12 +57,15 @@ object UpdateCheck {
 	}
 }
 
-/* "1.2.3", "1.2", "1.2.3-beta.1" (a pre-release before its release); anything else sorts first */
+/*
+ * "1.2.3", "1.2", "1.2.3.1" (a security patch has a fourth number), "1.2.3-beta-1" or "1.2.3-beta.1" (a pre-release
+ * before its release; beta-9 before beta-10); anything else sorts first
+ */
 object Versions {
 	fun compare(a: String, b: String): Int {
 		val x = key(a)
 		val y = key(b)
-		for (i in 0 until 3) if (x.numbers[i] != y.numbers[i]) return x.numbers[i].compareTo(y.numbers[i])
+		for (i in 0 until NUMBERS) if (x.numbers[i] != y.numbers[i]) return x.numbers[i].compareTo(y.numbers[i])
 		return when {
 			x.pre == y.pre -> 0
 			x.pre == null -> 1
@@ -76,14 +79,16 @@ object Versions {
 	private fun key(text: String): Key {
 		val main = text.trim().removePrefix("v").substringBefore("-")
 		val pre = text.trim().substringAfter("-", "").takeIf { it.isNotEmpty() }
-		val numbers = main.split(".").map { it.toIntOrNull() ?: return Key(listOf(-1, -1, -1), null) }
-		return Key((numbers + listOf(0, 0, 0)).take(3), pre)
+		val numbers = main.split(".").map { it.toIntOrNull() ?: return Key(List(NUMBERS) { -1 }, null) }
+		return Key((numbers + List(NUMBERS) { 0 }).take(NUMBERS), pre)
 	}
 
-	/* beta.2 before beta.10: numeric parts by number */
+	private const val NUMBERS = 4
+
+	/* beta.2 and beta-2 before beta.10 and beta-10: numeric parts by number */
 	private fun comparePre(a: String, b: String): Int {
-		val x = a.split(".")
-		val y = b.split(".")
+		val x = a.split('.', '-')
+		val y = b.split('.', '-')
 		for (i in 0 until minOf(x.size, y.size)) {
 			val n = x[i].toIntOrNull()
 			val m = y[i].toIntOrNull()
