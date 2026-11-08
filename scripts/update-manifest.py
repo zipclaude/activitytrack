@@ -31,7 +31,7 @@ import urllib.parse
 import urllib.request
 
 GITLAB = "https://gitlab.com"
-GROUP = "infraconsulting"
+GROUP = "activitytrack"
 FORMAT = "activitytrack-update-manifest"
 # repository -> the name of its component
 REPOS = {

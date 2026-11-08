@@ -26,10 +26,10 @@ enum class UpdateSource { UPSTREAM, SERVER, CUSTOM }
 
 object UpdateCheck {
 	/* the manifest of the project, the default source */
-	const val UPSTREAM_MANIFEST = "https://gitlab.com/infraconsulting/activitytrack/-/raw/main/update-manifest.json"
+	const val UPSTREAM_MANIFEST = "https://gitlab.com/activitytrack/activitytrack/-/raw/main/update-manifest.json"
 
 	/* the releases page, for a release without its own address */
-	const val RELEASES_PAGE = "https://gitlab.com/infraconsulting/activitytrack/-/releases"
+	const val RELEASES_PAGE = "https://gitlab.com/activitytrack/activitytrack/-/releases"
 
 	/*
 	 * Whether a check runs: "Check now" whenever the build can check (a store's app too, where it only tells); the daily one

@@ -25,7 +25,7 @@ The payload:
 { "format": "activitytrack-update-manifest", "v": 1, "issued": "2026-11-07T10:00:00Z",
   "releases": [
     { "version": "0.9.9", "channel": "prod", "published": "2026-11-12",
-      "notes_url": "https://gitlab.com/infraconsulting/activitytrack/-/releases/v0.9.9",
+      "notes_url": "https://gitlab.com/activitytrack/activitytrack/-/releases/v0.9.9",
       "packages": [ { "component": "android", "url": "https://…/ActivityTrack-0.9.9.apk", "sha256": "…", "size": 57407486 } ] } ] }
 ```
 
@@ -56,7 +56,7 @@ server's manifests are not trusted. The same `k` lets a self-signed server certi
 
 ## 3. Sources (Settings → Updates; policy `updateSource`, `updateUrl`, `updateChannels`)
 
-1. the **project**: `https://gitlab.com/infraconsulting/activitytrack/-/raw/main/update-manifest.json` (default),
+1. the **project**: `https://gitlab.com/activitytrack/activitytrack/-/raw/main/update-manifest.json` (default),
 2. the **paired server**: the manifest it relays in the sync `head` answer (`"update"`), announced at the first sync
    whatever the source chosen,
 3. a **custom https address**.

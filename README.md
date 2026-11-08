@@ -1,6 +1,6 @@
 # ActivityTrack
 
-[![pipeline status](https://gitlab.com/infraconsulting/activitytrack/badges/main/pipeline.svg)](https://gitlab.com/infraconsulting/activitytrack/-/pipelines)
+[![pipeline status](https://gitlab.com/activitytrack/activitytrack/badges/main/pipeline.svg)](https://gitlab.com/activitytrack/activitytrack/-/pipelines)
 
 Time tracking for freelancers: companies, clients, roles, travel, pauses,
 expenses and attachments, with reminders designed for people who forget to
