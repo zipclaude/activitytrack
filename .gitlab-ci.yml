@@ -1,14 +1,16 @@
 # CI of ActivityTrack on GitLab (free plan: the shared runners' minutes are limited,
-# so no pipeline starts on its own: "Run pipeline" by hand or the pipelines API, on a
-# branch or on a tag). A pipeline run on a version tag (v0.2.0) also publishes the signed
+# so no pipeline starts on its own, except the one of a merge request into next, see workflow
+# below: "Run pipeline" by hand or the pipelines API, on a branch or on a tag). A pipeline run on
+# a version tag (v0.2.0) also publishes the signed
 # release: jobs apk, manual and release. A tag with a suffix (v1.1.0-beta1) is a beta
 # (SYNC.md §12.4); the job manifest then publishes the signed update manifest of all
 # the repositories (docs/UPDATES.md).
 
-# Shared-runner minutes are paid: no pipeline starts on its own (not on pushes,
-# merge requests or tags). Start one by hand ("Run pipeline" on a branch or tag,
+# Shared-runner minutes are paid: no pipeline starts on its own (not on pushes
+# or tags). Start one by hand ("Run pipeline" on a branch or tag,
 # or the pipelines API) before a release. Day-to-day tests run locally.
-# A merge request into next also starts a pipeline: all its jobs run on the local runner.
+# A merge request into next also starts a pipeline: only the job build runs in it, on the local
+# runner (the other jobs need a tag or a pipeline started by hand).
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api"
