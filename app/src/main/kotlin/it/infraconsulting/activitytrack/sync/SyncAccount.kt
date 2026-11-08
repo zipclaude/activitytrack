@@ -85,6 +85,7 @@ class SyncAccount(
 	 */
 	suspend fun head(): Long? {
 		mapsRev = null
+		updateManifest = null
 		val http = http() ?: return null
 		val r = runCatching { http.send("GET", "api/v1/sync/head", token = token()) }.getOrNull() ?: return null
 		if (r.status == 401) {
@@ -107,8 +108,15 @@ class SyncAccount(
 		}
 		/* the fingerprint of the offline maps on offer ("" = none); absent from an older server (issue #155) */
 		mapsRev = o["mapsRev"]?.jsonPrimitive?.takeIf { it.isString }?.content
+		/* the signed update manifest the server relays (issue #1); checked by Updates, never trusted here */
+		updateManifest = it.infraconsulting.activitytrack.domain.update.UpdateManifest.relayed(o)
 		return o["rev"]?.jsonPrimitive?.long
 	}
+
+	/* `update` of the last head answer: the manifest as text, null when the server has none to announce */
+	@Volatile
+	var updateManifest: String? = null
+		private set
 
 	/* `mapsRev` of the last head answer: null when the server did not say (unreachable, or too old to offer maps) */
 	@Volatile
@@ -157,6 +165,7 @@ class SyncAccount(
 			pinned = link.pin != null,
 			pairedUtcMs = System.currentTimeMillis(),
 			pluginHolder = answer.pluginHolder,
+			signerKey = link.signerKey,
 		)
 		dao.forgetServer()
 		secrets.putApp(TOKEN, answer.token)
