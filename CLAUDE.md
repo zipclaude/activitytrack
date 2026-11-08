@@ -5,6 +5,30 @@ Technical notes to set up the environment and work on the code. Read
 and why. Project history and work in progress live in the GitLab issues and
 merge requests (on GitHub until 0.9.7-beta1: see the first merge request).
 
+## 0. Branches and releases (read first)
+
+The whole workflow is in
+[activitytrack-doc/agents/workflow.md](https://gitlab.com/activitytrack/activitytrack-doc/-/blob/main/agents/workflow.md)
+(usually cloned next to this repository as `../activitytrack-doc`). In short:
+
+- `main` is the **last released version**, `next` is the development branch. Work happens
+  in `feature/<name>` or `issue/<n>-<name>`, cut from `next` and merged back into it with a
+  merge request. Nobody pushes to `main` or `next`, except the CI job `manifest` (§3), which
+  commits `update-manifest.json` to `main` after every tag, beta or stable.
+- Stable release: first merge `main` into `next` (it brings in the manifest commits of §3; a
+  no-op otherwise), then merge request `next` → `main`, merged fast-forward only; tag `vX.Y.Z`
+  on `main`; then merge `main` into `next` again.
+- Beta: tag `vX.Y.Z-beta-N` on `next` (X.Y.Z is the *next* version); Debian version
+  `X.Y.Z~beta-N-1` (the CI turns the tag's first hyphen into a tilde,
+  the changelog adds the revision). Needs the unit tests and the local Wine jobs, not the paid Windows pipeline.
+- Security patch: `security/<name>` cut from `main`, version `X.Y.Z.1`, released at once with
+  the security report, then merged into `next`.
+- Test locally first. Pipelines on GitLab's shared runners start only when the owner says so;
+  jobs with `tags: [local]` run on the owner's runner (see `agents/local-ci.md` in the
+  documentation repository).
+- The Android application id, the AppStream ids and the package names keep the
+  `it.infraconsulting` names; they do not follow the GitLab group.
+
 ## 1. Working rules
 
 - English for code, comments, commits and docs; Italian with the maintainer.
@@ -33,7 +57,7 @@ scripts/build-manual.sh                        # manual PDFs into build/manual
 scripts/build-brochure.sh                      # brochure PDF (Google Fonts need the network)
 ```
 
-- Push to `main` only after a green local build; CI must stay green.
+- Merge into `next` only after a green local build (see §0); `main` moves at a release and when CI commits the update manifest (§3).
 - Build outputs copied from another path break dexing ("located outside the
   root directory"): `./gradlew clean` first.
 - Where only `chromium-headless-shell` exists, put a `chromium` symlink to it
@@ -58,7 +82,7 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
 - Release: tag `vX.Y.Z` on `main`, push the tag and start a pipeline on it by hand (no
   pipeline starts on its own) → the jobs `apk`, `manual` and `release` of `.gitlab-ci.yml` sign the APK and publish the GitLab Release
   with the manual PDFs (versionCode = pipeline number); a tag with a suffix
-  (`v1.1.0-beta1`) is a beta. `scripts/check-manual.sh` checks the manual
+  (`v0.9.10-beta-1`) is a beta (see §0). `scripts/check-manual.sh` checks the manual
   version line and images; versions released with the previous manual are
   listed in `scripts/manual-unchanged`.
 - Update manifest (`docs/UPDATES.md`, issue #1): after the release job, the job `manifest` assembles the
