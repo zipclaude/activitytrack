@@ -57,7 +57,7 @@ class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	val appVersion: String by lazy { appContext.packageManager.getPackageInfo(appContext.packageName, 0).versionName.orEmpty() }
 
 	/* Nominatim policy: identify the application (no personal contact). */
-	val userAgent: String by lazy { "ActivityTrack/$appVersion (+https://gitlab.com/infraconsulting/activitytrack)" }
+	val userAgent: String by lazy { "ActivityTrack/$appVersion (+https://gitlab.com/activitytrack/activitytrack)" }
 	val nominatim: Nominatim by lazy { Nominatim(userAgent) }
 	val exporter: Exporter by lazy { Exporter(database) }
 	val todos: TodoRepository by lazy { TodoRepository(database, clock) }
