@@ -48,22 +48,15 @@ The whole workflow is in
 | JDK | 21 (`JAVA_HOME` set) |
 | Android SDK | platform 37, build-tools 36.0.0, platform-tools (adb); `ANDROID_HOME` set |
 | Gradle | the wrapper (`./gradlew`) |
-| Manual / brochure | pandoc, graphviz (`dot`), Chromium (`chromium` on `PATH`) |
 
 ```sh
 ./gradlew :core:domain:test :core:data:testDebugUnitTest assembleDebug   # unit tests + debug APK
 ./gradlew :app:assembleRelease                 # release APK (signed when configured, §3)
-scripts/build-manual.sh                        # manual PDFs into build/manual
-scripts/build-brochure.sh                      # brochure PDF (Google Fonts need the network)
 ```
 
 - Merge into `next` only after a green local build (see §0); `main` moves at a release and when CI commits the update manifest (§3).
 - Build outputs copied from another path break dexing ("located outside the
   root directory"): `./gradlew clean` first.
-- Where only `chromium-headless-shell` exists, put a `chromium` symlink to it
-  on `PATH` for the manual scripts.
-- Graphviz releases differ in layout: a newer `dot` rewrites every committed
-  SVG with noise only; `git checkout -- docs/manual` unless a diagram changed.
 - CI failures: read the job log of the pipeline (project → Build → Pipelines),
   or `curl -H "PRIVATE-TOKEN: $TOKEN" "https://gitlab.com/api/v4/projects/88636043/jobs?per_page=10"`
   and fetch `.../jobs/<id>/trace` for the output.
@@ -80,11 +73,10 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
 - CI: protected CI/CD variables `RELEASE_KEYSTORE_BASE64`, `RELEASE_STORE_PASSWORD`,
   `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` (available to the protected tags `v*` only).
 - Release: tag `vX.Y.Z` on `main`, push the tag and start a pipeline on it by hand (no
-  pipeline starts on its own) → the jobs `apk`, `manual` and `release` of `.gitlab-ci.yml` sign the APK and publish the GitLab Release
-  with the manual PDFs (versionCode = pipeline number); a tag with a suffix
-  (`v0.9.10-beta-1`) is a beta (see §0). `scripts/check-manual.sh` checks the manual
-  version line and images; versions released with the previous manual are
-  listed in `scripts/manual-unchanged`.
+  pipeline starts on its own) → the jobs `apk` and `release` of `.gitlab-ci.yml` sign the APK and publish the GitLab Release
+  (versionCode = pipeline number); a tag with a suffix
+  (`v0.9.10-beta-1`) is a beta (see §0). The manuals, the brochure and their checks are in
+  the `activitytrack-doc` repository (same version, released after this one).
 - Update manifest (`docs/UPDATES.md`, issue #1): after the release job, the job `manifest` assembles the
   packages of the tag from the six repositories' releases, signs `update-manifest.json` with the same
   key and commits it to `main` (`[skip ci]`). Needs the variable `MANIFEST_PUSH_TOKEN` (project access
@@ -107,7 +99,7 @@ scripts/build-brochure.sh                      # brochure PDF (Google Fonts need
   `-wal`/`-shm` first, or Room finds a stale WAL and recreates an empty DB.
 - `scripts/sample-db.py` builds an invented DB (schema of
   `ActivityTrackDatabase.VERSION`, times relative to now) and
-  `scripts/screenshots.py` takes the manual's screenshots.
+  `scripts/screenshots.py` takes the manual's screenshots (into `../activitytrack-doc`).
 - Sync against a development server (ActivityTrack Web `runserver` on the
   computer): `adb reverse tcp:8765 tcp:8765`, server `base_url =
   http://localhost:8765`; debug builds allow plain http to localhost only
@@ -187,10 +179,9 @@ docs/DESIGN.md                  technical design, toolchain, risks
 docs/INTERCHANGE.md             import/export format
 docs/POLICY.md                  policy.json reference (PolicyCatalogDocTest keeps it complete)
 docs/PLUGINS.md                 plugin descriptor format; plugins/ holds the plugins and their guides
-docs/manual/{it,en}/            quickstart.md + manual.md, diagrams/diagrams.py (Graphviz), img/, style.css
-docs/brochure/                  brochure.html + committed PDF
-scripts/                        build-manual.sh, check-manual.sh, manual-unchanged, build-brochure.sh,
-                                sample-db.py, screenshots.py, sign-policy.sh
+(manuals and brochure: repository activitytrack-doc, manual/app and brochure/)
+scripts/                        sample-db.py, screenshots.py (writes into ../activitytrack-doc), sign-policy.sh,
+                                update-manifest.py
 gradle/libs.versions.toml       dependency versions
 core/domain/                    pure Kotlin rules: model, state machine, rounding, reports, geo, reminders,
                                 export, settings (AppSettings, Gestures), policy, plugin engine; unit tests

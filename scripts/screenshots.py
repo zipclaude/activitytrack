@@ -109,7 +109,8 @@ def back(n=1):
 
 
 def shot(lang, name):
-	out = os.path.join(ROOT, "docs/manual", lang, "img", name + ".png")
+	# the manuals live in the documentation repository, cloned next to this one
+	out = os.path.join(ROOT, "..", "activitytrack-doc", "manual", "app", lang, "img", name + ".png")
 	os.makedirs(os.path.dirname(out), exist_ok=True)
 	png = adb("exec-out", "screencap", "-p").stdout
 	# a lost connection gives nothing: keep the image there is

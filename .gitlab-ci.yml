@@ -2,7 +2,7 @@
 # so no pipeline starts on its own, except the one of a merge request into next, see workflow
 # below: "Run pipeline" by hand or the pipelines API, on a branch or on a tag). A pipeline run on
 # a version tag (v0.2.0) also publishes the signed
-# release: jobs apk, manual and release. A tag with a suffix (v1.1.0-beta1) is a beta
+# release: jobs apk and release. A tag with a suffix (v1.1.0-beta1) is a beta
 # (SYNC.md §12.4); the job manifest then publishes the signed update manifest of all
 # the repositories (docs/UPDATES.md).
 
@@ -28,7 +28,7 @@ variables:
   DEBIAN_FRONTEND: noninteractive
   ANDROID_HOME: $CI_PROJECT_DIR/.android-sdk
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle-home
-  # the tags' pipelines need the history (the manual check, the release notes)
+  # the tags' pipelines need the history (the release notes)
   GIT_DEPTH: "50"
 
 .android:
@@ -78,7 +78,7 @@ build:
       fi
 
 # the tag's commit was tried by its merge request and the default branch: the
-# signed APK, the manual and the release follow
+# signed APK and the release follow
 apk:
   extends: .android
   stage: package
@@ -102,30 +102,7 @@ apk:
     paths: ["dist/*.apk"]
     expire_in: 30 days
 
-manual:
-  stage: package
-  image: debian:trixie
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v[0-9]/
-  interruptible: false
-  variables:
-    GIT_DEPTH: "0"
-  script:
-    - apt-get update -qq
-    - apt-get install -y -qq --no-install-recommends git ca-certificates pandoc graphviz chromium python3 python3-venv fonts-dejavu-core fonts-liberation > /dev/null
-    # before every release: is the manual up to date (owner, 2026-10-19)
-    - scripts/check-manual.sh "$CI_COMMIT_TAG"
-    # a release without manual changes builds the PDFs of the manual's own version
-    - V="${CI_COMMIT_TAG#v}"
-    - if grep -qx "$V" scripts/manual-unchanged; then scripts/build-manual.sh; else scripts/build-manual.sh "$V"; fi
-    - python3 -m venv /tmp/pdf
-    - /tmp/pdf/bin/pip install -q pymupdf
-    - /tmp/pdf/bin/python scripts/check-pdf.py build/manual/*.pdf
-  artifacts:
-    paths: ["build/manual/*.pdf"]
-    expire_in: 30 days
-
-# the APK and the PDFs go to the project's Generic Packages and the release links them
+# the APK goes to the project's Generic Packages and the release links it
 # (permalinks .../-/releases/<tag>/downloads/<file>)
 release:
   stage: release
@@ -138,13 +115,13 @@ release:
   script:
     - apk add --no-cache curl jq git
     - V="${CI_COMMIT_TAG#v}"
-    - mkdir artifacts && cp dist/*.apk build/manual/*.pdf artifacts/
+    - mkdir artifacts && cp dist/*.apk artifacts/
     - |
       PREV=$(git describe --tags --abbrev=0 "$CI_COMMIT_TAG^" 2>/dev/null || true)
       {
         case "$V" in *-*) echo "ActivityTrack $V: a beta, shown only to who subscribed to the betas (Settings → Updates)." ;; *) echo "ActivityTrack $V." ;; esac
         echo
-        echo "Install \`ActivityTrack-$V.apk\` (it updates the installed app and keeps the data); the manuals are the PDFs."
+        echo "Install \`ActivityTrack-$V.apk\` (it updates the installed app and keeps the data). The manuals are in the documentation release: https://gitlab.com/activitytrack/activitytrack-doc/-/releases/v$V"
         if [ -n "$PREV" ]; then
           echo
           echo "## Changes since $PREV"
