@@ -6,6 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class UpdateCheckTest {
 	private fun package_(component: String, url: String) = UpdateManifest.Package(component, url, "ab".repeat(32), 10)
@@ -33,6 +34,8 @@ class UpdateCheckTest {
 		assertEquals(ordered, ordered.reversed().sortedWith { a, b -> Versions.compare(a, b) })
 		assertEquals(0, Versions.compare("v0.9.9.0", "0.9.9"))
 		assertEquals(0, Versions.compare("0.9.10-beta-1", "0.9.10-beta.1"))
+		/* a number before a word, as in scripts/update-manifest.py */
+		assertTrue(Versions.compare("1.0.0-1", "1.0.0-beta") < 0)
 	}
 
 	@Test
