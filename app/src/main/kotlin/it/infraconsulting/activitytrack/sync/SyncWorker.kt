@@ -54,6 +54,9 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 			if (code != before) incompatible(app, code)
 			return Result.success()
 		}
+		/* a new version the server announces (issue #1): at the first sync that reaches it */
+		runCatching { app.updates.fromServer(account.updateManifest) }
+			.onFailure { x -> if (x is kotlinx.coroutines.CancellationException) throw x else Log.w(TAG, "update announcement", x) }
 		val transport = object : SyncTransport {
 			override suspend fun send(method: String, path: String, body: String?): SyncTransport.Reply {
 				val r = http.send(method, "api/v1/$path", body, token)

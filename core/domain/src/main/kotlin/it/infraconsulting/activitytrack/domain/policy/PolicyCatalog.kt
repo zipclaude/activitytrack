@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.policy
 
+import it.infraconsulting.activitytrack.domain.update.UpdateCheck
+import it.infraconsulting.activitytrack.domain.update.UpdateManifest
+import it.infraconsulting.activitytrack.domain.update.UpdateSource
 import it.infraconsulting.activitytrack.domain.rounding.RoundingMode
 import it.infraconsulting.activitytrack.domain.rounding.RoundingRule
 import it.infraconsulting.activitytrack.domain.settings.AGENDA_VIEWS
@@ -138,21 +141,25 @@ object SettingsCatalog {
 	private fun oneOf(key: String, allowed: Collection<Int>, since: String = SettingSpec.SINCE_SYNC, apply: (AppSettings, Int) -> AppSettings) =
 		SettingSpec(key, SettingSpec.Kind.INT, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as Int) }, allowed = allowed.toList(), since = since)
 
-	private fun string(key: String, allowed: Collection<String>, apply: (AppSettings, String) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.STRING, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as String) }, allowed = allowed.toList())
+	private fun string(key: String, allowed: Collection<String>, since: String = SettingSpec.SINCE_SYNC, apply: (AppSettings, String) -> AppSettings) =
+		SettingSpec(key, SettingSpec.Kind.STRING, { v -> if (v in allowed) null else "must be one of ${allowed.joinToString()}" }, { s, v -> apply(s, v as String) }, allowed = allowed.toList(), since = since)
 
 	private fun double(key: String, range: ClosedFloatingPointRange<Double>, apply: (AppSettings, Double) -> AppSettings) =
 		SettingSpec(key, SettingSpec.Kind.DOUBLE, { v -> if ((v as Double) in range) null else "must be in ${range.start}..${range.endInclusive}" }, { s, v -> apply(s, v as Double) }, min = range.start, max = range.endInclusive)
 
 	/* a free text the [check] accepts (an endpoint URL, a list of names) */
-	private fun text(key: String, check: (String) -> String?, apply: (AppSettings, String) -> AppSettings) =
-		SettingSpec(key, SettingSpec.Kind.STRING, { v -> check(v as String) }, { s, v -> apply(s, v as String) })
+	private fun text(key: String, check: (String) -> String?, since: String = SettingSpec.SINCE_SYNC, apply: (AppSettings, String) -> AppSettings) =
+		SettingSpec(key, SettingSpec.Kind.STRING, { v -> check(v as String) }, { s, v -> apply(s, v as String) }, since = since)
 
 	private fun url(v: String, tiles: Boolean = false): String? = when {
 		!v.trim().startsWith("https://") -> "must be an https:// URL"
 		tiles && !listOf("{z}", "{x}", "{y}").all { it in v } -> "must contain {z}, {x} and {y}"
 		else -> null
 	}
+
+	private fun channels(v: String): String? =
+		if (v.split(',').all { c -> c.trim().lowercase() in UpdateManifest.CHANNELS }) null
+		else "must be channels of ${UpdateManifest.CHANNELS.joinToString()}, comma-separated"
 
 	private inline fun <reified E : Enum<E>> names() = enumValues<E>().map { it.name }
 
@@ -170,7 +177,11 @@ object SettingsCatalog {
 		bool("editableTimes") { s, v -> s.copy(editableTimes = v) },
 		bool("tagsFreeText") { s, v -> s.copy(tagsFreeText = v) },
 		bool("updateCheck", since = "0.9.3") { s, v -> s.copy(updateCheck = v) },
-		bool("updateBetas", since = "0.9.3") { s, v -> s.copy(updateBetas = v) },
+		/* the old switch of the betas: the beta channel of updateChannels */
+		bool("updateBetas", since = "0.9.3") { s, v -> s.copy(updateChannels = if (v) s.updateChannels + "beta" else s.updateChannels - "beta") },
+		string("updateSource", UpdateSource.entries.map { it.name.lowercase() }, since = "0.9.9") { s, v -> s.copy(updateSource = UpdateSource.valueOf(v.uppercase())) },
+		text("updateUrl", { v -> if (v.isBlank()) null else url(v) }, since = "0.9.9") { s, v -> s.copy(updateUrl = v.trim()) },
+		text("updateChannels", ::channels, since = "0.9.9") { s, v -> s.copy(updateChannels = UpdateCheck.channelsOf(v)) },
 		int("confirmIntervalMin", 10..240) { s, v -> s.copy(confirmIntervalMin = v) },
 		int("maxConfirmations", 0..100) { s, v -> s.copy(maxConfirmations = v) },
 		int("pauseIntervalMin", 10..120) { s, v -> s.copy(pauseIntervalMin = v) },

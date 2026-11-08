@@ -13,7 +13,8 @@ import java.util.Date
  * unsigned policy.json waits for the user's confirmation (owner, security
  * review 2026-11): [Outcome.Confirm] until it is confirmed by fingerprint;
  * a refusal is recorded like any refused file, so it is not asked again
- * until the file changes.
+ * until the file changes. The paired server may sign with a self-signed
+ * certificate: its fingerprint is known from the pairing link ([pinned]).
  */
 object PolicyGate {
 	/* What the app remembers between starts. */
@@ -43,6 +44,8 @@ object PolicyGate {
 	fun decide(
 		policy: ByteArray?, sig: ByteArray?, state: State, anchors: () -> Set<TrustAnchor>, at: Date = Date(),
 		askUnsigned: Boolean = false, confirmed: String? = null,
+		/* certificates (SHA-256, hex) trusted as they are: the paired server's own, self-signed */
+		pinned: Set<String> = emptySet(),
 	): Outcome {
 		if (policy == null)
 			return Outcome.Unchanged
@@ -61,7 +64,7 @@ object PolicyGate {
 			else -> Outcome.Apply(parsed, fp, null)
 		}
 		val cn = try {
-			PolicySignature.verify(policy, sig, anchors(), at)
+			PolicySignature.verify(policy, sig, anchors(), at, pinned)
 		} catch (e: PolicySignature.Invalid) {
 			return refuse(e.message.orEmpty())
 		}

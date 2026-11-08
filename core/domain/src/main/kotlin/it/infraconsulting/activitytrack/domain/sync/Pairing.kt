@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.sync
 
+import it.infraconsulting.activitytrack.domain.update.UpdateFingerprint
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.net.URI
@@ -8,11 +9,14 @@ import java.net.URLDecoder
 
 /*
  * Pairing with ActivityTrack Web (issue #113, server SYNC.md §9). The QR
- * code holds activitytrack://pair?v=1&u=<server>&c=<one-time code>[&f=<pin>];
+ * code holds activitytrack://pair?v=1&u=<server>&c=<one-time code>[&f=<pin>][&k=<key>];
  * f is the base64 SHA-256 of the server's public key, present when its
- * certificate is not trusted by the phone (self-signed).
+ * certificate is not trusted by the phone (self-signed). k is the SHA-256
+ * (64 hex digits) of the certificate the server signs with (its policy and
+ * the update manifest it relays, issue #1): the phone trusts that signer
+ * from the pairing on; a link without k leaves the server's manifests untrusted.
  */
-data class PairLink(val server: String, val code: String, val pin: String?) {
+data class PairLink(val server: String, val code: String, val pin: String?, val signerKey: String? = null) {
 	companion object {
 		/* [allowHttp]: debug builds only, for a development server */
 		fun parse(text: String, allowHttp: Boolean = false): PairLink {
@@ -31,7 +35,9 @@ data class PairLink(val server: String, val code: String, val pin: String?) {
 			val pin = q["f"]?.takeIf { it.isNotBlank() }
 			if (pin != null && runCatching { java.util.Base64.getDecoder().decode(pin) }.getOrNull()?.size != 32)
 				throw PairException(PairError.BAD_PIN)
-			return PairLink(server, code, pin)
+			val signerKey = q["k"]?.takeIf { it.isNotBlank() }?.let(UpdateFingerprint::normalize)
+			if (signerKey != null && signerKey.length != 64) throw PairException(PairError.BAD_PIN)
+			return PairLink(server, code, pin, signerKey)
 		}
 	}
 }
@@ -82,6 +88,8 @@ data class SyncAccountInfo(
 	val pairedUtcMs: Long,
 	/* this phone sends to the management systems; the others of the user only import (issue #118) */
 	val pluginHolder: Boolean = true,
+	/* SHA-256 (hex) of the certificate the server signs its policy and manifests with, from the pairing link (issue #1) */
+	val signerKey: String? = null,
 )
 
 object PairApi {

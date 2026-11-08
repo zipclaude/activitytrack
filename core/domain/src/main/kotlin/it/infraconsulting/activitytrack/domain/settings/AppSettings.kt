@@ -117,9 +117,14 @@ data class AppSettings(
 	val editableTimes: Boolean = true,
 	/* tags typed freely besides the ones of the master data (issue #133); off = only the master data's */
 	val tagsFreeText: Boolean = true,
-	/* newer releases on GitLab, once a day (SYNC.md §12.4); betas too when subscribed */
+	/*
+	 * newer releases from a signed manifest, once a day (SYNC.md §12.4, issue #1): where it comes from (the
+	 * project's, the paired server's or [updateUrl]) and the channels followed (prod always; beta, test, dev)
+	 */
 	val updateCheck: Boolean = true,
-	val updateBetas: Boolean = false,
+	val updateSource: it.infraconsulting.activitytrack.domain.update.UpdateSource = it.infraconsulting.activitytrack.domain.update.UpdateSource.UPSTREAM,
+	val updateUrl: String = "",
+	val updateChannels: Set<String> = setOf("prod"),
 	/* call recognition (issue #28): incoming and outgoing each, off until enabled; pause and proposal options */
 	val callsIncoming: Boolean = false,
 	val callsOutgoing: Boolean = false,

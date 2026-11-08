@@ -17,6 +17,11 @@ class PairingTest {
 		assertEquals("https://at.example.com", p.server)
 		assertEquals("zm1IQApO6pUnx_UcBtwnE2Y2EtQ", p.code)
 		assertNull(p.pin)
+		assertNull(p.signerKey)
+		/* the signing certificate's fingerprint (issue #1), as the server writes it or pasted with colons */
+		val k = "ab12".repeat(16)
+		assertEquals(k, PairLink.parse("$link&k=$k").signerKey)
+		assertEquals(k, PairLink.parse("$link&k=" + k.uppercase().chunked(2).joinToString(":")).signerKey)
 		assertEquals(pin, PairLink.parse("$link&f=" + java.net.URLEncoder.encode(pin, Charsets.UTF_8)).pin)
 	}
 
@@ -28,6 +33,7 @@ class PairingTest {
 		assertEquals(PairError.VERSION, error(link.replace("v=1", "v=2")))
 		assertEquals(PairError.NOT_HTTPS, error("activitytrack://pair?v=1&u=http%3A%2F%2Fa.b&c=x"))
 		assertEquals(PairError.BAD_PIN, error("$link&f=abc"))
+		assertEquals(PairError.BAD_PIN, error("$link&k=abc"))
 		assertEquals("http://10.0.2.2:8000", PairLink.parse("activitytrack://pair?v=1&u=http%3A%2F%2F10.0.2.2%3A8000&c=x", allowHttp = true).server)
 	}
 

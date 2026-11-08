@@ -55,9 +55,22 @@ key for the server's editor.
 
 ## 2. Signature (optional)
 
-`policy.json.sig` beside it, written by `scripts/sign-policy.sh policy.json key.pem cert.pem [chain.pem]`
-(EC → SHA256withECDSA, RSA → SHA256withRSA). The chain must lead to a CA
-the phone trusts, system or user/MDM-installed; no revocation check (the
+A policy is signed in one of two ways; the signature format is the same (`policy.json.sig`: algorithm,
+certificate chain, signature over the exact text).
+
+**By the management server** (ActivityTrack Web, since 0.9.9): the server generates its own key and a
+self-signed certificate and signs the phones' policies with it (the same key signs the update manifests it
+relays, `docs/UPDATES.md`). No CA can vouch for that certificate: the phone trusts it through the **pairing**,
+whose link carries the certificate's SHA-256 fingerprint (`k=`). A signed policy of the server is accepted when its
+signer's fingerprint is the pairing's `k`; the chain is not checked. A **phone paired before 0.9.9** has no `k`: it
+cannot trust the server's certificate, so it **keeps the policy in force** (nothing is recorded, nothing is lost),
+a notification says to **pair again** (Settings → Sync) and the new policy is looked at again after the new
+pairing. Nothing else is affected: the sync goes on, an unsigned server policy is still accepted until a signer's
+CN is pinned.
+
+**By hand**, for who has no management server: `policy.json.sig` beside `policy.json`, written by
+`scripts/sign-policy.sh policy.json key.pem cert.pem [chain.pem]` (EC → SHA256withECDSA, RSA → SHA256withRSA).
+The chain must lead to a CA the phone trusts, system or user/MDM-installed; no revocation check (the
 app works offline); the certificate must be valid at the time of reading.
 
 The first signed policy applied fixes its signer's CN: from then on only
@@ -175,7 +188,10 @@ are written back at every read, so they cannot drift.
 | `editableTimes` | true/false | |
 | `tagsFreeText` | true/false | false: only the tags of the master data (issue #133) |
 | `updateCheck` | true/false | daily check of newer releases on GitLab, apps not installed from a store (0.9.3) |
-| `updateBetas` | true/false | the check shows betas (pre-releases) too (0.9.3) |
+| `updateBetas` | true/false | the check follows the beta channel too; the same as `beta` in `updateChannels` (0.9.3) |
+| `updateSource` | `upstream`, `server`, `custom` | where the signed update manifest comes from: the project's (GitLab), the paired server's, or `updateUrl` (0.9.9, issue #1) |
+| `updateUrl` | https URL | the manifest of `custom` (0.9.9) |
+| `updateChannels` | comma-separated | the channels followed, among `prod` (always), `beta`, `test`, `dev`; e.g. `"prod,test"` (0.9.9) |
 | `confirmIntervalMin` | minutes | 10–240 |
 | `maxConfirmations` | number | 0–100 (0 = unlimited) |
 | `pauseIntervalMin` | minutes | 10–120 |

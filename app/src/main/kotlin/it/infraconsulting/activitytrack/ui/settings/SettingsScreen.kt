@@ -54,6 +54,7 @@ import it.infraconsulting.activitytrack.domain.rounding.RoundingRule
 import it.infraconsulting.activitytrack.domain.settings.AppSettings
 import it.infraconsulting.activitytrack.domain.settings.OnlineService
 import it.infraconsulting.activitytrack.ui.appViewModel
+import it.infraconsulting.activitytrack.domain.update.UpdateSource
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
@@ -92,7 +93,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 /* Text-field keys of the form; values are parsed on save. */
 private enum class F {
 	CONFIRM, MAX_CONFIRM, PAUSE, DAY_START, MOVEMENT, ST_RADIUS, ST_MIN, KM_FACTOR, CARRY_OVER, RETENTION,
-	NOMINATIM, OSRM, TILES, WORK_MIN, TRAVEL_MIN, PAUSE_MIN, PLAN_LEAD, PLAN_SNOOZE,
+	NOMINATIM, OSRM, TILES, UPDATE_URL, WORK_MIN, TRAVEL_MIN, PAUSE_MIN, PLAN_LEAD, PLAN_SNOOZE,
 }
 
 /* Settings grouped in sub-screens (backlog 2, 2026-10-18). */
@@ -185,6 +186,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 			F.NOMINATIM to initial.nominatim.endpoint,
 			F.OSRM to initial.osrm.endpoint,
 			F.TILES to initial.tiles.endpoint,
+			F.UPDATE_URL to initial.updateUrl,
 			F.WORK_MIN to initial.rounding.work.minimum.toMinutes().toString(),
 			F.TRAVEL_MIN to initial.rounding.travel.minimum.toMinutes().toString(),
 			F.PAUSE_MIN to initial.rounding.pause.minimum.toMinutes().toString(),
@@ -204,7 +206,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var editableTimes by remember { mutableStateOf(initial.editableTimes) }
 	var tagsFreeText by remember { mutableStateOf(initial.tagsFreeText) }
 	var updateCheck by remember { mutableStateOf(initial.updateCheck) }
-	var updateBetas by remember { mutableStateOf(initial.updateBetas) }
+	var updateSource by remember { mutableStateOf(initial.updateSource) }
+	var updateChannels by remember { mutableStateOf(initial.updateChannels) }
 	var callsIn by remember { mutableStateOf(initial.callsIncoming) }
 	var callsOut by remember { mutableStateOf(initial.callsOutgoing) }
 	var callPause by remember { mutableStateOf(initial.callAutoPause) }
@@ -257,7 +260,9 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		editableTimes = editableTimes,
 		tagsFreeText = tagsFreeText,
 		updateCheck = updateCheck,
-		updateBetas = updateBetas,
+		updateSource = updateSource,
+		updateUrl = text[F.UPDATE_URL].orEmpty().trim(),
+		updateChannels = updateChannels,
 		callsIncoming = callsIn,
 		callsOutgoing = callsOut,
 		callAutoPause = callPause,
@@ -385,7 +390,29 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 				SettingsSection.UPDATES -> {
 					UpdateRows()
 					PolicySetting("updateCheck") { SwitchRow(stringResource(R.string.set_update_check), updateCheck) { updateCheck = it } }
-					PolicySetting("updateBetas") { SwitchRow(stringResource(R.string.set_update_betas), updateBetas) { updateBetas = it } }
+					/* where the signed manifest comes from (issue #1), and the channels followed besides the stable one */
+					PolicySetting("updateSource") {
+						ChoiceField(
+							stringResource(R.string.set_update_source),
+							listOf(
+								UpdateSource.UPSTREAM to stringResource(R.string.update_src_upstream),
+								UpdateSource.SERVER to stringResource(R.string.update_src_server),
+								UpdateSource.CUSTOM to stringResource(R.string.update_src_custom),
+							),
+							updateSource,
+						) { updateSource = it }
+					}
+					if (updateSource == UpdateSource.CUSTOM)
+						field(F.UPDATE_URL, R.string.set_update_url, KeyboardType.Uri, key = "updateUrl")
+					PolicySetting("updateBetas") {
+						SwitchRow(stringResource(R.string.update_channel_beta), "beta" in updateChannels) { on -> updateChannels = if (on) updateChannels + "beta" else updateChannels - "beta" }
+					}
+					PolicySetting("updateChannels") {
+						Column {
+							for ((name, label) in listOf("test" to R.string.update_channel_test, "dev" to R.string.update_channel_dev))
+								SwitchRow(stringResource(label), name in updateChannels) { on -> updateChannels = if (on) updateChannels + name else updateChannels - name }
+						}
+					}
 				}
 				/* language names in their own language, as in the system pickers */
 				SettingsSection.DICTATION -> PolicySetting("dictationLanguage") {
