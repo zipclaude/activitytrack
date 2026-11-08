@@ -218,6 +218,11 @@ def capture(lang):
 
 def main():
 	langs = sys.argv[1:] or ["it", "en"]
+	# the manuals live in the documentation repository, cloned next to this one: without it the
+	# screenshots would land in a stray folder (checked first, the run swaps the phone's data)
+	doc = os.path.join(ROOT, "..", "activitytrack-doc", "manual", "app")
+	if not os.path.isdir(doc):
+		raise SystemExit("clone activitytrack-doc next to this repository (%s is missing)" % os.path.normpath(doc))
 	# no phone: stop before anything, or every screenshot would be written empty
 	if adb("get-state").stdout.decode().strip() != "device":
 		raise SystemExit("no phone connected (adb get-state)")
