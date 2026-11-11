@@ -164,6 +164,27 @@ An absence is an activity of kind `ABSENCE` with one `ABSENCE` segment per day:
   `day_off` days are skipped (decided by the assistant; owner agreed 2026-11-11);
 - reports count absence segments apart from work, travel and pause.
 
+### 3.2 Return trip on stop (owner, 2026-11-11)
+
+When `stop` is asked for an activity that has a TRAVEL segment followed later by a WORK
+segment, and no TRAVEL segment after its last WORK segment, the app offers three choices:
+
+1. **Avvia viaggio di ritorno**: `switch(TRAVEL, at)`; the activity stays running.
+2. **Termina l'attività**: `stop(at)`.
+3. **Termina l'attività ed aggiungi il viaggio di ritorno**: in one transaction, close the
+   open segment at `at`; add a TRAVEL segment (`source = MANUAL`) starting at `at` and
+   lasting as long as the **outbound** one (the last TRAVEL segment before the first WORK
+   segment that follows it), with the same `km_estimated` and `km_declared`; give it two
+   location samples only, its start at the outbound's last sample and its end at the
+   outbound's first sample (start and arrival swapped, no intermediate points; none when
+   the outbound has no samples); then close the activity with `closed_utc_ms = now`.
+
+The return's end may lie in the future: it is a declared estimate, allowed beyond the
+60 minutes of 4.1, so choice 3 is offered only when times are editable (decided by the
+assistant). With saving rounded times on, `at` is rounded as a stop and the return keeps the
+outbound's exact duration. The same three choices replace today's "return travel" option
+of the stop sheet.
+
 ## 4. Times
 
 ### 4.1 Closing in the future
@@ -232,6 +253,18 @@ migration a node's first sync is a full realignment: the server's version wins f
 migrated record; changes made after the migration are pushed as usual. Reimporting a
 phone's data on the server is the fallback (owner, 2026-11-11).
 
+### 6.1 Restoring an older backup
+
+A backup of any earlier version (DB ≤ 21) is restored as a migration: `DatabaseBackup`
+already accepts older schemas and Room migrates them on open, so the 21 → 22 migration
+runs on the restored file exactly as on an upgrade. After it the restored data are
+treated as freshly migrated: the next sync is the full realignment above. Interchange
+files of version 1 follow the same function (section 6). The server's own backups (SQLite
+file or PostgreSQL dump) are restored by Django's migrations, the data migration included.
+Tests: a v21 backup zip restored into the new app; a v20 one (two migrations in a row).
+
+### 6.2 Wire and interchange
+
 Wire 3, `entry` record: drops `todoUid`; adds `kind`, `deletedUtcMs`, `closedUtcMs`,
 `externalKey`, `dueDate`, `dueTimeMin`, `planDate`, `planStartMin`, `durationMin`,
 `priority`, `absenceKind`; `status` takes the new values. `segment` adds `planned`.
@@ -268,7 +301,9 @@ migration function.
 
 ## 9. Versions
 
-App, web, library, cli, tui, desktop, doc: **1.0.0** (betas `v1.0.0-beta-N`). Room
+App, web, library, cli, tui, desktop, doc: **1.0.0**. The first release is the pre-release
+`v1.0.0-alfa-1` (Debian `1.0.0~alfa-1-1`; the update check treats it as a beta), then
+betas `v1.0.0-beta-N`. Room
 `VERSION = 22`, wire `SCHEMA = 3` with `WINDOW` reset (no older schema accepted),
 interchange `VERSION = 2`. Branch `feature/activity-1.0` in every repository, merged into
 `next` and then `main` at the release.
