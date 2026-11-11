@@ -55,7 +55,7 @@ build:
   extends: .android
   stage: build
   rules:
-    - if: $TESTVM
+    - if: $TESTVM || $CI_COMMIT_BRANCH =~ /^testvm\//
       when: never
     - if: $CI_COMMIT_TAG =~ /^v[0-9]/
       when: never
@@ -85,7 +85,7 @@ apk:
   extends: .android
   stage: package
   rules:
-    - if: $TESTVM
+    - if: $TESTVM || $CI_COMMIT_BRANCH =~ /^testvm\//
       when: never
     - if: $CI_COMMIT_TAG =~ /^v[0-9]/
   interruptible: false
@@ -112,7 +112,7 @@ release:
   stage: release
   image: alpine:3.22
   rules:
-    - if: $TESTVM
+    - if: $TESTVM || $CI_COMMIT_BRANCH =~ /^testvm\//
       when: never
     - if: $CI_COMMIT_TAG =~ /^v[0-9]/
   interruptible: false
@@ -163,7 +163,7 @@ manifest:
     - job: apk
       artifacts: true
   rules:
-    - if: $TESTVM
+    - if: $TESTVM || $CI_COMMIT_BRANCH =~ /^testvm\//
       when: never
     - if: $CI_COMMIT_TAG =~ /^v[0-9]/
   interruptible: false
@@ -194,7 +194,7 @@ manifest:
         '{branch:$branch, commit_message:$msg, content:$content}' |
         curl --fail-with-body -sS -X "$method" --header "PRIVATE-TOKEN: $MANIFEST_PUSH_TOKEN" --header "Content-Type: application/json" --data @- "$API"
 
-# ---- test VM runner (tag testvm, the owner's test VM): a pipeline started with the variable TESTVM=1 runs
+# ---- test VM runner (tag testvm, the owner's test VM): a pipeline started with the variable TESTVM=1, or on a branch testvm/*, runs
 # ---- only the jobs below; every other job has "if: $TESTVM / when: never" first in its rules.
 # ---- Images are built by hand on the VM (activitytrack-doc agents/testvm-ci.md).
 testvm:
@@ -202,7 +202,7 @@ testvm:
   tags: [testvm]
   image: activitytrack/android:37
   rules:
-    - if: $TESTVM
+    - if: $TESTVM || $CI_COMMIT_BRANCH =~ /^testvm\//
   timeout: 40m
   variables:
     # the SDK is in the image; the Gradle home is a volume of the runner (/root/.gradle), shared by the jobs
