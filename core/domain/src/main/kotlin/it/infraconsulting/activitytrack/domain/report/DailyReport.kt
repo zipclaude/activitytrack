@@ -56,7 +56,8 @@ object DailyReport {
 		val active = HashMap<LocalDate, MutableList<Interval>>()
 
 		for (t in timelines) {
-			val parts = DayAttribution.attribute(t, zone, now, policy)
+			/* absence segments (activity model 1.0) are neither work, travel nor pause: reported apart */
+			val parts = DayAttribution.attribute(t, zone, now, policy).filter { it.kind != SegmentKind.ABSENCE }
 			for ((day, dayParts) in parts.groupBy { it.day }.toSortedMap()) {
 				val work = sum(dayParts.filter { it.kind == SegmentKind.WORK }.map { it.interval })
 				val travel = sum(dayParts.filter { it.kind == SegmentKind.TRAVEL }.map { it.interval })

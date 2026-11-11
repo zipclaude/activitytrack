@@ -35,7 +35,7 @@ class TrackingMonitor(private val context: Context, private val container: AppCo
 			when (seg.kind) {
 				SegmentKind.WORK -> checkMovement(seg, settings.movementThresholdM.toDouble())
 				SegmentKind.TRAVEL -> checkArrival(seg, settings.stationaryRadiusM.toDouble(), settings.stationaryMin * 60_000L)
-				SegmentKind.PAUSE -> {}
+				SegmentKind.PAUSE, SegmentKind.ABSENCE -> {}
 			}
 		}
 	}

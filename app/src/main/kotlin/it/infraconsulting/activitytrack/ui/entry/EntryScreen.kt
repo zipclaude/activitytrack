@@ -504,6 +504,7 @@ private fun SegmentBadge(kind: SegmentKind) {
 			SegmentKind.WORK -> EntryCommand.WORK
 			SegmentKind.PAUSE -> EntryCommand.PAUSE
 			SegmentKind.TRAVEL -> EntryCommand.TRAVEL
+			SegmentKind.ABSENCE -> return	/* activity model 1.0: no command opens it */
 		},
 	) ?: return
 	Box(Modifier.size(32.dp).background(style.container, CircleShape), contentAlignment = Alignment.Center) {
@@ -785,6 +786,7 @@ private fun kindLabel(k: SegmentKind) = stringResource(
 		SegmentKind.WORK -> R.string.cmd_work
 		SegmentKind.TRAVEL -> R.string.cmd_travel
 		SegmentKind.PAUSE -> R.string.cmd_pause
+		SegmentKind.ABSENCE -> R.string.todo_absence
 	},
 )
 

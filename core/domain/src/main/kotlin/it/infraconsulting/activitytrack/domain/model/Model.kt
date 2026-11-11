@@ -17,6 +17,7 @@ enum class SegmentKind {
 	WORK,
 	TRAVEL,
 	PAUSE,
+	ABSENCE,	/* activity model 1.0: only in ABSENCE activities, never counts as work, travel or pause */
 }
 
 /* Where the work is done: company site, client site, home, elsewhere. */

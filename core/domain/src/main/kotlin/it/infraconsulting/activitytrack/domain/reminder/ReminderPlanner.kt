@@ -117,7 +117,7 @@ class ReminderPlanner(
 					if (config.maxConfirmations == 0 || e.unanswered < config.maxConfirmations)
 						out += Reminder.Confirm(e.id, base + config.confirmInterval.multipliedBy(e.unanswered + 1L))
 				SegmentKind.PAUSE -> out += Reminder.Pause(e.id, outsideLunch(base + config.pauseInterval))
-				null -> {}
+				SegmentKind.ABSENCE, null -> {}	/* an absence segment is never open */
 			}
 		}
 		summary(lastSummaryDay, now)?.let { out += it }

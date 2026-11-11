@@ -31,6 +31,15 @@ class DailyReportTest {
 	private val now = at(d2.plusDays(5), 12, 0)
 
 	@Test
+	fun absenceSegmentsAreNotWorkTravelOrPause() {
+		val absence = EntryTimeline(1, listOf(seg(SegmentKind.ABSENCE, d1, 8, 30, d1, 17, 30)))
+		val work = EntryTimeline(2, listOf(seg(WORK, d1, 18, 0, d1, 19, 0)))
+		val days = DailyReport.build(listOf(absence, work), zone, now)
+		assertEquals(listOf(2L), days.single().lines.map { it.entryId })
+		assertEquals(min(60), days.single().solar)
+	}
+
+	@Test
 	fun nightEndingBeforeCutoffStaysOnStartDay() {
 		val t = EntryTimeline(1, listOf(seg(WORK, d1, 22, 0, d2, 4, 30)))
 		val days = DailyReport.build(listOf(t), zone, now)

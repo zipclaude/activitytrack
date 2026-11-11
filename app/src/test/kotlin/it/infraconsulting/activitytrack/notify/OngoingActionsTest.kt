@@ -11,7 +11,7 @@ class OngoingActionsTest {
 	/* every action offered on the notification must be legal for the state machine */
 	@Test
 	fun actionsAreLegalTransitions() {
-		for (mode in SegmentKind.entries) {
+		for (mode in SegmentKind.entries - SegmentKind.ABSENCE) {	/* an absence segment is never open */
 			val actions = ongoingActions(mode)
 			assertTrue(actions.isNotEmpty())
 			assertTrue(actions.size <= 3, "notifications show at most 3 actions")

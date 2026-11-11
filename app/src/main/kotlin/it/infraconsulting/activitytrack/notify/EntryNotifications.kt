@@ -54,7 +54,7 @@ fun ongoingActions(mode: SegmentKind?): List<EntryCommand> = when (mode) {
 	SegmentKind.WORK -> listOf(EntryCommand.PAUSE, EntryCommand.TRAVEL, EntryCommand.STOP)
 	SegmentKind.TRAVEL -> listOf(EntryCommand.WORK, EntryCommand.PAUSE, EntryCommand.STOP)
 	SegmentKind.PAUSE -> listOf(EntryCommand.WORK, EntryCommand.STOP)
-	null -> emptyList()
+	SegmentKind.ABSENCE, null -> emptyList()
 }
 
 object EntryNotifications {
