@@ -230,8 +230,15 @@ def migrate(rows, zone="Europe/Rome"):
 		if epoch_day in days_off:
 			return []
 		dow = _day(epoch_day).isoweekday()
-		out = []
+		# windows that overlap or touch are merged first, as the app's AbsencePlanner does
+		merged = []
 		for a, b in sorted(schedule.get(dow, [])):
+			if merged and a <= merged[-1][1]:
+				merged[-1] = (merged[-1][0], max(merged[-1][1], b))
+			else:
+				merged.append((a, b))
+		out = []
+		for a, b in merged:
 			cur = a
 			for la, lb in sorted(lunch.get(dow, [])):
 				if lb <= cur or la >= b:
