@@ -835,6 +835,24 @@ class RepositoryTest {
 		assertEquals(Reason.NOT_ALLOWED, reason { entries.tick(todo) })
 	}
 
+	/* the Home "Chiuse" tab: a ticked task has no segment end, it is listed by when it was closed; untick takes it out */
+	@Test
+	fun tickedTasksAreListedByClosingTime() = runBlocking<Unit> {
+		val from = clock.millis() - 1_000
+		val first = entries.saveTodo(null, TodoRequest(acme, activity = "First"))
+		val second = entries.saveTodo(null, TodoRequest(acme, activity = "Second"))
+		val untouched = entries.saveTodo(null, TodoRequest(acme, activity = "Untouched"))
+		entries.tick(first)
+		clock.advance(60)
+		entries.tick(second)
+		assertEquals(listOf(second, first), entries.tickedSince(from, 10).first().map { it.id })
+		assertEquals(emptyList(), entries.tickedSince(clock.millis() + 1, 10).first())
+		assertEquals(listOf(second), entries.tickedSince(from, 1).first().map { it.id })
+		entries.untick(second)
+		assertEquals(listOf(first), entries.tickedSince(from, 10).first().map { it.id })
+		assertEquals("TODO", state(untouched))
+	}
+
 	/* 4.1, 4.2: rounded stored times and closing up to 60 minutes ahead, only with editable times */
 	@Test
 	fun roundedTimesAndFutureClose() = runBlocking<Unit> {

@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.ui.common.Undo
+import it.infraconsulting.activitytrack.ui.common.pulledBackNotices
 import kotlinx.coroutines.flow.collectLatest
 import it.infraconsulting.activitytrack.policy.PolicyLoader
 import it.infraconsulting.activitytrack.ui.start.CallPrefill
@@ -218,12 +219,16 @@ private fun Navigator(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 	}
 }
 
-/* The "Annulla" snackbar of every screen (issue #97), above the bottom bar. */
+/* The "Annulla" snackbar of every screen (issue #97) and the pulled-back notice (ACTIVITY-MODEL.md 4.1), above the bottom bar. */
 @Composable
 private fun UndoHost(modifier: Modifier) {
 	val host = remember { SnackbarHostState() }
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
+	val container = (context.applicationContext as ActivityTrackApp).container
+	LaunchedEffect(Unit) {
+		pulledBackNotices(context, container.entries, container.masterData).collect { host.showSnackbar(it) }
+	}
 	LaunchedEffect(Unit) {
 		Undo.events.collectLatest { e ->
 			val result = host.showSnackbar(

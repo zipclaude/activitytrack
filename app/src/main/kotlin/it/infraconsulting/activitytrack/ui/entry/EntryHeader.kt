@@ -108,7 +108,8 @@ internal fun DetailHeader(
 					val name = stringResource(displayName(shown.state))
 					StatePill(displayStyle(shown.state), shown.since?.let { stringResource(R.string.since_fmt, name, sinceText(it, zone, now)) } ?: name)
 				}
-				val total = if (e.kind == ActivityKind.ABSENCE) sum(SegmentKind.ABSENCE) else sum(SegmentKind.WORK) + sum(SegmentKind.TRAVEL)
+				/* work time only: the total of work (owner: "il tempo totale di lavoro"), the travel and pause are in the line below */
+				val total = if (e.kind == ActivityKind.ABSENCE) sum(SegmentKind.ABSENCE) else sum(SegmentKind.WORK)
 				Text(hmOf(total), style = MaterialTheme.typography.titleLarge)
 			}
 			/* a closed activity ending ahead (4.1): its end highlighted */

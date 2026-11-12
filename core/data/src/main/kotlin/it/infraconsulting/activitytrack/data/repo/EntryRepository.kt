@@ -89,8 +89,6 @@ class EntryRepository(
 	val openEntries = dao.observeOpenEntries()
 	val openEntrySegments = dao.observeOpenEntrySegments()
 	val openEntryTags = dao.observeOpenEntryTags()
-	val recentClosed = dao.observeRecentClosed(RECENT_CLOSED)
-	val recentClosedSegments = dao.observeRecentClosedSegments(RECENT_CLOSED)
 	val clientLastUse = dao.observeClientLastUse()
 
 	/* TODO activities not deleted, by plan, due date and priority */
@@ -111,6 +109,9 @@ class EntryRepository(
 	fun closedEntriesSince(fromUtcMs: Long, limit: Int) = dao.observeClosedSince(fromUtcMs, limit)
 	fun closedSegmentsSince(fromUtcMs: Long, limit: Int) = dao.observeClosedSegmentsSince(fromUtcMs, limit)
 	fun closedTagsSince(fromUtcMs: Long, limit: Int) = dao.observeClosedTagsSince(fromUtcMs, limit)
+	/* the ticked tasks of the same tab (closed without a segment), newest closed first */
+	fun tickedSince(fromUtcMs: Long, limit: Int) = dao.observeTickedSince(fromUtcMs, limit)
+	fun tickedTagsSince(fromUtcMs: Long, limit: Int) = dao.observeTickedTagsSince(fromUtcMs, limit)
 
 	fun entry(id: Long) = dao.observeEntry(id)
 	suspend fun find(id: Long): TimeEntryEntity? = dao.entry(id)
@@ -1225,8 +1226,6 @@ class EntryRepository(
 		const val MIN_LENGTH_MS = 60_000L
 		/* the end of a running segment when checking overlaps: it goes on */
 		const val RUNNING_END = Long.MAX_VALUE
-		/* the most Home shows (compact display) */
-		const val RECENT_CLOSED = 3
 		/* the longest absence: a year (issue #158) */
 		const val MAX_ABSENCE_DAYS = 366
 	}

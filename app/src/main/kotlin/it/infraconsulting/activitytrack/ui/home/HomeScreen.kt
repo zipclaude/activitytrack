@@ -25,8 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -91,9 +89,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/* A notice for the user: an earlier activity's end moved back to where another one started (ACTIVITY-MODEL.md 4.1). */
-class PulledNotice(val count: Int, val title: String?, val newEndUtcMs: Long, val zoneId: String)
-
 /* The activities the creation buttons make: [TODO] and [ABSENCE] open their dialogs, [WORK] the start dialog; Viaggio starts at once. */
 enum class CreateMode { TODO, WORK, ABSENCE }
 
@@ -150,8 +145,8 @@ class HomeViewModel(
 
 	/*
 	 * The closed activities: those with their last segment ending in the last
-	 * 31 days (the largest window offered), and the last few without any
-	 * segment (a task ticked off). The window and the company/tag filters are
+	 * 31 days (the largest window offered), and the tasks ticked off in the
+	 * same period (closed without any segment). The window and the company/tag filters are
 	 * applied on top of it.
 	 */
 	private val closedFrom = System.currentTimeMillis() - 31L * 24 * 60 * 60 * 1000
@@ -160,15 +155,13 @@ class HomeViewModel(
 			entries.closedEntriesSince(closedFrom, CLOSED_LIMIT), entries.closedSegmentsSince(closedFrom, CLOSED_LIMIT),
 			entries.closedTagsSince(closedFrom, CLOSED_LIMIT), ::Triple,
 		),
-		combine(entries.recentClosed, entries.recentClosedSegments, ::Pair),
+		combine(entries.tickedSince(closedFrom, CLOSED_LIMIT), entries.tickedTagsSince(closedFrom, CLOSED_LIMIT), ::Pair),
 		master.clients, master.companies,
-	) { (list, segs, tags), (recent, recentSegs), clients, companies ->
+	) { (list, segs, tags), (ticked, tickedTags), clients, companies ->
 		val cl = clients.associateBy { it.id }
 		val co = companies.associateBy { it.id }
 		val bySeg = segs.groupBy { it.entryId }
-		val byTag = tags.groupBy { it.entryId }
-		val withSegments = recentSegs.map { it.entryId }.toSet()
-		val ticked = recent.filter { it.id !in withSegments && it.id !in bySeg }
+		val byTag = (tags + tickedTags).groupBy { it.entryId }
 		(list + ticked).map { e ->
 			EntryCard(
 				e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(),
@@ -212,8 +205,10 @@ class HomeViewModel(
 		entries.start(StartRequest(SegmentKind.TRAVEL, clientId = null, companyId = p.companyId, locationKind = p.locationKind), emptyMap())
 	}
 
-	/* a to-do ticked off (no way back in the repository yet: no "Annulla") */
-	fun tick(e: TimeEntryEntity) = run { entries.tick(e.id) }
+	/* a to-do ticked off, "Annulla" puts it back to do (untick) */
+	fun tick(e: TimeEntryEntity, title: String) = run({
+		Undo.post(UndoEvent(R.string.undo_todo_done, title) { entries.untick(e.id) })
+	}) { entries.tick(e.id) }
 
 	fun postpone(e: TimeEntryEntity, minutes: Int, title: String) = run({
 		Undo.post(UndoEvent(R.string.undo_todo_postponed, title) { entries.putBack(e) })
@@ -223,14 +218,6 @@ class HomeViewModel(
 	fun delete(e: TimeEntryEntity, title: String) = run({
 		Undo.post(UndoEvent(R.string.undo_todo_ignored, title) { entries.restore(e.id) })
 	}) { entries.delete(e.id) }
-
-	/* an earlier activity's end moved back (4.1): what the notice says */
-	val pulled: Flow<PulledNotice> = entries.pulledBack.map { list ->
-		val first = list.first()
-		val e = entries.find(first.entryId)
-		val client = e?.clientId?.let { id -> master.clients.first().firstOrNull { it.id == id }?.name }
-		PulledNotice(list.size, client ?: e?.activity, first.newEndUtcMs, e?.zoneId ?: ZoneId.systemDefault().id)
-	}
 
 	companion object {
 		private const val CLOSED_LIMIT = 200
@@ -325,23 +312,11 @@ fun HomeScreen(
 	val rows = RowActions(
 		open = onOpenEntry,
 		startTodo = onStartTodo,
-		tick = vm::tick,
+		tick = { e -> vm.tick(e, e.activity.orEmpty().ifBlank { fallback }) },
 		postpone = { e -> vm.postpone(e, snooze, e.activity.orEmpty().ifBlank { fallback }) },
 		delete = { e -> vm.delete(e, e.activity.orEmpty().ifBlank { fallback }) },
 		reopen = askReopen,
 	)
-
-	/* the pulled-back notice (4.1) */
-	val snackbar = remember { SnackbarHostState() }
-	val context = LocalContext.current
-	LaunchedEffect(vm) {
-		vm.pulled.collect { n ->
-			val end = Instant.ofEpochMilli(n.newEndUtcMs).atZone(ZoneId.of(n.zoneId)).toLocalTime().let { formatMin(it.hour * 60 + it.minute) }
-			val message = if (n.count > 1) context.getString(R.string.home_pulled_back_many, n.count)
-				else context.getString(R.string.home_pulled_back, n.title ?: context.getString(R.string.entry_no_client), end)
-			snackbar.showSnackbar(message)
-		}
-	}
 
 	ScreenScaffold(
 		title = stringResource(R.string.app_name),
@@ -445,7 +420,6 @@ fun HomeScreen(
 					}
 				}
 			}
-			SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
 		}
 	}
 }
