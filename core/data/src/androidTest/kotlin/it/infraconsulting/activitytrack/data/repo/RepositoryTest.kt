@@ -111,6 +111,29 @@ class RepositoryTest {
 		assertEquals(listOf(750 to 840), master.lunchBreaks.first().map { it.startMin to it.endMin })
 	}
 
+	/* the creation dialog's extras (ACTIVITY-MODEL.md 3): notes, plugin fields, references, segments before the start */
+	@Test
+	fun startKeepsTheDialogsExtras() = runBlocking<Unit> {
+		val now = clock.millis()
+		val id = entries.start(
+			StartRequest(
+				SegmentKind.WORK, client, notes = " asked by phone ", pluginFields = "{\"k\":\"v\"}",
+				earlier = listOf(SegmentInput(SegmentKind.TRAVEL, now - 3_600_000, now - 1_800_000)),
+				externalRefs = listOf("TCK-1", " ", "TCK-2"),
+			),
+		)
+		val e = db.entryDao().entry(id)!!
+		assertEquals("asked by phone", e.notes)
+		assertEquals("{\"k\":\"v\"}", e.pluginFields)
+		assertEquals(listOf("TCK-1", "TCK-2"), entries.externalRefValues(id))
+		assertEquals(listOf(SegmentKind.TRAVEL, SegmentKind.WORK), db.entryDao().segments(id).map { it.kind })
+		/* a segment after the start is refused */
+		assertEquals(
+			Reason.INVALID_SEGMENT,
+			reason { entries.start(StartRequest(SegmentKind.WORK, client, earlier = listOf(SegmentInput(SegmentKind.PAUSE, now + 3_600_000, now + 7_200_000)))) },
+		)
+	}
+
 	@Test
 	fun clientCompanyLockedOnceUsed() = runBlocking<Unit> {
 		entries.start(StartRequest(SegmentKind.WORK, client))

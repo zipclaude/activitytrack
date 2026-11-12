@@ -897,4 +897,21 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="lists_absence_kind_sick">Krankheit</string>
   <string name="set_round_stored">Gerundete Werte speichern</string>
   <string name="set_round_stored_hint">Die Schaltflächen Start, Wechsel, Stopp und Wiedereröffnen speichern gerundete Zeiten; von Hand eingegebene Zeiten bleiben exakt. Braucht frei änderbare Zeiten.</string>
+  <!-- ui-create -->
+  <string name="create_more_info">Weitere Informationen</string>
+  <string name="create_external_refs">Externe Referenzen (eine pro Zeile)</string>
+  <string name="create_segments">Abschnitte</string>
+  <string name="create_segments_hint">Noch kein Abschnitt: mit der Schaltfläche einen hinzufügen.</string>
+  <string name="create_segments_planned_hint">Geplante Abschnitte sind gestrichelt und werden nie mitgezählt.</string>
+  <string name="create_add_segment">%1$s hinzufügen</string>
+  <string name="create_absence_title">Neue Abwesenheit</string>
+  <string name="create_absence_kind_absence">Abwesenheit</string>
+  <string name="create_absence_kind_holiday">Urlaub</string>
+  <string name="create_absence_kind_leave">Freistellung</string>
+  <string name="create_absence_kind_sick">Krankheit</string>
+  <string name="create_absence_from">Von</string>
+  <string name="create_absence_to">Bis (optional)</string>
+  <string name="create_absence_times">Uhrzeit (optional)</string>
+  <string name="create_absence_hint_days">Ohne Uhrzeit: die Arbeitszeit jedes Arbeitstags.</string>
+  <string name="create_absence_hint_times">Mit Uhrzeit: dieselben Stunden an jedem Tag des Zeitraums.</string>
 </resources>

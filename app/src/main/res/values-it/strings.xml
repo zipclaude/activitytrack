@@ -898,4 +898,21 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="lists_absence_kind_sick">Malattia</string>
   <string name="set_round_stored">Salva i valori arrotondati</string>
   <string name="set_round_stored_hint">I pulsanti Avvia, Cambia, Termina e Riapri salvano orari arrotondati; gli orari digitati a mano restano esatti. Richiede orari liberamente modificabili.</string>
+  <!-- ui-create -->
+  <string name="create_more_info">Altre informazioni</string>
+  <string name="create_external_refs">Riferimenti esterni (uno per riga)</string>
+  <string name="create_segments">Tratti</string>
+  <string name="create_segments_hint">Nessun tratto: aggiungine uno con il pulsante.</string>
+  <string name="create_segments_planned_hint">I tratti previsti sono tratteggiati e non vengono mai conteggiati.</string>
+  <string name="create_add_segment">Aggiungi %1$s</string>
+  <string name="create_absence_title">Nuova assenza</string>
+  <string name="create_absence_kind_absence">Assenza</string>
+  <string name="create_absence_kind_holiday">Ferie</string>
+  <string name="create_absence_kind_leave">Permesso</string>
+  <string name="create_absence_kind_sick">Malattia</string>
+  <string name="create_absence_from">Dal</string>
+  <string name="create_absence_to">Al (facoltativo)</string>
+  <string name="create_absence_times">Orario (facoltativo)</string>
+  <string name="create_absence_hint_days">Senza orario: l\'orario di lavoro di ogni giorno lavorativo.</string>
+  <string name="create_absence_hint_times">Con orario: le stesse ore in ogni giorno dell\'intervallo.</string>
 </resources>

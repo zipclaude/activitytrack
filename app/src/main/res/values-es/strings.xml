@@ -898,4 +898,21 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="lists_absence_kind_sick">Baja por enfermedad</string>
   <string name="set_round_stored">Guardar los valores redondeados</string>
   <string name="set_round_stored_hint">Los botones Iniciar, Cambiar, Terminar y Reabrir guardan horas redondeadas; las horas escritas a mano quedan exactas. Requiere horarios editables libremente.</string>
+  <!-- ui-create -->
+  <string name="create_more_info">Más información</string>
+  <string name="create_external_refs">Referencias externas (una por línea)</string>
+  <string name="create_segments">Tramos</string>
+  <string name="create_segments_hint">Ningún tramo todavía: añade uno con el botón.</string>
+  <string name="create_segments_planned_hint">Los tramos previstos van punteados y nunca se cuentan.</string>
+  <string name="create_add_segment">Añadir %1$s</string>
+  <string name="create_absence_title">Nueva ausencia</string>
+  <string name="create_absence_kind_absence">Ausencia</string>
+  <string name="create_absence_kind_holiday">Vacaciones</string>
+  <string name="create_absence_kind_leave">Permiso</string>
+  <string name="create_absence_kind_sick">Enfermedad</string>
+  <string name="create_absence_from">Desde</string>
+  <string name="create_absence_to">Hasta (opcional)</string>
+  <string name="create_absence_times">Horario (opcional)</string>
+  <string name="create_absence_hint_days">Sin horario: el horario de trabajo de cada día laborable.</string>
+  <string name="create_absence_hint_times">Con horario: las mismas horas cada día del rango.</string>
 </resources>

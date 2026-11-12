@@ -181,6 +181,8 @@ class EntryRepository(
 				mode = t.next.mode,
 				locality = req.locality?.trim()?.ifEmpty { null },
 				locationKind = req.locationKind,
+				notes = req.notes?.trim()?.ifEmpty { null },
+				pluginFields = req.pluginFields,
 				zoneId = zone,
 				lastConfirmedUtcMs = now,
 				plannedEndUtcMs = req.endUtcMs?.takeIf { it > now },
@@ -189,9 +191,30 @@ class EntryRepository(
 			),
 			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = start, zoneId = zone),
 		)
-		verify(id)
+		addExtras(id, req, start)
+		verifyOrOverlap(id)
 		afterStart(id, req.mode, start)
 		return id
+	}
+
+	/* what a creation dialog adds to the new activity: segments before the start, references */
+	private suspend fun addExtras(id: Long, req: StartRequest, startMs: Long) {
+		val zone = clock.zone.id
+		val now = clock.millis()
+		for (s in req.earlier) {
+			checkSegment(s, now, minOf(startMs, now))
+			if (s.kind == SegmentKind.ABSENCE)
+				throw ValidationException(Reason.INVALID_SEGMENT, "absence segment in an activity")
+			dao.insertSegment(
+				SegmentEntity(
+					entryId = id, kind = s.kind, startUtcMs = s.startUtcMs, endUtcMs = s.endUtcMs, zoneId = zone, source = SegmentSource.MANUAL,
+					kmDeclared = s.kmDeclared?.takeIf { s.kind == SegmentKind.TRAVEL },
+				),
+			)
+		}
+		val have = dao.externalRefs(listOf(id)).map { it.value }.toSet()
+		for (r in req.externalRefs.map { it.trim() }.filter { it.isNotEmpty() && it !in have })
+			dao.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(r), value = r))
 	}
 
 	/* a TODO activity started from the start dialog: its details as chosen there, then start(kind, at) */
@@ -212,9 +235,16 @@ class EntryRepository(
 				locality = req.locality?.trim()?.ifEmpty { null } ?: e.locality,
 				locationKind = req.locationKind ?: e.locationKind,
 				plannedEndUtcMs = req.endUtcMs?.takeIf { it > clock.millis() },
+				notes = req.notes?.trim()?.ifEmpty { null } ?: e.notes,
+				pluginFields = req.pluginFields ?: e.pluginFields,
 			),
 		)
 		command(id, ActivityCommand.Start(req.mode, at(req.startUtcMs)), exact = req.startUtcMs != null)
+		if (req.earlier.isNotEmpty() || req.externalRefs.isNotEmpty()) {
+			val opened = dao.segments(id).firstOrNull { !it.planned && it.endUtcMs == null }?.startUtcMs ?: clock.millis()
+			addExtras(id, req, opened)
+			verifyOrOverlap(id)
+		}
 		return id
 	}
 

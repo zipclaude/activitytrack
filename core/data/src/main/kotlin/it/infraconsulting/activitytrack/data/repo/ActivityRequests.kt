@@ -35,6 +35,13 @@ data class StartRequest(
 	val locationKind: LocationKind? = null,
 	/* the TODO activity to start (a to-do before 1.0) */
 	val todoId: Long? = null,
+	val notes: String? = null,
+	/* the management system's fields, one JSON object */
+	val pluginFields: String? = null,
+	/* closed segments before the start ("Tratti" of the creation dialog); each ends at or before it */
+	val earlier: List<SegmentInput> = emptyList(),
+	/* external references, one row each */
+	val externalRefs: List<String> = emptyList(),
 )
 
 /* A segment typed by hand: a past activity's, or a planned one of a TODO activity. */

@@ -909,4 +909,21 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="lists_absence_kind_sick">Sick leave</string>
   <string name="set_round_stored">Save rounded values</string>
   <string name="set_round_stored_hint">The Start, Switch, Stop and Reopen buttons store rounded times; times typed by hand stay exact. Needs freely editable times.</string>
+  <!-- ui-create -->
+  <string name="create_more_info">More information</string>
+  <string name="create_external_refs">External references (one per line)</string>
+  <string name="create_segments">Segments</string>
+  <string name="create_segments_hint">No segment yet: add one with the button.</string>
+  <string name="create_segments_planned_hint">Planned segments are drawn dashed and never counted.</string>
+  <string name="create_add_segment">Add %1$s</string>
+  <string name="create_absence_title">New absence</string>
+  <string name="create_absence_kind_absence">Absence</string>
+  <string name="create_absence_kind_holiday">Holiday</string>
+  <string name="create_absence_kind_leave">Leave</string>
+  <string name="create_absence_kind_sick">Sick leave</string>
+  <string name="create_absence_from">From</string>
+  <string name="create_absence_to">To (optional)</string>
+  <string name="create_absence_times">Time (optional)</string>
+  <string name="create_absence_hint_days">Without a time: the working hours of each working day.</string>
+  <string name="create_absence_hint_times">With a time: the same hours on each day of the range.</string>
 </resources>
