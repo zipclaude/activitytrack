@@ -159,12 +159,17 @@ class EntryRepository(
 	/* "Viaggio": an anonymous activity travelling from now (or [atUtcMs]). */
 	suspend fun startTravel(atUtcMs: Long? = null): Long = start(StartRequest(SegmentKind.TRAVEL, null, startUtcMs = atUtcMs))
 
-	private suspend fun startNew(req: StartRequest): Long {
+	/*
+	 * [roundedAhead]: the start is an instant the app rounded (travel from
+	 * work, 4.2), which may lie ahead of now by less than a quantum; a
+	 * start the user typed may not.
+	 */
+	private suspend fun startNew(req: StartRequest, roundedAhead: Boolean = false): Long {
 		if (req.clientId == null && req.mode != SegmentKind.TRAVEL)
 			throw ValidationException(Reason.CLIENT_REQUIRED)
 		val companyId = companyFor(req.companyId, req.clientId)
 		val now = clock.millis()
-		if (req.startUtcMs != null && req.startUtcMs > now)
+		if (req.startUtcMs != null && req.startUtcMs > now && !roundedAhead)
 			throw ValidationException(Reason.FUTURE_TIME)
 		val rules = times()
 		val start = req.startUtcMs ?: if (rules.rounds) roundStart(req.mode, now, null, rules) else now
@@ -188,7 +193,8 @@ class EntryRepository(
 				zoneId = zone,
 				lastConfirmedUtcMs = now,
 				plannedEndUtcMs = req.endUtcMs?.takeIf { it > now },
-				createdUtcMs = now,
+				/* never before its start: born running (wasTodo) */
+				createdUtcMs = maxOf(now, start),
 				updatedUtcMs = now,
 			),
 			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = start, zoneId = zone),
@@ -523,7 +529,11 @@ class EntryRepository(
 			}
 			is TravelFromWork.StopAndTravel -> {
 				applyTransition(e, decision.stop, null)
-				startNew(StartRequest(SegmentKind.TRAVEL, null, startUtcMs = at, companyId = e.companyId.takeIf { e.clientId == null }))
+				/* the same instant for both, even when the rounded switch lies a little ahead of now */
+				startNew(
+					StartRequest(SegmentKind.TRAVEL, null, startUtcMs = at, companyId = e.companyId.takeIf { e.clientId == null }),
+					roundedAhead = atUtcMs == null,
+				)
 			}
 		}
 	}

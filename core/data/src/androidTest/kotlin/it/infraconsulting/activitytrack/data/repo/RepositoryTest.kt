@@ -893,6 +893,22 @@ class RepositoryTest {
 		assertEquals(Reason.FUTURE_TIME, reason { repo.stop(c, clock.millis() + 60_000) })
 	}
 
+	/* travel from work, "yes", with rounded times: the rounded switch may lie ahead of now; both activities share it */
+	@Test
+	fun travelFromWorkWithRoundedTimesAhead() = runBlocking<Unit> {
+		val repo = EntryRepository(db, clock, times = { TimeRules(editableTimes = true, roundStoredTimes = true) })
+		clock.now = Instant.parse("2026-10-14T08:00:00Z")
+		val id = repo.start(StartRequest(SegmentKind.WORK, client, activity = "x"))
+		/* nearest multiple of 5 (travel) to 09:03 is 09:05 */
+		clock.now = Instant.parse("2026-10-14T09:03:00Z")
+		val travel = repo.travelFromWork(id, workDone = true)
+		val at = Instant.parse("2026-10-14T09:05:00Z").toEpochMilli()
+		assertEquals(at, db.entryDao().segments(id).single().endUtcMs)
+		assertEquals(at, db.entryDao().segments(travel).single().startUtcMs)
+		assertEquals("CLOSED", state(id))
+		assertEquals("ACTIVE", state(travel))
+	}
+
 	/* 3.2: stop with the return trip, as long as the outbound one, samples swapped */
 	@Test
 	fun stopWithReturnTrip() = runBlocking<Unit> {

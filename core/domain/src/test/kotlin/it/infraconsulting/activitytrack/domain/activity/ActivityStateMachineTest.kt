@@ -162,4 +162,17 @@ class ActivityStateMachineTest {
 		assertEquals(ActivityTransition(running(TRAVEL), closeAt = at, open = OpenSegment(TRAVEL, at)), no.switch)
 		assertFailsWith<IllegalArgumentException> { TravelFromWork.decide(running(TRAVEL), true, at, now) }
 	}
+
+	/* "yes" with rounded times (4.2): the rounded switch may lie ahead of now, one instant for both activities */
+	@Test
+	fun travelFromWorkAheadOfNow() {
+		val clock = Instant.parse("2026-11-11T09:03:00Z")
+		val rounded = InstantRounding.switch(
+			clock, java.time.Duration.ofMinutes(15), java.time.Duration.ofMinutes(5), java.time.ZoneOffset.UTC, Instant.parse("2026-11-11T08:00:00Z"),
+		)
+		assertEquals(Instant.parse("2026-11-11T09:05:00Z"), rounded)
+		val yes = assertIs<TravelFromWork.StopAndTravel>(TravelFromWork.decide(running(WORK), true, rounded, clock))
+		assertEquals(rounded, yes.stop.closeAt)
+		assertEquals(rounded, yes.travel.open?.at)
+	}
 }
