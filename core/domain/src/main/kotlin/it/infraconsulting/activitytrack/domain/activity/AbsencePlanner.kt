@@ -12,9 +12,10 @@ data class AbsenceInterval(val day: LocalDate, val index: Int, val start: Instan
 
 /*
  * The segments of an absence (3.1), one per day:
- * - with a start and an end time: those times on every day of the range
- *   (a "permesso"; days off and weekends are not skipped: the user chose
- *   the days and the times);
+ * - with a start and an end time: those times on every working day of the
+ *   range (a "permesso"); over several days the days without working hours
+ *   and the days off are skipped as below (coordinator, 2026-11-11), a
+ *   single day is taken as chosen;
  * - without: every working day of the range, covering that weekday's
  *   working hours ([schedule]) minus its lunch break, so two segments when
  *   the break splits them; days without hours and days off are skipped.
@@ -37,12 +38,20 @@ object AbsencePlanner {
 		val out = ArrayList<AbsenceInterval>()
 		var day = from
 		while (!day.isAfter(to)) {
-			val windows = if (startMin != null) listOf(startMin to endMin!!) else workingWindows(day, schedule, lunchBreaks, isDayOff)
+			val windows = when {
+				startMin == null -> workingWindows(day, schedule, lunchBreaks, isDayOff)
+				from == to || isWorkingDay(day, schedule, isDayOff) -> listOf(startMin to endMin!!)
+				else -> emptyList()
+			}
 			windows.forEachIndexed { i, (a, b) -> out += AbsenceInterval(day, i, day.atMinute(a, zone), day.atMinute(b, zone)) }
 			day = day.plusDays(1)
 		}
 		return out
 	}
+
+	/* a day with working hours that is not a day off */
+	fun isWorkingDay(day: LocalDate, schedule: List<DayWindow>, isDayOff: (LocalDate) -> Boolean): Boolean =
+		!isDayOff(day) && schedule.any { it.dayOfWeek == day.dayOfWeek.value && it.startMin < it.endMin }
 
 	/*
 	 * The working hours of [day] as (start, end) minutes, in order: the
