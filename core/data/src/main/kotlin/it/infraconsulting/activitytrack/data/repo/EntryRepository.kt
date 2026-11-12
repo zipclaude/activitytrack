@@ -346,6 +346,18 @@ class EntryRepository(
 		id
 	}
 
+	/*
+	 * "Late entry at…" of the day-start prompt: a LEAVE absence ("permesso")
+	 * from the day's first working hour to [untilMin]; at or before it nothing
+	 * was missed and nothing is recorded.
+	 */
+	suspend fun recordLateEntry(day: LocalDate, untilMin: Int) {
+		val first = schedule().filter { it.dayOfWeek == day.dayOfWeek.value }.minOfOrNull { it.startMin } ?: return
+		if (untilMin <= first)
+			return
+		createAbsence(AbsenceRequest(absenceKind = it.infraconsulting.activitytrack.domain.activity.AbsenceKind.LEAVE, fromEpochDay = day.toEpochDay(), startMin = first, endMin = untilMin))
+	}
+
 	private suspend fun schedule(): List<DayWindow> =
 		(1..7).flatMap { d -> master.scheduleOf(d).map { DayWindow(it.dayOfWeek, it.startMin, it.endMin) } }
 
@@ -1024,6 +1036,16 @@ class EntryRepository(
 		val id = dao.insertExternalRef(ExternalRefEntity(entryId = entryId, kind = ExternalRefClassifier.classify(v), value = v))
 		dao.updateEntry(e.copy(updatedUtcMs = clock.millis()))
 		id
+	}
+
+	/* the activity's reference values, in order */
+	suspend fun externalRefValues(entryId: Long): List<String> = dao.externalRefs(listOf(entryId)).map { it.value }
+
+	/* a reference added unless the activity has it already (imports) */
+	suspend fun ensureExternalRef(entryId: Long, value: String) = db.withTransaction {
+		val v = value.trim()
+		if (v.isNotEmpty() && dao.externalRefs(listOf(entryId)).none { it.value == v })
+			addExternalRef(entryId, v)
 	}
 
 	suspend fun removeExternalRef(entryId: Long, refId: Long) = db.withTransaction {
