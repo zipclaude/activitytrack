@@ -63,6 +63,10 @@ class SyncMappingTest {
 		assertEquals("""{"service":"s1"}""", round("pluginFields", """{"service":"s1"}"""))
 		assertEquals(null, round("notes", null))
 		assertEquals(listOf("a", "b"), SyncMapping.listFromWire("tags", SyncMapping.list(listOf("b", "a"))))
+		/* a blank external key is no key (the server's rule); other blank texts stay */
+		assertEquals(null, SyncMapping.fromWire(todo.byName.getValue("externalKey"), JsonPrimitive(" ")))
+		assertEquals("K-1", SyncMapping.fromWire(todo.byName.getValue("externalKey"), JsonPrimitive("K-1")))
+		assertEquals("", SyncMapping.fromWire(todo.byName.getValue("notes"), JsonPrimitive("")))
 	}
 
 	@Test

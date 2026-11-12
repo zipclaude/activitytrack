@@ -190,11 +190,12 @@ object ActivityMigration {
 			val seen = HashSet<Pair<Long?, String>>()
 			val lose = HashSet<String>()
 			for (a in all.sortedWith(compareBy({ it.createdUtcMs }, { it.uid }))) {
-				val k = a.externalKey ?: continue
+				val k = a.externalKey?.takeIf { it.isNotBlank() } ?: continue
 				if (!seen.add(a.companyId to k))
 					lose += a.uid
 			}
-			return all.map { if (it.uid in lose) it.copy(externalKey = null) else it }
+			/* a blank key is no key (the server's rule): it would clash with every other blank one */
+			return all.map { if (it.uid in lose || it.externalKey?.isBlank() == true) it.copy(externalKey = null) else it }
 		}
 
 		/* step 1: the entry's status; closed at its last segment end, else at its last update */

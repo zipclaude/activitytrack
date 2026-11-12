@@ -198,6 +198,9 @@ object SyncMapping {
 	}
 
 	/* a wire value as the database keeps it; REF stays the uid string, resolved by the caller */
+	/* text fields where a blank value means none */
+	private val BLANK_IS_NONE = setOf("externalKey")
+
 	fun fromWire(field: WireField, value: JsonElement): Any? {
 		if (value is JsonNull) {
 			if (!field.nullable) throw WireException("${field.name}: null not allowed")
@@ -209,7 +212,8 @@ object SyncMapping {
 			else -> {
 				val p = value as? JsonPrimitive ?: bad()
 				when (field.kind) {
-					WireKind.TEXT, WireKind.REF -> if (p.isString) p.content else bad()
+					/* a blank external key is no key (the server's rule): "" would clash with every other "" */
+					WireKind.TEXT, WireKind.REF -> if (!p.isString) bad() else if (field.name in BLANK_IS_NONE && p.content.isBlank() && field.nullable) null else p.content
 					WireKind.INT, WireKind.INSTANT -> if (p.isString) bad() else p.longOrNull ?: bad()
 					WireKind.FLOAT -> if (p.isString) bad() else p.doubleOrNull ?: bad()
 					WireKind.BOOL -> if (p.isString) bad() else if (p.booleanOrNull ?: bad()) 1L else 0L

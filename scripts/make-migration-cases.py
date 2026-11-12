@@ -256,6 +256,14 @@ add(Case("external_key unique with the company: the earliest created activity ke
 		todo(2, "c36-t2", "Assorbita", external_key="K-8", company_id=2, done=1, done_utc_ms=T0 + 9000, created_utc_ms=T0 + 200),
 		todo(3, "c36-t3", "Stessa chiave", external_key="K-7", created_utc_ms=T0 + 50),
 		todo(4, "c36-t4", "Stessa chiave, dopo", external_key="K-8", company_id=1, created_utc_ms=T0 + 5)]))
+# distinct blank keys: DB 21 holds one key per company (unique index), the server any number
+add(Case("a blank external_key is no key: blank ones never clash, a real one stays",
+	time_entry=[entry(1, "c37-e1", "CLOSED", todo=3, company_id=1)],
+	segment=[seg(1, 1, L("2026-11-03", "09:00"), L("2026-11-03", "10:00"))],
+	todo=[todo(1, "c37-t1", "Chiave vuota", external_key="", company_id=1, created_utc_ms=T0 + 10),
+		todo(2, "c37-t2", "Chiave di spazi", external_key="  ", company_id=1, created_utc_ms=T0 + 20),
+		todo(3, "c37-t3", "Assorbita, vuota", external_key="\t", company_id=1, done=1, done_utc_ms=T0 + 9000, created_utc_ms=T0 + 30),
+		todo(4, "c37-t4", "Chiave vera", external_key="K-9", company_id=1, created_utc_ms=T0 + 40)]))
 
 
 def build():

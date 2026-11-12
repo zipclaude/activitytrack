@@ -1115,6 +1115,16 @@
 			"start_utc_ms": 1793692800000,
 			"uid": "c36-seg-1",
 			"zone_id": "Europe/Rome"
+		},
+		{
+			"end_utc_ms": 1793696400000,
+			"entry_uid": "c37-e1",
+			"kind": "WORK",
+			"planned": 0,
+			"source": "TRACKED",
+			"start_utc_ms": 1793692800000,
+			"uid": "c37-seg-1",
+			"zone_id": "Europe/Rome"
 		}
 	],
 	"time_entry": [
@@ -2277,6 +2287,60 @@
 			"priority": 0,
 			"status": "TODO",
 			"uid": "c36-t4",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793606401000,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Assorbita, vuota",
+			"closed_utc_ms": 1793696400000,
+			"company_id": 1,
+			"created_utc_ms": 1793606401000,
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "CLOSED",
+			"uid": "c37-e1",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793610000001,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Chiave vuota",
+			"company_id": 1,
+			"created_utc_ms": 1793606400010,
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "TODO",
+			"uid": "c37-t1",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793606401000,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Chiave di spazi",
+			"company_id": 1,
+			"created_utc_ms": 1793606400020,
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "TODO",
+			"uid": "c37-t2",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793606401000,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Chiave vera",
+			"company_id": 1,
+			"created_utc_ms": 1793606400040,
+			"external_key": "K-9",
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "TODO",
+			"uid": "c37-t4",
 			"unanswered_reminders": 0,
 			"updated_utc_ms": 1793606401000,
 			"zone_id": "Europe/Rome"
