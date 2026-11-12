@@ -263,8 +263,10 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			return r.skip("entries", x.key, "planned time without date")
 		val duration = x.durationMin?.takeIf { it in 1..TodoPlan.MAX_DURATION_MIN && planTime != null }
 			?: x.durationMin?.let { return r.skip("entries", x.key, "duration $it") }
+		/* trimmed, blank = none: the same key the lookup uses and the insert stores (unique with the company) */
+		val externalKey = x.externalKey?.trim()?.ifEmpty { null }
 		val existing = bulk.entryByUid(SyncIds.canonical(x.key))
-			?: x.externalKey?.let { entries.byExternalKey(clientId?.let { c -> master.client(c)?.companyId } ?: companyId, it) }
+			?: externalKey?.let { entries.byExternalKey(clientId?.let { c -> master.client(c)?.companyId } ?: companyId, it) }
 		if (existing != null) {
 			val diff = listOfNotNull(
 				"status".takeIf { existing.status != status },
@@ -311,7 +313,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 				notes = x.notes, zoneId = zone.id, createdUtcMs = real.minOfOrNull { it.startUtcMs } ?: now, updatedUtcMs = now,
 				deletedUtcMs = instant(x.deletedUtc),
 				closedUtcMs = if (status == ActivityStatus.CLOSED) instant(x.closedUtc) ?: real.mapNotNull { it.endUtcMs }.maxOrNull() ?: now else null,
-				externalKey = x.externalKey?.trim()?.ifEmpty { null }, dueEpochDay = due, dueTimeMin = dueTime,
+				externalKey = externalKey, dueEpochDay = due, dueTimeMin = dueTime,
 				planEpochDay = planDay, planStartMin = planTime, durationMin = duration, priority = Priority.of(x.priority).value,
 				absenceKind = if (kind == ActivityKind.ABSENCE) AbsenceKind.of(x.absenceKind) ?: AbsenceKind.ABSENCE else null,
 			),
