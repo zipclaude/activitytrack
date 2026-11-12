@@ -88,7 +88,7 @@ Inside a path use `${…}`: `"/timesheets/${remote.id}"`.
 
 **Activity fields** (`entryFields`): a list (`list`, with `parent` and
 `filter`) or a plain value (`type: "bool"`). A field may be `required` or
-`hidden`, also depending on an expression (`{ "eq": ["@todo", null] }`).
+`hidden`, also depending on an expression (`{ "eq": ["@activity", null] }`).
 When a required field is missing the activity is not sent, and the report
 says which field is missing.
 
