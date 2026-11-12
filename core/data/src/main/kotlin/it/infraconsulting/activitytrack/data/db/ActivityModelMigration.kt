@@ -257,6 +257,9 @@ object ActivityModelMigration {
 	 * entry, its uid) or, absorbed, under the entries it was linked to; and
 	 * what the migration derived from a dirty record (absence segments,
 	 * references of a dirty activity or of a dirty to-do's entries).
+	 * The log's order stays (an activity in the place of its first change),
+	 * the derived records come after every activity: parents before children,
+	 * or the server answers unknown_ref.
 	 */
 	fun dirty(pending: List<Change>, d: LegacyData, r: MigrationResult): List<Change> {
 		val out = LinkedHashMap<Pair<String, String>, Change>()
@@ -264,23 +267,26 @@ object ActivityModelMigration {
 			out[c.type to c.uid] = c
 		}
 		val activities = r.activities.map { it.uid }.toSet()
-		val dirtyActivities = HashMap<String, Change>()
+		val dirtyActivities = LinkedHashMap<String, Change>()
+		fun activity(c: Change) {
+			dirtyActivities[c.uid] = c
+			add(c)
+		}
 		for (c in pending) {
 			when (c.type) {
 				"todo", "absence" -> {
 					val todo = d.todos.firstOrNull { it.uid == c.uid }
 					when {
-						c.uid in activities -> dirtyActivities[c.uid] = c.copy(type = "entry")
+						c.uid in activities -> activity(c.copy(type = "entry"))
 						c.op == "delete" -> add(c.copy(type = "entry"))
-						todo != null -> d.entries.filter { it.todoId == todo.id }.forEach { dirtyActivities[it.uid] = c.copy(type = "entry", uid = it.uid, op = "upsert") }
+						todo != null -> d.entries.filter { it.todoId == todo.id }.forEach { activity(c.copy(type = "entry", uid = it.uid, op = "upsert")) }
 					}
 				}
-				"entry" -> dirtyActivities[c.uid] = c
+				"entry" -> activity(c)
 				else -> add(c)
 			}
 		}
 		for ((uid, c) in dirtyActivities) {
-			add(c)
 			if (c.op == "delete")
 				continue
 			r.segments.filter { it.entryUid == uid }.forEach { add(Change("segment", it.uid, "upsert", c.time)) }
