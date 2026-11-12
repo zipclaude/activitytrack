@@ -880,4 +880,26 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="priority_high">Alta</string>
   <string name="priority_urgent">Urgente</string>
   <string name="priority_emergency">Emergencia</string>
+  <!-- ui-detail -->
+  <string name="detail_end_ahead">termina a las %1$s</string>
+  <string name="detail_reopen_work">Reabrir con trabajo</string>
+  <string name="detail_reopen_travel">Reabrir con viaje</string>
+  <string name="detail_reopen_text">Se abre un nuevo tramo desde ahora; el tiempo desde el cierre queda vacío.</string>
+  <string name="detail_travel_question">¿Has completado el trabajo?</string>
+  <string name="detail_travel_hint">Sí: esta actividad se cierra y empieza un nuevo viaje. No: el viaje forma parte de esta actividad.</string>
+  <string name="detail_stop_title">Terminar la actividad</string>
+  <string name="detail_stop_at">Fin (vacío = ahora)</string>
+  <string name="detail_stop_ahead_hint">Hasta 60 minutos en el futuro.</string>
+  <string name="detail_return_question">Hubo un viaje de ida: ¿y la vuelta?</string>
+  <string name="detail_stop_with_return">Terminar la actividad y añadir el viaje de vuelta</string>
+  <string name="detail_days">Días</string>
+  <string name="detail_add_day">Día</string>
+  <string name="detail_segment_new">Nuevo tramo</string>
+  <string name="detail_planned">planificado</string>
+  <string name="detail_planned_hint">Planificado: no cuenta en los totales.</string>
+  <string name="detail_delete_text">La actividad va a la papelera: desde allí se puede restaurar.</string>
+  <string name="detail_absence_absence">Ausencia</string>
+  <string name="detail_absence_holiday">Vacaciones</string>
+  <string name="detail_absence_leave">Permiso</string>
+  <string name="detail_absence_sick">Enfermedad</string>
 </resources>

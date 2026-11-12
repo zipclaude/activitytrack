@@ -1,161 +1,170 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
-import it.infraconsulting.activitytrack.ui.common.canCreateMasterData
-import it.infraconsulting.activitytrack.ui.common.tagColor
-import it.infraconsulting.activitytrack.ui.common.TagDialog
-import it.infraconsulting.activitytrack.ui.common.TagLabel
-import it.infraconsulting.activitytrack.ui.common.enabled
-import it.infraconsulting.activitytrack.ui.common.fieldShown
-import it.infraconsulting.activitytrack.ui.common.fieldImportance
-import it.infraconsulting.activitytrack.ui.common.LocalPolicy
-import it.infraconsulting.activitytrack.ui.common.fieldLabel
-import it.infraconsulting.activitytrack.ui.common.PolicyField
-import it.infraconsulting.activitytrack.domain.policy.Feature
-import it.infraconsulting.activitytrack.domain.policy.Field
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.imePadding
-import it.infraconsulting.activitytrack.ui.masterdata.ContactsViewModel
-import it.infraconsulting.activitytrack.ui.common.INDIGO
-import it.infraconsulting.activitytrack.ui.common.TEAL
-import it.infraconsulting.activitytrack.ui.common.PURPLE
-import it.infraconsulting.activitytrack.ui.common.MAGENTA
-import it.infraconsulting.activitytrack.ui.common.MiniActionButton
-import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
-import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
-import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
-import it.infraconsulting.activitytrack.ui.common.WithAddButton
-import it.infraconsulting.activitytrack.ui.LocalCompact
-import it.infraconsulting.activitytrack.ui.common.formatMin
-import it.infraconsulting.activitytrack.ui.common.dateText
-import it.infraconsulting.activitytrack.ui.common.TimeGridSheet
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.runtime.produceState
-import kotlinx.coroutines.flow.map
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import it.infraconsulting.activitytrack.R
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.height
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.res.painterResource
-import androidx.compose.material3.Icon
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.InputChip
-import androidx.compose.foundation.layout.FlowRow
-import it.infraconsulting.activitytrack.domain.tag.Tags
-import it.infraconsulting.activitytrack.ui.common.Importance
-import it.infraconsulting.activitytrack.ui.common.ColoredActionButton
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryDetails
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
+import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
+import it.infraconsulting.activitytrack.domain.activity.ActivityKind
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+import it.infraconsulting.activitytrack.domain.activity.Priority
 import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
+import it.infraconsulting.activitytrack.domain.policy.Feature
+import it.infraconsulting.activitytrack.domain.policy.Field
+import it.infraconsulting.activitytrack.domain.tag.Tags
+import it.infraconsulting.activitytrack.location.CurrentPosition
+import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.ClickableRow
+import it.infraconsulting.activitytrack.ui.common.DateField
 import it.infraconsulting.activitytrack.ui.common.DictationInput
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
+import it.infraconsulting.activitytrack.ui.common.INDIGO
+import it.infraconsulting.activitytrack.ui.common.Importance
+import it.infraconsulting.activitytrack.ui.common.LocalPolicy
+import it.infraconsulting.activitytrack.ui.common.MAGENTA
+import it.infraconsulting.activitytrack.ui.common.MiniActionButton
+import it.infraconsulting.activitytrack.ui.common.PURPLE
+import it.infraconsulting.activitytrack.ui.common.PolicyField
+import it.infraconsulting.activitytrack.ui.common.PriorityField
+import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
+import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
+import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
+import it.infraconsulting.activitytrack.ui.common.TEAL
+import it.infraconsulting.activitytrack.ui.common.TagDialog
+import it.infraconsulting.activitytrack.ui.common.TagLabel
 import it.infraconsulting.activitytrack.ui.common.TextInput
+import it.infraconsulting.activitytrack.ui.common.TimeField
+import it.infraconsulting.activitytrack.ui.common.WithAddButton
+import it.infraconsulting.activitytrack.ui.common.canCreateMasterData
 import it.infraconsulting.activitytrack.ui.common.clockOf
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.common.enabled
+import it.infraconsulting.activitytrack.ui.common.fieldImportance
+import it.infraconsulting.activitytrack.ui.common.fieldLabel
+import it.infraconsulting.activitytrack.ui.common.fieldShown
+import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.hmOf
-import it.infraconsulting.activitytrack.ui.common.localRange
 import it.infraconsulting.activitytrack.ui.common.parseDate
-import it.infraconsulting.activitytrack.ui.common.parseDecimal
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
 import it.infraconsulting.activitytrack.ui.common.reasonText
-import it.infraconsulting.activitytrack.ui.common.DateField
-import it.infraconsulting.activitytrack.ui.common.TimeField
-import it.infraconsulting.activitytrack.ui.home.statusText
-import it.infraconsulting.activitytrack.domain.time.atMinute
-import java.time.Instant
+import it.infraconsulting.activitytrack.ui.common.tagColor
+import it.infraconsulting.activitytrack.ui.masterdata.ContactsViewModel
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
+/*
+ * The detail dialog of an activity, for every state (ACTIVITY-MODEL.md 8,
+ * owner 2026-11-11), opened from the Home and the to-do list: the state
+ * and the commands it allows on top, then the fields in the order of the
+ * creation dialogs, Annulla and Salva at the bottom.
+ */
 @Composable
 fun EntryScreen(entryId: Long, onBack: () -> Unit, onOpenTrack: (Long) -> Unit = {}) {
-	val vm = appViewModel { c -> EntryViewModel(entryId, c.entries, c.masterData, c.todos, c.settings.settings.map { s -> s.editableTimes }, c.settings.settings.map { s -> s.tagsFreeText }, { c.policies.current.value }) }
+	val appContext = LocalContext.current.applicationContext
+	val vm = appViewModel { c ->
+		/* the locality proposal needs the position, so the location feature (8) */
+		val prefill = if (c.policies.current.value.enabled(Feature.LOCATION))
+			LocalityPrefill(
+				c.masterData, c.locations,
+				municipality = { p -> c.settings.current().nominatim.takeIf { it.enabled }?.let { n -> c.nominatim.locality(n.endpoint, p) } },
+				currentPosition = { CurrentPosition.get(appContext) },
+			)
+		else null
+		EntryViewModel(
+			entryId, c.entries, c.masterData, c.settings.settings.map { s -> s.editableTimes }, c.settings.settings.map { s -> s.tagsFreeText },
+			{ c.policies.current.value }, prefill,
+		)
+	}
 	val entry by vm.entry.collectAsState()
 	ScreenScaffold(
 		title = stringResource(R.string.entry_title),
 		onBack = onBack,
-		/* the whole entry (issue #40), in the ⋮ menu (issue #94) */
 		actions = {
-			val policy = LocalPolicy.current
 			/* the route of this activity (issue #155): its map or export, as the policy allows */
-			val route = policy.enabled(Feature.LOCATION) &&
+			val policy = LocalPolicy.current
+			val route = entry?.kind == ActivityKind.ACTIVITY && policy.enabled(Feature.LOCATION) &&
 				(policy.enabled(Feature.TRACK_MAP) || (policy.enabled(Feature.TRACK_EXPORT) && policy.enabled(Feature.EXPORT)))
-			val canDelete = policy.enabled(Feature.DELETE_ENTRIES)
-			if (canDelete || route) {
+			if (route) {
 				var menu by remember { mutableStateOf(false) }
 				val menuLabel = stringResource(R.string.nav_more)
-				androidx.compose.foundation.layout.Box {
-					androidx.compose.material3.IconButton(onClick = { menu = true }) {
+				Box {
+					IconButton(onClick = { menu = true }) {
 						Text("⋮", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { contentDescription = menuLabel })
 					}
-					androidx.compose.material3.DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-						if (route)
-							androidx.compose.material3.DropdownMenuItem(
-								text = { Text(stringResource(R.string.track_entry)) },
-								onClick = { menu = false; onOpenTrack(entryId) },
-							)
-						if (canDelete)
-							androidx.compose.material3.DropdownMenuItem(
-								text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
-								onClick = { menu = false; vm.askDelete() },
-							)
+					DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+						DropdownMenuItem(text = { Text(stringResource(R.string.track_entry)) }, onClick = { menu = false; onOpenTrack(entryId) })
 					}
 				}
 			}
 		},
 	) { padding ->
-		/* the form starts from the first loaded state; later emissions refresh only status and lists */
+		/* the form starts from the first loaded state; later emissions refresh state, commands and lists */
 		entry?.let { EntryForm(it, vm, onBack, Modifier.padding(padding).consumeWindowInsets(padding).imePadding()) }
 	}
 }
@@ -172,114 +181,178 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	val roles by vm.roles.collectAsState()
 	val presets by vm.presets.collectAsState()
 	val error by vm.error.collectAsState()
+	val proposed by vm.proposedLocality.collectAsState()
 	val none = stringResource(R.string.field_none)
 	val zone = ZoneId.of(initial.zoneId)
+	val absence = initial.kind == ActivityKind.ABSENCE
+	/* follows the state: a TODO started here stops showing its plan */
+	val todo = !absence && e.status == ActivityStatus.TODO
 
+	var companyId by remember { mutableStateOf(initial.companyId) }
 	var clientId by remember { mutableStateOf(initial.clientId) }
 	var roleId by remember { mutableStateOf(initial.roleId) }
 	var activity by remember { mutableStateOf(initial.activity.orEmpty()) }
 	/* the client's person the work was for (issue #44) */
 	var contactId by remember { mutableStateOf(initial.contactId) }
+	var locality by remember { mutableStateOf(initial.locality.orEmpty()) }
+	var locationKind by remember { mutableStateOf(initial.locationKind) }
+	var notes by remember { mutableStateOf(initial.notes.orEmpty()) }
+	/* a TODO activity's plan, deadline and priority */
+	var planDate by remember { mutableStateOf(initial.planEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
+	var planTime by remember { mutableStateOf(initial.planStartMin?.let(::formatMin).orEmpty()) }
+	var duration by remember { mutableStateOf(initial.durationMin?.toString().orEmpty()) }
+	var dueDate by remember { mutableStateOf(initial.dueEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
+	var dueTime by remember { mutableStateOf(initial.dueTimeMin?.let(::formatMin).orEmpty()) }
+	var priority by remember { mutableStateOf(Priority.of(initial.priority)) }
+	var absenceKind by remember { mutableStateOf(initial.absenceKind ?: AbsenceKind.ABSENCE) }
 	/* quick add of master data (issue #37) */
 	var addClient by remember { mutableStateOf(false) }
 	var addPreset by remember { mutableStateOf(false) }
 	var addRole by remember { mutableStateOf(false) }
-	var locality by remember { mutableStateOf(initial.locality.orEmpty()) }
-	var locationKind by remember { mutableStateOf(initial.locationKind) }
-	var notes by remember { mutableStateOf(initial.notes.orEmpty()) }
 	var adding by remember { mutableStateOf<SegmentKind?>(null) }
 	var editingSegment by remember { mutableStateOf<SegmentEntity?>(null) }
 	var editingNote by remember { mutableStateOf<SegmentEntity?>(null) }
-	/* the "add" row at the top asks the sections below (issue #37) */
+	/* the "add" row asks the sections below (issue #37) */
 	var addRequest by remember { mutableStateOf<AddRequest?>(null) }
 	var deletingRef by remember { mutableStateOf<ExternalRefEntity?>(null) }
 	var newRef by remember { mutableStateOf("") }
 
-	val companyId = clients.firstOrNull { it.id == clientId }?.companyId ?: initial.companyId
-	fun details() = EntryDetails(companyId, clientId, roleId, activity, locality, locationKind, notes, contactId)
+	/* the place proposed (site, else municipality) while the field is still empty */
+	LaunchedEffect(proposed) {
+		proposed?.let { if (locality.isBlank()) locality = it }
+	}
 
-	/* compact display (M11): tighter spacing; locality, place and notes folded while empty */
+	val clientCompany = clients.firstOrNull { it.id == clientId }?.companyId
+	fun details() = EntryDetails(clientCompany ?: companyId, clientId, roleId, activity, locality, locationKind, notes, contactId)
+	fun save() {
+		vm.clearError()
+		when {
+			absence -> vm.saveAbsence(companyId, absenceKind, notes, onBack)
+			todo -> {
+				val pd = planDate.takeIf { it.isNotBlank() }?.let { parseDate(it) ?: return vm.invalid(Reason.INVALID_DATE) }
+				val pt = planTime.takeIf { it.isNotBlank() }?.let { parseHhMm(it)?.takeIf { m -> m < 1440 } ?: return vm.invalid(Reason.INVALID_TIME) }
+				val du = duration.trim().takeIf { it.isNotEmpty() }?.let { it.toIntOrNull() ?: return vm.invalid(Reason.INVALID_TIME_RANGE) }
+				val dd = dueDate.takeIf { it.isNotBlank() }?.let { parseDate(it) ?: return vm.invalid(Reason.INVALID_DATE) }
+				val dt = dueTime.takeIf { it.isNotBlank() }?.let { parseHhMm(it)?.takeIf { m -> m < 1440 } ?: return vm.invalid(Reason.INVALID_TIME) }
+				vm.saveTodo(details(), TodoFields(pd?.toEpochDay(), pt, du, dd?.toEpochDay(), dt, priority.value), onBack)
+			}
+			else -> vm.save(details(), onBack)
+		}
+	}
+
 	val compact = LocalCompact.current
-	var more by remember { mutableStateOf(false) }
 	/* read here: the lazy list's builder is not composable (issue #48) */
 	val policy = LocalPolicy.current
-	val entryPlugin = rememberEntryPlugin(e)
-	val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-	val scope = androidx.compose.runtime.rememberCoroutineScope()
+	val travelOn = enabled(Feature.TRAVEL)
+	val entryPlugin = if (absence) null else rememberEntryPlugin(e)
+	val listState = rememberLazyListState()
+	val scope = rememberCoroutineScope()
+	val actions = detailActions(e, segments, vm)
+	val pad = if (compact) 10.dp else 16.dp
+	val gap = if (compact) 4.dp else 8.dp
+	/* the kinds a segment typed by hand may take: work only once the activity is no longer running */
+	val kinds = when {
+		absence -> listOf(SegmentKind.ABSENCE)
+		e.status == ActivityStatus.RUNNING -> listOf(SegmentKind.TRAVEL, SegmentKind.PAUSE)
+		else -> listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.PAUSE)
+	}.filter { it != SegmentKind.TRAVEL || travelOn }
 	Column(modifier = modifier.fillMaxSize()) {
 		LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
-			item {
-				Column(Modifier.padding(if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)) {
-					/*
-					 * a summary first (issue #94): state, totals, the segments as a
-					 * coloured bar (a tap goes to Tempi), + Travel and + Pause
-					 * still without scrolling (owner, 2026-10-19)
-					 */
-					EntrySummary(e, segments, editableTimes, onTimes = { scope.launch { listState.animateScrollToItem(1) } }) {
-						val travel = commandStyle(EntryCommand.TRAVEL)!!
-						val pause = commandStyle(EntryCommand.PAUSE)!!
-						if (enabled(Feature.TRAVEL))
-							ColoredActionButton(stringResource(R.string.add_travel), travel.icon, travel.container, { vm.clearError(); adding = SegmentKind.TRAVEL }, travel.content)
-						ColoredActionButton(stringResource(R.string.add_pause), pause.icon, pause.container, { vm.clearError(); adding = SegmentKind.PAUSE }, pause.content)
-					}
-					val coNames = companies.associate { it.id to it.name }
-					/* by company in the company order, then in the client order (M16; stable sort) */
-					val coIndex = companies.withIndex().associate { (i, c) -> c.id to i }
-					if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {
-						SearchableChoiceField(
-							fieldLabel(Field.CLIENT, R.string.field_client),
-							listOf<Pair<Long?, String>>(null to none) +
-								clients.filter { !it.archived || it.id == clientId }
-									.filter { initial.companyId == null || initial.clientId != null || it.companyId == initial.companyId }
-									.sortedBy { coIndex[it.companyId] ?: Int.MAX_VALUE }
-									.map { it.id to if (policy.field(Field.COMPANY).visible) "${coNames[it.companyId].orEmpty()} · ${it.name}" else it.name },
-							clientId,
+			item(key = "header") {
+				Box(Modifier.padding(start = pad, end = pad, top = pad, bottom = gap)) {
+					DetailHeader(e, segments, editableTimes, onTimes = { scope.launch { listState.animateScrollToItem(2) } }, actions)
+				}
+			}
+			item(key = "fields") {
+				Column(Modifier.padding(horizontal = pad), verticalArrangement = Arrangement.spacedBy(gap)) {
+					if (absence) {
+						ChoiceField(
+							stringResource(R.string.field_kind),
+							AbsenceKind.entries.map { it to absenceLabel(it) },
+							absenceKind,
 							importance = Importance.REQUIRED,
-							colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
-						) { clientId = it }
-					} }
-					val usable = presets.filter { it.companyId == null || it.companyId == companyId }
-					if (fieldShown(Field.QUICK_PICK)) WithAddButton(stringResource(R.string.quick_preset), { addPreset = true }) { PolicyField(Field.QUICK_PICK) {
+						) { absenceKind = it }
 						ChoiceField(
-							fieldLabel(Field.QUICK_PICK, R.string.field_preset),
-							listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
-							null,
-							importance = fieldImportance(Field.QUICK_PICK, Importance.OPTIONAL),
-						) { id ->
-							usable.firstOrNull { it.id == id }?.let { p ->
-								activity = p.text
-								if (roleId == null) roleId = p.defaultRoleId
-							}
-						}
-					} }
-					PolicyField(Field.DESCRIPTION) {
-						DictationInput(fieldLabel(Field.DESCRIPTION, R.string.field_activity), activity, { activity = it }, Importance.REQUIRED)
+							stringResource(R.string.field_company),
+							listOf<Pair<Long?, String>>(null to stringResource(R.string.todo_filter_all)) +
+								companies.filter { !it.archived || it.id == companyId }.map { it.id to it.name },
+							companyId,
+							importance = Importance.OPTIONAL,
+						) { companyId = it }
+					} else
+						ActivityFields(
+							initial, companyId, { companyId = it }, clientId, { clientId = it }, contactId, { contactId = it },
+							activity, { activity = it }, roleId, { roleId = it },
+							companies, clients, roles, presets, none, policy,
+							onAddClient = { addClient = true }, onAddPreset = { addPreset = true }, onAddRole = { addRole = true },
+						)
+					if (todo) {
+						DateField(stringResource(R.string.todo_field_plan_date), planDate, { planDate = it }, clearable = true)
+						TimeField(stringResource(R.string.todo_plan_time_optional), planTime, { planTime = it }, clearable = true)
+						if (planTime.isNotBlank())
+							TextInput(stringResource(R.string.todo_field_duration), duration, { duration = it }, KeyboardType.Number, importance = Importance.OPTIONAL)
+						DateField(stringResource(R.string.todo_field_due), dueDate, { dueDate = it }, clearable = true)
+						if (dueDate.isNotBlank())
+							TimeField(stringResource(R.string.todo_field_time), dueTime, { dueTime = it }, clearable = true)
+						PriorityField(priority) { priority = it }
 					}
-					val people by appViewModel(key = "contacts") { c -> ContactsViewModel(c.calls) }.contacts.collectAsState()
-					val ofClient = people.filter { it.contact.clientId == clientId }
-					if ((ofClient.isNotEmpty() || contactId != null) && fieldShown(Field.CONTACT))
-						PolicyField(Field.CONTACT) {
-							ChoiceField(
-								fieldLabel(Field.CONTACT, R.string.field_contact),
-								listOf<Pair<Long?, String>>(null to none) + ofClient.map { it.contact.id to it.contact.name },
-								contactId.takeIf { id -> ofClient.any { it.contact.id == id } },
-								importance = fieldImportance(Field.CONTACT, Importance.OPTIONAL),
-							) { contactId = it }
+				}
+			}
+
+			/* segments ("Tratti"; the days of an absence), with the split button that adds one */
+			item(key = "segments") {
+				SectionHeader(stringResource(if (absence) R.string.detail_days else R.string.segments))
+				if (e.deletedUtcMs == null)
+					Box(Modifier.padding(horizontal = pad)) {
+						SegmentSplitButton(kinds, enabled = absence || kinds.isNotEmpty()) { k -> vm.clearError(); adding = k }
+					}
+			}
+			if (segments.isEmpty())
+				item { EmptyText() }
+			items(segments.sortedBy { it.startUtcMs }, key = { "s${it.id}" }) { s ->
+				SegmentRow(s, zone) {
+					/*
+					 * segments can be edited or deleted with editable times on
+					 * (backlog 11, M17), the running one too, its start only
+					 * (issue #57); a planned one and an absence day always (they
+					 * are declared, not recorded); the description of a pause
+					 * always (issue #28)
+					 */
+					vm.clearError()
+					when {
+						s.planned || s.kind == SegmentKind.ABSENCE || editableTimes -> editingSegment = s
+						s.kind == SegmentKind.PAUSE -> editingNote = s
+					}
+				}
+			}
+
+			if (!absence) {
+				/* expense, photo, voice note, file, material: one row with the sections they fill (issue #94) */
+				val choices = listOfNotNull(
+					AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_euro, MAGENTA).takeIf { policy.enabled(Feature.EXPENSES) },
+					AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE).takeIf { policy.enabled(Feature.ATTACHMENTS) },
+					AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL).takeIf { policy.enabled(Feature.VOICE_NOTES) },
+					AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO).takeIf { policy.enabled(Feature.ATTACHMENTS) },
+					AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK).takeIf { policy.enabled(Feature.MATERIALS) },
+				)
+				if (choices.isNotEmpty())
+					item(key = "add") {
+						SectionHeader(stringResource(R.string.entry_add_section))
+						Row(Modifier.padding(horizontal = pad), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+							for ((req, label, icon, color) in choices)
+								MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
 						}
-					if (fieldShown(Field.ROLE)) WithAddButton(stringResource(R.string.quick_role), { addRole = true }) { PolicyField(Field.ROLE) {
-						ChoiceField(
-							fieldLabel(Field.ROLE, R.string.field_role),
-							listOf<Pair<Long?, String>>(null to none) +
-								roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
-							roleId,
-							importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
-						) { roleId = it }
-					} }
-					/* locality, place and notes folded while empty, in every display (issue #94) */
-					val folded = !more && locality.isEmpty() && locationKind == null && notes.isEmpty()
-					if (folded)
-						TextButton(onClick = { more = true }) { Text(stringResource(R.string.more_details) + " ▾") }
-					else {
+					}
+				if (policy.enabled(Feature.EXPENSES))
+					item(key = "expenses") { ExpensesSection(initial.id) }
+				if (policy.enabled(Feature.MATERIALS))
+					item(key = "materials") { MaterialsSection(initial.id) }
+				if (policy.enabled(Feature.ATTACHMENTS) || policy.enabled(Feature.VOICE_NOTES))
+					item(key = "attachments") { AttachmentsSection(initial.id, zone) }
+
+				/* place: the locality (pre-filled from a site or the municipality) and where */
+				item(key = "place") {
+					Column(Modifier.padding(horizontal = pad, vertical = gap), verticalArrangement = Arrangement.spacedBy(gap)) {
 						PolicyField(Field.LOCALITY) {
 							TextInput(fieldLabel(Field.LOCALITY, R.string.field_locality), locality, { locality = it }, importance = fieldImportance(Field.LOCALITY, Importance.OPTIONAL))
 						}
@@ -291,84 +364,40 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 								importance = fieldImportance(Field.PLACE, Importance.OPTIONAL),
 							) { locationKind = it }
 						}
+					}
+				}
+			}
+			item(key = "notes") {
+				Column(Modifier.padding(horizontal = pad, vertical = gap)) {
+					if (absence)
+						TextInput(stringResource(R.string.field_notes), notes, { notes = it }, singleLine = false, importance = Importance.OPTIONAL)
+					else
 						PolicyField(Field.NOTES) {
 							TextInput(fieldLabel(Field.NOTES, R.string.field_notes), notes, { notes = it }, singleLine = false, importance = fieldImportance(Field.NOTES, Importance.OPTIONAL))
 						}
-					}
 				}
 			}
-
-			item {
-				SectionHeader(stringResource(R.string.segments))
-			}
-			if (segments.isEmpty())
-				item { EmptyText() }
-			items(segments, key = { "s${it.id}" }) { s ->
-				val end = s.endUtcMs
-				val range = clockOf(s.startUtcMs, zone) + " – " + (end?.let { clockOf(it, zone) } ?: "…")
-				val extra = listOfNotNull(
-					end?.let { hmOf(it - s.startUtcMs) },
-					(s.kmDeclared ?: s.kmEstimated)?.let { "%.1f km".format(it) },
-					if (s.source == SegmentSource.MANUAL) stringResource(R.string.segment_manual) else null,
-					s.note,
-				).joinToString(" · ")
-				/*
-				 * segments can be edited or deleted with editable times on
-				 * (backlog 11, M17), the running one too, its start only (issue
-				 * #57); the description of a pause always (issue #28)
-				 */
-				ClickableRow("${kindLabel(s.kind)}  $range", extra, leading = { SegmentBadge(s.kind) }) {
-					if (editableTimes) {
-						vm.clearError()
-						editingSegment = s
-					} else if (s.kind == SegmentKind.PAUSE) {
-						vm.clearError()
-						editingNote = s
+			if (!absence) {
+				if (policy.field(Field.TAGS).visible)
+					item(key = "tags") { TagsSection(vm) }
+				if (policy.field(Field.REFS).visible) {
+					item(key = "refsHeader") { SectionHeader(fieldLabel(Field.REFS, R.string.external_refs)) }
+					items(refs, key = { "r${it.id}" }) { r ->
+						ClickableRow(r.value, refKindLabel(r.kind)) { if (policy.field(Field.REFS).enabled) deletingRef = r }
 					}
-				}
-			}
-
-			/* expense, photo, voice note, file, material: one row with the sections they fill (issue #94) */
-			val choices = listOfNotNull(
-				AddChoice(AddRequest.EXPENSE, R.string.short_expense, R.drawable.ic_euro, MAGENTA).takeIf { policy.enabled(Feature.EXPENSES) },
-				AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE).takeIf { policy.enabled(Feature.ATTACHMENTS) },
-				AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL).takeIf { policy.enabled(Feature.VOICE_NOTES) },
-				AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO).takeIf { policy.enabled(Feature.ATTACHMENTS) },
-				AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK).takeIf { policy.enabled(Feature.MATERIALS) },
-			)
-			if (choices.isNotEmpty())
-				item {
-					SectionHeader(stringResource(R.string.entry_add_section))
-					Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-						for ((req, label, icon, color) in choices)
-							MiniActionButton(stringResource(label), icon, color, { addRequest = req }, Modifier.weight(1f))
-					}
-				}
-			if (policy.field(Field.TAGS).visible)
-				item { TagsSection(vm) }
-			if (policy.field(Field.REFS).visible) {
-				item { SectionHeader(fieldLabel(Field.REFS, R.string.external_refs)) }
-				items(refs, key = { "r${it.id}" }) { r ->
-					ClickableRow(r.value, refKindLabel(r.kind)) { if (policy.field(Field.REFS).enabled) deletingRef = r }
-				}
-				if (policy.field(Field.REFS).enabled)
-					item {
-						Row(Modifier.padding(horizontal = 16.dp)) {
-							Column(Modifier.weight(1f)) {
-								TextInput(stringResource(R.string.external_ref_new), newRef, { newRef = it })
+					if (policy.field(Field.REFS).enabled)
+						item(key = "refsNew") {
+							Row(Modifier.padding(horizontal = 16.dp)) {
+								Column(Modifier.weight(1f)) {
+									TextInput(stringResource(R.string.external_ref_new), newRef, { newRef = it })
+								}
+								AddButton { vm.addRef(newRef) { newRef = "" } }
 							}
-							AddButton { vm.addRef(newRef) { newRef = "" } }
 						}
-					}
+				}
+				/* the fields of the company's management system (issue #48) */
+				entryPlugin?.let { (co, plugin) -> item(key = "plugin") { PluginFieldsSection(e, co, plugin) } }
 			}
-			/* the fields of the company's integration plugin (issue #48) */
-			entryPlugin?.let { (co, plugin) -> item(key = "plugin") { PluginFieldsSection(e, co, plugin) } }
-			if (policy.enabled(Feature.EXPENSES))
-				item { ExpensesSection(initial.id) }
-			if (policy.enabled(Feature.MATERIALS))
-				item { MaterialsSection(initial.id) }
-			if (policy.enabled(Feature.ATTACHMENTS) || policy.enabled(Feature.VOICE_NOTES))
-				item { AttachmentsSection(initial.id, zone) }
 		}
 
 		/* outside the list: a validation error must stay visible above the buttons */
@@ -379,46 +408,14 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			modifier = Modifier.fillMaxWidth().padding(16.dp),
 			horizontalArrangement = Arrangement.spacedBy(8.dp),
 		) {
-			if (e.legacy == LegacyStatus.TO_COMPLETE || e.legacy == LegacyStatus.CLOSED)
-				OutlinedButton(onClick = vm::reopen, modifier = Modifier.height(52.dp)) { Text(stringResource(R.string.cmd_reopen)) }
-			/* the main action fills the row (issue #94): Completa when details are missing, else Salva */
-			if (e.legacy == LegacyStatus.TO_COMPLETE) {
-				OutlinedButton(onClick = { vm.save(details(), onBack) }, modifier = Modifier.height(52.dp)) { Text(stringResource(R.string.action_save)) }
-				Button(
-					onClick = { vm.complete(details(), onBack) },
-					colors = ButtonDefaults.buttonColors(containerColor = commandStyle(EntryCommand.WORK)!!.container, contentColor = Color.White),
-					modifier = Modifier.weight(1f).height(52.dp),
-				) { Text(stringResource(R.string.cmd_complete)) }
-			} else
-				Button(onClick = { vm.save(details(), onBack) }, modifier = Modifier.weight(1f).height(52.dp)) { Text(stringResource(R.string.action_save)) }
+			OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f).height(52.dp)) { Text(stringResource(R.string.action_cancel)) }
+			Button(onClick = ::save, modifier = Modifier.weight(1f).height(52.dp)) { Text(stringResource(R.string.action_save)) }
 		}
 	}
 
-	val emptyPrompt by vm.emptyPrompt.collectAsState()
-	emptyPrompt?.let { p ->
-		EmptyActivityDialog(
-			lastActivity = p.lastActivity,
-			onEmpty = { vm.completeEmpty(onBack) },
-			onCopy = { vm.completeCopyingLast(onBack) },
-			onEdit = vm::dismissEmptyPrompt,
-		)
-	}
-
-	val todoPrompt by vm.todoPrompt.collectAsState()
-	todoPrompt?.let { p ->
-		AlertDialog(
-			onDismissRequest = { vm.answerTodo(false) },
-			title = { Text(stringResource(R.string.todo_done_question)) },
-			text = { Text(p.title) },
-			confirmButton = { TextButton(onClick = { vm.answerTodo(true) }) { Text(stringResource(R.string.action_yes)) } },
-			dismissButton = { TextButton(onClick = { vm.answerTodo(false) }) { Text(stringResource(R.string.todo_later)) } },
-		)
-	}
-
+	CommandDialogs(vm, zone)
 	adding?.let { kind ->
-		val firstDay = segments.firstOrNull()?.let { Instant.ofEpochMilli(it.startUtcMs).atZone(zone).toLocalDate() }
-			?: LocalDate.now(zone)
-		ManualSegmentDialog(kind, firstDay, zone, vm) { adding = null }
+		ManualSegmentDialog(kind, kinds.ifEmpty { listOf(kind) }, todo, defaultSegmentDay(e, segments, zone), zone, vm) { adding = null }
 	}
 	editingSegment?.let { s -> SegmentDialog(s, zone, vm) { editingSegment = null } }
 	/* a segment saved over others: which ones, then confirm (issue #40) */
@@ -441,45 +438,36 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	}
 	val deletion by vm.deletion.collectAsState()
 	deletion?.let { d ->
-		if (d.attachments > 0)
-			AlertDialog(
-				onDismissRequest = vm::cancelDelete,
-				title = { Text(stringResource(R.string.entry_delete_title)) },
-				text = { Text(stringResource(R.string.entry_delete_attachments, d.attachments)) },
-				confirmButton = { TextButton(onClick = vm::cancelDelete) { Text(stringResource(R.string.action_ok)) } },
-			)
-		else
-			AlertDialog(
-				onDismissRequest = vm::cancelDelete,
-				title = { Text(stringResource(R.string.entry_delete_title)) },
-				text = {
-					Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-						Text(d.ticket?.let { stringResource(R.string.entry_delete_ticket, it) } ?: stringResource(R.string.entry_delete_text))
-						if (d.sent)
-							Text(stringResource(R.string.entry_delete_sent))
-					}
-				},
-				confirmButton = {
-					TextButton(onClick = { vm.deleteEntry(onBack) }) {
-						Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-					}
-				},
-				dismissButton = { TextButton(onClick = vm::cancelDelete) { Text(stringResource(R.string.action_cancel)) } },
-			)
+		AlertDialog(
+			onDismissRequest = vm::cancelDelete,
+			title = { Text(stringResource(R.string.entry_delete_title)) },
+			text = {
+				Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+					Text(stringResource(R.string.detail_delete_text))
+					if (d.sent)
+						Text(stringResource(R.string.entry_delete_sent))
+				}
+			},
+			confirmButton = {
+				TextButton(onClick = { vm.deleteEntry(onBack) }) {
+					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+				}
+			},
+			dismissButton = { TextButton(onClick = vm::cancelDelete) { Text(stringResource(R.string.action_cancel)) } },
+		)
 	}
 	/* outside the lazy list: always composed, whatever is scrolled into view */
 	ExpenseAdder(initial.id, addRequest) { addRequest = null }
 	MaterialAdder(initial.id, addRequest) { addRequest = null }
 	AttachmentAdder(initial.id, addRequest) { addRequest = null }
 	if (addClient)
-		QuickClientDialog(companyId, onDone = { client, _ -> addClient = false; clientId = client }, onDismiss = { addClient = false })
+		QuickClientDialog(clientCompany ?: companyId, onDone = { client, _ -> addClient = false; clientId = client }, onDismiss = { addClient = false })
 	if (addPreset)
-		QuickPresetDialog(activity, companyId, onDone = { addPreset = false; activity = it }, onDismiss = { addPreset = false })
+		QuickPresetDialog(activity, clientCompany ?: companyId, onDone = { addPreset = false; activity = it }, onDismiss = { addPreset = false })
 	if (addRole)
 		QuickRoleDialog(onDone = { addRole = false; roleId = it }, onDismiss = { addRole = false })
 	editingNote?.let { s ->
 		var note by remember(s.id) { mutableStateOf(s.note.orEmpty()) }
-		val error by vm.error.collectAsState()
 		EditDialog(
 			title = stringResource(R.string.segment_note),
 			error = error,
@@ -497,113 +485,156 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	}
 }
 
-/* Colour and icon of a segment kind, as the command that starts it (issue #57): work green, pause yellow, travel blue. */
-@Composable
-private fun SegmentBadge(kind: SegmentKind) {
-	val style = commandStyle(
-		when (kind) {
-			SegmentKind.WORK -> EntryCommand.WORK
-			SegmentKind.PAUSE -> EntryCommand.PAUSE
-			SegmentKind.TRAVEL -> EntryCommand.TRAVEL
-			SegmentKind.ABSENCE -> return	/* activity model 1.0: no command opens it */
-		},
-	) ?: return
-	Box(Modifier.size(32.dp).background(style.container, CircleShape), contentAlignment = Alignment.Center) {
-		Icon(painterResource(style.icon), contentDescription = null, tint = style.content, modifier = Modifier.size(20.dp))
-	}
-}
-
 /*
- * Edit or delete a closed segment (backlog 11): date, start, end, km of a
- * travel; the new values replace the recorded ones. The running segment
- * (issue #57) moves its start only and cannot be deleted.
+ * Azienda, Cliente (and its contact), Descrizione (with the quick pick),
+ * Ruolo: the order of the creation dialogs. A company narrows the clients;
+ * a client sets its company.
  */
 @Composable
-private fun SegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, onClose: () -> Unit) {
-	if (s.endUtcMs == null) {
-		RunningSegmentDialog(s, zone, vm, onClose)
-		return
-	}
-	val error by vm.error.collectAsState()
-	val startAt = Instant.ofEpochMilli(s.startUtcMs).atZone(zone)
-	var date by remember { mutableStateOf(startAt.toLocalDate().toString()) }
-	var start by remember { mutableStateOf(clockOf(s.startUtcMs, zone)) }
-	var end by remember { mutableStateOf(s.endUtcMs?.let { clockOf(it, zone) }.orEmpty()) }
-	var km by remember { mutableStateOf(s.kmDeclared?.toString().orEmpty()) }
-	var note by remember { mutableStateOf(s.note.orEmpty()) }
-	var deleting by remember { mutableStateOf(false) }
-	var grid by remember { mutableStateOf(false) }
-	EditDialog(
-		title = stringResource(R.string.segment_edit),
-		error = error,
-		onDismiss = { vm.clearError(); onClose() },
-		onDelete = { deleting = true },
-		onConfirm = {
-			val d = parseDate(date)
-			val a = parseHhMm(start)
-			val b = parseHhMm(end)
-			if (d == null || a == null || b == null)
-				vm.updateSegment(s.id, 1, 0, null, done = onClose)
-			else {
-				val (from, to) = localRange(d, a, b, zone)
-				vm.updateSegment(
-					s.id, from, to, if (s.kind == SegmentKind.TRAVEL) parseDecimal(km) else null,
-					if (s.kind == SegmentKind.PAUSE) note else null, onClose,
-				)
+private fun ActivityFields(
+	initial: TimeEntryEntity,
+	companyId: Long?,
+	setCompany: (Long?) -> Unit,
+	clientId: Long?,
+	setClient: (Long?) -> Unit,
+	contactId: Long?,
+	setContact: (Long?) -> Unit,
+	activity: String,
+	setActivity: (String) -> Unit,
+	roleId: Long?,
+	setRole: (Long?) -> Unit,
+	companies: List<it.infraconsulting.activitytrack.data.db.CompanyEntity>,
+	clients: List<it.infraconsulting.activitytrack.data.db.ClientEntity>,
+	roles: List<it.infraconsulting.activitytrack.data.db.RoleEntity>,
+	presets: List<it.infraconsulting.activitytrack.data.db.ActivityPresetEntity>,
+	none: String,
+	policy: it.infraconsulting.activitytrack.domain.policy.Policy,
+	onAddClient: () -> Unit,
+	onAddPreset: () -> Unit,
+	onAddRole: () -> Unit,
+) {
+	val coNames = companies.associate { it.id to it.name }
+	/* by company in the company order, then in the client order (M16; stable sort) */
+	val coIndex = companies.withIndex().associate { (i, c) -> c.id to i }
+	val company = clients.firstOrNull { it.id == clientId }?.companyId ?: companyId
+	if (fieldShown(Field.COMPANY))
+		PolicyField(Field.COMPANY) {
+			SearchableChoiceField(
+				fieldLabel(Field.COMPANY, R.string.field_company),
+				listOf<Pair<Long?, String>>(null to none) + companies.filter { !it.archived || it.id == company }.map { it.id to it.name },
+				company,
+				importance = fieldImportance(Field.COMPANY, Importance.IMPORTANT),
+				colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
+			) { id ->
+				setCompany(id)
+				if (id != null && clients.firstOrNull { it.id == clientId }?.companyId != id)
+					setClient(null)
 			}
-		},
-	) {
-		DateField(stringResource(R.string.field_date), date, { date = it }, importance = Importance.REQUIRED)
-		TimeField(stringResource(R.string.field_start), start, { start = it }, importance = Importance.REQUIRED, onOpen = { grid = true })
-		TimeField(stringResource(R.string.field_end), end, { end = it }, importance = Importance.REQUIRED, onOpen = { grid = true })
-		if (s.kind == SegmentKind.TRAVEL)
-			PolicyField(Field.KM) { TextInput(fieldLabel(Field.KM, R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = fieldImportance(Field.KM, Importance.OPTIONAL)) }
-		if (s.kind == SegmentKind.PAUSE)
-			TextInput(stringResource(R.string.segment_note), note, { note = it }, importance = Importance.OPTIONAL)
-	}
-	if (grid)
-		SegmentGrid(kindLabel(s.kind), date, start, end, s.id, zone, vm, { grid = false }) { a, b -> start = a; end = b }
-	if (deleting)
-		ConfirmDialog(stringResource(R.string.confirm_delete_segment), { deleting = false }) {
-			deleting = false
-			vm.deleteSegment(s.id, onClose)
 		}
-}
-
-@Composable
-private fun RunningSegmentDialog(s: SegmentEntity, zone: ZoneId, vm: EntryViewModel, onClose: () -> Unit) {
-	val error by vm.error.collectAsState()
-	var date by remember { mutableStateOf(Instant.ofEpochMilli(s.startUtcMs).atZone(zone).toLocalDate().toString()) }
-	var start by remember { mutableStateOf(clockOf(s.startUtcMs, zone)) }
-	var note by remember { mutableStateOf(s.note.orEmpty()) }
-	EditDialog(
-		title = stringResource(R.string.segment_edit),
-		error = error,
-		onDismiss = { vm.clearError(); onClose() },
-		onConfirm = {
-			val d = parseDate(date)
-			val a = parseHhMm(start)?.takeIf { it < 1440 }
-			/* a missing value is reported by the repository as an invalid segment */
-			val from = if (d == null || a == null) Long.MAX_VALUE - 1 else d.atMinute(a, zone).toEpochMilli()
-			vm.moveRunningStart(s.id, from) {
-				if (s.kind == SegmentKind.PAUSE) vm.setSegmentNote(s.id, note, onClose) else onClose()
+	if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), onAddClient, masterData = true) { PolicyField(Field.CLIENT) {
+		SearchableChoiceField(
+			fieldLabel(Field.CLIENT, R.string.field_client),
+			listOf<Pair<Long?, String>>(null to none) +
+				clients.filter { !it.archived || it.id == clientId }
+					.filter { company == null || it.companyId == company || it.id == initial.clientId && clientId == initial.clientId }
+					.sortedBy { coIndex[it.companyId] ?: Int.MAX_VALUE }
+					.map { it.id to if (policy.field(Field.COMPANY).visible && company == null) "${coNames[it.companyId].orEmpty()} · ${it.name}" else it.name },
+			clientId,
+			importance = Importance.REQUIRED,
+			colorOf = { id -> clients.firstOrNull { it.id == id }?.color },
+		) { id ->
+			setClient(id)
+			clients.firstOrNull { it.id == id }?.let { setCompany(it.companyId) }
+		}
+	} }
+	val people by appViewModel(key = "contacts") { c -> ContactsViewModel(c.calls) }.contacts.collectAsState()
+	val ofClient = people.filter { it.contact.clientId == clientId }
+	if ((ofClient.isNotEmpty() || contactId != null) && fieldShown(Field.CONTACT))
+		PolicyField(Field.CONTACT) {
+			ChoiceField(
+				fieldLabel(Field.CONTACT, R.string.field_contact),
+				listOf<Pair<Long?, String>>(null to none) + ofClient.map { it.contact.id to it.contact.name },
+				contactId.takeIf { id -> ofClient.any { it.contact.id == id } },
+				importance = fieldImportance(Field.CONTACT, Importance.OPTIONAL),
+			) { setContact(it) }
+		}
+	val usable = presets.filter { it.companyId == null || it.companyId == company }
+	if (fieldShown(Field.QUICK_PICK)) WithAddButton(stringResource(R.string.quick_preset), onAddPreset) { PolicyField(Field.QUICK_PICK) {
+		ChoiceField(
+			fieldLabel(Field.QUICK_PICK, R.string.field_preset),
+			listOf<Pair<Long?, String>>(null to none) + usable.map { it.id to it.text },
+			null,
+			importance = fieldImportance(Field.QUICK_PICK, Importance.OPTIONAL),
+		) { id ->
+			usable.firstOrNull { it.id == id }?.let { p ->
+				setActivity(p.text)
+				if (roleId == null) setRole(p.defaultRoleId)
 			}
-		},
-	) {
-		DateField(stringResource(R.string.field_date), date, { date = it }, importance = Importance.REQUIRED)
-		TimeField(stringResource(R.string.field_start), start, { start = it }, importance = Importance.REQUIRED)
-		if (s.kind == SegmentKind.PAUSE)
-			TextInput(stringResource(R.string.segment_note), note, { note = it }, importance = Importance.OPTIONAL)
-		Text(stringResource(R.string.segment_running_hint), style = MaterialTheme.typography.bodySmall)
+		}
+	} }
+	PolicyField(Field.DESCRIPTION) {
+		DictationInput(fieldLabel(Field.DESCRIPTION, R.string.field_activity), activity, setActivity, Importance.REQUIRED)
 	}
+	if (fieldShown(Field.ROLE)) WithAddButton(stringResource(R.string.quick_role), onAddRole) { PolicyField(Field.ROLE) {
+		ChoiceField(
+			fieldLabel(Field.ROLE, R.string.field_role),
+			listOf<Pair<Long?, String>>(null to none) + roles.filter { !it.archived || it.id == roleId }.map { it.id to it.name },
+			roleId,
+			importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
+		) { setRole(it) }
+	} }
 }
 
 /*
- * Tags of the entry (backlog 13): chips with a remove button, a field to
+ * "+ Lavoro · Viaggio · Pausa" as one split button (8): each part opens the
+ * segment dialog with its kind preset; an absence adds a day.
+ */
+@Composable
+private fun SegmentSplitButton(kinds: List<SegmentKind>, enabled: Boolean, onAdd: (SegmentKind) -> Unit) {
+	if (!enabled || kinds.isEmpty())
+		return
+	val compact = LocalCompact.current
+	Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(50)), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+		for (k in kinds) {
+			val style = segmentStyle(k)
+			Button(
+				onClick = { onAdd(k) },
+				modifier = Modifier.weight(1f).height(if (compact) 40.dp else 44.dp),
+				shape = androidx.compose.ui.graphics.RectangleShape,
+				colors = ButtonDefaults.buttonColors(containerColor = style.container, contentColor = style.content),
+				contentPadding = PaddingValues(horizontal = 6.dp),
+			) {
+				Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
+				Spacer(Modifier.width(4.dp))
+				Text(if (k == SegmentKind.ABSENCE) stringResource(R.string.detail_add_day) else kindLabel(k), maxLines = 1)
+			}
+		}
+	}
+}
+
+/* A segment: kind, times, length, km, manual, note; a planned one with a dashed badge (1.2). */
+@Composable
+private fun SegmentRow(s: SegmentEntity, zone: ZoneId, onClick: () -> Unit) {
+	val end = s.endUtcMs
+	val start = java.time.Instant.ofEpochMilli(s.startUtcMs).atZone(zone).toLocalDate()
+	val day = if (start == LocalDate.now(zone)) "" else start.format(java.time.format.DateTimeFormatter.ofPattern("d/MM "))
+	val range = day + clockOf(s.startUtcMs, zone) + " – " + (end?.let { clockOf(it, zone) } ?: "…")
+	val extra = listOfNotNull(
+		end?.let { hmOf(it - s.startUtcMs) },
+		(s.kmDeclared ?: s.kmEstimated)?.let { "%.1f km".format(it) },
+		if (s.planned) stringResource(R.string.detail_planned) else null,
+		if (!s.planned && s.source == SegmentSource.MANUAL && s.kind != SegmentKind.ABSENCE) stringResource(R.string.segment_manual) else null,
+		s.note,
+	).joinToString(" · ")
+	ClickableRow("${kindLabel(s.kind)}  $range", extra, leading = { SegmentBadge(s.kind, s.planned) }, onClick = onClick)
+}
+
+/*
+ * Tags of the activity (backlog 13): chips with a remove button, a field to
  * add one or more ("#urgente remoto"), suggestions from the master data's
  * tags first, then the free ones in use (issue #133). Without free tags
  * (setting, policy) only the master data's are taken; a free tag already
- * on the entry can be kept in the master data with a colour.
+ * on the activity can be kept in the master data with a colour.
  */
 @Composable
 private fun TagsSection(vm: EntryViewModel) {
@@ -658,7 +689,7 @@ private fun TagsSection(vm: EntryViewModel) {
 					SuggestionChip(
 						onClick = { add(listOf(t)); text = "" },
 						label = { Text("#$t") },
-						icon = { Box(Modifier.size(10.dp).clip(androidx.compose.foundation.shape.CircleShape).background(tagColor(t))) },
+						icon = { Box(Modifier.size(10.dp).clip(CircleShape).background(tagColor(t))) },
 					)
 			}
 	}
@@ -670,124 +701,12 @@ private fun TagsSection(vm: EntryViewModel) {
 }
 
 @Composable
-private fun ManualSegmentDialog(
-	kind: SegmentKind,
-	defaultDay: LocalDate,
-	zone: ZoneId,
-	vm: EntryViewModel,
-	onClose: () -> Unit,
-) {
-	val error by vm.error.collectAsState()
-	var date by remember { mutableStateOf(defaultDay.toString()) }
-	var start by remember { mutableStateOf("") }
-	var end by remember { mutableStateOf("") }
-	var km by remember { mutableStateOf("") }
-	var grid by remember { mutableStateOf(false) }
-	EditDialog(
-		title = stringResource(if (kind == SegmentKind.TRAVEL) R.string.add_travel else R.string.add_pause),
-		error = error,
-		onDismiss = onClose,
-		onConfirm = {
-			val d = parseDate(date)
-			val s = parseHhMm(start)
-			val t = parseHhMm(end)
-			if (d == null || s == null || t == null) {
-				/* reported by the repository as an invalid segment */
-				vm.addSegment(kind, 1, 0, null, onClose)
-			} else {
-				val (from, to) = localRange(d, s, t, zone)
-				vm.addSegment(kind, from, to, if (kind == SegmentKind.TRAVEL) parseDecimal(km) else null, onClose)
-			}
-		},
-	) {
-		DateField(stringResource(R.string.field_date), date, { date = it })
-		TimeField(stringResource(R.string.field_start), start, { start = it }, onOpen = { grid = true })
-		TimeField(stringResource(R.string.field_end), end, { end = it }, onOpen = { grid = true })
-		if (kind == SegmentKind.TRAVEL)
-			PolicyField(Field.KM) { TextInput(fieldLabel(Field.KM, R.string.field_km), km, { km = it }, KeyboardType.Decimal, importance = fieldImportance(Field.KM, null)) }
-		Text(stringResource(R.string.segment_hint), style = MaterialTheme.typography.bodySmall)
-	}
-	if (grid)
-		SegmentGrid(kindLabel(kind), date, start, end, null, zone, vm, { grid = false }) { a, b -> start = a; end = b }
-}
-
-/*
- * Start and end of a segment on the 5-minute grid (backlog 3): the other
- * segments of that day are hatched; "Exact time" is not offered here, the
- * fields keep any minute typed before.
- */
-@Composable
-private fun SegmentGrid(
-	kind: String,
-	date: String,
-	start: String,
-	end: String,
-	except: Long?,
-	zone: ZoneId,
-	vm: EntryViewModel,
-	onClose: () -> Unit,
-	onPick: (String, String) -> Unit,
-) {
-	val day = parseDate(date) ?: LocalDate.now(zone)
-	val busy by produceState(emptyList<IntRange>(), day, except) { value = vm.busyOn(day, except, zone) }
-	val locale = LocalConfiguration.current.locales[0]
-	val a = parseHhMm(start)
-	val b = parseHhMm(end)
-	TimeGridSheet(
-		title = "$kind · ${dateText(day, locale)}",
-		initial = if (a != null && b != null && b > a && a < 1440) a until b else null,
-		range = true,
-		busy = busy,
-		day = day,
-		onDismiss = onClose,
-	) { from, to ->
-		onClose()
-		onPick(formatMin(from), formatMin(to))
-	}
-}
-
-/* "No activity description": leave it empty, copy the last one on this client, or go back. */
-@Composable
-private fun EmptyActivityDialog(lastActivity: String?, onEmpty: () -> Unit, onCopy: () -> Unit, onEdit: () -> Unit) {
-	AlertDialog(
-		onDismissRequest = onEdit,
-		title = { Text(stringResource(R.string.empty_activity_title)) },
-		text = {
-			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-				Text(stringResource(R.string.empty_activity_text))
-				TextButton(onClick = onEmpty) { Text(stringResource(R.string.empty_activity_leave)) }
-				if (lastActivity != null)
-					TextButton(onClick = onCopy) {
-						Text(stringResource(R.string.empty_activity_copy, lastActivity), maxLines = 2, overflow = TextOverflow.Ellipsis)
-					}
-				TextButton(onClick = onEdit) { Text(stringResource(R.string.empty_activity_edit)) }
-			}
-		},
-		confirmButton = {},
-	)
-}
-
-@Composable
-private fun ConfirmDialog(text: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
-	AlertDialog(
-		onDismissRequest = onDismiss,
-		text = { Text(text) },
-		confirmButton = {
-			TextButton(onClick = onConfirm) {
-				Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-			}
-		},
-		dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-	)
-}
-
-@Composable
-private fun kindLabel(k: SegmentKind) = stringResource(
+private fun absenceLabel(k: AbsenceKind) = stringResource(
 	when (k) {
-		SegmentKind.WORK -> R.string.cmd_work
-		SegmentKind.TRAVEL -> R.string.cmd_travel
-		SegmentKind.PAUSE -> R.string.cmd_pause
-		SegmentKind.ABSENCE -> R.string.todo_absence
+		AbsenceKind.ABSENCE -> R.string.detail_absence_absence
+		AbsenceKind.HOLIDAY -> R.string.detail_absence_holiday
+		AbsenceKind.LEAVE -> R.string.detail_absence_leave
+		AbsenceKind.SICK -> R.string.detail_absence_sick
 	},
 )
 
@@ -818,58 +737,3 @@ enum class AddRequest { EXPENSE, PHOTO, VOICE, FILE, MATERIAL }
 private val TEAL_DARK = androidx.compose.ui.graphics.Color(0xFF5D4037)
 
 private data class AddChoice(val request: AddRequest, val label: Int, val icon: Int, val color: androidx.compose.ui.graphics.Color)
-
-/*
- * The top of the entry screen (issue #94): the state as on the Home card,
- * the totals of work, travel and pause, the segments as a coloured bar in
- * their order and length; [actions] are + Travel and + Pause.
- */
-@Composable
-private fun EntrySummary(e: TimeEntryEntity, segments: List<SegmentEntity>, editableTimes: Boolean, onTimes: () -> Unit, actions: @Composable () -> Unit) {
-	val now = System.currentTimeMillis()
-	fun len(s: SegmentEntity) = maxOf(0L, (s.endUtcMs ?: now) - s.startUtcMs)
-	fun sum(k: SegmentKind) = segments.filter { it.kind == k }.sumOf(::len)
-	androidx.compose.material3.Card(Modifier.fillMaxWidth()) {
-		Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-			/* two nodes' changes left overlapping segments (issue #119): fixed below, or on the web by a manager when times are locked */
-			if (e.needsReview)
-				Text(stringResource(if (editableTimes) R.string.entry_needs_review else R.string.entry_needs_review_locked), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-			Row(verticalAlignment = Alignment.CenterVertically) {
-				val style = it.infraconsulting.activitytrack.ui.common.stateStyle(e.legacy, e.mode)
-				Box(Modifier.weight(1f)) {
-					if (style != null && style.container != Color.Transparent)
-						it.infraconsulting.activitytrack.ui.common.StatePill(style, statusText(e.legacy, e.mode))
-					else
-						Text(statusText(e.legacy, e.mode), color = MaterialTheme.colorScheme.primary)
-				}
-				Text(hmOf(sum(SegmentKind.WORK) + sum(SegmentKind.TRAVEL)), style = MaterialTheme.typography.titleLarge)
-			}
-			val total = segments.sumOf(::len)
-			if (total > 0)
-				Row(
-					Modifier.fillMaxWidth().height(10.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(5.dp)).clickable(onClick = onTimes),
-					horizontalArrangement = Arrangement.spacedBy(2.dp),
-				) {
-					for (s in segments.sortedBy { it.startUtcMs }) {
-						val w = len(s).toFloat() / total
-						if (w > 0f)
-							Box(Modifier.weight(w).fillMaxSize().background(commandStyle(segmentCommand(s.kind))!!.container))
-					}
-				}
-			Row(verticalAlignment = Alignment.CenterVertically) {
-				Text(
-					stringResource(R.string.entry_summary_totals, hmOf(sum(SegmentKind.WORK)), hmOf(sum(SegmentKind.TRAVEL)), hmOf(sum(SegmentKind.PAUSE))),
-					style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f),
-				)
-				TextButton(onClick = onTimes) { Text(stringResource(R.string.segments) + " ›") }
-			}
-			androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { actions() }
-		}
-	}
-}
-
-private fun segmentCommand(k: SegmentKind) = when (k) {
-	SegmentKind.TRAVEL -> EntryCommand.TRAVEL
-	SegmentKind.PAUSE -> EntryCommand.PAUSE
-	else -> EntryCommand.WORK
-}

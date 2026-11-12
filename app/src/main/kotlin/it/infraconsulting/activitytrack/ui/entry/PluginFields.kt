@@ -1,20 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
-import it.infraconsulting.activitytrack.ui.todo.TodoEntity
-import it.infraconsulting.activitytrack.ui.todo.TodoKind
-import it.infraconsulting.activitytrack.ui.todo.TodoRepository
-import it.infraconsulting.activitytrack.ui.todo.title
-import it.infraconsulting.activitytrack.ui.todo.done
-import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
-import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
-import it.infraconsulting.activitytrack.ui.todo.refs
-import it.infraconsulting.activitytrack.ui.todo.color
-import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
-import it.infraconsulting.activitytrack.ui.todo.todoKind
-import it.infraconsulting.activitytrack.ui.todo.todoId
-import it.infraconsulting.activitytrack.ui.todo.isOpen
-import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -95,7 +81,7 @@ fun PluginFieldsSection(e: TimeEntryEntity, co: it.infraconsulting.activitytrack
 	val own = obj(e.pluginFields) ?: JsonObject(emptyMap())
 	val fields = HashMap<String, JsonElement>().apply { putAll(own) }
 	val todoJson: JsonElement = todo?.takeIf { it.externalKey != null }?.let {
-		JsonObject(mapOf("id" to JsonPrimitive(it.id), "externalKey" to JsonPrimitive(it.externalKey!!), "title" to JsonPrimitive(it.title)))
+		JsonObject(mapOf("id" to JsonPrimitive(it.id), "externalKey" to JsonPrimitive(it.externalKey!!), "title" to JsonPrimitive(it.activity.orEmpty())))
 	} ?: JsonNull
 	val entryJson = JsonObject(mapOf("client" to JsonObject(mapOf("code" to (clientCode?.let(::JsonPrimitive) ?: JsonNull)))))
 	fun itemJson(i: RemoteItemEntity) =
