@@ -891,4 +891,16 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="priority_high">High</string>
   <string name="priority_urgent">Urgent</string>
   <string name="priority_emergency">Emergency</string>
+  <!-- ui-lists -->
+  <string name="swipe_delete">Delete</string>
+  <string name="undo_todo_deleted">“%1$s” moved to the bin</string>
+  <string name="bin_title">Bin</string>
+  <string name="bin_restore">Restore</string>
+  <string name="bin_purge">Delete permanently</string>
+  <string name="bin_purge_confirm">Delete “%1$s” permanently? It cannot be undone.</string>
+  <string name="bin_purge_failed">It has attachments: remove them first.</string>
+  <string name="lists_absence_kind_absence">Absence</string>
+  <string name="lists_absence_kind_holiday">Holiday</string>
+  <string name="lists_absence_kind_leave">Leave</string>
+  <string name="lists_absence_kind_sick">Sick leave</string>
 </resources>

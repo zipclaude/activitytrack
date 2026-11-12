@@ -318,7 +318,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, s
 		Screen.Contacts -> it.infraconsulting.activitytrack.ui.masterdata.ContactsScreen(back)
 		Screen.Materials -> it.infraconsulting.activitytrack.ui.masterdata.MaterialsScreen(back)
 		/* a tab root, or opened from a notification above another screen */
-		Screen.Todos -> TodosScreen(back.takeUnless { LocalBottomBar.current }) { open(Screen.StartFromTodo(it)) }
+		Screen.Todos -> TodosScreen(back.takeUnless { LocalBottomBar.current }, onOpen = { open(Screen.Entry(it)) }) { open(Screen.StartFromTodo(it)) }
 		is Screen.Todo -> TodosScreen(back, editId = top.id) { open(Screen.StartFromTodo(it)) }
 		is Screen.Entry -> EntryScreen(top.id, back) { open(Screen.EntryTrack(it)) }
 		Screen.Day -> DayScreen(null, onOpenEntry = { open(Screen.Entry(it)) }, onExport = { open(Screen.Export) })

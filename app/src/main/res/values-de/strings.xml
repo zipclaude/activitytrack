@@ -879,4 +879,16 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="priority_high">Hoch</string>
   <string name="priority_urgent">Dringend</string>
   <string name="priority_emergency">Notfall</string>
+  <!-- ui-lists -->
+  <string name="swipe_delete">Löschen</string>
+  <string name="undo_todo_deleted">„%1$s“ in den Papierkorb verschoben</string>
+  <string name="bin_title">Papierkorb</string>
+  <string name="bin_restore">Wiederherstellen</string>
+  <string name="bin_purge">Endgültig löschen</string>
+  <string name="bin_purge_confirm">„%1$s“ endgültig löschen? Das lässt sich nicht rückgängig machen.</string>
+  <string name="bin_purge_failed">Es hat Anhänge: zuerst entfernen.</string>
+  <string name="lists_absence_kind_absence">Abwesenheit</string>
+  <string name="lists_absence_kind_holiday">Urlaub</string>
+  <string name="lists_absence_kind_leave">Freistellung</string>
+  <string name="lists_absence_kind_sick">Krankheit</string>
 </resources>

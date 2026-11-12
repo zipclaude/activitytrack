@@ -880,4 +880,16 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="priority_high">Alta</string>
   <string name="priority_urgent">Urgenza</string>
   <string name="priority_emergency">Emergenza</string>
+  <!-- ui-lists -->
+  <string name="swipe_delete">Elimina</string>
+  <string name="undo_todo_deleted">«%1$s» spostata nel cestino</string>
+  <string name="bin_title">Cestino</string>
+  <string name="bin_restore">Ripristina</string>
+  <string name="bin_purge">Elimina definitivamente</string>
+  <string name="bin_purge_confirm">Eliminare definitivamente «%1$s»? Non si può annullare.</string>
+  <string name="bin_purge_failed">Ha degli allegati: eliminali prima.</string>
+  <string name="lists_absence_kind_absence">Assenza</string>
+  <string name="lists_absence_kind_holiday">Ferie</string>
+  <string name="lists_absence_kind_leave">Permesso</string>
+  <string name="lists_absence_kind_sick">Malattia</string>
 </resources>

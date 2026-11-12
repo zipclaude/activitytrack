@@ -880,4 +880,16 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="priority_high">Alta</string>
   <string name="priority_urgent">Urgente</string>
   <string name="priority_emergency">Emergencia</string>
+  <!-- ui-lists -->
+  <string name="swipe_delete">Eliminar</string>
+  <string name="undo_todo_deleted">«%1$s» movida a la papelera</string>
+  <string name="bin_title">Papelera</string>
+  <string name="bin_restore">Restaurar</string>
+  <string name="bin_purge">Eliminar definitivamente</string>
+  <string name="bin_purge_confirm">¿Eliminar definitivamente «%1$s»? No se puede deshacer.</string>
+  <string name="bin_purge_failed">Tiene adjuntos: elimínalos primero.</string>
+  <string name="lists_absence_kind_absence">Ausencia</string>
+  <string name="lists_absence_kind_holiday">Vacaciones</string>
+  <string name="lists_absence_kind_leave">Permiso</string>
+  <string name="lists_absence_kind_sick">Baja por enfermedad</string>
 </resources>

@@ -118,6 +118,20 @@ import it.infraconsulting.activitytrack.ui.common.UndoEvent
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.parseDate
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
+import it.infraconsulting.activitytrack.data.db.SegmentEntity
+import it.infraconsulting.activitytrack.data.repo.EntryRepository
+import it.infraconsulting.activitytrack.domain.activity.ActivityDisplay
+import it.infraconsulting.activitytrack.domain.activity.DisplayState
+import it.infraconsulting.activitytrack.domain.activity.Priority
+import it.infraconsulting.activitytrack.ui.common.displayName
+import it.infraconsulting.activitytrack.ui.common.displayStyle
+import it.infraconsulting.activitytrack.ui.common.priorityName
+import it.infraconsulting.activitytrack.ui.common.snapshot
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -126,16 +140,26 @@ import java.time.format.DateTimeFormatter
 /* To-dos (M4, planned M9, cards and swipes M10): list, add/edit, plan, start, done, ignore. */
 class TodosViewModel(
 	private val todos: TodoRepository,
+	private val entries: EntryRepository,
 	master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
 	/* the policy in force: the fields it makes required (issue #48) */
 	private val policy: () -> it.infraconsulting.activitytrack.domain.policy.Policy = { it.infraconsulting.activitytrack.domain.policy.Policy.NONE },
 ) : ActionViewModel() {
 	val open = todos.open.state(emptyList())
+	/* the bin: every deleted activity, newest first (ACTIVITY-MODEL.md 1.1) */
+	val deleted = entries.deleted.state(emptyList())
+
+	/* read by the Home screen until its wave drops them: the deleted TODO ones, and none (a ticked to-do is a closed activity) */
 	val ignored = todos.ignored.state(emptyList())
-	val all = todos.all.state(emptyList())
-	/* the done ones, most recently marked first (Home "Chiuse", issue #59) */
-	val done = todos.done(100).state(emptyList())
+	val done = todos.done(0).state(emptyList())
+
+	/* the planned segments of each TODO activity (they make it PLANNED or LATE, 2.2) */
+	@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+	val planned: StateFlow<Map<Long, List<SegmentEntity>>> = entries.todos.flatMapLatest { list ->
+		if (list.isEmpty()) flowOf(emptyMap())
+		else combine(list.map { t -> entries.segments(t.id).map { segs -> t.id to segs.filter { it.planned } } }) { it.toMap() }
+	}.state(emptyMap())
 	val clients = master.clients.state(emptyList())
 	val companies = master.companies.state(emptyList())
 	val settings = settingsRepo.settings.state(null)
@@ -148,27 +172,18 @@ class TodosViewModel(
 	fun setHomeWindow(hours: Int) = run { settingsRepo.update { it.copy(homeTodoWindowHours = hours) } }
 	fun setHomeFilterEntries(on: Boolean) = run { settingsRepo.update { it.copy(homeFilterEntries = on) } }
 
-	/* ignored to-dos listed or hidden (owner, 2026-10-19) */
-	fun setShowIgnored(on: Boolean) = run { settingsRepo.update { it.copy(todoShowIgnored = on) } }
 
 	/* the change, then "Annulla" puts [t] back as it was (issue #97) */
 	private fun undoable(t: TodoEntity, @androidx.annotation.StringRes message: Int, action: suspend () -> Unit) =
 		run({ Undo.post(UndoEvent(message, t.title) { todos.restore(t) }) }, action)
 
-	fun setDone(t: TodoEntity, done: Boolean) =
-		undoable(t, if (done) R.string.undo_todo_done else R.string.undo_todo_open) { todos.setDone(t.id, done) }
-	fun delete(t: TodoEntity) = run { todos.delete(t.id) }
-	fun setIgnored(t: TodoEntity, ignored: Boolean) =
-		undoable(t, if (ignored) R.string.undo_todo_ignored else R.string.undo_todo_open) { todos.setIgnored(t.id, ignored) }
-	/* the state chosen by hand (issue #89) */
-	fun setState(t: TodoEntity, state: TodoState) = undoable(
-		t,
-		when (state) {
-			TodoState.DONE -> R.string.undo_todo_done
-			TodoState.IGNORED -> R.string.undo_todo_ignored
-			else -> R.string.undo_todo_open
-		},
-	) { todos.setState(t.id, done = state == TodoState.DONE, ignored = state == TodoState.IGNORED) }
+	/* tick: TODO -> CLOSED, the planned segments go (3) */
+	fun tick(t: TodoEntity) = undoable(t, R.string.undo_todo_done) { entries.tick(t.id) }
+	/* to the bin, restorable (ignoreTodos maps to delete/restore, 7) */
+	fun delete(t: TodoEntity) = undoable(t, R.string.undo_todo_deleted) { entries.delete(t.id) }
+	fun restore(t: TodoEntity) = run { entries.restore(t.id) }
+	/* out of the bin for good; refused with attachments (HAS_ATTACHMENTS) */
+	fun purge(t: TodoEntity, done: () -> Unit = {}) = run(done) { entries.purge(t.id) }
 	fun clearPlan(t: TodoEntity) = undoable(t, R.string.undo_todo_unplanned) { todos.clearPlan(t.id) }
 	/* TODO(activity-1.0-ui): the last day of an absence typed in the 0.9 dialog (no column for it since 1.0) */
 	var absenceLastDay: Long? = null
@@ -196,7 +211,7 @@ class TodosViewModel(
 }
 
 @Composable
-internal fun todosViewModel() = appViewModel(key = "todos") { c -> TodosViewModel(c.todos, c.masterData, c.settings, { c.policies.current.value }) }
+internal fun todosViewModel() = appViewModel(key = "todos") { c -> TodosViewModel(c.todos, c.entries, c.masterData, c.settings, { c.policies.current.value }) }
 
 /* the default colour of an absence (issue #158): the palette's red */
 internal const val ABSENCE_COLOR = 0xD64545
@@ -215,25 +230,26 @@ internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = todoDraft(
 internal fun moment(t: TodoEntity, zone: ZoneId): Instant? =
 	todoMoment(t.plan(), t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, zone)
 
-internal fun overdue(t: TodoEntity, now: Instant = Instant.now()): Boolean {
-	if (t.done || t.ignoredUtcMs != null || t.isAbsence())
-		return false
-	val zone = ZoneId.systemDefault()
-	return t.plan()?.over(now, zone) == true ||
-		dueOverdue(t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, now, zone)
-}
+/* The state shown for an activity (ACTIVITY-MODEL.md 2.2); [planned] its planned segments when known. */
+internal fun displayOf(t: TodoEntity, now: Instant = Instant.now(), planned: List<SegmentEntity> = emptyList()): DisplayState =
+	ActivityDisplay.display(t.snapshot(planned), now, ZoneId.systemDefault()).state
+
+internal fun overdue(t: TodoEntity, now: Instant = Instant.now(), planned: List<SegmentEntity> = emptyList()): Boolean =
+	displayOf(t, now, planned) == DisplayState.LATE
 
 /*
- * The one state a to-do shows (issue #89): done and ignored are set by hand,
- * overdue and planned follow its dates; a done one is no longer "planned".
+ * The coarse state Home still reads (the Home wave replaces it by
+ * DisplayState): computed from the displayed state, so the rules are the
+ * domain's (2.3).
  */
-internal fun todoState(t: TodoEntity, now: Instant = Instant.now()): TodoState = when {
-	t.done -> TodoState.DONE
-	t.ignoredUtcMs != null -> TodoState.IGNORED
-	overdue(t, now) -> TodoState.OVERDUE
-	t.plan() != null -> TodoState.PLANNED
-	else -> TodoState.OPEN
-}
+internal fun todoState(t: TodoEntity, now: Instant = Instant.now(), planned: List<SegmentEntity> = emptyList()): TodoState =
+	when (displayOf(t, now, planned)) {
+		DisplayState.DELETED -> TodoState.IGNORED
+		DisplayState.LATE -> TodoState.OVERDUE
+		DisplayState.PLANNED -> TodoState.PLANNED
+		DisplayState.DONE, DisplayState.INCOMPLETE -> TodoState.DONE
+		else -> TodoState.OPEN
+	}
 
 /* When a done to-do was done: "today 20:05", "mer 21/10 20:05"; null for the open ones. */
 @Composable
@@ -262,14 +278,22 @@ private fun subtitle(t: TodoEntity, clientName: String?): String {
 	}
 	val due = t.dueEpochDay?.let { d -> dayText(d) + (t.dueTimeMin?.let { " ${formatMin(it)}" } ?: "") }
 	val late = stringResource(R.string.todo_overdue).takeIf { overdue(t) }
-	return listOfNotNull(late, clientName, planned, due, t.priority.takeIf { it > 0 }?.let { "P$it" }).joinToString(" · ")
+	val priority = Priority.of(t.priority).takeIf { it != Priority.NONE }?.let { stringResource(priorityName(it)) }
+	return listOfNotNull(late, clientName, planned, due, priority).joinToString(" · ")
 }
 
 /* The time shown at the card's top right: when it was done, else the planned block, else the due date. */
 @Composable
-internal fun cardTime(t: TodoEntity): String? {
+internal fun cardTime(t: TodoEntity, planned: List<SegmentEntity> = emptyList()): String? {
 	doneText(t)?.let { return it }
 	val today = LocalDate.now()
+	/* planned segments without a plan: the first one's day and time */
+	if (t.plan() == null)
+		planned.minByOrNull { it.startUtcMs }?.let { s ->
+			val at = Instant.ofEpochMilli(s.startUtcMs).atZone(ZoneId.systemDefault())
+			val time = formatMin(at.hour * 60 + at.minute)
+			return if (at.toLocalDate() == today) time else "${dayText(at.toLocalDate().toEpochDay())} $time"
+		}
 	t.plan()?.let { p ->
 		val zone = ZoneId.systemDefault()
 		/* the day only; a point; a block (issue #52) */
@@ -295,54 +319,55 @@ private fun Chip(text: String, container: Color, content: Color) {
 }
 
 /*
- * One to-do as a card (M10): title and time, client and labels; an ignored
- * one is struck through and dimmed.
+ * One to-do as a card (M10): the state's icon and colour (2.2), title and
+ * time, client and priority by name; a deleted one is struck through.
  */
 @Composable
-fun TodoCard(t: TodoEntity, clientName: String?, band: Int? = null, onClick: () -> Unit) {
-	val state = todoState(t)
-	/* its own colour wins over the company's; an absence is red unless chosen (issue #158) */
-	val band = t.color ?: if (t.isAbsence()) ABSENCE_COLOR else band
+fun TodoCard(t: TodoEntity, clientName: String?, band: Int? = null, planned: List<SegmentEntity> = emptyList(), onClick: () -> Unit) {
+	val state = displayOf(t, planned = planned)
+	val style = displayStyle(state)
+	val deleted = state == DisplayState.DELETED
 	val title = t.title.ifBlank { if (t.isAbsence()) stringResource(R.string.todo_absence) else "" }
-	val ignored = state == TodoState.IGNORED
 	val compact = LocalCompact.current
 	val body: @Composable () -> Unit = {
-		Column(
+		Row(
 			Modifier.padding(horizontal = if (compact) 12.dp else 14.dp, vertical = if (compact) 7.dp else 12.dp),
-			verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp),
+			verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp),
 		) {
-			Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				Text(
-					(if (t.done) "✓ " else "") + title,
-					style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-					textDecoration = if (ignored) TextDecoration.LineThrough else null,
-					maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
-				)
-				cardTime(t)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+			Box(Modifier.size(28.dp).clip(CircleShape).background(style.container), contentAlignment = Alignment.Center) {
+				Icon(painterResource(style.icon), contentDescription = stringResource(displayName(state)), tint = style.content, modifier = Modifier.size(18.dp))
 			}
-			FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-				clientName?.let {
+			Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)) {
+				Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 					Text(
-						it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-						textDecoration = if (ignored) TextDecoration.LineThrough else null,
+						title,
+						style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+						textDecoration = if (deleted) TextDecoration.LineThrough else null,
+						maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
 					)
+					cardTime(t, planned)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
 				}
-				val cs = MaterialTheme.colorScheme
-				when (state) {
-					TodoState.DONE -> Chip(stringResource(R.string.todo_done_chip), cs.surfaceVariant, cs.onSurfaceVariant)
-					TodoState.IGNORED -> Chip(stringResource(R.string.todo_ignored), cs.surfaceVariant, cs.onSurfaceVariant)
-					TodoState.OVERDUE -> Chip(stringResource(R.string.todo_overdue), cs.errorContainer, cs.onErrorContainer)
-					TodoState.PLANNED -> Chip(stringResource(R.string.todo_planned_chip), cs.secondaryContainer, cs.onSecondaryContainer)
-					TodoState.OPEN -> {}
+				FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+					clientName?.let {
+						Text(
+							it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+							textDecoration = if (deleted) TextDecoration.LineThrough else null,
+						)
+					}
+					val cs = MaterialTheme.colorScheme
+					if (state == DisplayState.LATE)
+						Chip(stringResource(displayName(state)), cs.errorContainer, cs.onErrorContainer)
+					else if (state == DisplayState.PLANNED)
+						Chip(stringResource(displayName(state)), cs.secondaryContainer, cs.onSecondaryContainer)
+					Priority.of(t.priority).takeIf { it != Priority.NONE && !deleted }?.let { Chip(stringResource(priorityName(it)), cs.surfaceVariant, cs.onSurfaceVariant) }
 				}
-				t.priority.takeIf { it > 0 }?.takeIf { state != TodoState.IGNORED && state != TodoState.DONE }?.let { Chip("P$it", cs.surfaceVariant, cs.onSurfaceVariant) }
 			}
 		}
 	}
-	if (ignored)
+	if (deleted)
 		OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth().alpha(0.6f)) { Banded(band) { body() } }
 	else
-		Card(onClick = onClick, modifier = Modifier.fillMaxWidth().alpha(if (state == TodoState.DONE) 0.75f else 1f)) { Banded(band) { body() } }
+		Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Banded(band) { body() } }
 }
 
 /* The buttons a swipe reveals on a to-do card ([swipe] for that direction). */
@@ -357,16 +382,17 @@ internal fun todoSwipeActions(
 ): List<SwipeAction> {
 	val grey = MaterialTheme.colorScheme.outline
 	val canIgnore = LocalPolicy.current.enabled(Feature.IGNORE_TODOS)
-	return Gestures.todoActions(swipe, ignored = t.ignoredUtcMs != null, planned = t.plan() != null, done = t.done)
-		.filter { canIgnore || (it != TodoAction.IGNORE && it != TodoAction.RESTORE) }.map { a ->
+	return Gestures.todoActions(swipe, ignored = t.deletedUtcMs != null, planned = t.plan() != null, done = t.done)
+		.filter { canIgnore || (it != TodoAction.IGNORE && it != TodoAction.RESTORE) }.mapNotNull { a ->
 		when (a) {
 			TodoAction.START -> SwipeAction(stringResource(R.string.swipe_start), R.drawable.ic_cmd_play, GREEN, Color.White) { onStart(t.id) }
 			TodoAction.POSTPONE -> SwipeAction(stringResource(R.string.action_postpone, snooze), R.drawable.ic_clock, BLUE, Color.White) { vm.postpone(t, snooze) }
-			TodoAction.IGNORE -> SwipeAction(stringResource(R.string.swipe_ignore), R.drawable.ic_ignore, grey, Color.White) { vm.setIgnored(t, true) }
-			TodoAction.RESTORE -> SwipeAction(stringResource(R.string.swipe_restore), R.drawable.ic_restore, BLUE, Color.White) { vm.setIgnored(t, false) }
-			TodoAction.DONE -> SwipeAction(stringResource(R.string.todo_mark_done), R.drawable.ic_done, GREEN, Color.White) { vm.setDone(t, true) }
+			TodoAction.IGNORE -> SwipeAction(stringResource(R.string.swipe_delete), R.drawable.ic_ignore, grey, Color.White) { vm.delete(t) }
+			TodoAction.RESTORE -> SwipeAction(stringResource(R.string.swipe_restore), R.drawable.ic_restore, BLUE, Color.White) { vm.restore(t) }
+			TodoAction.DONE -> SwipeAction(stringResource(R.string.todo_mark_done), R.drawable.ic_done, GREEN, Color.White) { vm.tick(t) }
 			TodoAction.REPLAN -> SwipeAction(stringResource(R.string.action_replan), R.drawable.ic_calendar, BLUE, Color.White) { onReplan(t) }
-			TodoAction.REOPEN -> SwipeAction(stringResource(R.string.todo_reopen_short), R.drawable.ic_restore, ORANGE, Color.White) { vm.setDone(t, false) }
+			/* a ticked to-do leaves this list: nothing to reopen here */
+			TodoAction.REOPEN -> null
 		}
 	}
 }
@@ -380,6 +406,7 @@ fun TodoSwipeCard(
 	onStart: (Long) -> Unit,
 	onReplan: (TodoEntity) -> Unit,
 	band: Int? = null,
+	planned: List<SegmentEntity> = emptyList(),
 	onClick: () -> Unit,
 ) {
 	val settings by vm.settings.collectAsState()
@@ -390,7 +417,7 @@ fun TodoSwipeCard(
 		toEnd = todoSwipeActions(t, g.todoToEnd, vm, snooze, onStart, onReplan),
 		fullSwipe = g.fullSwipe,
 		shape = CardDefaults.shape,
-	) { TodoCard(t, clientName, band, onClick) }
+	) { TodoCard(t, clientName, band, planned, onClick) }
 }
 
 /* To-dos screen window: 24 h, 7 days, 30 days or all (owner, 2026-10-19); overdue always shown. */
@@ -458,23 +485,24 @@ internal fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false, label: S
 	}
 }
 
-/*
- * The band of each to-do (owner, 2026-10-18): the company colour, or the
- * client colour when the list shows a single company.
- */
+/* The band of each activity: its client's colour, else its company's. */
 internal fun bands(list: List<TodoEntity>, companies: List<CompanyEntity>, clients: List<ClientEntity>): Map<Long, Int?> {
-	val one = list.map { it.companyId }.distinct().size == 1
 	val co = companies.associate { it.id to it.color }
 	val cl = clients.associate { it.id to it.color }
-	return list.associate { t -> t.id to if (one) t.clientId?.let { cl[it] } else companyColor(t.companyId, co[t.companyId]) }
+	/* the client's colour, else its company's (owner, 2026-11-11: the to-do has none) */
+	return list.associate { t -> t.id to (t.clientId?.let { cl[it] } ?: companyColor(t.companyId, co[t.companyId])) }
 }
 
-/* Start / postpone / done / ignore / edit (re-plan) for one to-do. */
+/* Start / tick / postpone / re-plan / edit / delete (to the bin) for one to-do; the bin's ones: restore or purge. */
 @Composable
 internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit, onEdit: (() -> Unit)?, onDismiss: () -> Unit) {
+	if (t.deletedUtcMs != null) {
+		BinActions(t, vm, onDismiss)
+		return
+	}
 	val clients by vm.clients.collectAsState()
 	val settings by vm.settings.collectAsState()
-	val ignored = t.ignoredUtcMs != null
+	val planned by vm.planned.collectAsState()
 	var deleting by remember { mutableStateOf(false) }
 	if (deleting) {
 		AlertDialog(
@@ -494,38 +522,22 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 		title = { Text(t.title) },
 		text = {
 			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+				val state = displayOf(t, planned = planned[t.id].orEmpty())
+				val style = displayStyle(state)
+				Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+					Box(Modifier.size(24.dp).clip(CircleShape).background(style.container), contentAlignment = Alignment.Center) {
+						Icon(painterResource(style.icon), contentDescription = null, tint = style.content, modifier = Modifier.size(16.dp))
+					}
+					Text(stringResource(displayName(state)), style = MaterialTheme.typography.labelLarge)
+				}
 				Text(subtitle(t, clients.firstOrNull { it.id == t.clientId }?.name), style = MaterialTheme.typography.bodySmall)
 				t.notes?.let { Text(it) }
-				if (t.refs.isNotBlank())
-					Text(t.refs.lines().joinToString(" · "), style = MaterialTheme.typography.bodySmall)
-				/* the state set by hand, whatever it was (issue #89); planned and overdue follow the dates */
-				val state = todoState(t)
-				val chosen = when (state) {
-					TodoState.DONE, TodoState.IGNORED -> state
-					else -> TodoState.OPEN
-				}
-				val states = listOfNotNull(
-					TodoState.OPEN to R.string.todo_state_open,
-					TodoState.DONE to R.string.todo_state_done,
-					(TodoState.IGNORED to R.string.todo_state_ignored)
-						.takeIf { ignored || LocalPolicy.current.enabled(Feature.IGNORE_TODOS) },
-				)
-				Text(stringResource(R.string.todo_state), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
-				FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-					for ((s, label) in states)
-						FilterChip(
-							selected = s == chosen,
-							onClick = { if (s != chosen) vm.setState(t, s); onDismiss() },
-							label = { Text(stringResource(label)) },
-						)
-				}
-				if (chosen == TodoState.OPEN) {
-					TextButton(onClick = { onDismiss(); onStart() }) { Text(stringResource(R.string.todo_start)) }
-					val snooze = settings?.planSnoozeMin
-					if (t.plan() != null && snooze != null)
-						TextButton(onClick = { vm.postpone(t, snooze); onDismiss() }) { Text(stringResource(R.string.action_postpone, snooze)) }
-				}
-				if (t.plan() != null && chosen != TodoState.DONE)
+				TextButton(onClick = { onDismiss(); onStart() }) { Text(stringResource(R.string.todo_start)) }
+				TextButton(onClick = { vm.tick(t); onDismiss() }) { Text(stringResource(R.string.todo_mark_done)) }
+				val snooze = settings?.planSnoozeMin
+				if (t.plan() != null && snooze != null)
+					TextButton(onClick = { vm.postpone(t, snooze); onDismiss() }) { Text(stringResource(R.string.action_postpone, snooze)) }
+				if (t.plan() != null)
 					TextButton(onClick = { vm.clearPlan(t); onDismiss() }) { Text(stringResource(R.string.todo_clear_plan)) }
 				onEdit?.let {
 					TextButton(onClick = { onDismiss(); it() }) {
@@ -542,18 +554,58 @@ internal fun TodoActions(t: TodoEntity, vm: TodosViewModel, onStart: () -> Unit,
 	)
 }
 
+/* A deleted activity: "Ripristina", or "Elimina definitivamente" after a confirmation. */
+@Composable
+internal fun BinActions(t: TodoEntity, vm: TodosViewModel, onDismiss: () -> Unit) {
+	val error by vm.error.collectAsState()
+	var purging by remember { mutableStateOf(false) }
+	if (purging) {
+		AlertDialog(
+			onDismissRequest = { purging = false; vm.clearError() },
+			text = {
+				Column {
+					Text(stringResource(R.string.bin_purge_confirm, t.title.ifBlank { stringResource(R.string.todo_absence) }))
+					error?.let { Text(stringResource(R.string.bin_purge_failed), color = MaterialTheme.colorScheme.error) }
+				}
+			},
+			confirmButton = {
+				TextButton(onClick = { vm.purge(t) { onDismiss() } }) {
+					Text(stringResource(R.string.bin_purge), color = MaterialTheme.colorScheme.error)
+				}
+			},
+			dismissButton = { TextButton(onClick = { purging = false; vm.clearError() }) { Text(stringResource(R.string.action_cancel)) } },
+		)
+		return
+	}
+	AlertDialog(
+		onDismissRequest = onDismiss,
+		title = { Text(t.title.ifBlank { stringResource(R.string.todo_absence) }) },
+		text = {
+			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+				TextButton(onClick = { vm.restore(t); onDismiss() }) { Text(stringResource(R.string.bin_restore)) }
+				TextButton(onClick = { vm.clearError(); purging = true }) { Text(stringResource(R.string.bin_purge), color = MaterialTheme.colorScheme.error) }
+			}
+		},
+		confirmButton = {},
+		dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) } },
+	)
+}
+
 /*
- * [editId]: open that to-do in the editor at once (re-plan from the reminder).
- * Open ones first, ignored ones at the bottom, done ones on request.
+ * The "Da fare" list: the TODO activities (displayed as TODO, PLANNED or
+ * LATE), highest priority first, then by plan and due date; or the bin.
+ * [editId]: open that to-do in the editor at once (re-plan from the
+ * reminder). [onOpen]: the activity's detail route; without it a tap opens
+ * the actions dialog.
  */
 @Composable
-fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> Unit) {
+fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onOpen: ((Long) -> Unit)? = null, onStart: (Long) -> Unit) {
 	val vm = todosViewModel()
 	val open by vm.open.collectAsState()
-	val ignored by vm.ignored.collectAsState()
-	val all by vm.all.collectAsState()
+	val deleted by vm.deleted.collectAsState()
+	val planned by vm.planned.collectAsState()
 	val clients by vm.clients.collectAsState()
-	var showDone by remember { mutableStateOf(false) }
+	var showBin by rememberSaveable { mutableStateOf(false) }
 	var selected by remember { mutableStateOf<TodoEntity?>(null) }
 	var editing by remember { mutableStateOf<TodoEntity?>(null) }
 	var opened by rememberSaveable { mutableStateOf(false) }
@@ -564,20 +616,20 @@ fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> 
 	/* the advanced filters (owner, 2026-10-19), kept while the screen is open */
 	var more by rememberSaveable(stateSaver = TodoFilters.Saver) { mutableStateOf(TodoFilters()) }
 	var editingFilters by remember { mutableStateOf(false) }
-	val showIgnored = settings?.todoShowIgnored != false
 	val zone = ZoneId.systemDefault()
 	val now = Instant.now()
-	val list = (if (showDone) all else open + ignored).filter { t ->
+	val canBin = LocalPolicy.current.enabled(Feature.IGNORE_TODOS) || deleted.isNotEmpty()
+	val list = if (showBin) deleted.filter { filter == null || it.companyId == filter }
+	else open.filter { t ->
 		(filter == null || t.companyId == filter) &&
-			(showIgnored || t.ignoredUtcMs == null) &&
 			(window == 0 || withinHours(moment(t, zone), now, window.toLong())) &&
-			more.accepts(t, now)
-	}
+			more.accepts(t, now, planned[t.id].orEmpty())
+	}.sortedByDescending { it.priority }
 	val band = bands(list, companies, clients)
 
-	LaunchedEffect(editId, all) {
+	LaunchedEffect(editId, open) {
 		if (editId != null && !opened)
-			all.firstOrNull { it.id == editId }?.let {
+			open.firstOrNull { it.id == editId }?.let {
 				vm.clearError()
 				editing = it
 				opened = true
@@ -585,9 +637,9 @@ fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> 
 	}
 
 	ScreenScaffold(
-		title = stringResource(R.string.todo_title),
+		title = stringResource(if (showBin) R.string.bin_title else R.string.todo_title),
 		onBack = onBack,
-		actions = { AddButton { vm.clearError(); editing = newTodo() } },
+		actions = { if (!showBin) AddButton { vm.clearError(); editing = newTodo() } },
 	) { padding ->
 		LazyColumn(
 			modifier = Modifier.fillMaxSize().padding(padding),
@@ -595,18 +647,22 @@ fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> 
 		) {
 			item {
 				Column(Modifier.padding(horizontal = 16.dp)) {
-					SwitchRow(stringResource(R.string.todo_show_done), showDone) { showDone = it }
 					Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-						WindowFilter(window, vm::setWindow)
-						FilterChip(
-							selected = more.count > 0,
-							onClick = { editingFilters = true },
-							label = { Text(stringResource(R.string.todo_filters) + if (more.count > 0) " (${more.count})" else "") },
-						)
-						settingLock("todoShowIgnored").takeIf { it != SettingLock.HIDDEN }?.let { lock ->
-							FilterChip(selected = showIgnored, onClick = { vm.setShowIgnored(!showIgnored) }, enabled = lock == SettingLock.FREE, label = { Text(lock.prefix() + stringResource(R.string.todo_filter_ignored)) })
+						if (!showBin) {
+							WindowFilter(window, vm::setWindow)
+							FilterChip(
+								selected = more.count > 0,
+								onClick = { editingFilters = true },
+								label = { Text(stringResource(R.string.todo_filters) + if (more.count > 0) " (${more.count})" else "") },
+							)
 						}
 						CompanyFilter(vm)
+						if (canBin)
+							FilterChip(
+								selected = showBin, onClick = { showBin = !showBin },
+								leadingIcon = { Icon(painterResource(R.drawable.ic_state_deleted), contentDescription = null, modifier = Modifier.size(18.dp)) },
+								label = { Text(stringResource(R.string.bin_title) + if (deleted.isNotEmpty()) " (${deleted.size})" else "") },
+							)
 					}
 				}
 			}
@@ -616,8 +672,8 @@ fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> 
 				Column(Modifier.padding(horizontal = 16.dp)) {
 					TodoSwipeCard(
 						t, clients.firstOrNull { it.id == t.clientId }?.name, vm, onStart,
-						onReplan = { vm.clearError(); editing = it }, band = band[t.id],
-					) { selected = t }
+						onReplan = { vm.clearError(); editing = it }, band = band[t.id], planned = planned[t.id].orEmpty(),
+					) { if (onOpen != null && !showBin) onOpen(t.id) else selected = t }
 				}
 			}
 		}
@@ -628,28 +684,28 @@ fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onStart: (Long) -> 
 		TodoFiltersDialog(more, clients.filter { filter == null || it.companyId == filter }.map { it.id to it.name }, { editingFilters = false }) { more = it }
 }
 
-/* the advanced filters offer the first three; done and ignored are set by hand (issue #89) */
+/* the coarse state Home still reads (see todoState); the new screens use DisplayState */
 enum class TodoState { OPEN, PLANNED, OVERDUE, DONE, IGNORED }
 
-/* Advanced to-do filters (owner, 2026-10-19): client, priority, state, planned or not. */
+/* Advanced to-do filters (owner, 2026-10-19): client, priority, displayed state (TODO, PLANNED, LATE), planned or not. */
 data class TodoFilters(
 	val clientId: Long? = null,
-	val priority: Int? = null,
-	val state: TodoState? = null,
+	val priority: Priority? = null,
+	val state: DisplayState? = null,
 	val planned: Boolean? = null,
 ) {
 	val count get() = listOfNotNull(clientId, priority, state, planned).size
 
-	fun accepts(t: TodoEntity, now: Instant): Boolean =
+	fun accepts(t: TodoEntity, now: Instant, plannedSegments: List<SegmentEntity> = emptyList()): Boolean =
 		(clientId == null || t.clientId == clientId) &&
-			(priority == null || t.priority == priority) &&
-			(planned == null || (t.plan() != null) == planned) &&
-			(state == null || todoState(t, now) == state)
+			(priority == null || Priority.of(t.priority) == priority) &&
+			(planned == null || (t.plan() != null || plannedSegments.isNotEmpty()) == planned) &&
+			(state == null || displayOf(t, now, plannedSegments) == state)
 
 	companion object {
 		val Saver = androidx.compose.runtime.saveable.Saver<TodoFilters, List<Any?>>(
-			save = { listOf(it.clientId, it.priority, it.state?.name, it.planned) },
-			restore = { TodoFilters(it[0] as Long?, it[1] as Int?, (it[2] as String?)?.let(TodoState::valueOf), it[3] as Boolean?) },
+			save = { listOf(it.clientId, it.priority?.name, it.state?.name, it.planned) },
+			restore = { TodoFilters(it[0] as Long?, (it[1] as String?)?.let(Priority::valueOf), (it[2] as String?)?.let(DisplayState::valueOf), it[3] as Boolean?) },
 		)
 	}
 }
@@ -665,16 +721,14 @@ private fun TodoFiltersDialog(current: TodoFilters, clients: List<Pair<Long, Str
 			Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 				ChoiceField(stringResource(R.string.field_client), listOf<Pair<Long?, String>>(null to any) + clients, f.clientId) { f = f.copy(clientId = it) }
 				ChoiceField(
-					stringResource(R.string.todo_field_priority),
-					listOf<Pair<Int?, String>>(null to any) + (1..5).map { it to it.toString() },
+					stringResource(R.string.priority),
+					listOf<Pair<Priority?, String>>(null to any) + Priority.entries.reversed().map { it to stringResource(priorityName(it)) },
 					f.priority,
 				) { f = f.copy(priority = it) }
 				ChoiceField(
 					stringResource(R.string.todo_filter_state),
-					listOf(
-						null to any, TodoState.OPEN to stringResource(R.string.todo_state_open),
-						TodoState.PLANNED to stringResource(R.string.todo_state_planned), TodoState.OVERDUE to stringResource(R.string.todo_state_overdue),
-					),
+					listOf<Pair<DisplayState?, String>>(null to any) +
+						listOf(DisplayState.TODO, DisplayState.PLANNED, DisplayState.LATE).map { it to stringResource(displayName(it)) },
 					f.state,
 				) { f = f.copy(state = it) }
 				ChoiceField(

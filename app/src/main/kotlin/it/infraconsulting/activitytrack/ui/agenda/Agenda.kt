@@ -1,20 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
-import it.infraconsulting.activitytrack.ui.todo.TodoEntity
-import it.infraconsulting.activitytrack.ui.todo.TodoKind
 import it.infraconsulting.activitytrack.ui.todo.TodoRepository
-import it.infraconsulting.activitytrack.ui.todo.title
-import it.infraconsulting.activitytrack.ui.todo.done
-import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
-import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
-import it.infraconsulting.activitytrack.ui.todo.refs
-import it.infraconsulting.activitytrack.ui.todo.color
-import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
-import it.infraconsulting.activitytrack.ui.todo.todoKind
-import it.infraconsulting.activitytrack.ui.todo.todoId
-import it.infraconsulting.activitytrack.ui.todo.isOpen
-import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.ui.common.TagDots
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.flow.drop
@@ -89,7 +76,6 @@ import androidx.compose.runtime.LaunchedEffect
 import it.infraconsulting.activitytrack.ui.common.rgb
 import it.infraconsulting.activitytrack.data.repo.isAbsence
 import it.infraconsulting.activitytrack.domain.time.atMinute
-import it.infraconsulting.activitytrack.ui.todo.ABSENCE_COLOR
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
 import it.infraconsulting.activitytrack.ui.todo.todoSwipeActions
@@ -105,8 +91,20 @@ import androidx.compose.ui.graphics.RectangleShape
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.data.repo.EntryRepository
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+import it.infraconsulting.activitytrack.domain.activity.DisplayState
+import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.ui.common.displayName
+import it.infraconsulting.activitytrack.ui.common.displayStyle
+import it.infraconsulting.activitytrack.ui.todo.displayOf
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
@@ -149,30 +147,44 @@ data class AgendaItem(
 	val running: Boolean,
 	/* the entry itself: open ones swipe (M10) */
 	val entry: TimeEntryEntity? = null,
+	val clientId: Long? = null,
 	val tags: List<String> = emptyList(),
 )
 
 /*
- * An open to-do on the day it is planned (a block from [start] to [end]) or,
- * without a plan, on its due day (a line, [timeMin] the due time).
+ * A TODO activity on the day it is planned (a block from [start] to [end],
+ * dashed: it is a plan), or, without a plan, on its due day (a line,
+ * [timeMin] the due time); or one absence segment, solid in the ABSENCE
+ * style. [state] is the displayed state (ACTIVITY-MODEL.md 2.2).
  */
 data class AgendaTodo(
-	val todo: TodoEntity,
+	val todo: TimeEntryEntity,
 	val day: LocalDate,
 	val timeMin: Int?,
 	val start: Instant? = null,
 	val end: Instant? = null,
 	/* planned by day only (issue #52): the all-day strip */
 	val allDay: Boolean = false,
+	val state: DisplayState = DisplayState.TODO,
 ) {
 	val id get() = todo.id
-	val title get() = todo.title
+	val title get() = todo.activity.orEmpty()
+	val absence get() = todo.isAbsence()
 	val planned get() = start != null || allDay
 }
 
 /* the title; an absence without one is just "Absence" (issue #158) */
 @Composable
-private fun AgendaTodo.label(): String = title.ifBlank { if (todo.isAbsence()) stringResource(R.string.todo_absence) else "" }
+private fun AgendaTodo.label(): String = title.ifBlank {
+	if (!absence) "" else todo.absenceKind?.let { stringResource(absenceKindName(it)) } ?: stringResource(R.string.todo_absence)
+}
+
+private fun absenceKindName(k: AbsenceKind): Int = when (k) {
+	AbsenceKind.ABSENCE -> R.string.lists_absence_kind_absence
+	AbsenceKind.HOLIDAY -> R.string.lists_absence_kind_holiday
+	AbsenceKind.LEAVE -> R.string.lists_absence_kind_leave
+	AbsenceKind.SICK -> R.string.lists_absence_kind_sick
+}
 
 data class AgendaData(
 	val from: LocalDate,
@@ -194,7 +206,7 @@ data class AgendaData(
 class AgendaViewModel(
 	private val reports: ReportRepository,
 	private val settings: SettingsRepository,
-	todos: TodoRepository,
+	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
 ) : ViewModel() {
 	val mode = MutableStateFlow(AgendaMode.LIST)
@@ -208,7 +220,7 @@ class AgendaViewModel(
 		}
 	}
 
-	val data = combine(mode, anchor, reports.changes, todos.all) { m, a, _, open -> Triple(m, a, open) }
+	val data = combine(mode, anchor, reports.changes, entries.todos, entries.absences) { m, a, _, open, absences -> Triple(m, a, open + absences) }
 		.mapLatest { (m, a, open) -> load(m, a, open) }
 		.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -225,16 +237,16 @@ class AgendaViewModel(
 		mode.value = m
 	}
 
-	private suspend fun load(m: AgendaMode, a: LocalDate, open: List<TodoEntity>): AgendaData {
+	private suspend fun load(m: AgendaMode, a: LocalDate, open: List<TimeEntryEntity>): AgendaData {
 		val (from, to) = range(m, a)
 		val s = settings.current()
 		val zone = ZoneId.systemDefault()
 		val report = reports.report(from, to, zone, s.rounding, s.carryOverMin)
-		val entries = reports.entriesAround(from, to, zone).associateBy { it.entry.id }
+		val around = reports.entriesAround(from, to, zone).associateBy { it.entry.id }
 		val items = report.days.flatMap { d ->
 			d.lines.map { l ->
 				val meta = report.meta[l.entryId]
-				val e = entries[l.entryId]?.entry
+				val e = around[l.entryId]?.entry
 				AgendaItem(
 					entryId = l.entryId,
 					day = d.day,
@@ -244,8 +256,9 @@ class AgendaViewModel(
 					activity = meta?.activity.orEmpty(),
 					reported = l.reported,
 					companyId = e?.companyId,
-					running = e?.legacy == LegacyStatus.ACTIVE,
+					running = e?.let { it.status == ActivityStatus.RUNNING && it.mode != null } == true,
 					entry = e,
+					clientId = e?.clientId,
 					tags = meta?.tags.orEmpty(),
 				)
 			}
@@ -253,24 +266,31 @@ class AgendaViewModel(
 		val now = Instant.now()
 		val weekdays = generateSequence(from) { it.plusDays(1) }.takeWhile { it <= to }.map { it.dayOfWeek.value }.toSet()
 		val work = master.schedule.first().filter { it.dayOfWeek in weekdays }
-		val schedule = master.schedule.first().groupBy { it.dayOfWeek }
-		val todos = open.filter { it.isOpen() || it.isAbsence() }.flatMap { t ->
+		val absences = open.filter { it.isAbsence() }.associateBy { it.id }
+		/* one block per absence segment (3.1), solid in the ABSENCE style */
+		val absenceBlocks = entries.segmentsTouching(from.atStartOfDay(zone).toInstant().toEpochMilli(), to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli())
+			.filter { it.kind == SegmentKind.ABSENCE && it.endUtcMs != null }
+			.mapNotNull { sg ->
+				val t = absences[sg.entryId] ?: return@mapNotNull null
+				val start = Instant.ofEpochMilli(sg.startUtcMs)
+				val day = start.atZone(zone).toLocalDate()
+				AgendaTodo(t, day, start.atZone(zone).let { it.hour * 60 + it.minute }, start, Instant.ofEpochMilli(sg.endUtcMs!!), state = DisplayState.ABSENCE)
+			}
+		/* a TODO activity: its planned segments (dashed blocks), else its plan, else its due day */
+		val todos = open.filter { it.status == ActivityStatus.TODO }.flatMap { t ->
+			val segments = entries.segments(t.id).first().filter { it.planned && it.endUtcMs != null }
+			val state = displayOf(t, now, segments)
 			val p = t.plan()
 			when {
-				/* an absence stays visible once done (issue #158); each day it covers, over the working hours of that day, else the whole day */
-				p != null && t.isAbsence() -> p.days.let { r -> generateSequence(maxOf(r.start, from)) { it.plusDays(1) }.takeWhile { it <= minOf(r.endInclusive, to) } }.map { day ->
-					if (p.allDay) {
-						val hours = schedule[day.dayOfWeek.value].orEmpty()
-						val first = hours.minOfOrNull { it.startMin } ?: 0
-						val last = hours.maxOfOrNull { it.endMin } ?: 1440
-						AgendaTodo(t, day, first, day.atMinute(first, zone), day.atMinute(last, zone))
-					} else
-						AgendaTodo(t, day, p.startMin, p.start(zone), p.end(zone))
-				}.toList()
-				p != null -> listOf(AgendaTodo(t, p.day, p.startMin, p.start(zone).takeIf { !p.allDay }, p.end(zone).takeIf { !p.allDay }, allDay = p.allDay))
-				else -> listOfNotNull(t.dueEpochDay?.let { AgendaTodo(t, LocalDate.ofEpochDay(it), t.dueTimeMin) })
+				segments.isNotEmpty() -> segments.map { sg ->
+					val start = Instant.ofEpochMilli(sg.startUtcMs)
+					val local = start.atZone(zone)
+					AgendaTodo(t, local.toLocalDate(), local.hour * 60 + local.minute, start, Instant.ofEpochMilli(sg.endUtcMs!!), state = state)
+				}
+				p != null -> listOf(AgendaTodo(t, p.day, p.startMin, p.start(zone).takeIf { !p.allDay }, p.end(zone).takeIf { !p.allDay }, allDay = p.allDay, state = state))
+				else -> listOfNotNull(t.dueEpochDay?.let { AgendaTodo(t, LocalDate.ofEpochDay(it), t.dueTimeMin, state = state) })
 			}.filter { it.day in from..to }
-		}
+		} + absenceBlocks
 		return AgendaData(
 			from, to, items, todos, report.days.associate { it.day to it.reported },
 			work.minOfOrNull { it.startMin }, work.maxOfOrNull { it.endMin },
@@ -293,10 +313,33 @@ class AgendaViewModel(
 
 /* company colours chosen by the owner (M12); the others keep the automatic one */
 private val LocalCompanyColors = staticCompositionLocalOf { emptyMap<Long, Int>() }
+private val LocalClientColors = staticCompositionLocalOf { emptyMap<Long, Int>() }
 
+/* an activity takes its client's colour, else its company's (owner, 2026-11-11) */
 @Composable
-private fun colorOf(companyId: Long?): Color =
-	rgb(companyColor(companyId, companyId?.let { LocalCompanyColors.current[it] }) ?: NO_COLOR)
+private fun colorOf(clientId: Long?, companyId: Long?): Color {
+	val client = clientId?.let { LocalClientColors.current[it] }
+	return rgb(client ?: companyColor(companyId, companyId?.let { LocalCompanyColors.current[it] }) ?: NO_COLOR)
+}
+
+/* the outline of a plan: dashed (ACTIVITY-MODEL.md 1.2) */
+private fun Modifier.dashed(color: Color, radius: Dp = 4.dp): Modifier = drawBehind {
+	val w = 1.5.dp.toPx()
+	drawRoundRect(
+		color, topLeft = androidx.compose.ui.geometry.Offset(w / 2, w / 2),
+		size = androidx.compose.ui.geometry.Size(size.width - w, size.height - w),
+		cornerRadius = CornerRadius(radius.toPx()), style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 7f))),
+	)
+}
+
+/* the icon of a displayed state in its colour */
+@Composable
+private fun StateDot(state: DisplayState, size: Dp = 16.dp) {
+	val style = displayStyle(state)
+	Box(Modifier.size(size).clip(CircleShape).background(style.container), contentAlignment = Alignment.Center) {
+		Icon(painterResource(style.icon), contentDescription = stringResource(displayName(state)), tint = style.content, modifier = Modifier.size(size * 0.7f))
+	}
+}
 
 private fun hm(d: Duration) = "%d:%02d".format(d.toHours(), d.toMinutesPart())
 
@@ -304,7 +347,7 @@ private fun clock(i: Instant, zone: ZoneId): String = i.atZone(zone).toLocalTime
 
 @Composable
 fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
-	val vm = appViewModel { AgendaViewModel(it.reports, it.settings, it.todos, it.masterData) }
+	val vm = appViewModel { AgendaViewModel(it.reports, it.settings, it.entries, it.masterData) }
 	/* vertical scale of the day and week views, by pinch (issue #44); 1 = the working hours fill the screen */
 	var zoom by rememberSaveable { mutableStateOf(1f) }
 	val todosVm = todosViewModel()
@@ -315,13 +358,13 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	var tag by rememberSaveable { mutableStateOf<String?>(null) }
 	val data = loaded?.let { d -> tag?.let { d.withTag(it) } ?: d }
 	val locale = LocalConfiguration.current.locales[0]
-	var selected by remember { mutableStateOf<TodoEntity?>(null) }
-	var editing by remember { mutableStateOf<TodoEntity?>(null) }
+	var selected by remember { mutableStateOf<TimeEntryEntity?>(null) }
+	var editing by remember { mutableStateOf<TimeEntryEntity?>(null) }
 	/* planning from the agenda (M9): a tap on a free slot or "Add" opens a new planned to-do */
 	val policy = it.infraconsulting.activitytrack.ui.common.LocalPolicy.current
 	val canPlan = policy.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.PLANNING) && policy.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.TODOS)
 	val plan: (LocalDate, Int) -> Unit = { day, min -> if (canPlan) { todosVm.clearError(); editing = newTodo(day, min) } }
-	val onTodo: (TodoEntity) -> Unit = { selected = it }
+	val onTodo: (TimeEntryEntity) -> Unit = { if (it.isAbsence()) onOpenEntry(it.id) else selected = it }
 	/* swipes on open entries run the commands like Home (owner, 2026-10-18: gestures everywhere) */
 	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries, it.todos) }
 	val settings by todosVm.settings.collectAsState()
@@ -332,7 +375,8 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 
 	val companies by todosVm.companies.collectAsState()
 	val companyColors = companies.mapNotNull { c -> c.color?.let { c.id to it } }.toMap()
-	CompositionLocalProvider(LocalCompanyColors provides companyColors) {
+	val clientColors = todosVm.clients.collectAsState().value.mapNotNull { c -> c.color?.let { c.id to it } }.toMap()
+	CompositionLocalProvider(LocalCompanyColors provides companyColors, LocalClientColors provides clientColors) {
 		ScreenScaffold(
 			title = stringResource(R.string.nav_agenda),
 			onBack = null,
@@ -402,7 +446,7 @@ private class ListSwipes(
 	val run: (TimeEntryEntity, EntryCommand) -> Unit,
 	val todos: TodosViewModel,
 	val onStartTodo: (Long) -> Unit,
-	val onReplan: (TodoEntity) -> Unit,
+	val onReplan: (TimeEntryEntity) -> Unit,
 )
 
 /* "Add": the next half hour today, 09:00 on other days. */
@@ -425,7 +469,7 @@ private fun periodTitle(m: AgendaMode, a: LocalDate, locale: Locale): String = w
 
 /* Days of the month with their lines and to-dos; the search matches client, activity and tags ("#tag" too). */
 @Composable
-private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit, onTodo: (TodoEntity) -> Unit, swipes: ListSwipes) {
+private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit, onTodo: (TimeEntryEntity) -> Unit, swipes: ListSwipes) {
 	var query by rememberSaveable { mutableStateOf("") }
 	val zone = ZoneId.systemDefault()
 	val q = fold(query)
@@ -456,7 +500,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 					}
 				}
 				items(items.filter { it.day == day }.sortedBy { it.start }, key = { "e${it.entryId}/$day" }) { it ->
-					val e = it.entry?.takeIf { e -> e.legacy == LegacyStatus.ACTIVE || e.legacy == LegacyStatus.SUSPENDED }
+					val e = it.entry?.takeIf { e -> e.status == ActivityStatus.RUNNING }
 					SwipeCard(
 						toStart = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToStart) { swipes.run(e, it) } }.orEmpty(),
 						toEnd = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToEnd) { swipes.run(e, it) } }.orEmpty(),
@@ -467,7 +511,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 						Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).clickable { onOpenEntry(it.entryId) }.padding(horizontal = 16.dp, vertical = 6.dp),
 						verticalAlignment = Alignment.CenterVertically,
 					) {
-						Box(Modifier.size(10.dp).clip(CircleShape).background(colorOf(it.companyId)))
+						Box(Modifier.size(10.dp).clip(CircleShape).background(colorOf(it.clientId, it.companyId)))
 						Spacer(Modifier.width(12.dp))
 						Column(Modifier.weight(1f)) {
 							Text(it.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -496,14 +540,21 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 						fullSwipe = g.fullSwipe,
 						shape = RectangleShape,
 					) {
-					Text(
-						"☐ " + listOfNotNull(
-							t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.takeIf { e -> e != t.start }?.let { e -> "–${clock(e, zone)}" } ?: "") },
-							t.label(),
-						).joinToString(" "),
-						modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
-						color = MaterialTheme.colorScheme.primary,
-					)
+					Row(
+						Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 6.dp),
+						verticalAlignment = Alignment.CenterVertically,
+					) {
+						StateDot(t.state)
+						Spacer(Modifier.width(10.dp))
+						Text(
+							listOfNotNull(
+								t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.takeIf { e -> e != t.start }?.let { e -> "–${clock(e, zone)}" } ?: "") },
+								t.label(),
+							).joinToString(" "),
+							maxLines = 1, overflow = TextOverflow.Ellipsis,
+							color = if (t.absence) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
+						)
+					}
 					}
 				}
 			}
@@ -525,7 +576,7 @@ private fun Timeline(
 	zoom: Float,
 	onZoom: (Float) -> Unit,
 	onOpenEntry: (Long) -> Unit,
-	onTodo: (TodoEntity) -> Unit,
+	onTodo: (TimeEntryEntity) -> Unit,
 	onPlan: (LocalDate, Int) -> Unit,
 	onDayHeader: ((LocalDate) -> Unit)? = null,
 ) {
@@ -573,11 +624,14 @@ private fun Timeline(
 		/* the strip above the grid: due dates without time and plans for the whole day (issue #52) */
 		val dayTodos = d.todos.filter { it.day in days && (!it.planned || it.allDay) }
 		for (t in dayTodos)
-			Text(
-				(if (t.allDay) "▭ " else "☐ ") + "${t.day.dayOfMonth} · " + t.label(),
-				modifier = Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 2.dp),
-				style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
-			)
+			Row(
+				Modifier.fillMaxWidth().clickable { onTodo(t.todo) }.padding(horizontal = 16.dp, vertical = 2.dp),
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				StateDot(t.state, 14.dp)
+				Spacer(Modifier.width(8.dp))
+				Text("${t.day.dayOfMonth} · " + t.label(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+			}
 		BoxWithConstraints(Modifier.fillMaxSize()) {
 			val minuteHeight = maxHeight / (to - from) * zoom
 			val scroll = rememberScrollState()
@@ -650,7 +704,7 @@ private fun Timeline(
 							b.item?.let {
 								Box(
 									place.clip(RoundedCornerShape(4.dp))
-										.background(colorOf(it.companyId).copy(alpha = if (it.running) 0.6f else 0.85f))
+										.background(colorOf(it.clientId, it.companyId).copy(alpha = if (it.running) 0.6f else 0.85f))
 										.clickable { onOpenEntry(it.entryId) }.padding(horizontal = 3.dp, vertical = 1.dp),
 								) {
 									Text(
@@ -665,16 +719,21 @@ private fun Timeline(
 								}
 							}
 							b.todo?.let {
-								val absence = it.todo.isAbsence()
-								val c = it.todo.color?.let(::rgb) ?: if (absence) rgb(ABSENCE_COLOR) else colorOf(it.todo.companyId)
+								/* an absence: solid in the ABSENCE style; a plan: dashed in the activity's colour, brown when late */
+								val c = when {
+									it.absence -> displayStyle(DisplayState.ABSENCE).container
+									it.state == DisplayState.LATE -> displayStyle(DisplayState.LATE).container
+									else -> colorOf(it.todo.clientId, it.todo.companyId)
+								}
+								val shape = RoundedCornerShape(4.dp)
 								Box(
-									place.clip(RoundedCornerShape(4.dp)).background(c.copy(alpha = if (absence) 0.35f else 0.15f))
-										.border(1.dp, c, RoundedCornerShape(4.dp))
+									place.clip(shape)
+										.then(if (it.absence) Modifier.background(c.copy(alpha = 0.85f)) else Modifier.background(c.copy(alpha = 0.12f)).dashed(c))
 										.clickable { onTodo(it.todo) }.padding(horizontal = 3.dp, vertical = 1.dp),
 								) {
 									Text(
-										(if (absence) (if (it.todo.done) "✓ " else "") else "☐ ") + it.label() + (if (one) "\n$span" else ""),
-										color = MaterialTheme.colorScheme.onSurface, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
+										it.label() + (if (one) "\n$span" else ""),
+										color = if (it.absence) Color.White else MaterialTheme.colorScheme.onSurface, fontSize = if (one) 12.sp else 10.sp, lineHeight = 13.sp,
 										overflow = TextOverflow.Ellipsis,
 									)
 								}
@@ -725,7 +784,7 @@ private fun MonthView(anchor: LocalDate, d: AgendaData, locale: Locale, onDay: (
 					val day = w.plusDays(i)
 					val inMonth = YearMonth.from(day) == month
 					val reported = d.reported[day]?.takeIf { !it.isZero }
-					val dots = d.items.filter { it.day == day }.mapNotNull { it.companyId }.distinct().take(4)
+					val dots = d.items.filter { it.day == day && it.companyId != null }.map { it.clientId to it.companyId }.distinct().take(4)
 					Column(
 						Modifier.weight(1f).aspectRatio(0.8f).padding(2.dp).clip(RoundedCornerShape(6.dp))
 							.background(if (day == today) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (inMonth) 0.6f else 0.2f))
@@ -738,8 +797,8 @@ private fun MonthView(anchor: LocalDate, d: AgendaData, locale: Locale, onDay: (
 						)
 						Spacer(Modifier.weight(1f))
 						Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-							for (c in dots)
-								Box(Modifier.size(6.dp).clip(CircleShape).background(colorOf(c)))
+							for ((cl, c) in dots)
+								Box(Modifier.size(6.dp).clip(CircleShape).background(colorOf(cl, c)))
 							if (d.todos.any { it.day == day })
 								Box(Modifier.size(6.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
 						}
