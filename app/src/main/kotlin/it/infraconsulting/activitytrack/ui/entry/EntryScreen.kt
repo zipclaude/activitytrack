@@ -256,7 +256,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	Column(modifier = modifier.fillMaxSize()) {
 		LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
 			item(key = "header") {
-				Box(Modifier.padding(start = pad, end = pad, top = pad, bottom = gap)) {
+				Box(Modifier.padding(start = pad, end = pad, top = pad, bottom = gap + 8.dp)) {	/* the first field's label sticks out above its box */
 					DetailHeader(e, segments, editableTimes, onTimes = { scope.launch { listState.animateScrollToItem(2) } }, actions)
 				}
 			}

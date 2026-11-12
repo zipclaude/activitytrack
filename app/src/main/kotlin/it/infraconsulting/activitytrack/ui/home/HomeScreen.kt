@@ -433,13 +433,19 @@ private val BAR_DISC = Color(0xFF424242)
 /* The four buttons at the top right, each on a dark grey circle (owner, 2026-11-11). */
 @Composable
 private fun CreateBar(buttons: List<CreateButton>) {
+	/* a gap between the discs and from the screen's edge: they touched each other and the edge */
+	androidx.compose.foundation.layout.Row(
+		modifier = Modifier.padding(end = 8.dp),
+		horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+	) {
 	for (b in buttons) {
 		val st = displayStyle(b.state)
 		val label = stringResource(b.label)
-		IconButton(onClick = b.onClick, modifier = Modifier.padding(horizontal = 2.dp).size(40.dp).background(BAR_DISC, CircleShape)) {
+		IconButton(onClick = b.onClick, modifier = Modifier.size(40.dp).background(BAR_DISC, CircleShape)) {
 			/* the state's colour, lightened: the dark green and blue would sink into the disc */
 			Icon(painterResource(st.icon), contentDescription = label, tint = lerp(st.container, Color.White, 0.3f), modifier = Modifier.size(24.dp))
 		}
+	}
 	}
 }
 

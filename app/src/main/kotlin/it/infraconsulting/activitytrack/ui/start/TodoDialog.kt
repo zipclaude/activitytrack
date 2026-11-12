@@ -99,20 +99,21 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 	var picked by remember { mutableStateOf(initial?.companyId) }
 	/* the last pick may arrive after the first frame: taken once, if nothing was chosen meanwhile */
 	var lastTaken by remember { mutableStateOf(!isNew || initial?.companyId != null) }
-	LaunchedEffect(lastCompany, lastClient, clients) {
+	LaunchedEffect(lastCompany, lastClient, clients, companies) {
 		if (lastTaken || (lastCompany == null && lastClient == null))
 			return@LaunchedEffect
-		if (picked == null)
+		/* a remembered company that no longer exists (deleted, other data) must not be taken: it would break the foreign key */
+		if (picked == null && companies.any { it.id == lastCompany })
 			picked = lastCompany
 		if (clientId == null)
 			clientId = lastClient?.takeIf { id -> clients.firstOrNull { it.id == id }?.companyId == picked }
-		lastTaken = clients.isNotEmpty() || lastClient == null
+		lastTaken = companies.isNotEmpty() && (clients.isNotEmpty() || lastClient == null)
 	}
 	var addCompany by remember { mutableStateOf(false) }
 	var addClient by remember { mutableStateOf(false) }
 	/* without companies (policy, issue #48) a to-do belongs to none */
 	val withCompanies = companiesShown()
-	val companyId = if (withCompanies) picked ?: companies.firstOrNull()?.id else null
+	val companyId = if (withCompanies) picked?.takeIf { id -> companies.isEmpty() || companies.any { it.id == id } } ?: companies.firstOrNull()?.id else null
 	var planDay by remember { mutableStateOf(initial?.planEpochDay?.let { LocalDate.ofEpochDay(it).toString() }.orEmpty()) }
 	var planTime by remember { mutableStateOf(initial?.planStartMin?.let(::formatMin).orEmpty()) }
 	var planEnd by remember {

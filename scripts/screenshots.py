@@ -153,19 +153,8 @@ def capture(lang):
 	back()
 	tap(t["new"])
 	shot(lang, "start")
-	# the Passata mode asks start and end (issue #92)
-	tap(t["past"])
-	tap(t["end"])
-	# a range on the grid: from the third cell of the first row to the eighth of the second
-	rows = [b for n, b in nodes() if re.fullmatch(r"\d\d:00", n.get("text") or "")]
-	(lx1, ly1, lx2, ly2), (_, my1, _, my2) = rows[0], rows[1]
-	width = int(sh("wm", "size").split()[-1].split("x")[0])
-	cell = (width - lx2 - 40) / 12
-	x = lambda c: int(lx2 + 20 + cell * (c + 0.5))
-	sh("input", "swipe", str(x(3)), str((ly1 + ly2) // 2), str(x(7)), str((my1 + my2) // 2), "1500")
-	time.sleep(1)
-	shot(lang, "time-grid")
-	back(2)
+	# 1.0: Passata no longer has the Inizio/Fine grid (Data, Tratti, one Salva): time-grid.png is not retaken
+	back()
 	time.sleep(1.5)	# the Home must be settled, or the tap gets lost in the transition
 	tap(f"^{t['running']}$", wait=3)
 	shot(lang, "entry")
