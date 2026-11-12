@@ -99,6 +99,7 @@ class ReportRepository(
 				expensesCents = expenses[e.id] ?: 0,
 				tags = tags[e.id].orEmpty(),
 				materialsCents = materials[e.id] ?: 0,
+				absenceKind = e.absenceKind?.name,
 			)
 		}
 		return Report(days, meta)

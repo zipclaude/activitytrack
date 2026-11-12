@@ -871,4 +871,8 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="todo_absence_until">Until (last day, optional)</string>
   <string name="todo_absence_label">Label (optional)</string>
   <string name="todo_field_color">Colour</string>
+  <string name="absence_kind_absence">Absence</string>
+  <string name="absence_kind_holiday">Holiday</string>
+  <string name="absence_kind_leave">Leave</string>
+  <string name="absence_kind_sick">Sick leave</string>
 </resources>

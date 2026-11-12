@@ -859,4 +859,8 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="todo_absence_until">Bis (letzter Tag, optional)</string>
   <string name="todo_absence_label">Bezeichnung (optional)</string>
   <string name="todo_field_color">Farbe</string>
+  <string name="absence_kind_absence">Abwesenheit</string>
+  <string name="absence_kind_holiday">Urlaub</string>
+  <string name="absence_kind_leave">Freistellung</string>
+  <string name="absence_kind_sick">Krankheit</string>
 </resources>

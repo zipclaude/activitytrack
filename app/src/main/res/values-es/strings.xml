@@ -860,4 +860,8 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="todo_absence_until">Hasta (último día, opcional)</string>
   <string name="todo_absence_label">Etiqueta (opcional)</string>
   <string name="todo_field_color">Color</string>
+  <string name="absence_kind_absence">Ausencia</string>
+  <string name="absence_kind_holiday">Vacaciones</string>
+  <string name="absence_kind_leave">Permiso</string>
+  <string name="absence_kind_sick">Enfermedad</string>
 </resources>
