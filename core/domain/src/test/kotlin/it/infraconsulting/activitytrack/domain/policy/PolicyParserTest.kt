@@ -53,7 +53,7 @@ class PolicyParserTest {
 		assertEquals("Project", p.field(Field.CLIENT).labelFor("it"))
 		assertFalse(p.field(Field.KM).visible)
 		assertEquals(true, p.field(Field.ROLE).required)
-		assertEquals(EntrySource.TODOS_ONLY, p.entrySource)
+		assertEquals(EntrySource.PLANNED_ONLY, p.entrySource)
 		assertEquals(setOf("csv"), p.exportFormats)
 		assertFalse(p.behaviours.askTravelDone)
 		assertTrue(p.settings.getValue("compactDisplay").fixed)

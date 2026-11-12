@@ -21,7 +21,7 @@ import kotlinx.serialization.json.jsonPrimitive
 /*
  * The ServiceDesk Plus descriptor (issue #102) and the engine pieces it
  * needs: input_data JSON in the query with its paging, the form-encoded
- * body, the "object" transform, several to-do sources, todoDone.
+ * body, the "object" transform, several to-do sources, activityClosed.
  */
 class ServiceDeskPlusTest {
 	private fun <T> run(block: suspend () -> T): T {
@@ -71,7 +71,7 @@ class ServiceDeskPlusTest {
 		assertEquals("input_data", sdp.http.bodyForm)
 		assertIs<Paging.JsonParam>(sdp.http.paging)
 		assertEquals(2, sdp.imports.getValue(ImportTarget.TODOS).size)
-		assertTrue(sdp.export!!.todoDone != null)
+		assertTrue(sdp.export!!.activityClosed != null)
 	}
 
 	@Test
@@ -130,7 +130,7 @@ class ServiceDeskPlusTest {
 		val e = env().with { r ->
 			when (r.root) {
 				"entry" -> PluginEnv.dig(JsonObject(mapOf("activity" to JsonPrimitive("Toner replaced"), "notes" to JsonPrimitive(""))), r.path)
-				"todo" -> PluginEnv.dig(Json.parseToJsonElement("""{ "fields": { "path": "requests/1", "owner": "900" } }"""), r.path)
+				"activity" -> PluginEnv.dig(Json.parseToJsonElement("""{ "fields": { "path": "requests/1", "owner": "900" } }"""), r.path)
 				"block" -> PluginEnv.dig(Json.parseToJsonElement("""{ "from": 1793001600000, "to": 1793005200000 }"""), r.path)
 				"field" -> PluginEnv.dig(Json.parseToJsonElement("""{ "worklogType": "3" }"""), r.path)
 				else -> null
@@ -157,12 +157,12 @@ class ServiceDeskPlusTest {
 	}
 
 	@Test
-	fun todoDoneResolvesARequest() {
+	fun activityClosedResolvesARequest() {
 		val e = env().with { r ->
-			if (r.root != "todo") null
+			if (r.root != "activity") null
 			else PluginEnv.dig(Json.parseToJsonElement("""{ "title": "Printer 1", "activities": "Toner replaced", "fields": { "path": "requests/1", "kind": "request" } }"""), r.path)
 		}
-		val done = sdp.export!!.todoDone!!
+		val done = sdp.export!!.activityClosed!!
 		val body = PluginExport.body(done.body, e)
 		assertEquals(setOf("request"), body.keys)
 		val req = body.getValue("request").jsonObject

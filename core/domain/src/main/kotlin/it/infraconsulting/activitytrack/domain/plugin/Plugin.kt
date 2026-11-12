@@ -102,6 +102,7 @@ data class ListSource(val request: Request, val map: Map<String, Expr>, val when
 enum class ImportTarget(val key: String, val fields: Set<String>) {
 	CLIENTS("clients", setOf("name", "code")),
 	CONTACTS("contacts", setOf("name", "email", "phone", "clientCode")),
+	/* imported to-dos: TODO activities matched by (company, key); "priority" on the scale 0..5 (ACTIVITY-MODEL.md 5), a "map" transform turns the remote one into it */
 	TODOS("todos", setOf("title", "notes", "refs", "clientCode", "priority", "done", "due", "planStart", "planEnd"));
 
 	companion object {
@@ -178,14 +179,15 @@ data class ExportSpec(
 	val create: Call,
 	val update: Call?,
 	val delete: Call?,
-	val todoDone: TodoDone? = null,
+	val activityClosed: ActivityClosed? = null,
 )
 
 /*
- * A to-do imported by the plugin and marked done in the app: closed on the
+ * An activity imported by the plugin and closed in the app: closed on the
  * remote side once (ServiceDesk Plus: the request resolved, its resolution
- * the activities' descriptions). [body] may use @todo, with @todo.activities.
+ * the activities' descriptions). [body] may use @activity, with
+ * @activity.activities. "todoDone" before 1.0, still read as an alias.
  */
-data class TodoDone(val method: String, val path: Expr, val body: Map<String, Expr>)
+data class ActivityClosed(val method: String, val path: Expr, val body: Map<String, Expr>)
 
 data class Schedule(val onCloseMode: Expr?, val onCloseScope: Expr?, val onCloseSync: Expr?, val fetchEveryMin: Expr?)
