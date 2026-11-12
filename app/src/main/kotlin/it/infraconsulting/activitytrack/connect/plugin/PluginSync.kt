@@ -16,6 +16,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.util.UUID
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import it.infraconsulting.activitytrack.data.repo.remoteTick
 import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.activity.Priority
 import kotlinx.coroutines.sync.Mutex
@@ -153,15 +154,16 @@ class PluginSync(private val app: ActivityTrackApp) {
 				pluginFields = importedFields(r.fields, base.pluginFields, remoteDone, overwrite = todo),
 				updatedUtcMs = if (existing == null) now else base.updatedUtcMs,
 			)
-			/* the remote closes a to-do; it never reopens one the user closed */
-			if (remoteDone && t.status == ActivityStatus.TODO && t.deletedUtcMs == null)
-				t = t.copy(status = ActivityStatus.CLOSED, closedUtcMs = now)
+			/* the remote ticks a to-do off (its planned segments go too); it never reopens one the user closed */
+			var deletePlanned = false
+			if (remoteDone)
+				remoteTick(t, now)?.let { (ticked, planned) -> t = ticked; deletePlanned = planned }
 			if (t.copy(updatedUtcMs = 0) != existing?.copy(updatedUtcMs = 0)) {
 				if (existing == null) {
 					val id = dao.insertActivity(t)
 					report = report.copy(newTodos = report.newTodos + (id to title))
 				} else {
-					dao.updateActivity(t.copy(updatedUtcMs = now))
+					dao.updateActivity(t.copy(updatedUtcMs = now), deletePlanned)
 				}
 			}
 			val id = existing?.id ?: dao.activityByKey(companyId, r.key)?.id

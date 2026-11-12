@@ -849,6 +849,22 @@ class RepositoryTest {
 		assertEquals(Reason.NOT_ALLOWED, reason { entries.tick(todo) })
 	}
 
+	/* a plugin import closing a planned TODO (PluginSync): the tick transition, so later commands still pass the invariants */
+	@Test
+	fun aRemoteDoneTicksOffWithThePlannedSegments() = runBlocking<Unit> {
+		val t0 = clock.millis()
+		val todo = entries.saveTodo(
+			null,
+			TodoRequest(acme, client, "Patch", externalKey = "T-1", planned = listOf(SegmentInput(SegmentKind.WORK, t0 + 3_600_000, t0 + 7_200_000))),
+		)
+		val (ticked, deletePlanned) = remoteTick(entries.find(todo)!!, clock.millis())!!
+		db.pluginDao().updateActivity(ticked, deletePlanned)
+		assertEquals("CLOSED", state(todo))
+		assertEquals(emptyList(), db.entryDao().segments(todo))
+		/* every command verifies the invariants: no InvariantViolationException */
+		entries.setActivity(todo, "Patched")
+	}
+
 	/* the Home "Chiuse" tab: a ticked task has no segment end, it is listed by when it was closed; untick takes it out */
 	@Test
 	fun tickedTasksAreListedByClosingTime() = runBlocking<Unit> {

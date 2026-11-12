@@ -60,6 +60,17 @@ interface PluginDao {
 	@Update
 	suspend fun updateActivity(t: TimeEntryEntity)
 
+	@Query("DELETE FROM segment WHERE entry_id = :entryId AND planned = 1")
+	suspend fun deletePlannedSegments(entryId: Long)
+
+	/* an imported activity updated; [deletePlanned]: the remote ticked it off, its plan has served (ACTIVITY-MODEL.md 3) */
+	@Transaction
+	suspend fun updateActivity(t: TimeEntryEntity, deletePlanned: Boolean) {
+		if (deletePlanned)
+			deletePlannedSegments(t.id)
+		updateActivity(t)
+	}
+
 	@Query("SELECT contact.* FROM contact JOIN client ON client.id = contact.client_id WHERE client.company_id = :companyId AND contact.external_key = :key LIMIT 1")
 	suspend fun contactByKey(companyId: Long, key: String): ContactEntity?
 

@@ -1326,6 +1326,20 @@ fun wasTodo(e: TimeEntryEntity, segments: List<SegmentEntity>): Boolean {
 	return e.createdUtcMs < first
 }
 
+/*
+ * A management system marked the imported [e] done: a TODO activity not
+ * deleted is ticked off (3, `tick()`), its planned segments going with it
+ * (the caller deletes them in the same transaction); null otherwise (the
+ * remote never closes an activity the user started or closed).
+ */
+fun remoteTick(e: TimeEntryEntity, nowMs: Long): Pair<TimeEntryEntity, Boolean>? {
+	if (e.kind != ActivityKind.ACTIVITY || e.status != ActivityStatus.TODO || e.deletedUtcMs != null)
+		return null
+	val state = ActivityState(e.kind, e.status, e.mode, e.closedUtcMs?.let(Instant::ofEpochMilli), null)
+	val t = ActivityStateMachine.apply(state, ActivityCommand.Tick, Instant.ofEpochMilli(nowMs))
+	return e.copy(status = t.next.status, mode = t.next.mode, closedUtcMs = t.next.closedAt?.toEpochMilli()) to t.deletePlanned
+}
+
 /* "Untick" (3): an activity, closed, not deleted, without real segments goes back to TODO. */
 fun canUntick(e: TimeEntryEntity, segments: List<SegmentEntity>): Boolean =
 	e.kind == ActivityKind.ACTIVITY && e.status == ActivityStatus.CLOSED && e.deletedUtcMs == null && segments.none { !it.planned }
