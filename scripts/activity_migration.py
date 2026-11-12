@@ -331,7 +331,6 @@ def migrate(rows, zone="Europe/Rome"):
 	for r in legacy:
 		kind = r["kind"]
 		ed, tmin = r["date_epoch_day"], r.get("time_min")
-		ivs = working_intervals(ed) if ed not in days_off else []
 		sched = sorted(schedule.get(_day(ed).isoweekday(), []))
 		first = min((a for a, _ in sched), default=0)  # as the 20 -> 21 migration: no schedule = 0..1440
 		last = max((b for _, b in sched), default=1440)
