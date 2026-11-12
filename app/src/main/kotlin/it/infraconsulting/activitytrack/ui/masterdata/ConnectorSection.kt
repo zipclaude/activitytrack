@@ -190,7 +190,7 @@ private fun PluginCard(company: CompanyEntity, plugin: Plugin, config: JSONObjec
 		if (!holder && plugin.export != null)
 			Text(stringResource(R.string.plugin_not_holder), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 		if (missing.isEmpty() && (!oauth || loggedIn))
-			ClickableRow(stringResource(if (running) R.string.plugin_syncing else R.string.plugin_sync_now), plugin.name) {
+			ClickableRow(stringResource(if (running) R.string.plugin_syncing else R.string.sync_now), plugin.name) {
 				if (!running)
 					scope.launch {
 						running = true

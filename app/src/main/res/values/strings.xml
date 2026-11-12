@@ -21,15 +21,11 @@
   <string name="action_add">Add</string>
   <string name="action_edit">Edit</string>
   <string name="action_back">Back</string>
-  <string name="action_more">More</string>
   <string name="confirm_delete">Delete \"%1$s\"?</string>
   <string name="no_items">Nothing here yet.</string>
   <string name="archived_suffix">Archived</string>
 
   <!-- home -->
-  <string name="home_no_open_entries">No open activities.</string>
-  <string name="home_empty_hint">No activity running.
-Tap the green play button below to start one.</string>
   <string name="entry_no_client">Client not set</string>
   <string name="mode_work">Working</string>
   <string name="mode_travel">Travelling</string>
@@ -39,7 +35,6 @@ Tap the green play button below to start one.</string>
   <string name="tile_add_hint">Pause / resume from the notification panel</string>
   <string name="tile_added">Added</string>
   <string name="widget_no_activity">No activity</string>
-  <string name="widget_since">%1$s since %2$s</string>
   <string name="widget_status_name">Activity status</string>
   <string name="widget_status_description">Running activity with its commands, or recent clients</string>
   <string name="widget_toggle_name">Pause / resume</string>
@@ -49,9 +44,6 @@ Tap the green play button below to start one.</string>
   <string name="widget_todo_name">To-dos 4×2</string>
   <string name="widget_todo_description">The next planned to-dos, each with a Start button</string>
   <string name="widget_todo_empty">Nothing planned</string>
-  <string name="status_suspended">Suspended</string>
-  <string name="status_to_complete">Details missing</string>
-  <string name="status_closed">Closed</string>
 
   <!-- data folder -->
   <string name="setup_title">Data folder</string>
@@ -188,31 +180,17 @@ Tap the green play button below to start one.</string>
   <string name="set_change_root">Change</string>
   <string name="set_backup_retention">Backups kept</string>
   <!-- tracking -->
-  <string name="home_start">Start activity</string>
   <string name="cmd_work">Work</string>
   <string name="cmd_resume">Resume</string>
   <string name="cmd_travel">Travel</string>
   <string name="cmd_pause">Pause</string>
-  <string name="cmd_suspend">Suspend</string>
   <string name="cmd_stop">Stop</string>
-  <string name="suspend_hint_text">Suspend leaves the activity to resume it later, for example to work on another one; the time in between is not counted. Pause is a break inside the activity and is counted as a pause.</string>
   <string name="cmd_complete">Complete</string>
-  <string name="empty_activity_title">No activity description</string>
-  <string name="empty_activity_text">Complete with the client only?</string>
-  <string name="empty_activity_leave">Leave it empty</string>
-  <string name="empty_activity_copy">Copy the last one: %1$s</string>
-  <string name="empty_activity_edit">Back to editing</string>
   <string name="cmd_reopen">Reopen</string>
   <string name="since_fmt">%1$s since %2$s</string>
   <string name="totals_fmt">Work %1$s · Travel %2$s</string>
   <string name="stop_title">Stop \"%1$s\"</string>
-  <string name="stop_now">Stop now</string>
   <string name="stop_return">Start return travel</string>
-  <string name="stop_quick">Quick stop</string>
-  <string name="stop_end_work">End of work</string>
-  <string name="stop_close">Close</string>
-  <string name="stop_no_activity_hint">No description: it stays “details missing”.</string>
-  <string name="stop_todo_done">To-do done</string>
   <string name="resume_title">Resume \"%1$s\"?</string>
   <string name="action_yes">Yes</string>
   <string name="action_no">No</string>
@@ -232,9 +210,7 @@ Tap the green play button below to start one.</string>
   <string name="running_suspend">Suspend it</string>
   <string name="travel_done_title">Is the travel completed?</string>
   <string name="travel_suspend">Suspend travel</string>
-  <string name="err_completion_incomplete">Describe the activity.</string>
   <string name="err_client_required">Choose a client.</string>
-  <string name="notif_to_complete_title">Activity: details missing</string>
   <string name="notif_confirm_title">Still on %1$s?</string>
   <string name="notif_confirm_text">Last confirmation at %1$s</string>
   <string name="notif_stop_at">Stop at %1$s</string>
@@ -256,8 +232,6 @@ Tap the green play button below to start one.</string>
   <string name="field_locality">Locality</string>
   <string name="field_location_kind">Where</string>
   <string name="segments">Times</string>
-  <string name="add_travel">+ Travel</string>
-  <string name="add_pause">+ Pause</string>
   <string name="segment_manual">manual</string>
   <string name="external_refs">External references</string>
   <string name="external_ref_new">Ticket, URL or code</string>
@@ -275,9 +249,7 @@ Tap the green play button below to start one.</string>
   <string name="att_audio">Voice note</string>
   <string name="att_receipt">Receipt</string>
   <string name="att_file">File</string>
-  <string name="att_add_photo">Photo</string>
   <string name="att_add_voice">Voice note</string>
-  <string name="att_add_file">File</string>
   <string name="att_recording">Recording… %1$s</string>
   <string name="att_record_failed">The microphone is not available.</string>
   <string name="att_stop_save">Stop and save</string>
@@ -318,7 +290,6 @@ Tap the green play button below to start one.</string>
   <string name="nav_agenda">Agenda</string>
   <string name="nav_report">Report</string>
   <string name="nav_more">More</string>
-  <string name="agenda_today">Today</string>
   <string name="agenda_list">List</string>
   <string name="agenda_day">Day</string>
   <string name="agenda_week">Week</string>
@@ -331,23 +302,16 @@ Tap the green play button below to start one.</string>
   <string name="connector_not_set">Not set</string>
   <string name="connector_generic_hint">Exchange through JSON / XML files from Import / export.</string>
   <string name="todo_title">To-dos</string>
-  <string name="todo_due_today">To do · next 24 h</string>
   <string name="todo_today">today</string>
   <string name="todo_align_due">The plan starts after the due date. Align the due date to the planned day (%1$s)?</string>
   <string name="todo_align_due_yes">Align the due date</string>
   <string name="todo_will_overdue">It will show as overdue: the plan starts after the due date.</string>
   <string name="todo_align_due_no">Keep it</string>
-  <string name="todo_start">Start activity</string>
   <string name="todo_mark_done">Mark as done</string>
   <string name="todo_edit">Edit to-do</string>
-  <string name="todo_show_done">Show done ones</string>
   <string name="todo_field_title">Description</string>
   <string name="todo_field_due">Due date</string>
   <string name="todo_field_time">Due time</string>
-  <string name="todo_field_priority">Priority (1 = highest)</string>
-  <string name="todo_field_refs">References (one per line)</string>
-  <string name="todo_done_question">Is the to-do done?</string>
-  <string name="todo_later">No, I will come back</string>
   <string name="export_all">All</string>
   <string name="export_section">Export</string>
   <string name="export_sections">Content</string>
@@ -378,9 +342,7 @@ Tap the green play button below to start one.</string>
   <string name="export_from">From</string>
   <string name="export_to">To</string>
   <string name="export_hint">One line per activity and day, rounded as in Settings. The file goes to the export folder of the data folder; coordinates are never exported.</string>
-  <string name="export_csv">Export CSV</string>
   <string name="export_invalid">Invalid range: dates as yyyy-mm-dd, at most one year.</string>
-  <string name="export_failed">Export failed: check the data folder.</string>
   <string name="backup_now">Back up now</string>
   <string name="backup_started">Backup started</string>
   <plurals name="export_done">
@@ -393,7 +355,6 @@ Tap the green play button below to start one.</string>
   <string name="action_postpone">Postpone %1$d min</string>
   <string name="action_replan">Re-plan</string>
   <string name="todo_field_plan_date">Planned date</string>
-  <string name="todo_field_plan_time">Planned time</string>
   <string name="todo_field_duration">Duration (min; empty = 1 h, growing)</string>
   <string name="todo_planned">planned %1$s</string>
   <string name="todo_overdue">overdue</string>
@@ -409,40 +370,25 @@ Tap the green play button below to start one.</string>
   <string name="first_text">Create the client you work for, with its company: then ▶ starts your first activity.</string>
   <string name="first_client">Create the first client</string>
   <string name="first_import">Import from a file or a management system</string>
-  <string name="home_none_hint">Tap the green button below to start one.</string>
-  <string name="home_tab_planned">To-dos</string>
   <string name="home_tab_closed">Done</string>
   <string name="home_no_date">Without a date</string>
-  <string name="home_window_today">Today</string>
-  <string name="home_planned_empty">Nothing planned in this window</string>
   <string name="home_all_todos">All to-dos →</string>
   <string name="home_filter_state">State</string>
   <string name="home_filter_company">Company</string>
   <string name="home_filter_tag">Tag</string>
   <string name="home_show_todo">To-dos</string>
-  <string name="home_show_ignored">Ignored</string>
   <string name="home_show_all">All</string>
-  <string name="home_show_none">None</string>
-  <string name="home_show_fmt">State: %1$s</string>
   <string name="home_show_only_todo">Only to-dos</string>
   <string name="home_show_only_done">Only done</string>
-  <string name="home_sec_overdue">Overdue</string>
   <string name="home_sec_next">Next days</string>
   <string name="home_sec_earlier">Earlier</string>
-  <string name="home_state_open">open</string>
-  <string name="home_kind_entry">Activity</string>
   <string name="home_list_empty">Nothing to show with these filters</string>
-  <string name="undo_entry_reopened">“%1$s” reopened</string>
-  <string name="home_closed_empty">Nothing done in this window</string>
-  <string name="todo_ignored">ignored</string>
   <string name="swipe_start">Start</string>
-  <string name="swipe_ignore">Delete</string>
   <string name="swipe_restore">Restore</string>
   <string name="swipe_postpone">Postpone</string>
   <string name="swipe_none">None</string>
   <string name="swipe_postpone_or_ignore">Postpone or delete</string>
   <string name="swipe_pause_resume">Pause / resume</string>
-  <string name="swipe_stop_or_suspend">Stop or suspend</string>
   <string name="gestures_title">Gestures</string>
   <string name="gesture_hint_text">Tip: drag a card sideways for its commands — a short swipe shows the buttons (pause, stop, start…), a long one runs the first.</string>
   <string name="gesture_hint_ok">Got it</string>
@@ -451,21 +397,14 @@ Tap the green play button below to start one.</string>
   <string name="gestures_todos">To-dos</string>
   <string name="gestures_past">Stopped activities</string>
   <string name="swipe_start_or_done">Start or done</string>
-  <string name="todo_reopen_short">Reopen</string>
   <string name="gestures_to_start">Swipe left</string>
   <string name="gestures_to_end">Swipe right</string>
   <string name="gestures_full">Long swipe runs the first action at once</string>
   <string name="todo_due_at">due %1$s</string>
-  <string name="todo_planned_chip">planned</string>
-  <string name="todo_done_chip">done</string>
   <string name="todo_done_at">done %1$s</string>
-  <string name="todo_state">State</string>
-  <string name="todo_state_done">Done</string>
-  <string name="todo_state_ignored">Ignored</string>
   <string name="todo_clear_plan">Remove the plan</string>
   <string name="action_undo">Undo</string>
   <string name="undo_todo_done">“%1$s” marked done</string>
-  <string name="undo_todo_open">“%1$s” open again</string>
   <string name="undo_todo_ignored">“%1$s” ignored</string>
   <string name="undo_todo_postponed">“%1$s” postponed</string>
   <string name="undo_todo_unplanned">Plan removed from “%1$s”</string>
@@ -494,9 +433,7 @@ Tap the green play button below to start one.</string>
   <string name="color_grey">grey</string>
   <string name="color_none">No colour</string>
   <string name="sec_color">Colour</string>
-  <string name="todo_filter_all">All companies</string>
   <!-- M13 backlog -->
-  <string name="todo_plan_time_missing">Set the planned time too</string>
   <string name="todo_plan_date_missing">Set the planned date too</string>
   <string name="quick_role">New role</string>
   <string name="quick_preset">New quick pick</string>
@@ -504,14 +441,9 @@ Tap the green play button below to start one.</string>
   <string name="short_title">\"%1$s\" lasted less than a minute</string>
   <string name="short_text">Probably started by mistake. Discard it?</string>
   <string name="short_discard">Discard</string>
-  <string name="short_keep">Keep and stop</string>
   <string name="sec_notifications">Notifications</string>
   <string name="notif_settings_hint">Banner, sound and vibration of each kind of notification are set in Android: tap one to change it.</string>
   <string name="notif_all">All notifications of the app</string>
-  <string name="agenda_fit">Fit</string>
-  <string name="agenda_scroll">Scroll</string>
-  <string name="todo_filter_next24h">Next 24 h</string>
-  <string name="todo_filter_ignored">Ignored</string>
   <!-- M15 tags, segments -->
   <string name="tags">Tags</string>
   <string name="tag_new">New tags (e.g. #urgent remote)</string>
@@ -539,7 +471,6 @@ Tap the green play button below to start one.</string>
   <string name="grid_exact">Exact time</string>
   <!-- M19 tag filters -->
   <string name="tag_filter_all">All tags</string>
-  <string name="more_details">More details</string>
   <string name="todo_window_24h">24 h</string>
   <string name="todo_window_3d">3 days</string>
   <string name="todo_window_7d">7 days</string>
@@ -547,28 +478,17 @@ Tap the green play button below to start one.</string>
   <string name="todo_window_all">All</string>
   <!-- M22 end at start -->
   <string name="notif_planned_end_title">%1$s finished?</string>
-  <string name="notif_planned_end_text">Planned end %1$s</string>
   <string name="notif_planned_end_stop">Yes, stop at %1$s</string>
   <string name="notif_planned_end_go_on">No, go on</string>
-  <string name="field_end_optional">End (optional)</string>
-  <string name="end_hint">Empty = open; already passed = the activity is recorded as done.</string>
-  <string name="ended_title">Is the activity over?</string>
-  <string name="ended_text">The end %1$s has already passed.</string>
   <string name="planned_end_fmt">Planned end %1$s</string>
   <string name="todo_filters">Filters</string>
   <string name="todo_filter_any">Any</string>
-  <string name="todo_filter_state">State</string>
-  <string name="todo_filter_planned">Planned</string>
-  <string name="todo_state_open">Open</string>
-  <string name="todo_state_planned">Planned</string>
-  <string name="todo_state_overdue">Overdue</string>
   <string name="todo_filters_reset">Clear</string>
   <!-- issue #28 calls -->
   <string name="md_contacts">Contacts</string>
   <string name="contacts_import">Import from the phone book</string>
   <string name="contact_edit">Contact</string>
   <string name="contact_numbers">Numbers (one per line)</string>
-  <string name="contact_numbers_missing">At least one number is needed.</string>
   <string name="client_calls">Calls</string>
   <string name="sec_calls">Calls</string>
   <string name="set_calls_incoming">Recognise incoming calls</string>
@@ -583,7 +503,6 @@ Tap the green play button below to start one.</string>
   <string name="call_propose_text">%1$s–%2$s: record it as an activity?</string>
   <string name="call_propose_action">Create activity</string>
   <string name="segment_note">Description</string>
-  <string name="start_end_hint">Empty Start = now; empty End = open; an End already passed records the activity as done.</string>
   <string name="start_when_now">Now</string>
   <string name="start_when_started">Already started</string>
   <string name="start_when_past">Past</string>
@@ -591,9 +510,6 @@ Tap the green play button below to start one.</string>
   <string name="start_when_started_hint">It stays open: stop it with Stop.</string>
   <string name="start_started_at">Started at</string>
   <string name="start_minutes_ago">%1$d min ago</string>
-  <string name="start_now_action">Start now</string>
-  <string name="start_from_action">Start from %1$s</string>
-  <string name="start_record_action">Record %1$s–%2$s</string>
   <!-- issue #37 add row -->
   <string name="short_expense">Expense</string>
   <string name="short_photo">Photo</string>
@@ -605,17 +521,13 @@ Tap the green play button below to start one.</string>
   <string name="future_plan">Plan it today at %1$s</string>
   <string name="future_now">Start now</string>
   <string name="future_yesterday">Started yesterday at %1$s</string>
-  <string name="todo_home_title">To do · %1$s ▾</string>
   <!-- issue #40 -->
   <string name="overlap_title">Overlapping segments</string>
   <string name="overlap_text">This segment overlaps:</string>
   <string name="overlap_hint">Confirming saves it: the segments above are shortened, split or removed where it covers them.</string>
   <string name="action_confirm">Confirm</string>
   <string name="entry_delete_title">Delete the activity</string>
-  <string name="entry_delete_text">The activity is deleted with its segments, expenses, references and tags.</string>
-  <string name="entry_delete_ticket">The recorded time is deleted; the to-do "%1$s" goes back to the open ones.</string>
   <string name="entry_delete_sent">Already sent to the management system: it is deleted there too at the next sync.</string>
-  <string name="entry_delete_attachments">The activity has %1$d attachments: delete them first, from the Attachments section.</string>
   <!-- issue #44 -->
   <string name="backup_section">Backup</string>
   <string name="backup_hint">A copy of the data goes into the \"backup\" folder of the data folder every day; this makes one now.</string>
@@ -636,8 +548,6 @@ Tap the green play button below to start one.</string>
   <string name="err_invalid_value">Invalid value.</string>
   <string name="field_description">Description</string>
   <!-- issue #47 -->
-  <string name="field_start_end">Start – End</string>
-  <string name="todo_more_details">Notes and references</string>
   <!-- issue #44 -->
   <string name="set_backup_every">Automatic backup</string>
   <string name="set_backup_hour">Preferred hour</string>
@@ -650,8 +560,6 @@ Tap the green play button below to start one.</string>
   <!-- issue #44 date -->
   <string name="err_start_required">Another day needs the start time.</string>
   <string name="err_end_required">A past day needs the end time too.</string>
-  <string name="plan_question">Plan it for %1$s at %2$s?</string>
-  <string name="plan_question_text">It becomes a planned to-do with this client and description.</string>
   <!-- issue #48 policy -->
   <string name="ch_policy">Policy</string>
   <string name="policy_refused_title">policy.json refused</string>
@@ -701,7 +609,6 @@ Tap the green play button below to start one.</string>
   <string name="plugin_log_in">Log in</string>
   <string name="plugin_log_out">Log out</string>
   <string name="plugin_logged_in_state">Logged in</string>
-  <string name="plugin_sync_now">Sync now</string>
   <string name="plugin_syncing">Syncing…</string>
   <string name="plugin_https_only">An https:// address</string>
   <string name="plugin_sync_done">%1$s: sync done</string>
@@ -866,11 +773,6 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="offline_map_err_failed">The operation failed.</string>
   <string name="offline_map_hint_server">A basic map (roads, rivers, borders, place names) of the areas your administrator prepared on ActivityTrack Web: it arrives with the sync, on Wi-Fi. You can also copy .pmtiles files into the «maps» folder of the data folder and import them. It shows in place of the OSM tiles when those are off or there is no network. © OpenStreetMap contributors · Protomaps.</string>
   <string name="offline_map_hint_folder">Copy the .pmtiles map files (vector, Protomaps) into the «maps» folder of the data folder and import them here; docs/OFFLINE-MAPS.md tells how to make them. A map shows in place of the OSM tiles when those are off or there is no network. © OpenStreetMap contributors · Protomaps.</string>
-  <string name="todo_kind_task">To-do</string>
-  <string name="todo_absence">Absence</string>
-  <string name="todo_absence_until">Until (last day, optional)</string>
-  <string name="todo_absence_label">Label (optional)</string>
-  <string name="todo_field_color">Colour</string>
   <!-- displayed states of an activity (ACTIVITY-MODEL.md 2.2) -->
   <string name="state_deleted">Deleted</string>
   <string name="state_absence">Absence</string>
@@ -891,70 +793,55 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="priority_high">High</string>
   <string name="priority_urgent">Urgent</string>
   <string name="priority_emergency">Emergency</string>
-  <!-- ui-home -->
+  <!-- start, stop and reopen questions (ACTIVITY-MODEL.md 3) -->
   <string name="travel_done_question">Have you completed the work activity?</string>
   <string name="stop_choice_travel_back">Start return trip</string>
   <string name="stop_choice_end">End the activity</string>
   <string name="stop_choice_end_return">End the activity and add the return trip</string>
   <string name="reopen_title">Reopen “%1$s”?</string>
   <string name="reopen_text">The activity goes back to running; the time in between stays a gap.</string>
+  <string name="detail_reopen_work">Reopen with work</string>
+  <string name="detail_reopen_travel">Reopen with travel</string>
+  <string name="detail_reopen_text">A new segment opens from now; the time since the activity was closed stays empty.</string>
+  <string name="detail_travel_hint">Yes: this activity closes and a new travel starts. No: the travel is part of this activity.</string>
+  <string name="detail_stop_at">End (empty = now)</string>
+  <string name="detail_stop_ahead_hint">Up to 60 minutes ahead.</string>
+  <string name="detail_return_question">There was an outbound travel: what about the way back?</string>
+  <string name="detail_end_ahead">ends at %1$s</string>
+  <!-- pulled-back notice (ACTIVITY-MODEL.md 4.1) -->
   <string name="home_pulled_back">The end of “%1$s” was moved back to %2$s (another activity started)</string>
   <string name="home_pulled_back_many">The end of %1$d activities was moved back (another activity started)</string>
+  <!-- absence kinds and the absence dialog -->
   <string name="absence_kind_absence">Absence</string>
   <string name="absence_kind_holiday">Holiday</string>
   <string name="absence_kind_leave">Leave</string>
   <string name="absence_kind_sick">Sick leave</string>
-  <!-- ui-lists -->
-  <string name="swipe_delete">Delete</string>
+  <string name="create_absence_title">New absence</string>
+  <string name="create_absence_from">From</string>
+  <string name="create_absence_to">To (optional)</string>
+  <string name="create_absence_hint_days">Without a time: the working hours of each working day.</string>
+  <string name="create_absence_hint_times">With a time: the same hours on each day of the range.</string>
+  <!-- bin -->
   <string name="undo_todo_deleted">“%1$s” moved to the bin</string>
   <string name="bin_title">Bin</string>
-  <string name="bin_restore">Restore</string>
   <string name="bin_purge">Delete permanently</string>
   <string name="bin_purge_confirm">Delete “%1$s” permanently? It cannot be undone.</string>
   <string name="bin_purge_failed">It has attachments: remove them first.</string>
-  <string name="lists_absence_kind_absence">Absence</string>
-  <string name="lists_absence_kind_holiday">Holiday</string>
-  <string name="lists_absence_kind_leave">Leave</string>
-  <string name="lists_absence_kind_sick">Sick leave</string>
-  <string name="set_round_stored">Save rounded values</string>
-  <string name="set_round_stored_hint">The Start, Switch, Stop and Reopen buttons store rounded times; times typed by hand stay exact. Needs freely editable times.</string>
-  <!-- ui-create -->
+  <!-- creation dialogs: segments and references -->
   <string name="create_more_info">More information</string>
   <string name="create_external_refs">External references (one per line)</string>
   <string name="create_segments">Segments</string>
   <string name="create_segments_hint">No segment yet: add one with the button.</string>
   <string name="create_segments_planned_hint">Planned segments are drawn dashed and never counted.</string>
   <string name="create_add_segment">Add %1$s</string>
-  <string name="create_absence_title">New absence</string>
-  <string name="create_absence_kind_absence">Absence</string>
-  <string name="create_absence_kind_holiday">Holiday</string>
-  <string name="create_absence_kind_leave">Leave</string>
-  <string name="create_absence_kind_sick">Sick leave</string>
-  <string name="create_absence_from">From</string>
-  <string name="create_absence_to">To (optional)</string>
-  <string name="create_absence_times">Time (optional)</string>
-  <string name="create_absence_hint_days">Without a time: the working hours of each working day.</string>
-  <string name="create_absence_hint_times">With a time: the same hours on each day of the range.</string>
-  <!-- ui-detail -->
-  <string name="detail_end_ahead">ends at %1$s</string>
-  <string name="detail_reopen_work">Reopen with work</string>
-  <string name="detail_reopen_travel">Reopen with travel</string>
-  <string name="detail_reopen_text">A new segment opens from now; the time since the activity was closed stays empty.</string>
-  <string name="detail_travel_question">Have you completed the work?</string>
-  <string name="detail_travel_hint">Yes: this activity closes and a new travel starts. No: the travel is part of this activity.</string>
-  <string name="detail_stop_title">End the activity</string>
-  <string name="detail_stop_at">End (empty = now)</string>
-  <string name="detail_stop_ahead_hint">Up to 60 minutes ahead.</string>
-  <string name="detail_return_question">There was an outbound travel: what about the way back?</string>
-  <string name="detail_stop_with_return">End the activity and add the return travel</string>
+  <!-- detail dialog: days and segments -->
   <string name="detail_days">Days</string>
   <string name="detail_add_day">Day</string>
   <string name="detail_segment_new">New segment</string>
   <string name="detail_planned">planned</string>
   <string name="detail_planned_hint">Planned: it does not count in the totals.</string>
   <string name="detail_delete_text">The activity goes to the bin: it can be restored from there.</string>
-  <string name="detail_absence_absence">Absence</string>
-  <string name="detail_absence_holiday">Holiday</string>
-  <string name="detail_absence_leave">Leave</string>
-  <string name="detail_absence_sick">Sick leave</string>
+  <!-- settings: stored times -->
+  <string name="set_round_stored">Save rounded values</string>
+  <string name="set_round_stored_hint">The Start, Switch, Stop and Reopen buttons store rounded times; times typed by hand stay exact. Needs freely editable times.</string>
 </resources>

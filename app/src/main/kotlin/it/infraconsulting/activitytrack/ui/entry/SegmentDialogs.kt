@@ -92,7 +92,7 @@ internal fun kindLabel(k: SegmentKind) = stringResource(
 		SegmentKind.WORK -> R.string.cmd_work
 		SegmentKind.TRAVEL -> R.string.cmd_travel
 		SegmentKind.PAUSE -> R.string.cmd_pause
-		SegmentKind.ABSENCE -> R.string.todo_absence
+		SegmentKind.ABSENCE -> R.string.state_absence
 	},
 )
 

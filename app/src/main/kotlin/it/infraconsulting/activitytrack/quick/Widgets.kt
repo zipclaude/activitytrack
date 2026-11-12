@@ -199,7 +199,7 @@ class StatusWidget : GlanceAppWidget() {
 				if (s.entryId != null) {
 					val mode = context.getString(displayName(s.state ?: DisplayState.WORK))
 					Text(
-						s.sinceMs?.let { context.getString(R.string.widget_since, mode, clock(it)) } ?: mode,
+						s.sinceMs?.let { context.getString(R.string.since_fmt, mode, clock(it)) } ?: mode,
 						maxLines = 1,
 						style = TextStyle(color = text, fontSize = 12.sp),
 					)

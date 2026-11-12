@@ -90,7 +90,7 @@ internal fun HomeListHeader(
 	onTag: (String?) -> Unit,
 ) {
 	val windows = listOf(
-		-1 to stringResource(R.string.home_window_today),
+		-1 to stringResource(R.string.day_today),
 		24 to stringResource(R.string.todo_window_24h),
 		72 to stringResource(R.string.todo_window_3d),
 		168 to stringResource(R.string.todo_window_7d),
@@ -179,7 +179,7 @@ private fun CompanyChip(
 			label = { Text(stringResource(R.string.home_filter_company) + " ▾", maxLines = 1, overflow = TextOverflow.Ellipsis) },
 		)
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-			DropdownMenuItem(text = { Text(stringResource(R.string.todo_filter_all)) }, onClick = { open = false; onPick(null) })
+			DropdownMenuItem(text = { Text(stringResource(R.string.all_companies)) }, onClick = { open = false; onPick(null) })
 			val lock = settingLock("homeFilterEntries")
 			if (lock != SettingLock.HIDDEN)
 				DropdownMenuItem(
@@ -203,7 +203,7 @@ internal fun sectionLabel(s: HomeSection): String = stringResource(
 	when (s) {
 		HomeSection.LATE -> R.string.state_late
 		HomeSection.INCOMPLETE -> R.string.state_incomplete
-		HomeSection.TODAY -> R.string.home_window_today
+		HomeSection.TODAY -> R.string.day_today
 		HomeSection.NEXT -> R.string.home_sec_next
 		HomeSection.EARLIER -> R.string.home_sec_earlier
 		HomeSection.NO_DATE -> R.string.home_no_date

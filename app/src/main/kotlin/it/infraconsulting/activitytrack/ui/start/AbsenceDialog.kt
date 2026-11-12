@@ -37,10 +37,10 @@ import kotlinx.coroutines.launch
 
 @StringRes
 fun absenceKindName(k: AbsenceKind): Int = when (k) {
-	AbsenceKind.ABSENCE -> R.string.create_absence_kind_absence
-	AbsenceKind.HOLIDAY -> R.string.create_absence_kind_holiday
-	AbsenceKind.LEAVE -> R.string.create_absence_kind_leave
-	AbsenceKind.SICK -> R.string.create_absence_kind_sick
+	AbsenceKind.ABSENCE -> R.string.absence_kind_absence
+	AbsenceKind.HOLIDAY -> R.string.absence_kind_holiday
+	AbsenceKind.LEAVE -> R.string.absence_kind_leave
+	AbsenceKind.SICK -> R.string.absence_kind_sick
 }
 
 /*
@@ -122,7 +122,7 @@ fun AbsenceDialog(onClose: () -> Unit) {
 		DateField(stringResource(R.string.create_absence_from), from, { from = it }, importance = Importance.REQUIRED)
 		DateField(stringResource(R.string.create_absence_to), to, { to = it }, clearable = true, importance = Importance.OPTIONAL)
 		RangeField(
-			stringResource(R.string.create_absence_times), start, end, { grid = true }, { start = ""; end = "" },
+			stringResource(R.string.todo_plan_time_optional), start, end, { grid = true }, { start = ""; end = "" },
 			importance = Importance.OPTIONAL,
 		)
 		Text(
@@ -134,7 +134,7 @@ fun AbsenceDialog(onClose: () -> Unit) {
 		val a = parseHhMm(start)?.takeIf { it < 1440 }
 		val b = parseHhMm(end)
 		TimeGridSheet(
-			title = stringResource(R.string.create_absence_times),
+			title = stringResource(R.string.todo_plan_time_optional),
 			initial = if (a != null && b != null && b > a) a until b else null,
 			range = true,
 			day = parseDate(from) ?: LocalDate.now(),

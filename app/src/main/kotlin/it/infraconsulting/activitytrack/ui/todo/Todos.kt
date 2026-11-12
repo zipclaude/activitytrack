@@ -293,7 +293,7 @@ fun TodoCard(t: TimeEntryEntity, clientName: String?, band: Int? = null, planned
 	val state = displayOf(t, planned = planned)
 	val style = displayStyle(state)
 	val deleted = state == DisplayState.DELETED
-	val title = t.title().ifBlank { if (t.isAbsence()) stringResource(R.string.todo_absence) else "" }
+	val title = t.title().ifBlank { if (t.isAbsence()) stringResource(R.string.state_absence) else "" }
 	val compact = LocalCompact.current
 	val body: @Composable () -> Unit = {
 		Row(
@@ -353,7 +353,7 @@ internal fun todoSwipeActions(
 		when (a) {
 			TodoAction.START -> SwipeAction(stringResource(R.string.swipe_start), R.drawable.ic_cmd_play, GREEN, Color.White) { onStart(t.id) }
 			TodoAction.POSTPONE -> SwipeAction(stringResource(R.string.action_postpone, snooze), R.drawable.ic_clock, BLUE, Color.White) { vm.postpone(t, snooze) }
-			TodoAction.IGNORE -> SwipeAction(stringResource(R.string.swipe_delete), R.drawable.ic_ignore, grey, Color.White) { vm.delete(t) }
+			TodoAction.IGNORE -> SwipeAction(stringResource(R.string.action_delete), R.drawable.ic_ignore, grey, Color.White) { vm.delete(t) }
 			TodoAction.RESTORE -> SwipeAction(stringResource(R.string.swipe_restore), R.drawable.ic_restore, BLUE, Color.White) { vm.restore(t) }
 			TodoAction.DONE -> SwipeAction(stringResource(R.string.todo_mark_done), R.drawable.ic_done, GREEN, Color.White) { vm.tick(t) }
 			TodoAction.REPLAN -> SwipeAction(stringResource(R.string.action_replan), R.drawable.ic_calendar, BLUE, Color.White) { onReplan(t) }
@@ -422,17 +422,17 @@ internal fun CompanyFilter(vm: TodosViewModel, onHome: Boolean = false, label: S
 			selected = current != null,
 			onClick = { open = true },
 			/* [label]: a compact chip naming the filter, coloured while a company is chosen (Home, owner 2026-10-28) */
-			label = { Text(label?.let { "$it ▾" } ?: current?.name ?: stringResource(R.string.todo_filter_all), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+			label = { Text(label?.let { "$it ▾" } ?: current?.name ?: stringResource(R.string.all_companies), maxLines = 1, overflow = TextOverflow.Ellipsis) },
 			leadingIcon = current?.color?.takeIf { label == null }?.let { c -> { Box(Modifier.size(10.dp).clip(CircleShape).background(rgb(c))) } },
 			trailingIcon = if (current != null && label == null) ({
 				Icon(
-					painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.todo_filter_all),
+					painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.all_companies),
 					modifier = Modifier.size(18.dp).clickable { vm.setCompanyFilter(null) },
 				)
 			}) else null,
 		)
 		DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-			DropdownMenuItem(text = { Text(stringResource(R.string.todo_filter_all)) }, onClick = { open = false; vm.setCompanyFilter(null) })
+			DropdownMenuItem(text = { Text(stringResource(R.string.all_companies)) }, onClick = { open = false; vm.setCompanyFilter(null) })
 			/* on Home: the filter may hide the entries above too (owner, issue #44; off by default) */
 			val entriesLock = settingLock("homeFilterEntries")
 			if (onHome && entriesLock != SettingLock.HIDDEN)
@@ -498,7 +498,7 @@ internal fun TodoActions(t: TimeEntryEntity, vm: TodosViewModel, onStart: () -> 
 				}
 				Text(subtitle(t, clients.firstOrNull { it.id == t.clientId }?.name), style = MaterialTheme.typography.bodySmall)
 				t.notes?.let { Text(it) }
-				TextButton(onClick = { onDismiss(); onStart() }) { Text(stringResource(R.string.todo_start)) }
+				TextButton(onClick = { onDismiss(); onStart() }) { Text(stringResource(R.string.action_start_entry)) }
 				TextButton(onClick = { vm.tick(t); onDismiss() }) { Text(stringResource(R.string.todo_mark_done)) }
 				val snooze = settings?.planSnoozeMin
 				if (t.plan() != null && snooze != null)
@@ -530,7 +530,7 @@ internal fun BinActions(t: TimeEntryEntity, vm: TodosViewModel, onDismiss: () ->
 			onDismissRequest = { purging = false; vm.clearError() },
 			text = {
 				Column {
-					Text(stringResource(R.string.bin_purge_confirm, t.title().ifBlank { stringResource(R.string.todo_absence) }))
+					Text(stringResource(R.string.bin_purge_confirm, t.title().ifBlank { stringResource(R.string.state_absence) }))
 					error?.let { Text(stringResource(R.string.bin_purge_failed), color = MaterialTheme.colorScheme.error) }
 				}
 			},
@@ -545,10 +545,10 @@ internal fun BinActions(t: TimeEntryEntity, vm: TodosViewModel, onDismiss: () ->
 	}
 	AlertDialog(
 		onDismissRequest = onDismiss,
-		title = { Text(t.title().ifBlank { stringResource(R.string.todo_absence) }) },
+		title = { Text(t.title().ifBlank { stringResource(R.string.state_absence) }) },
 		text = {
 			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-				TextButton(onClick = { vm.restore(t); onDismiss() }) { Text(stringResource(R.string.bin_restore)) }
+				TextButton(onClick = { vm.restore(t); onDismiss() }) { Text(stringResource(R.string.swipe_restore)) }
 				TextButton(onClick = { vm.clearError(); purging = true }) { Text(stringResource(R.string.bin_purge), color = MaterialTheme.colorScheme.error) }
 			}
 		},
@@ -689,13 +689,13 @@ private fun TodoFiltersDialog(current: TodoFilters, clients: List<Pair<Long, Str
 					f.priority,
 				) { f = f.copy(priority = it) }
 				ChoiceField(
-					stringResource(R.string.todo_filter_state),
+					stringResource(R.string.home_filter_state),
 					listOf<Pair<DisplayState?, String>>(null to any) +
 						listOf(DisplayState.TODO, DisplayState.PLANNED, DisplayState.LATE).map { it to stringResource(displayName(it)) },
 					f.state,
 				) { f = f.copy(state = it) }
 				ChoiceField(
-					stringResource(R.string.todo_filter_planned),
+					stringResource(R.string.state_planned),
 					listOf(null to any, true to stringResource(R.string.action_yes), false to stringResource(R.string.action_no)),
 					f.planned,
 				) { f = f.copy(planned = it) }

@@ -225,7 +225,7 @@ private fun kindName(k: SegmentKind): Int = when (k) {
 	SegmentKind.WORK -> R.string.cmd_work
 	SegmentKind.TRAVEL -> R.string.cmd_travel
 	SegmentKind.PAUSE -> R.string.cmd_pause
-	SegmentKind.ABSENCE -> R.string.todo_absence
+	SegmentKind.ABSENCE -> R.string.state_absence
 }
 
 /* The questions the commands ask: travel from work, stop (end time and return trip), reopen. */
@@ -235,7 +235,7 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 	if (travelAsk)
 		AlertDialog(
 			onDismissRequest = vm::cancelTravel,
-			title = { Text(stringResource(R.string.detail_travel_question)) },
+			title = { Text(stringResource(R.string.travel_done_question)) },
 			text = { Text(stringResource(R.string.detail_travel_hint)) },
 			confirmButton = { TextButton(onClick = { vm.answerTravel(true) }) { Text(stringResource(R.string.action_yes)) } },
 			dismissButton = { TextButton(onClick = { vm.answerTravel(false) }) { Text(stringResource(R.string.action_no)) } },
@@ -249,7 +249,7 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 		val options = p.choices.ifEmpty { listOf(ReturnChoice.STOP) }
 		AlertDialog(
 			onDismissRequest = vm::cancelStop,
-			title = { Text(stringResource(R.string.detail_stop_title)) },
+			title = { Text(stringResource(R.string.stop_choice_end)) },
 			text = {
 				Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 					if (editable) {
@@ -263,8 +263,8 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 						val label = stringResource(
 							when (c) {
 								ReturnChoice.TRAVEL_BACK -> R.string.stop_return
-								ReturnChoice.STOP -> R.string.detail_stop_title
-								ReturnChoice.STOP_WITH_RETURN -> R.string.detail_stop_with_return
+								ReturnChoice.STOP -> R.string.stop_choice_end
+								ReturnChoice.STOP_WITH_RETURN -> R.string.stop_choice_end_return
 							},
 						)
 						if (i == options.lastIndex)

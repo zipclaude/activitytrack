@@ -224,12 +224,12 @@ class TodoWidget : GlanceAppWidget() {
 						Spacer(GlanceModifier.width(6.dp))
 						if (r.directStart) {
 							CommandCircle(
-								QuickAction.WORK, 34, context.getString(R.string.todo_start),
+								QuickAction.WORK, 34, context.getString(R.string.action_start_entry),
 								actionRunCallback<WidgetTodoStartAction>(actionParametersOf(TODO to r.todo.id)),
 							)
 						} else {
 							CommandCircle(
-								QuickAction.WORK, 34, context.getString(R.string.todo_start),
+								QuickAction.WORK, 34, context.getString(R.string.action_start_entry),
 								widgetOpenScreen(context, Screen.StartFromTodo(r.todo.id)),
 							)
 						}

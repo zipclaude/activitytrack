@@ -108,7 +108,7 @@ private fun todoLabel(s: TodoSwipe): Int = when (s) {
 	TodoSwipe.START_OR_DONE -> R.string.swipe_start_or_done
 	TodoSwipe.POSTPONE_OR_IGNORE -> R.string.swipe_postpone_or_ignore
 	TodoSwipe.POSTPONE -> R.string.swipe_postpone
-	TodoSwipe.IGNORE -> R.string.swipe_ignore
+	TodoSwipe.IGNORE -> R.string.action_delete
 	TodoSwipe.DONE -> R.string.todo_mark_done
 	TodoSwipe.REPLAN -> R.string.action_replan
 	TodoSwipe.NONE -> R.string.swipe_none

@@ -175,14 +175,14 @@ data class AgendaTodo(
 /* the title; an absence without one is just "Absence" (issue #158) */
 @Composable
 private fun AgendaTodo.label(): String = title.ifBlank {
-	if (!absence) "" else todo.absenceKind?.let { stringResource(absenceKindName(it)) } ?: stringResource(R.string.todo_absence)
+	if (!absence) "" else todo.absenceKind?.let { stringResource(absenceKindName(it)) } ?: stringResource(R.string.state_absence)
 }
 
 private fun absenceKindName(k: AbsenceKind): Int = when (k) {
-	AbsenceKind.ABSENCE -> R.string.lists_absence_kind_absence
-	AbsenceKind.HOLIDAY -> R.string.lists_absence_kind_holiday
-	AbsenceKind.LEAVE -> R.string.lists_absence_kind_leave
-	AbsenceKind.SICK -> R.string.lists_absence_kind_sick
+	AbsenceKind.ABSENCE -> R.string.absence_kind_absence
+	AbsenceKind.HOLIDAY -> R.string.absence_kind_holiday
+	AbsenceKind.LEAVE -> R.string.absence_kind_leave
+	AbsenceKind.SICK -> R.string.absence_kind_sick
 }
 
 data class AgendaData(
@@ -381,7 +381,7 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 			onBack = null,
 			actions = {
 				AddButton { plan(anchor, defaultSlot(anchor)) }
-				TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.agenda_today)) }
+				TextButton(onClick = { vm.anchor.value = LocalDate.now() }) { Text(stringResource(R.string.day_today)) }
 			},
 		) { padding ->
 			Column(Modifier.fillMaxSize().padding(padding)) {

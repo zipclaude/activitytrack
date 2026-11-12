@@ -178,7 +178,7 @@ class EntryWidget : GlanceAppWidget() {
 				if (s.entryId != null) {
 					/* "In <state> dalle <since>", the state from ActivityDisplay */
 					val name = context.getString(displayName(s.state ?: DisplayState.WORK))
-					val state = s.sinceMs?.let { context.getString(R.string.widget_since, name, clock(it)) } ?: name
+					val state = s.sinceMs?.let { context.getString(R.string.since_fmt, name, clock(it)) } ?: name
 					Text(state, maxLines = 1, style = TextStyle(color = text, fontSize = 12.sp))
 					Text(
 						context.getString(R.string.totals_fmt, hm(s.workMs), hm(s.travelMs)),
