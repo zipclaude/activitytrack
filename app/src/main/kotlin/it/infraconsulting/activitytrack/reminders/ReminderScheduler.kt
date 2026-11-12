@@ -1,20 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.reminders
 
-import it.infraconsulting.activitytrack.ui.todo.TodoEntity
-import it.infraconsulting.activitytrack.ui.todo.TodoKind
 import it.infraconsulting.activitytrack.ui.todo.TodoRepository
-import it.infraconsulting.activitytrack.ui.todo.title
-import it.infraconsulting.activitytrack.ui.todo.done
-import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
-import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
-import it.infraconsulting.activitytrack.ui.todo.refs
-import it.infraconsulting.activitytrack.ui.todo.color
-import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
-import it.infraconsulting.activitytrack.ui.todo.todoKind
-import it.infraconsulting.activitytrack.ui.todo.todoId
-import it.infraconsulting.activitytrack.ui.todo.isOpen
-import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.domain.todo.nextWorkingDay
 import android.app.AlarmManager
 import android.app.NotificationManager
@@ -36,8 +23,10 @@ import it.infraconsulting.activitytrack.domain.reminder.ReminderPlanner
 import it.infraconsulting.activitytrack.domain.reminder.ReminderTodo
 import it.infraconsulting.activitytrack.data.repo.isAbsence
 import it.infraconsulting.activitytrack.data.repo.plan
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+import it.infraconsulting.activitytrack.domain.activity.ActivitySegment
+import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryInfo
 import it.infraconsulting.activitytrack.notify.NotificationIds
 import java.time.Duration
@@ -72,7 +61,7 @@ class ReminderScheduler(
 				container.settings.settings,
 				container.masterData.lunchBreaks,
 				container.masterData.schedule,
-				combine(container.entries.absences, container.masterData.daysOff, container.todos.all) { _, _, _ -> },
+				combine(container.entries.absences, container.masterData.daysOff, container.entries.todos) { _, _, _ -> },
 			) { _, _, _, _, _ -> }.conflate().collect { reschedule() }
 		}
 	}
@@ -122,20 +111,20 @@ class ReminderScheduler(
 	}
 
 	/*
-	 * Open planned to-dos without a running entry of their own. A shown
-	 * reminder goes away when the to-do is started, done, re-planned or over.
+	 * TODO activities with a plan (the reminder is on the activity's plan,
+	 * ACTIVITY-MODEL.md 7). A shown reminder goes away when the activity is
+	 * started, ticked, deleted, re-planned or the plan is over.
 	 */
 	private suspend fun plannedTodos(zone: ZoneId, nm: NotificationManager): List<ReminderTodo> {
 		val now = Instant.now()
-		val started = container.entries.openEntries.first().filter { it.legacy == LegacyStatus.ACTIVE }.mapNotNull { it.todoId }.toSet()
 		val out = ArrayList<ReminderTodo>()
-		for (t in container.todos.all.first()) {
+		for (t in container.entries.todos.first()) {
 			/* no reminder for a plan by day only (issue #52, answer 3), nor for an absence (issue #158) */
 			val p = t.plan()?.takeIf { !it.allDay && !t.isAbsence() }
 			val start = p?.start(zone)
 			/* after the block (a point: its first hour) a reminder is moot */
 			val end = p?.let { maxOf(it.end(zone), it.start(zone).plus(java.time.Duration.ofHours(1))) }
-			val live = start != null && end != null && t.isOpen() && t.id !in started && now.isBefore(end)
+			val live = start != null && end != null && t.status == ActivityStatus.TODO && t.deletedUtcMs == null && now.isBefore(end)
 			if (live)
 				out += ReminderTodo(t.id, start!!, end!!, t.planRemindedUtcMs)
 			if (t.planRemindedUtcMs != null && (!live || t.planRemindedUtcMs != start?.toEpochMilli()))
@@ -210,33 +199,35 @@ class ReminderScheduler(
 		val fallback = context.getString(R.string.app_name)
 		return container.entries.openEntries.first().associate { e ->
 			val title = e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name } ?: fallback
-			e.id to EntryInfo(e, title, emptyList())
+			/* the segments tell what "Riprendi" resumes after a pause */
+			val segments = if (e.mode == SegmentKind.PAUSE) container.entries.segments(e.id).first() else emptyList()
+			e.id to EntryInfo(e, title, segments)
 		}
 	}
 
 	/* The reminder of a planned to-do, recorded against its planned start. */
 	private suspend fun postPlanned(nm: NotificationManager, todoId: Long) {
-		val t = container.todos.find(todoId) ?: return
+		val t = container.entries.find(todoId)?.takeIf { it.status == ActivityStatus.TODO && it.deletedUtcMs == null } ?: return
 		val start = t.plan()?.start(ZoneId.systemDefault())?.toEpochMilli() ?: return
 		val client = t.clientId?.let { id -> container.masterData.clients.first().firstOrNull { it.id == id }?.name }
 		val company = container.masterData.companies.first().firstOrNull { it.id == t.companyId }?.name
 		nm.notify(
 			NotificationIds.of(todoId, NotificationIds.PLANNED),
-			ReminderNotifications.planned(context, todoId, t.title, client ?: company, start, container.settings.current().planSnoozeMin),
+			ReminderNotifications.planned(context, todoId, t.activity.orEmpty(), client ?: company, start, container.settings.current().planSnoozeMin),
 		)
-		container.todos.markPlanReminded(todoId, start)
+		container.entries.markPlanReminded(todoId, start)
 	}
 
 	/* The planned to-dos of [day] not worked, with the next working day proposed (issue #52). */
 	private suspend fun postUnworked(nm: NotificationManager, day: LocalDate) {
 		val zone = ZoneId.systemDefault()
-		val todos = container.todos.unworked(day, zone)
+		val todos = container.entries.unworked(day, zone)
 		if (todos.isEmpty())
 			return
 		val weekdays = container.masterData.schedule.first().map { it.dayOfWeek }.toSet()
 		val daysOff = container.masterData.daysOffBetween(day, day.plusDays(60))
 		val next = nextWorkingDay(day, weekdays) { it in daysOff || ItalianHolidays.isHoliday(it) }
-		nm.notify(NotificationIds.of(0, NotificationIds.UNWORKED), ReminderNotifications.unworked(context, todos.map { it.title }, todos.map { it.id }, next))
+		nm.notify(NotificationIds.of(0, NotificationIds.UNWORKED), ReminderNotifications.unworked(context, todos.map { it.activity.orEmpty() }, todos.map { it.id }, next))
 	}
 
 	/* The reported total of [day] (issue #99); nothing when the day has no time. */

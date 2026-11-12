@@ -425,11 +425,11 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="home_closed_empty">Niente di fatto in questo intervallo</string>
   <string name="todo_ignored">ignorata</string>
   <string name="swipe_start">Avvia</string>
-  <string name="swipe_ignore">Ignora</string>
+  <string name="swipe_ignore">Elimina</string>
   <string name="swipe_restore">Ripristina</string>
   <string name="swipe_postpone">Posticipa</string>
   <string name="swipe_none">Nessuna</string>
-  <string name="swipe_postpone_or_ignore">Posticipa o ignora</string>
+  <string name="swipe_postpone_or_ignore">Posticipa o elimina</string>
   <string name="swipe_pause_resume">Pausa / riprendi</string>
   <string name="swipe_stop_or_suspend">Termina o sospendi</string>
   <string name="gestures_title">Gesti</string>
@@ -892,4 +892,6 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="lists_absence_kind_holiday">Ferie</string>
   <string name="lists_absence_kind_leave">Permesso</string>
   <string name="lists_absence_kind_sick">Malattia</string>
+  <string name="set_round_stored">Salva i valori arrotondati</string>
+  <string name="set_round_stored_hint">I pulsanti Avvia, Cambia, Termina e Riapri salvano orari arrotondati; gli orari digitati a mano restano esatti. Richiede orari liberamente modificabili.</string>
 </resources>

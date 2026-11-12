@@ -4,7 +4,10 @@ package it.infraconsulting.activitytrack.reminders
 import android.app.Notification
 import android.content.Context
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.domain.activity.ActivitySegment
+import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.ActionReceiver
 import it.infraconsulting.activitytrack.notify.EntryInfo
 import it.infraconsulting.activitytrack.notify.EntryLinks
@@ -59,9 +62,13 @@ object ReminderNotifications {
 			.build()
 	}
 
-	/* "Still on pause?" — Resume / Stop. */
+	/* "Still on pause?" — Resume (the kind open before the pause) / Stop. No suspend. */
 	fun pause(context: Context, info: EntryInfo): Notification {
 		val id = info.entry.id
+		val pauseStart = info.openSince?.let(Instant::ofEpochMilli)
+		val back = if (pauseStart != null && ActivityStateMachine.resumeKind(
+			info.segments.filter { !it.planned }.map { ActivitySegment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli)) }, pauseStart,
+		) == SegmentKind.TRAVEL) EntryCommand.TRAVEL else EntryCommand.WORK
 		return Notification.Builder(context, NotificationChannels.PAUSE)
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(context.getString(R.string.notif_pause_title))
@@ -69,7 +76,7 @@ object ReminderNotifications {
 			.setContentIntent(EntryLinks.openEntry(context, id))
 			.setAutoCancel(true)
 			.setCategory(Notification.CATEGORY_REMINDER)
-			.addAction(action(context.getString(R.string.cmd_resume), ActionReceiver.command(context, id, EntryCommand.WORK)))
+			.addAction(action(context.getString(R.string.cmd_resume), ActionReceiver.command(context, id, back)))
 			.addAction(action(context.getString(R.string.cmd_stop), ActionReceiver.command(context, id, EntryCommand.STOP)))
 			.build()
 	}
@@ -94,9 +101,9 @@ object ReminderNotifications {
 			.build()
 
 	/*
-	 * "<title> at HH:MM" before a planned to-do: Start (start screen from the
-	 * to-do) / Postpone N min / Re-plan (the to-do editor). No dialog outside
-	 * the app.
+	 * "<title> at HH:MM" before a planned TODO activity: Start (start screen
+	 * from it) / Postpone N min / Re-plan (its editor); a tap opens its
+	 * detail. No dialog outside the app.
 	 */
 	fun planned(context: Context, todoId: Long, title: String, subtitle: String?, startMs: Long, snoozeMin: Int): Notification {
 		val rc = (todoId * 4).toInt()
@@ -104,7 +111,7 @@ object ReminderNotifications {
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(context.getString(R.string.notif_planned_title, title, clock(startMs)))
 			.apply { subtitle?.let(::setContentText) }
-			.setContentIntent(EntryLinks.openScreen(context, Screen.Todo(todoId), -(rc + 1)))
+			.setContentIntent(EntryLinks.openScreen(context, Screen.Entry(todoId), -(rc + 1)))
 			.setAutoCancel(true)
 			.setCategory(Notification.CATEGORY_REMINDER)
 			.setWhen(startMs)

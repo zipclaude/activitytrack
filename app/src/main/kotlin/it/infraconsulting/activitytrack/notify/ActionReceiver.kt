@@ -98,7 +98,7 @@ class ActionReceiver : BroadcastReceiver() {
 		scope.launch {
 			try {
 				if (todoId >= 0) {
-					app.container.todos.postpone(todoId, app.container.settings.current().planSnoozeMin)
+					app.container.entries.postpone(todoId, app.container.settings.current().planSnoozeMin)
 					context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(todoId, NotificationIds.PLANNED))
 				}
 			} catch (e: ValidationException) {
@@ -116,7 +116,7 @@ class ActionReceiver : BroadcastReceiver() {
 		scope.launch {
 			try {
 				if (day != null)
-					app.container.todos.replan(ids, day)
+					app.container.entries.replan(ids, day)
 				context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(0, NotificationIds.UNWORKED))
 			} finally {
 				pending.finish()
