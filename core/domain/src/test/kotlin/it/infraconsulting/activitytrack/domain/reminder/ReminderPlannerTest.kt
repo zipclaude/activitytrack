@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.reminder
 
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import java.time.Duration
 import java.time.Instant
@@ -28,9 +28,9 @@ class ReminderPlannerTest {
 	)
 
 	private fun work(lastConfirmed: Long, unanswered: Int = 0) =
-		ReminderEntry(1, EntryStatus.ACTIVE, SegmentKind.WORK, lastConfirmed, unanswered)
+		ReminderEntry(1, ActivityStatus.RUNNING, SegmentKind.WORK, lastConfirmed, unanswered)
 
-	private fun pause(lastConfirmed: Long) = ReminderEntry(2, EntryStatus.ACTIVE, SegmentKind.PAUSE, lastConfirmed, 0)
+	private fun pause(lastConfirmed: Long) = ReminderEntry(2, ActivityStatus.RUNNING, SegmentKind.PAUSE, lastConfirmed, 0)
 
 	/* entry reminders only (the day summary is always planned when a schedule exists) */
 	private fun List<Reminder>.entries() = filterNot { it is Reminder.DaySummary }
@@ -81,8 +81,8 @@ class ReminderPlannerTest {
 
 	@Test
 	fun inactiveEntriesHaveNoReminders() {
-		val suspended = ReminderEntry(3, EntryStatus.SUSPENDED, null, ms(wed, 9, 0), 0)
-		val noConfirm = ReminderEntry(4, EntryStatus.ACTIVE, SegmentKind.WORK, null, 0)
+		val suspended = ReminderEntry(3, ActivityStatus.RUNNING, null, ms(wed, 9, 0), 0)
+		val noConfirm = ReminderEntry(4, ActivityStatus.RUNNING, SegmentKind.WORK, null, 0)
 		assertTrue(planner.planned(listOf(suspended, noConfirm), wed, at(wed, 10, 0)).entries().isEmpty())
 	}
 
@@ -143,8 +143,8 @@ class ReminderPlannerTest {
 	fun plannedEndWhileActive() {
 		val end = Instant.parse("2026-10-19T15:00:00Z")
 		val p = ReminderPlanner(ReminderConfig(Duration.ofMinutes(30), 0, Duration.ofMinutes(15)), emptyList(), emptyList(), ZoneId.of("UTC"))
-		val e = ReminderEntry(1, EntryStatus.ACTIVE, SegmentKind.WORK, end.minusSeconds(600).toEpochMilli(), 0, end.toEpochMilli())
+		val e = ReminderEntry(1, ActivityStatus.RUNNING, SegmentKind.WORK, end.minusSeconds(600).toEpochMilli(), 0, end.toEpochMilli())
 		assertTrue(p.planned(listOf(e), null, end.minusSeconds(60)).contains(Reminder.PlannedEnd(1, end)))
-		assertTrue(p.planned(listOf(e.copy(status = EntryStatus.SUSPENDED)), null, end).none { it is Reminder.PlannedEnd })
+		assertTrue(p.planned(listOf(e.copy(mode = null)), null, end).none { it is Reminder.PlannedEnd })
 	}
 }

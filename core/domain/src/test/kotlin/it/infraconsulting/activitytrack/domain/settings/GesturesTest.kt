@@ -2,7 +2,7 @@
 package it.infraconsulting.activitytrack.domain.settings
 
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -38,28 +38,28 @@ class GesturesTest {
 
 	@Test
 	fun pastCommandsFollowTheState() {
-		assertEquals(listOf(EntryCommand.COMPLETE), Gestures.pastCommands(PastSwipe.COMPLETE, EntryStatus.TO_COMPLETE))
-		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.COMPLETE, EntryStatus.CLOSED))
-		assertEquals(listOf(EntryCommand.REOPEN), Gestures.pastCommands(PastSwipe.REOPEN, EntryStatus.CLOSED))
-		assertEquals(listOf(EntryCommand.REOPEN), Gestures.pastCommands(PastSwipe.REOPEN, EntryStatus.TO_COMPLETE))
-		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.REOPEN, EntryStatus.ACTIVE))
+		/* completing opens the details: no command (activity model 1.0) */
+		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.COMPLETE, ActivityStatus.CLOSED))
+		assertEquals(listOf(EntryCommand.REOPEN), Gestures.pastCommands(PastSwipe.REOPEN, ActivityStatus.CLOSED))
+		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.REOPEN, ActivityStatus.RUNNING))
+		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.REOPEN, ActivityStatus.TODO))
 	}
 
 	@Test
 	fun entryCommandsFollowTheState() {
 		val pr = EntrySwipe.PAUSE_RESUME
-		assertEquals(listOf(EntryCommand.PAUSE), Gestures.entryCommands(pr, EntryStatus.ACTIVE, SegmentKind.WORK))
-		assertEquals(listOf(EntryCommand.PAUSE), Gestures.entryCommands(pr, EntryStatus.ACTIVE, SegmentKind.TRAVEL))
-		assertEquals(listOf(EntryCommand.WORK), Gestures.entryCommands(pr, EntryStatus.ACTIVE, SegmentKind.PAUSE))
-		assertEquals(listOf(EntryCommand.WORK), Gestures.entryCommands(pr, EntryStatus.SUSPENDED, null))
+		assertEquals(listOf(EntryCommand.PAUSE), Gestures.entryCommands(pr, ActivityStatus.RUNNING, SegmentKind.WORK))
+		assertEquals(listOf(EntryCommand.PAUSE), Gestures.entryCommands(pr, ActivityStatus.RUNNING, SegmentKind.TRAVEL))
+		assertEquals(listOf(EntryCommand.WORK), Gestures.entryCommands(pr, ActivityStatus.RUNNING, SegmentKind.PAUSE))
+		assertEquals(listOf(EntryCommand.WORK), Gestures.entryCommands(pr, ActivityStatus.RUNNING, null))
 
 		val ss = EntrySwipe.STOP_OR_SUSPEND
-		assertEquals(listOf(EntryCommand.STOP, EntryCommand.SUSPEND), Gestures.entryCommands(ss, EntryStatus.ACTIVE, SegmentKind.WORK))
+		assertEquals(listOf(EntryCommand.STOP, EntryCommand.SUSPEND), Gestures.entryCommands(ss, ActivityStatus.RUNNING, SegmentKind.WORK))
 		/* no suspension from a pause or a suspension */
-		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, EntryStatus.ACTIVE, SegmentKind.PAUSE))
-		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, EntryStatus.SUSPENDED, null))
+		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, SegmentKind.PAUSE))
+		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, null))
 		/* closed or to complete: nothing */
-		assertEquals(emptyList(), Gestures.entryCommands(ss, EntryStatus.TO_COMPLETE, null))
-		assertEquals(emptyList(), Gestures.entryCommands(pr, EntryStatus.CLOSED, null))
+		assertEquals(emptyList(), Gestures.entryCommands(ss, ActivityStatus.TODO, null))
+		assertEquals(emptyList(), Gestures.entryCommands(pr, ActivityStatus.CLOSED, null))
 	}
 }

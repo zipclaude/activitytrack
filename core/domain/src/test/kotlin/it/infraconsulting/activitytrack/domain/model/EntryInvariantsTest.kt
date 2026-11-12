@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.model
 
-import it.infraconsulting.activitytrack.domain.model.EntryStatus.ACTIVE
-import it.infraconsulting.activitytrack.domain.model.EntryStatus.SUSPENDED
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus.CLOSED
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus.RUNNING
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus.TODO
 import it.infraconsulting.activitytrack.domain.model.SegmentKind.PAUSE
 import it.infraconsulting.activitytrack.domain.model.SegmentKind.TRAVEL
 import it.infraconsulting.activitytrack.domain.model.SegmentKind.WORK
@@ -21,40 +22,50 @@ class EntryInvariantsTest {
 	@Test
 	fun consistentActiveEntry() {
 		val segs = listOf(seg(TRAVEL, 0, 30), seg(WORK, 30, 90), seg(PAUSE, 90, null))
-		assertEquals(emptyList(), EntryInvariants.violations(ACTIVE, PAUSE, segs))
+		assertEquals(emptyList(), EntryInvariants.violations(RUNNING, PAUSE, segs))
 	}
 
 	@Test
 	fun consistentSuspendedEntry() {
 		val segs = listOf(seg(WORK, 0, 30), seg(WORK, 60, 90))
-		assertEquals(emptyList(), EntryInvariants.violations(SUSPENDED, null, segs))
+		assertEquals(emptyList(), EntryInvariants.violations(RUNNING, null, segs))
+		assertEquals(emptyList(), EntryInvariants.violations(CLOSED, null, segs))
+	}
+
+	@Test
+	fun plannedSegmentsOnlyInATodoAndNeverCounted() {
+		val planned = listOf(Segment(WORK, t(0), t(60), planned = true), Segment(TRAVEL, t(60), t(90), planned = true))
+		assertEquals(emptyList(), EntryInvariants.violations(TODO, null, planned))
+		assertTrue(EntryInvariants.violations(CLOSED, null, planned).isNotEmpty())
+		assertTrue(EntryInvariants.violations(TODO, null, listOf(Segment(WORK, t(0), null, planned = true))).isNotEmpty())
+		assertTrue(EntryInvariants.violations(TODO, null, planned + Segment(WORK, t(30), t(40), planned = true)).isNotEmpty())
 	}
 
 	@Test
 	fun activeModeMustMatchOpenSegment() {
 		val segs = listOf(seg(WORK, 0, null))
-		assertTrue(EntryInvariants.violations(ACTIVE, TRAVEL, segs).isNotEmpty())
-		assertTrue(EntryInvariants.violations(ACTIVE, WORK, listOf(seg(WORK, 0, 10))).isNotEmpty())
+		assertTrue(EntryInvariants.violations(RUNNING, TRAVEL, segs).isNotEmpty())
+		assertTrue(EntryInvariants.violations(RUNNING, WORK, listOf(seg(WORK, 0, 10))).isNotEmpty())
 	}
 
 	@Test
 	fun noOpenSegmentUnlessActive() {
-		assertTrue(EntryInvariants.violations(SUSPENDED, null, listOf(seg(WORK, 0, null))).isNotEmpty())
+		assertTrue(EntryInvariants.violations(CLOSED, null, listOf(seg(WORK, 0, null))).isNotEmpty())
 	}
 
 	@Test
 	fun statusAndModeAgree() {
-		assertTrue(EntryInvariants.violations(SUSPENDED, WORK, emptyList()).isNotEmpty())
+		assertTrue(EntryInvariants.violations(CLOSED, WORK, emptyList()).isNotEmpty())
 	}
 
 	@Test
 	fun overlapsFromASyncAllowedWhenAsked() {
 		/* the device case: a closed segment from the server inside the running one (issue #119) */
 		val segs = listOf(seg(WORK, 0, null), seg(WORK, 60, 120))
-		assertTrue(EntryInvariants.violations(ACTIVE, WORK, segs).isNotEmpty())
-		assertEquals(emptyList(), EntryInvariants.violations(ACTIVE, WORK, segs, overlaps = true))
+		assertTrue(EntryInvariants.violations(RUNNING, WORK, segs).isNotEmpty())
+		assertEquals(emptyList(), EntryInvariants.violations(RUNNING, WORK, segs, overlaps = true))
 		/* the other rules still hold */
-		assertTrue(EntryInvariants.violations(SUSPENDED, null, segs, overlaps = true).isNotEmpty())
+		assertTrue(EntryInvariants.violations(RUNNING, null, segs, overlaps = true).isNotEmpty())
 	}
 
 	@Test
@@ -70,6 +81,6 @@ class EntryInvariantsTest {
 	@Test
 	fun twoOpenSegments() {
 		val segs = listOf(seg(WORK, 0, null), seg(PAUSE, 10, null))
-		assertFailsWith<InvariantViolationException> { EntryInvariants.require(1, ACTIVE, PAUSE, segs) }
+		assertFailsWith<InvariantViolationException> { EntryInvariants.require(1, RUNNING, PAUSE, segs) }
 	}
 }

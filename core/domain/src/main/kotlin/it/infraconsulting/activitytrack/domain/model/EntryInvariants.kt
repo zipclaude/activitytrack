@@ -1,37 +1,49 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.model
 
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+
 class InvariantViolationException(entryId: Long, violations: List<String>) :
 	IllegalStateException("entry $entryId: " + violations.joinToString("; "))
 
 /*
- * Consistency rules between an entry's state and its segments (DESIGN §4),
- * checked by the repository before committing every entry transaction:
- * 1. at most one open segment;
- * 2. status ACTIVE <=> mode set <=> an open segment of kind mode exists;
- * 3. segments never overlap (an open segment extends to infinity, so it must
- *    be the last one), unless [overlaps] allows it: an entry merged by a sync
- *    to review (issue #119), the user fixes it.
+ * Consistency rules between an activity's state and its segments (DESIGN §4,
+ * ACTIVITY-MODEL.md 1.1, 1.2), checked by the repository before committing
+ * every activity transaction:
+ * 1. at most one open segment, never a planned or an ABSENCE one;
+ * 2. mode set <=> an open segment of kind mode exists, and only while RUNNING;
+ * 3. planned segments only in a TODO activity;
+ * 4. real segments never overlap (an open segment extends to infinity, so it
+ *    must be the last one), unless [overlaps] allows it: an activity merged
+ *    by a sync to review (issue #119), the user fixes it. Planned segments
+ *    are checked among themselves.
  */
 object EntryInvariants {
-	fun violations(status: EntryStatus, mode: SegmentKind?, segments: List<Segment>, overlaps: Boolean = false): List<String> {
+	fun violations(status: ActivityStatus, mode: SegmentKind?, segments: List<Segment>, overlaps: Boolean = false): List<String> {
 		val out = ArrayList<String>()
+		val real = segments.filter { !it.planned }
+		val planned = segments.filter { it.planned }
 		val open = segments.filter { it.end == null }
 
 		if (open.size > 1)
 			out += "${open.size} open segments"
-		if ((status == EntryStatus.ACTIVE) != (mode != null))
+		if (open.any { it.planned || it.kind == SegmentKind.ABSENCE })
+			out += "an open planned or absence segment"
+		if (mode != null && status != ActivityStatus.RUNNING)
 			out += "status $status with mode $mode"
-		if (status == EntryStatus.ACTIVE && mode != null && open.singleOrNull()?.kind != mode)
-			out += "ACTIVE($mode) without a matching open segment"
-		if (status != EntryStatus.ACTIVE && open.isNotEmpty())
-			out += "open segment while $status"
+		if (mode != null && open.singleOrNull()?.kind != mode)
+			out += "mode $mode without a matching open segment"
+		if (mode == null && open.isNotEmpty())
+			out += "open segment without mode ($status)"
+		if (planned.isNotEmpty() && status != ActivityStatus.TODO)
+			out += "planned segments while $status"
 		if (!overlaps)
-			firstOverlap(segments)?.let { (a, b) -> out += "overlapping segments $a and $b" }
+			firstOverlap(real)?.let { (a, b) -> out += "overlapping segments $a and $b" }
+		firstOverlap(planned)?.let { (a, b) -> out += "overlapping planned segments $a and $b" }
 		return out
 	}
 
-	fun require(entryId: Long, status: EntryStatus, mode: SegmentKind?, segments: List<Segment>, overlaps: Boolean = false) {
+	fun require(entryId: Long, status: ActivityStatus, mode: SegmentKind?, segments: List<Segment>, overlaps: Boolean = false) {
 		val v = violations(status, mode, segments, overlaps)
 		if (v.isNotEmpty())
 			throw InvariantViolationException(entryId, v)
