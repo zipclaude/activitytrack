@@ -43,7 +43,9 @@ object AbsencePlanner {
 				from == to || isWorkingDay(day, schedule, isDayOff) -> listOf(startMin to endMin!!)
 				else -> emptyList()
 			}
-			windows.forEachIndexed { i, (a, b) -> out += AbsenceInterval(day, i, day.atMinute(a, zone), day.atMinute(b, zone)) }
+			/* a window in the spring-forward gap is empty or inverted on the real clock: it goes */
+			windows.map { (a, b) -> day.atMinute(a, zone) to day.atMinute(b, zone) }.filter { (a, b) -> b.isAfter(a) }
+				.forEachIndexed { i, (a, b) -> out += AbsenceInterval(day, i, a, b) }
 			day = day.plusDays(1)
 		}
 		return out

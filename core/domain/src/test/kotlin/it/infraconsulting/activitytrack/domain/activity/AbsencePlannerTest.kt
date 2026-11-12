@@ -84,6 +84,21 @@ class AbsencePlannerTest {
 	}
 
 	@Test
+	fun dstStartDayTimesInTheGapGiveNoInterval() {
+		/* Sunday 2026-03-29: 02:00 and 03:00 are both 01:00Z, 02:30 is 01:30Z, after 03:00 */
+		val sunday = listOf(DayWindow(7, 60, 300))
+		assertEquals(emptyList(), AbsencePlanner.plan(d("2026-03-29"), d("2026-03-29"), 120, 180, sunday, emptyList(), noDaysOff, rome))
+		assertEquals(emptyList(), AbsencePlanner.plan(d("2026-03-29"), d("2026-03-29"), 150, 180, sunday, emptyList(), noDaysOff, rome))
+		/* over several days only that day goes; the others keep their times and index */
+		val every = (1..7).map { DayWindow(it, 60, 300) }
+		val got = AbsencePlanner.plan(d("2026-03-28"), d("2026-03-30"), 120, 180, every, emptyList(), noDaysOff, rome)
+		assertEquals(listOf("2026-03-28/0 2026-03-28T01:00:00Z-2026-03-28T02:00:00Z", "2026-03-30/0 2026-03-30T00:00:00Z-2026-03-30T01:00:00Z"), got.map(::row))
+		val one = AbsencePlanner.plan(d("2026-03-29"), d("2026-03-29"), 120, 240, sunday, emptyList(), noDaysOff, rome).single()
+		assertEquals(t("2026-03-29T01:00:00Z"), one.start)
+		assertEquals(t("2026-03-29T02:00:00Z"), one.end)
+	}
+
+	@Test
 	fun dstEndDayKeepsTheWallClock() {
 		/* Sunday 2026-10-25, 01:00-05:00: 02:00-03:00 twice, five real hours */
 		val sunday = listOf(DayWindow(7, 60, 300))
