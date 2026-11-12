@@ -114,26 +114,18 @@ object SyncMapping {
 		),
 		RecordType("place", "place", listOf(text("kind"), text("label"), float("lat"), float("lon"), int("radiusM"))),
 		RecordType(
-			"todo", "todo",
-			listOf(
-				ref("companyUid", "company", "company_id"), ref("clientUid", "client", "client_id"), text("externalKey", nullable = true),
-				text("title"), text("notes", nullable = true), text("refs"), date("dueDate", "due_epoch_day", nullable = true),
-				int("dueTimeMin", nullable = true), int("priority", nullable = true), bool("done"), instant("doneUtcMs", nullable = true),
-				instant("createdUtcMs"), instant("updatedUtcMs"), date("planDate", "plan_epoch_day", nullable = true),
-				int("planStartMin", nullable = true), int("durationMin", nullable = true), instant("ignoredUtcMs", nullable = true),
-				json("pluginFields"),
-				/* schema 2 (issue #158) */
-				text("kind"), int("color", nullable = true), date("planEndDate", "plan_end_epoch_day", nullable = true),
-			),
-		),
-		RecordType(
 			"entry", "time_entry",
 			listOf(
-				ref("todoUid", "todo", "todo_id"), ref("contactUid", "contact", "contact_id"), ref("companyUid", "company", "company_id"),
+				ref("contactUid", "contact", "contact_id"), ref("companyUid", "company", "company_id"),
 				ref("clientUid", "client", "client_id"), ref("roleUid", "role", "role_id"), text("activity", nullable = true),
 				text("status"), text("mode", nullable = true), text("locality", nullable = true), text("locationKind", nullable = true),
 				text("notes", nullable = true), text("zoneId"), instant("plannedEndUtcMs", nullable = true), json("pluginFields"),
 				bool("needsReview"), instant("createdUtcMs"), instant("updatedUtcMs"),
+				/* schema 3: activity model 1.0 (ACTIVITY-MODEL.md 6.2) */
+				text("kind"), instant("deletedUtcMs", nullable = true), instant("closedUtcMs", nullable = true),
+				text("externalKey", nullable = true), date("dueDate", "due_epoch_day", nullable = true), int("dueTimeMin", nullable = true),
+				date("planDate", "plan_epoch_day", nullable = true), int("planStartMin", nullable = true), int("durationMin", nullable = true),
+				int("priority"), text("absenceKind", nullable = true),
 			),
 			lists = listOf(FoldedList("tags", "entry_tag", "entry_id", "tag")),
 			localDefaults = mapOf("unanswered_reminders" to 0L),
@@ -143,6 +135,8 @@ object SyncMapping {
 			listOf(
 				ref("entryUid", "entry", "entry_id", nullable = false), text("kind"), instant("startUtcMs"), instant("endUtcMs", nullable = true),
 				text("zoneId"), text("source"), float("kmEstimated", nullable = true), float("kmDeclared", nullable = true), text("note", nullable = true),
+				/* schema 3 */
+				bool("planned"),
 			),
 			parent = "entryUid",
 		),
@@ -173,7 +167,6 @@ object SyncMapping {
 			parent = "entryUid",
 		),
 		RecordType("externalRef", "external_ref", listOf(ref("entryUid", "entry", "entry_id", nullable = false), text("kind"), text("value")), parent = "entryUid"),
-		RecordType("absence", "absence", listOf(date("date", "date_epoch_day"), text("kind"), int("timeMin", nullable = true))),
 		RecordType("dayOff", "day_off", listOf(date("date", "date_epoch_day"), text("note", nullable = true)), idColumn = null),
 		RecordType("workSchedule", "work_schedule", listOf(int("dayOfWeek"), int("startMin"), int("endMin"))),
 		RecordType("lunchBreak", "lunch_break", listOf(int("dayOfWeek"), int("startMin"), int("endMin"))),

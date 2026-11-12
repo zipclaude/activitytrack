@@ -105,7 +105,7 @@ object PairApi {
 		throw when (error) {
 			"invalid_code" -> PairException(PairError.INVALID_CODE)
 			"user_disabled" -> PairException(PairError.USER_DISABLED)
-			WireVersion.APP_TOO_OLD -> PairException(PairError.APP_TOO_OLD)
+			WireVersion.APP_TOO_OLD, WireVersion.UPGRADE_REQUIRED -> PairException(PairError.APP_TOO_OLD)
 			WireVersion.SERVER_TOO_OLD -> PairException(PairError.SERVER_TOO_OLD)
 			else -> PairException(PairError.SERVER, "HTTP $status ${error.orEmpty()}")
 		}

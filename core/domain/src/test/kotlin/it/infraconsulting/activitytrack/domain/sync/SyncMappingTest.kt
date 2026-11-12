@@ -50,12 +50,14 @@ class SyncMappingTest {
 
 	@Test
 	fun valuesConvertBothWays() {
-		val todo = SyncMapping.byType.getValue("todo")
+		val todo = SyncMapping.byType.getValue("entry")
+		val segment = SyncMapping.byType.getValue("segment")
 		fun round(name: String, db: Any?) = SyncMapping.fromWire(todo.byName.getValue(name), SyncMapping.toWire(todo.byName.getValue(name), db))
 		assertEquals(JsonPrimitive("2024-10-04"), SyncMapping.toWire(todo.byName.getValue("dueDate"), 20000L))
 		assertEquals(20000L, round("dueDate", 20000L))
-		assertEquals(JsonPrimitive(true), SyncMapping.toWire(todo.byName.getValue("done"), 1L))
-		assertEquals(0L, round("done", 0L))
+		assertEquals(JsonPrimitive(true), SyncMapping.toWire(segment.byName.getValue("planned"), 1L))
+		assertEquals(0L, round("needsReview", 0L))
+		assertEquals(5L, round("priority", 5L))
 		assertEquals(1761600000000L, round("createdUtcMs", 1761600000000L))
 		assertEquals(JsonObject(mapOf("service" to JsonPrimitive("s1"))), SyncMapping.toWire(todo.byName.getValue("pluginFields"), """{"service":"s1"}"""))
 		assertEquals("""{"service":"s1"}""", round("pluginFields", """{"service":"s1"}"""))
@@ -65,11 +67,11 @@ class SyncMappingTest {
 
 	@Test
 	fun badValuesAreRefused() {
-		val todo = SyncMapping.byType.getValue("todo")
-		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("title"), JsonNull) }
-		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("title"), JsonPrimitive(3)) }
+		val todo = SyncMapping.byType.getValue("entry")
+		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("kind"), JsonNull) }
+		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("status"), JsonPrimitive(3)) }
 		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("priority"), JsonPrimitive("3")) }
-		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("done"), JsonPrimitive(1)) }
+		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("needsReview"), JsonPrimitive(1)) }
 		assertFailsWith<WireException> { SyncMapping.fromWire(todo.byName.getValue("dueDate"), JsonPrimitive("04/10/2024")) }
 		assertFailsWith<WireException> { SyncMapping.listFromWire("tags", JsonPrimitive("a")) }
 	}
