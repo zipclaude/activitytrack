@@ -74,6 +74,15 @@ object SyncSchema {
 		"CREATE TABLE IF NOT EXISTS `sync_state` (`id` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `applying` INTEGER NOT NULL, `server_url` TEXT, `cursor` INTEGER NOT NULL, `clock_offset_ms` INTEGER NOT NULL, `last_sync_utc_ms` INTEGER, `last_error` TEXT, PRIMARY KEY(`id`))",
 	)
 
+	/*
+	 * The records the 21 -> 22 migration wrote from scratch (activities made
+	 * of to-dos, absence segments, references): each one the realignment's
+	 * pull receives is struck off, those left afterwards are ghosts the
+	 * server's own migration did not make (SyncStore.dropGhosts). Plain SQL,
+	 * not a Room entity: schema 22 stays as released.
+	 */
+	const val REALIGN_TABLE = "CREATE TABLE IF NOT EXISTS `sync_realign` (`type` TEXT NOT NULL, `uid` TEXT NOT NULL, PRIMARY KEY(`type`, `uid`))"
+
 	private const val STATE_ROW = "INSERT OR IGNORE INTO sync_state (id, enabled, applying, cursor, clock_offset_ms) VALUES (1, 0, 0, 0, 0)"
 
 	fun triggers(present: Set<String>? = null): List<String> = buildList {
@@ -123,6 +132,7 @@ object SyncSchema {
 	/* a new database: Room made the tables */
 	fun onCreate(db: Sql) {
 		db.exec(STATE_ROW)
+		db.exec(REALIGN_TABLE)
 		/* a migration from an older schema runs before the newer tables exist: opening adds their triggers */
 		val present = db.rows("SELECT name FROM sqlite_master WHERE type = 'table'").map { it[0] as String }.toSet()
 		triggers(present).forEach { db.exec(it) }

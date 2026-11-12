@@ -263,7 +263,11 @@ and what the migration derived from them: absence segments, references; coordina
 had too. Of a dirty record only the fields changed locally are pushed: the node keeps
 the record's wire-2 shadow translated to wire 3 (the mapping of steps 1 and 3) as the
 base of the merge, so a field edited elsewhere is not overwritten (a field the
-translation cannot tell counts as changed locally). The pushed changes carry the time of that sync, so they win over the fields the
+translation cannot tell counts as changed locally). A paired node remembers the records
+its migration made from scratch (activities of to-dos, absence segments, references); those
+the realignment's pull does not bring are what the server's migration made otherwise (a
+to-do absorbed by an entry on another device): they are dropped, unless a local change still
+holds them, instead of being pushed back as new (as the library does). The pushed changes carry the time of that sync, so they win over the fields the
 server's migration stamped. Reimporting a phone's data on the server is the fallback
 (owner, 2026-11-11).
 

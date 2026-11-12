@@ -137,7 +137,10 @@ object ActivityModelMigration {
 		val broken = db.rows("PRAGMA foreign_key_check")
 		check(broken.isEmpty()) { "migration 21 -> 22: foreign keys broken: $broken" }
 
-		realign(db, dirty)
+		/* what the migration made from scratch: the realignment drops what the server's migration did not make */
+		val written = result.activities.filter { it.id == null }.map { "entry" to it.uid } +
+			result.segments.map { "segment" to it.uid } + result.refs.map { "externalRef" to it.uid }
+		realign(db, dirty, written)
 		db.exec("UPDATE sync_state SET applying = 0 WHERE id = 1")
 		/* the triggers of the rebuilt table */
 		SyncSchema.onCreate(db)
@@ -152,8 +155,10 @@ object ActivityModelMigration {
 	 * dirty records, translated to wire 3 ([baseShadows]): with them the
 	 * pull keeps only the fields changed here, and the push sends only those,
 	 * so a field edited elsewhere is not overwritten by a stale local value.
+	 * A paired node remembers the records it [written] from scratch: those
+	 * the server's migration did not make go after the pull (no ghosts).
 	 */
-	private fun realign(db: SyncSchema.Sql, dirty: List<Change>) {
+	private fun realign(db: SyncSchema.Sql, dirty: List<Change>, written: List<Pair<String, String>>) {
 		val bases = baseShadows(dirty) { type, uid ->
 			db.rows("SELECT json FROM sync_shadow WHERE type = ? AND uid = ?", type, uid).firstOrNull()?.get(0) as String?
 		}
@@ -166,6 +171,11 @@ object ActivityModelMigration {
 			db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES (?, ?, ?, ?)", c.type, c.uid, c.op, c.time)
 		for ((key, json) in bases)
 			db.exec("INSERT INTO sync_shadow (type, uid, json) VALUES (?, ?, ?)", key.first, key.second, json.toString())
+		db.exec(SyncSchema.REALIGN_TABLE)
+		db.exec("DELETE FROM sync_realign")
+		if (db.rows("SELECT enabled FROM sync_state WHERE id = 1").firstOrNull()?.get(0).let { (it as Number?)?.toLong() ?: 0L } != 0L)
+			for ((type, uid) in written)
+				db.exec("INSERT OR IGNORE INTO sync_realign (type, uid) VALUES (?, ?)", type, uid)
 	}
 
 	/*

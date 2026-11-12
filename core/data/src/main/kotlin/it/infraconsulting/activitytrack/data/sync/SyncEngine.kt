@@ -91,7 +91,15 @@ class SyncEngine(
 			if (!state.enabled || state.realign) {
 				db.run { it.enable() }
 				pull(errors) { offset = it }.also { pulled += it }
-				db.run { if (state.realign) it.restamp(); it.seed(); it.realigned() }
+				/* before seeding: a ghost of the migration must not go up as new */
+				val ghosts = if (state.realign) db.run { it.restamp(); it.dropGhosts() } else 0
+				if (ghosts > 0) {
+					/* a ghost held what a pulled record needed (its external key): pull once more from 0 */
+					errors.clear()
+					db.run { it.clearErrors(); it.setCursor(0) }
+					pull(errors) { offset = it }
+				}
+				db.run { it.seed(); it.realigned() }
 			}
 			var pushed = 0
 			/* a pull may log changes of its own (adoption): they go out in the same sync */

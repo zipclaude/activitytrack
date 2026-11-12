@@ -203,6 +203,8 @@ class SyncStore(
 		if (type !in SyncMapping.byType) return null
 		/* the uid becomes file names and request paths: a plain token or nothing (security review 0.9.8, R2) */
 		if (!SyncIds.isSafe(uid)) return "$type: uid refused (not a plain token)"
+		/* the server has it: not a ghost of the migration (dropGhosts) */
+		strike(type, uid)
 		if (record["deleted"]?.jsonPrimitive?.booleanOrNull == true) {
 			gone(type, uid)
 			return null
@@ -237,6 +239,7 @@ class SyncStore(
 
 	/* a record deleted on the server, or no longer this user's: removed here, without echo */
 	fun gone(type: String, uid: String) {
+		strike(type, uid)
 		applying { records.delete(type, uid) }
 		dropShadow(type, uid)
 		dropChanges(type, uid)
@@ -275,6 +278,40 @@ class SyncStore(
 			return
 		}
 	}
+
+	private fun strike(type: String, uid: String) = db.exec("DELETE FROM sync_realign WHERE type = ? AND uid = ?", type, uid)
+
+	/*
+	 * The realignment's pull from 0 is over: the records the 21 -> 22
+	 * migration wrote that the server did not send are ghosts (its own
+	 * migration made something else of the same data, e.g. a to-do absorbed
+	 * by an entry on another phone). They go, without echo, unless a local
+	 * change still holds them (that one is pushed); an activity also stays
+	 * while something hangs from it. Then seed() pushes only what the
+	 * server never had. Returns how many went.
+	 */
+	fun dropGhosts(): Int {
+		var dropped = 0
+		val order = listOf("segment", "externalRef", "entry")
+		val left = db.rows("SELECT type, uid FROM sync_realign").map { it[0] as String to it[1] as String }
+			.sortedBy { (type, _) -> order.indexOf(type).let { if (it < 0) order.size else it } }
+		for ((type, uid) in left) {
+			if (type !in SyncMapping.byType || hasChanges(type, uid) || (type == "entry" && hasChildren(uid)))
+				continue
+			applying { records.delete(type, uid) }
+			dropShadow(type, uid)
+			dropped++
+		}
+		db.exec("DELETE FROM sync_realign")
+		return dropped
+	}
+
+	private fun hasChildren(entryUid: String): Boolean = db.rows(
+		"SELECT 1 FROM time_entry t WHERE t.uid = ? AND (EXISTS (SELECT 1 FROM segment WHERE entry_id = t.id) " +
+			"OR EXISTS (SELECT 1 FROM external_ref WHERE entry_id = t.id) OR EXISTS (SELECT 1 FROM expense WHERE entry_id = t.id) " +
+			"OR EXISTS (SELECT 1 FROM attachment WHERE entry_id = t.id) OR EXISTS (SELECT 1 FROM entry_material WHERE entry_id = t.id))",
+		entryUid,
+	).isNotEmpty()
 
 	/* an attachment's file to upload (issue #116) */
 	class FileUp(val uid: String, val relPath: String, val mime: String)

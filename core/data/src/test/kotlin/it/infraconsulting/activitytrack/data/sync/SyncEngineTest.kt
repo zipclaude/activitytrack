@@ -306,6 +306,56 @@ class SyncEngineTest {
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
 	}
 
+	/*
+	 * No ghosts after the realignment: here the open to-do stayed its own
+	 * TODO activity and its closed entry got a UUID reference to it; the
+	 * server's migration (the to-do done on another phone) let the entry
+	 * absorb it instead. What the phone's migration made and the server does
+	 * not have goes, and is not pushed back as new; a to-do changed here and
+	 * not synced is kept and pushed.
+	 */
+	@Test
+	fun theRealignmentDropsWhatTheServersMigrationDidNotMake() {
+		val a = phone(version = 21)
+		val db = a.sql
+		db.exec("UPDATE sync_state SET enabled = 1")
+		val acme = SyncIds.random()
+		db.exec("INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, ?)", acme)
+		val todo = SyncIds.random()
+		val mine = SyncIds.random()
+		val e = SyncIds.random()
+		db.exec("INSERT INTO todo (id, uid, company_id, title, external_key, refs, done, created_utc_ms, updated_utc_ms, kind) VALUES (1, ?, 1, 'Patch', 'K-1', '', 0, 1, 2, 'TASK')", todo)
+		db.exec("INSERT INTO todo (id, uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms, kind) VALUES (2, ?, 1, 'Mine', '', 0, 1, 2, 'TASK')", mine)
+		db.exec(
+			"INSERT INTO time_entry (id, uid, todo_id, company_id, activity, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) VALUES (1, ?, 1, 1, 'work', 'CLOSED', 'Europe/Rome', 0, 1, 2)",
+			e,
+		)
+		/* synced; then only the second to-do changed here */
+		db.exec("DELETE FROM sync_change")
+		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 5)", mine)
+		db.exec("PRAGMA foreign_keys = OFF")
+		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		db.exec("PRAGMA foreign_keys = ON")
+		val link = a.one("SELECT uid FROM external_ref WHERE entry_id = 1") as String
+		assertEquals(todo, a.one("SELECT value FROM external_ref WHERE uid = ?", link))
+		/* the server's migration: the entry absorbed the to-do (its key), no activity of the to-do, no link */
+		val r = a.records.read("entry", e)!!.toMutableMap()
+		r["externalKey"] = JsonPrimitive("K-1")
+		server.put("company", acme, a.records.read("company", acme)!!)
+		server.put("entry", e, r)
+		sync(a)
+		assertNull(a.one("SELECT id FROM time_entry WHERE uid = ?", todo))
+		assertNull(a.one("SELECT id FROM external_ref WHERE uid = ?", link))
+		assertEquals("K-1", a.one("SELECT external_key FROM time_entry WHERE uid = ?", e))
+		assertNull(server.records["entry" to todo])
+		assertNull(server.records["externalRef" to link])
+		/* the to-do changed here: kept and pushed */
+		assertEquals(JsonPrimitive("Mine"), server.records.getValue("entry" to mine).fields["activity"])
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_realign"))
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_error"))
+	}
+
 	@Test
 	fun upgradeRequiredIsReportedAsIncompatible() {
 		val a = phone()
