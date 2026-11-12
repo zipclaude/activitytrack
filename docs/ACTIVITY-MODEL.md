@@ -124,6 +124,7 @@ declares required is filled (`missingRequired = false`).
 | `suspend(at)` (internal, no button) | `RUNNING` | `RUNNING` | close the open one at `at` |
 | `stop(at)` | `RUNNING` | `CLOSED` | close the open one at `at`; `closed_utc_ms = now` |
 | `tick()` | `TODO` | `CLOSED` | planned segments deleted |
+| `untick()` | `CLOSED` without real segments | `TODO` | none; `closed_utc_ms = null` (a task ticked off by mistake) |
 | `reopen(kind, at)` kind ∈ WORK, TRAVEL | `CLOSED` | `RUNNING` | open `kind` at `at`; the gap stays a gap |
 | `delete()` | any | same, `deleted_utc_ms = now` | none |
 | `restore()` | deleted | same, `deleted_utc_ms = null` | none |
