@@ -237,8 +237,13 @@ class SyncStore(
 		}
 	}
 
-	/* a record deleted on the server, or no longer this user's: removed here, without echo */
+	/*
+	 * a record deleted on the server, or no longer this user's: removed here,
+	 * without echo; a type this app does not know (todo, absence after 1.0)
+	 * is skipped, as a pulled record of one is
+	 */
 	fun gone(type: String, uid: String) {
+		if (type !in SyncMapping.byType) return
 		strike(type, uid)
 		applying { records.delete(type, uid) }
 		dropShadow(type, uid)

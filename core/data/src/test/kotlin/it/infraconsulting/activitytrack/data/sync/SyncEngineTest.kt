@@ -41,6 +41,8 @@ class SyncEngineTest {
 		/* uids whose changes are refused, as ActivityTrack Web does for a forbidden one */
 		val refuse = HashSet<String>()
 		val files = HashMap<String, ByteArray>()
+		/* scope exits sent with every pull, as (type, uid) */
+		val gone = ArrayList<Pair<String, String>>()
 
 		override suspend fun upload(path: String, bytes: ByteArray, mime: String, sha256: String): SyncTransport.Reply {
 			val uid = path.substringAfter("files/")
@@ -104,7 +106,7 @@ class SyncEngineTest {
 						"cursor" to JsonPrimitive(rev),
 						"more" to JsonPrimitive(false),
 						"records" to JsonArray(newer.map { (k, r) -> wire(k.first, k.second, r) }),
-						"gone" to JsonArray(emptyList()),
+						"gone" to JsonArray(gone.map { (t, u) -> JsonObject(mapOf("type" to JsonPrimitive(t), "uid" to JsonPrimitive(u))) }),
 					),
 				)
 			}
@@ -532,6 +534,20 @@ class SyncEngineTest {
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_error"))
 		assertEquals(null, a.sql.rows("SELECT last_error FROM sync_state")[0][0])
+	}
+
+	/* a server migrated to 1.0 still sends the scope exits of the removed types (todo, absence): skipped, the pull goes on */
+	@Test
+	fun aGoneRecordOfAnUnknownTypeIsSkipped() {
+		val a = phone()
+		company(a, "Acme")
+		sync(a)
+		server.gone += "todo" to SyncIds.random()
+		server.put("company", SyncIds.random(), mapOf("name" to JsonPrimitive("Beta"), "archived" to JsonPrimitive(false)))
+		sync(a)
+		assertEquals(server.rev, a.one("SELECT cursor FROM sync_state") as Long)
+		assertEquals(null, a.one("SELECT last_error FROM sync_state"))
+		assertEquals(1L, a.one("SELECT COUNT(*) FROM company WHERE name = 'Beta'"))
 	}
 
 	@Test
