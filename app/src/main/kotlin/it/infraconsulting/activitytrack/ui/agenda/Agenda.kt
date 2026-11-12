@@ -82,6 +82,7 @@ import it.infraconsulting.activitytrack.ui.todo.TodosViewModel
 import it.infraconsulting.activitytrack.ui.home.RunAction
 import it.infraconsulting.activitytrack.ui.home.rememberRunCommands
 import it.infraconsulting.activitytrack.ui.home.runSwipeActions
+import it.infraconsulting.activitytrack.ui.home.resumeKindOf
 import it.infraconsulting.activitytrack.ui.home.QuickActioner
 import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.domain.settings.GestureSettings
@@ -148,6 +149,8 @@ data class AgendaItem(
 	val entry: TimeEntryEntity? = null,
 	val clientId: Long? = null,
 	val tags: List<String> = emptyList(),
+	/* "Riprendi" of a running entry's swipe: the kind open before the pause (3) */
+	val resumeKind: SegmentKind = SegmentKind.WORK,
 )
 
 /*
@@ -259,6 +262,7 @@ class AgendaViewModel(
 					entry = e,
 					clientId = e?.clientId,
 					tags = meta?.tags.orEmpty(),
+					resumeKind = around[l.entryId]?.let { resumeKindOf(it.entry, it.segments) } ?: SegmentKind.WORK,
 				)
 			}
 		}
@@ -501,8 +505,8 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 				items(items.filter { it.day == day }.sortedBy { it.start }, key = { "e${it.entryId}/$day" }) { it ->
 					val e = it.entry?.takeIf { e -> e.status == ActivityStatus.RUNNING }
 					SwipeCard(
-						toStart = e?.let { e -> runSwipeActions(e, SegmentKind.WORK, swipes.gestures.entryToStart) { swipes.run(e, it) } }.orEmpty(),
-						toEnd = e?.let { e -> runSwipeActions(e, SegmentKind.WORK, swipes.gestures.entryToEnd) { swipes.run(e, it) } }.orEmpty(),
+						toStart = e?.let { e -> runSwipeActions(e, it.resumeKind, swipes.gestures.entryToStart) { swipes.run(e, it) } }.orEmpty(),
+						toEnd = e?.let { e -> runSwipeActions(e, it.resumeKind, swipes.gestures.entryToEnd) { swipes.run(e, it) } }.orEmpty(),
 						fullSwipe = swipes.gestures.fullSwipe,
 						shape = RectangleShape,
 					) {
