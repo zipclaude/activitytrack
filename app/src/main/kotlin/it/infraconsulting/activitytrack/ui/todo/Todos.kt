@@ -174,8 +174,8 @@ class TodosViewModel(
 	private fun undoable(t: TimeEntryEntity, @androidx.annotation.StringRes message: Int, action: suspend () -> Unit) =
 		run({ Undo.post(UndoEvent(message, t.title()) { entries.putBack(t) }) }, action)
 
-	/* tick: TODO -> CLOSED, the planned segments go (3) */
-	fun tick(t: TimeEntryEntity) = undoable(t, R.string.undo_todo_done) { entries.tick(t.id) }
+	/* tick: TODO -> CLOSED, the planned segments go (3); "Annulla" puts it back to do (untick: putBack skips a changed status) */
+	fun tick(t: TimeEntryEntity) = run({ Undo.post(UndoEvent(R.string.undo_todo_done, t.title()) { entries.untick(t.id) }) }) { entries.tick(t.id) }
 	/* to the bin, restorable (ignoreTodos maps to delete/restore, 7) */
 	fun delete(t: TimeEntryEntity) = undoable(t, R.string.undo_todo_deleted) { entries.delete(t.id) }
 	fun restore(t: TimeEntryEntity) = run { entries.restore(t.id) }
