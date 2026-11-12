@@ -13,7 +13,7 @@ import androidx.room.Query
  * has a NULL in the IN, which would make the whole NOT unknown, never true.
  */
 private const val KEPT =
-	"(entry_id IN (SELECT id FROM time_entry WHERE status = 'ACTIVE') OR COALESCE(segment_id IN (" +
+	"(entry_id IN (SELECT id FROM time_entry WHERE status = 'RUNNING' AND mode IS NOT NULL) OR COALESCE(segment_id IN (" +
 		"SELECT id FROM segment WHERE kind = 'TRAVEL' AND source = 'TRACKED' AND end_utc_ms IS NOT NULL " +
 		"AND km_estimated IS NULL AND (SELECT COUNT(*) FROM location_sample WHERE segment_id = segment.id) >= 2), 0))"
 
@@ -43,7 +43,7 @@ interface LocationDao {
 	/* Open segment of every ACTIVE entry: a fix is recorded once per running entry. */
 	@Query(
 		"SELECT segment.* FROM segment JOIN time_entry ON time_entry.id = segment.entry_id " +
-			"WHERE time_entry.status = 'ACTIVE' AND segment.end_utc_ms IS NULL",
+			"WHERE time_entry.status = 'RUNNING' AND segment.end_utc_ms IS NULL AND segment.planned = 0",
 	)
 	suspend fun activeOpenSegments(): List<SegmentEntity>
 

@@ -50,14 +50,15 @@ interface PluginDao {
 	@Insert
 	suspend fun insertClient(c: ClientEntity): Long
 
-	@Query("SELECT * FROM todo WHERE company_id = :companyId AND external_key = :key LIMIT 1")
-	suspend fun todoByKey(companyId: Long, key: String): TodoEntity?
+	/* an activity imported from the plugin (activity model 1.0: the to-dos are TODO activities) */
+	@Query("SELECT * FROM time_entry WHERE company_id = :companyId AND external_key = :key LIMIT 1")
+	suspend fun activityByKey(companyId: Long, key: String): TimeEntryEntity?
 
 	@Insert
-	suspend fun insertTodo(t: TodoEntity): Long
+	suspend fun insertActivity(t: TimeEntryEntity): Long
 
 	@Update
-	suspend fun updateTodo(t: TodoEntity)
+	suspend fun updateActivity(t: TimeEntryEntity)
 
 	@Query("SELECT contact.* FROM contact JOIN client ON client.id = contact.client_id WHERE client.company_id = :companyId AND contact.external_key = :key LIMIT 1")
 	suspend fun contactByKey(companyId: Long, key: String): ContactEntity?
@@ -69,22 +70,20 @@ interface PluginDao {
 	suspend fun insertPhone(p: ContactPhoneEntity)
 
 	/*
-	 * Closed entries of the company the plugin may send (B4): those with its
-	 * entry fields, those started from an imported to-do, and those already
-	 * sent (an edit or a deletion of blocks must reach the remote side).
+	 * Closed activities of the company the plugin may send (B4): those with
+	 * its entry fields, those imported from it (an external key), and those
+	 * already sent (an edit or a deletion of blocks must reach the remote
+	 * side). Absences and deleted activities never go.
 	 */
 	@Query(
-		"SELECT * FROM time_entry WHERE company_id = :companyId AND status = 'CLOSED' AND (plugin_fields IS NOT NULL " +
-			"OR todo_id IN (SELECT id FROM todo WHERE external_key IS NOT NULL) " +
+		"SELECT * FROM time_entry WHERE company_id = :companyId AND status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL " +
+			"AND (plugin_fields IS NOT NULL OR external_key IS NOT NULL " +
 			"OR id IN (SELECT entry_id FROM remote_record WHERE plugin_id = :pluginId)) ORDER BY id",
 	)
 	suspend fun entriesToSend(companyId: Long, pluginId: String): List<TimeEntryEntity>
 
-	@Query("SELECT * FROM segment WHERE entry_id = :entryId ORDER BY start_utc_ms")
+	@Query("SELECT * FROM segment WHERE entry_id = :entryId AND planned = 0 ORDER BY start_utc_ms")
 	suspend fun segmentsOf(entryId: Long): List<SegmentEntity>
-
-	@Query("SELECT * FROM todo WHERE id = :id")
-	suspend fun todo(id: Long): TodoEntity?
 
 	@Query("SELECT * FROM client WHERE id = :id")
 	suspend fun client(id: Long): ClientEntity?
@@ -101,13 +100,20 @@ interface PluginDao {
 	@Query("DELETE FROM remote_record WHERE entry_id = :entryId AND plugin_id = :pluginId AND block_key = :key")
 	suspend fun forgetSent(entryId: Long, pluginId: String, key: String)
 
-	/* the plugin's to-dos marked done (export.todoDone closes them on the remote side once) */
-	@Query("SELECT * FROM todo WHERE company_id = :companyId AND external_key IS NOT NULL AND done != 0")
-	suspend fun doneImportedTodos(companyId: Long): List<TodoEntity>
+	/* the plugin's activities closed in the app (export.activityClosed closes them on the remote side once) */
+	@Query("SELECT * FROM time_entry WHERE company_id = :companyId AND external_key IS NOT NULL AND status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL")
+	suspend fun closedImported(companyId: Long): List<TimeEntryEntity>
 
-	/* what was done for a to-do: its entries' descriptions, oldest first */
-	@Query("SELECT activity FROM time_entry WHERE todo_id = :todoId AND activity IS NOT NULL AND activity != '' ORDER BY created_utc_ms")
-	suspend fun activitiesOfTodo(todoId: Long): List<String>
+	/*
+	 * What was done for an imported activity: its own description and those
+	 * of the activities pointing at it with a UUID reference (the entries of
+	 * a to-do before 1.0), oldest first.
+	 */
+	@Query(
+		"SELECT activity FROM time_entry WHERE (id = :entryId OR id IN (SELECT entry_id FROM external_ref WHERE kind = 'UUID' AND value = :uid)) " +
+			"AND activity IS NOT NULL AND activity != '' ORDER BY created_utc_ms",
+	)
+	suspend fun activitiesOf(entryId: Long, uid: String): List<String>
 
 	@Query("SELECT * FROM remote_record WHERE entry_id = :entryId")
 	suspend fun sentAll(entryId: Long): List<RemoteRecordEntity>

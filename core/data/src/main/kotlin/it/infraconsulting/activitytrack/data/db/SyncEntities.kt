@@ -46,6 +46,13 @@ data class SyncStateEntity(
 	@ColumnInfo(name = "clock_offset_ms") val clockOffsetMs: Long = 0,
 	@ColumnInfo(name = "last_sync_utc_ms") val lastSyncUtcMs: Long? = null,
 	@ColumnInfo(name = "last_error") val lastError: String? = null,
+	/*
+	 * Schema 22: the next sync is a full realignment (ACTIVITY-MODEL.md 6):
+	 * set by the migration of the data (also of a restored older backup),
+	 * cleared by the sync that pulled everything and pushed what the server
+	 * lacks.
+	 */
+	@ColumnInfo(defaultValue = "0") val realign: Boolean = false,
 )
 
 /* A record the last sync could not send or take (issue #119), listed under Settings → Sync. */

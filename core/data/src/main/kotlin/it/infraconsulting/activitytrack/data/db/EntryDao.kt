@@ -40,7 +40,7 @@ interface EntryDao {
 	/* Never closes before the segment start (wall clock moved backwards). */
 	@Query(
 		"UPDATE segment SET end_utc_ms = MAX(start_utc_ms, :endUtcMs) " +
-			"WHERE entry_id = :entryId AND end_utc_ms IS NULL",
+			"WHERE entry_id = :entryId AND end_utc_ms IS NULL AND planned = 0",
 	)
 	suspend fun closeOpenSegment(entryId: Long, endUtcMs: Long): Int
 
@@ -53,13 +53,51 @@ interface EntryDao {
 	@Query("SELECT COUNT(*) FROM attachment WHERE entry_id = :entryId")
 	suspend fun attachmentCount(entryId: Long): Int
 
-	/* The entries running now: without concurrent entries only one may (issue #132). */
-	@Query("SELECT * FROM time_entry WHERE status = 'ACTIVE'")
+	/* The activities running with a segment open: without concurrent activities only one may (issue #132). */
+	@Query("SELECT * FROM time_entry WHERE status = 'RUNNING' AND mode IS NOT NULL AND deleted_utc_ms IS NULL")
 	suspend fun activeEntries(): List<TimeEntryEntity>
 
-	/* Entries that still need user attention: active, suspended or to complete. */
-	@Query("SELECT * FROM time_entry WHERE status != 'CLOSED' ORDER BY updated_utc_ms DESC")
+	/* The running activities (a segment open or suspended), not deleted. */
+	@Query("SELECT * FROM time_entry WHERE status = 'RUNNING' AND deleted_utc_ms IS NULL ORDER BY updated_utc_ms DESC")
 	fun observeOpenEntries(): Flow<List<TimeEntryEntity>>
+
+	/* TODO activities not deleted: plan first (by day and time, unplanned last), then due date, priority (highest first). */
+	@Query(
+		"SELECT * FROM time_entry WHERE status = 'TODO' AND deleted_utc_ms IS NULL ORDER BY plan_epoch_day IS NULL, plan_epoch_day, " +
+			"plan_start_min IS NULL, plan_start_min, due_epoch_day IS NULL, due_epoch_day, due_time_min IS NULL, due_time_min, priority DESC, activity COLLATE NOCASE",
+	)
+	fun observeTodos(): Flow<List<TimeEntryEntity>>
+
+	@Query("SELECT * FROM time_entry WHERE status = 'TODO' AND deleted_utc_ms IS NULL")
+	suspend fun todos(): List<TimeEntryEntity>
+
+	/* The bin: deleted activities, most recently deleted first. */
+	@Query("SELECT * FROM time_entry WHERE deleted_utc_ms IS NOT NULL ORDER BY deleted_utc_ms DESC")
+	fun observeDeleted(): Flow<List<TimeEntryEntity>>
+
+	/* Absences (kind ABSENCE) not deleted, newest first. */
+	@Query("SELECT * FROM time_entry WHERE kind = 'ABSENCE' AND deleted_utc_ms IS NULL ORDER BY created_utc_ms DESC")
+	fun observeAbsences(): Flow<List<TimeEntryEntity>>
+
+	/* The absence segments touching [fromUtcMs, toUtcMs) of absences not deleted. */
+	@Query(
+		"SELECT segment.* FROM segment JOIN time_entry ON time_entry.id = segment.entry_id WHERE time_entry.kind = 'ABSENCE' " +
+			"AND time_entry.deleted_utc_ms IS NULL AND segment.start_utc_ms < :toUtcMs AND segment.end_utc_ms > :fromUtcMs",
+	)
+	suspend fun absenceSegmentsBetween(fromUtcMs: Long, toUtcMs: Long): List<SegmentEntity>
+
+	/* IS: null matches the activities of no company (issue #48) */
+	@Query("SELECT * FROM time_entry WHERE company_id IS :companyId AND external_key = :key LIMIT 1")
+	suspend fun byExternalKey(companyId: Long?, key: String): TimeEntryEntity?
+
+	@Query("SELECT * FROM time_entry WHERE uid = :uid")
+	suspend fun byUid(uid: String): TimeEntryEntity?
+
+	@Query("UPDATE time_entry SET plan_reminded_utc_ms = :startMs WHERE id = :id")
+	suspend fun markPlanReminded(id: Long, startMs: Long)
+
+	@Query("DELETE FROM segment WHERE entry_id = :entryId AND planned = 1")
+	suspend fun deletePlannedSegments(entryId: Long)
 
 	@Query("SELECT * FROM segment WHERE entry_id = :entryId ORDER BY start_utc_ms")
 	suspend fun segments(entryId: Long): List<SegmentEntity>
@@ -67,9 +105,9 @@ interface EntryDao {
 	@Query("SELECT * FROM segment WHERE entry_id = :entryId ORDER BY start_utc_ms")
 	fun observeSegments(entryId: Long): Flow<List<SegmentEntity>>
 
-	/* Segments overlapping [fromUtcMs, toUtcMs); open segments always overlap. */
+	/* Real segments overlapping [fromUtcMs, toUtcMs); open segments always overlap. */
 	@Query(
-		"SELECT * FROM segment WHERE start_utc_ms < :toUtcMs " +
+		"SELECT * FROM segment WHERE planned = 0 AND start_utc_ms < :toUtcMs " +
 			"AND (end_utc_ms IS NULL OR end_utc_ms > :fromUtcMs) ORDER BY entry_id, start_utc_ms",
 	)
 	suspend fun segmentsBetween(fromUtcMs: Long, toUtcMs: Long): List<SegmentEntity>
@@ -106,29 +144,29 @@ interface EntryDao {
 	)
 	fun observeRoleLastUse(): Flow<List<LastUse>>
 
-	/* Segments of every entry that is not CLOSED (home screen timers). */
+	/* Segments of every running activity (home screen timers). */
 	@Query(
 		"SELECT segment.* FROM segment JOIN time_entry ON time_entry.id = segment.entry_id " +
-			"WHERE time_entry.status != 'CLOSED' ORDER BY segment.entry_id, segment.start_utc_ms",
+			"WHERE time_entry.status = 'RUNNING' AND time_entry.deleted_utc_ms IS NULL ORDER BY segment.entry_id, segment.start_utc_ms",
 	)
 	fun observeOpenEntrySegments(): Flow<List<SegmentEntity>>
 
 	/* the tags of the open entries: dots on the Home cards (issue #133) */
-	@Query("SELECT entry_tag.* FROM entry_tag JOIN time_entry ON time_entry.id = entry_tag.entry_id WHERE time_entry.status != 'CLOSED'")
+	@Query("SELECT entry_tag.* FROM entry_tag JOIN time_entry ON time_entry.id = entry_tag.entry_id WHERE time_entry.status = 'RUNNING' AND time_entry.deleted_utc_ms IS NULL")
 	fun observeOpenEntryTags(): Flow<List<EntryTagEntity>>
 
 	/* The last [n] completed entries (Home keeps a few in view, owner 2026-10-19). */
-	@Query("SELECT * FROM time_entry WHERE status = 'CLOSED' ORDER BY updated_utc_ms DESC LIMIT :n")
+	@Query("SELECT * FROM time_entry WHERE status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL ORDER BY updated_utc_ms DESC LIMIT :n")
 	fun observeRecentClosed(n: Int): Flow<List<TimeEntryEntity>>
 
 	/*
-	 * The "Chiuse" tab of the Home (issue #59): entries that stopped being
-	 * worked on (CLOSED or TO_COMPLETE) with their last segment ending after
+	 * The "Chiuse" tab of the Home (issue #59): closed activities (not
+	 * absences, not deleted) with their last segment ending after
 	 * [fromUtcMs], newest end first.
 	 */
 	@Query(
 		"SELECT time_entry.* FROM time_entry JOIN segment ON segment.entry_id = time_entry.id " +
-			"WHERE time_entry.status IN ('CLOSED', 'TO_COMPLETE') " +
+			"WHERE time_entry.status = 'CLOSED' AND time_entry.kind = 'ACTIVITY' AND time_entry.deleted_utc_ms IS NULL " +
 			"GROUP BY time_entry.id HAVING MAX(segment.end_utc_ms) > :fromUtcMs " +
 			"ORDER BY MAX(segment.end_utc_ms) DESC LIMIT :limit",
 	)
@@ -137,7 +175,7 @@ interface EntryDao {
 	@Query(
 		"SELECT segment.* FROM segment WHERE segment.entry_id IN (" +
 			"SELECT time_entry.id FROM time_entry JOIN segment s2 ON s2.entry_id = time_entry.id " +
-			"WHERE time_entry.status IN ('CLOSED', 'TO_COMPLETE') " +
+			"WHERE time_entry.status = 'CLOSED' AND time_entry.kind = 'ACTIVITY' AND time_entry.deleted_utc_ms IS NULL " +
 			"GROUP BY time_entry.id HAVING MAX(s2.end_utc_ms) > :fromUtcMs " +
 			"ORDER BY MAX(s2.end_utc_ms) DESC LIMIT :limit) " +
 			"ORDER BY segment.entry_id, segment.start_utc_ms",
@@ -147,7 +185,7 @@ interface EntryDao {
 	@Query(
 		"SELECT entry_tag.* FROM entry_tag WHERE entry_tag.entry_id IN (" +
 			"SELECT time_entry.id FROM time_entry JOIN segment ON segment.entry_id = time_entry.id " +
-			"WHERE time_entry.status IN ('CLOSED', 'TO_COMPLETE') " +
+			"WHERE time_entry.status = 'CLOSED' AND time_entry.kind = 'ACTIVITY' AND time_entry.deleted_utc_ms IS NULL " +
 			"GROUP BY time_entry.id HAVING MAX(segment.end_utc_ms) > :fromUtcMs " +
 			"ORDER BY MAX(segment.end_utc_ms) DESC LIMIT :limit)",
 	)
@@ -156,22 +194,26 @@ interface EntryDao {
 
 	@Query(
 		"SELECT * FROM segment WHERE entry_id IN " +
-			"(SELECT id FROM time_entry WHERE status = 'CLOSED' ORDER BY updated_utc_ms DESC LIMIT :n) " +
+			"(SELECT id FROM time_entry WHERE status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL ORDER BY updated_utc_ms DESC LIMIT :n) " +
 			"ORDER BY entry_id, start_utc_ms",
 	)
 	fun observeRecentClosedSegments(n: Int): Flow<List<SegmentEntity>>
 
 	@Query(
-		"SELECT * FROM time_entry WHERE status = 'SUSPENDED' AND id != :excludeId " +
+		"SELECT * FROM time_entry WHERE status = 'RUNNING' AND mode IS NULL AND deleted_utc_ms IS NULL AND id != :excludeId " +
 			"ORDER BY updated_utc_ms DESC LIMIT 1",
 	)
 	suspend fun mostRecentSuspended(excludeId: Long): TimeEntryEntity?
 
-	/* Every segment of the entries having at least one segment overlapping [fromUtcMs, toUtcMs). */
+	/*
+	 * Every real segment of the activities (not deleted) having at least one
+	 * overlapping [fromUtcMs, toUtcMs): reports and the time grid; planned
+	 * segments never count (ACTIVITY-MODEL.md 1.2).
+	 */
 	@Query(
-		"SELECT * FROM segment WHERE entry_id IN (" +
-			"SELECT DISTINCT entry_id FROM segment WHERE start_utc_ms < :toUtcMs " +
-			"AND (end_utc_ms IS NULL OR end_utc_ms > :fromUtcMs)) ORDER BY entry_id, start_utc_ms",
+		"SELECT * FROM segment WHERE planned = 0 AND entry_id IN (" +
+			"SELECT DISTINCT s.entry_id FROM segment s JOIN time_entry t ON t.id = s.entry_id WHERE t.deleted_utc_ms IS NULL AND s.planned = 0 " +
+			"AND s.start_utc_ms < :toUtcMs AND (s.end_utc_ms IS NULL OR s.end_utc_ms > :fromUtcMs)) ORDER BY entry_id, start_utc_ms",
 	)
 	suspend fun segmentsOfEntriesTouching(fromUtcMs: Long, toUtcMs: Long): List<SegmentEntity>
 
@@ -257,19 +299,7 @@ interface EntryDao {
 	@Query("UPDATE location_sample SET segment_id = :segmentId WHERE entry_id = :entryId AND ts_utc_ms >= :fromUtcMs")
 	suspend fun retagSamples(entryId: Long, segmentId: Long, fromUtcMs: Long)
 
-	@Insert
-	suspend fun insertAbsence(a: AbsenceEntity): Long
-
-	@Query("DELETE FROM absence WHERE date_epoch_day = :day AND kind = :kind")
-	suspend fun deleteAbsence(day: Long, kind: AbsenceKind)
-
-	@Query("SELECT * FROM absence WHERE date_epoch_day BETWEEN :fromDay AND :toDay ORDER BY date_epoch_day")
-	suspend fun absencesBetween(fromDay: Long, toDay: Long): List<AbsenceEntity>
-
-	@Query("SELECT * FROM absence ORDER BY date_epoch_day DESC")
-	fun observeAbsences(): Flow<List<AbsenceEntity>>
-
-	@Query("SELECT created_utc_ms FROM time_entry WHERE created_utc_ms >= :fromMs AND created_utc_ms < :toMs")
+	@Query("SELECT created_utc_ms FROM time_entry WHERE kind = 'ACTIVITY' AND status != 'TODO' AND deleted_utc_ms IS NULL AND created_utc_ms >= :fromMs AND created_utc_ms < :toMs")
 	suspend fun entryStartsBetween(fromMs: Long, toMs: Long): List<Long>
 
 	@Transaction
@@ -278,4 +308,8 @@ interface EntryDao {
 		insertSegment(first.copy(entryId = id))
 		return id
 	}
+
+	/* worked between the two instants on [entryId] (a real segment touching them) */
+	@Query("SELECT COUNT(*) FROM segment WHERE entry_id = :entryId AND planned = 0 AND start_utc_ms < :toMs AND COALESCE(end_utc_ms, :toMs) > :fromMs")
+	suspend fun workedBetween(entryId: Long, fromMs: Long, toMs: Long): Int
 }
