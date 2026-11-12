@@ -228,6 +228,12 @@
       "doc": "true/false"
     },
     {
+      "key": "roundStoredTimes",
+      "kind": "BOOLEAN",
+      "since": "1.0.0",
+      "doc": "true/false — 1.0.0: the action buttons store rounded times (only with `editableTimes`)"
+    },
+    {
       "key": "tagsFreeText",
       "kind": "BOOLEAN",
       "doc": "true/false — false: only the tags of the master data (issue #133)"

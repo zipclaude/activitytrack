@@ -180,6 +180,7 @@ object SettingsCatalog {
 
 	val all: List<SettingSpec> = listOf(
 		bool("editableTimes") { s, v -> s.copy(editableTimes = v) },
+		bool("roundStoredTimes", since = "1.0.0") { s, v -> s.copy(roundStoredTimes = v) },
 		bool("tagsFreeText") { s, v -> s.copy(tagsFreeText = v) },
 		bool("updateCheck", since = "0.9.3") { s, v -> s.copy(updateCheck = v) },
 		/* the old switch of the betas: the beta channel of updateChannels */

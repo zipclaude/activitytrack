@@ -186,6 +186,7 @@ are written back at every read, so they cannot drift.
 | Key | Type | Values |
 |---|---|---|
 | `editableTimes` | true/false | |
+| `roundStoredTimes` | true/false | 1.0.0: the action buttons store rounded times (only with `editableTimes`) |
 | `tagsFreeText` | true/false | false: only the tags of the master data (issue #133) |
 | `updateCheck` | true/false | daily check of newer releases on GitLab, apps not installed from a store (0.9.3) |
 | `updateBetas` | true/false | the check follows the beta channel too; the same as `beta` in `updateChannels` (0.9.3) |
