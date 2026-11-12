@@ -48,6 +48,9 @@ private val ON_YELLOW = Color(0xFF212121)
 /* closed: a quiet grey on the card background, readable in both themes */
 private val NEUTRAL = Color(0xFF9EA3B0)
 
+/* the Stop button of a running activity: red, white stop icon */
+val STOP_STYLE = CommandStyle(R.drawable.ic_cmd_stop, RED, Color.White)
+
 fun commandStyle(cmd: EntryCommand): CommandStyle? = when (cmd) {
 	EntryCommand.WORK -> CommandStyle(R.drawable.ic_cmd_play, GREEN, Color.White)
 	EntryCommand.STOP -> CommandStyle(R.drawable.ic_cmd_stop, RED, Color.White)

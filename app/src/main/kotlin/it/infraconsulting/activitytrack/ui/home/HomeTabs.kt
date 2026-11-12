@@ -1,105 +1,79 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
-import it.infraconsulting.activitytrack.ui.todo.TodoEntity
-import it.infraconsulting.activitytrack.ui.todo.TodoKind
-import it.infraconsulting.activitytrack.ui.todo.TodoRepository
-import it.infraconsulting.activitytrack.ui.todo.title
-import it.infraconsulting.activitytrack.ui.todo.done
-import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
-import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
-import it.infraconsulting.activitytrack.ui.todo.refs
-import it.infraconsulting.activitytrack.ui.todo.color
-import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
-import it.infraconsulting.activitytrack.ui.todo.todoKind
-import it.infraconsulting.activitytrack.ui.todo.todoId
-import it.infraconsulting.activitytrack.ui.todo.isOpen
-import it.infraconsulting.activitytrack.ui.todo.todoDraft
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
-import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.data.db.SegmentEntity
+import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import it.infraconsulting.activitytrack.domain.activity.ActivityDisplay
+import it.infraconsulting.activitytrack.domain.activity.DisplayState
+import it.infraconsulting.activitytrack.domain.activity.Displayed
 import it.infraconsulting.activitytrack.domain.time.atMinute
-import it.infraconsulting.activitytrack.ui.common.TagFilterChip
-import it.infraconsulting.activitytrack.ui.todo.CompanyFilter
-import it.infraconsulting.activitytrack.ui.todo.TodosViewModel
-import it.infraconsulting.activitytrack.ui.todo.moment
-import it.infraconsulting.activitytrack.ui.todo.todoState
-import it.infraconsulting.activitytrack.ui.todo.TodoState
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.domain.todo.TodoPlan
+import it.infraconsulting.activitytrack.domain.todo.todoMoment
+import it.infraconsulting.activitytrack.ui.common.snapshot
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.abs
-
-/* The two Home tabs (issue #59): to-dos ahead, entries and done to-dos behind. */
-enum class HomeTab {
-	PLANNED, CLOSED;
-
-	companion object {
-		/* the stored setting falls back to the planned tab */
-		fun of(stored: String?): HomeTab = entries.firstOrNull { it.name == stored } ?: PLANNED
-	}
-}
-
-/* Dated to-dos inside the window, the others without a date (own section). */
-internal data class PlannedSplit(val dated: List<TodoEntity>, val noDate: List<TodoEntity>)
 
 /*
- * The "Pianificate" list (issue #59): the open to-dos of [company] (null =
- * all) whose moment falls within [window] hours of [now] (0 = everything);
- * past moments sort first, so the overdue ones stay on top. The to-dos
- * without a plan and without a due date go to their own bottom section
- * (owner answer 1).
+ * The pure logic of the Home list (ACTIVITY-MODEL.md 2.2, 8): which
+ * activities are listed, in which group, in which order. The screen only
+ * draws what comes out of here.
  */
-internal fun plannedSplit(open: List<TodoEntity>, company: Long?, window: Int, now: Instant, zone: ZoneId): PlannedSplit {
+
+/* An activity with the display names and the rows around it that the Home needs to draw it. */
+data class EntryCard(
+	val entry: TimeEntryEntity,
+	val client: String?,
+	val company: String?,
+	val segments: List<SegmentEntity>,
+	/* company colour for the card band (M12) */
+	val companyColor: Int? = null,
+	/* the activity's tags: the tag filter (issue #59), dots on every card (issue #133) */
+	val tags: Set<String> = emptySet(),
+	/* the last segment end: the sort key of the closed ones (issue #59) */
+	val endUtcMs: Long? = null,
+) {
+	val title: String? get() = client ?: company
+
+	/* latest start or end of a segment: "the most recent" activity for the big card */
+	val lastChange: Long get() = segments.maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: 0L) } ?: entry.updatedUtcMs
+
+	/* the state shown (2.2) and since when */
+	fun displayed(now: Instant, zone: ZoneId = ZoneId.of(entry.zoneId)): Displayed =
+		ActivityDisplay.display(entry.snapshot(segments), now, zone)
+}
+
+/* When a TODO activity next asks for attention: its plan, else its due time, else its first planned segment. */
+internal fun planMoment(e: TimeEntryEntity, segments: List<SegmentEntity>, zone: ZoneId): Instant? =
+	todoMoment(TodoPlan.of(e.planEpochDay, e.planStartMin, e.durationMin), e.dueEpochDay?.let(LocalDate::ofEpochDay), e.dueTimeMin, zone)
+		?: segments.filter { it.planned }.minOfOrNull { it.startUtcMs }?.let(Instant::ofEpochMilli)
+
+/* Dated to-dos inside the window, the others without a date (own section). */
+internal data class PlannedSplit(val dated: List<TimeEntryEntity>, val noDate: List<TimeEntryEntity>)
+
+/*
+ * The open to-dos of [company] (null = all) whose moment falls within
+ * [window] hours of [now] (0 = everything); past moments sort first, so the
+ * late ones stay on top. The to-dos without a plan and without a due date go
+ * to their own section (owner answer 1). Used by the to-do widget.
+ */
+internal fun plannedSplit(open: List<TimeEntryEntity>, company: Long?, window: Int, now: Instant, zone: ZoneId): PlannedSplit {
 	val ofCompany = open.filter { company == null || it.companyId == company }
 	val dated = ofCompany.mapNotNull { t ->
-		val m = moment(t, zone)
+		val m = planMoment(t, emptyList(), zone)
 		if (m == null || (window != 0 && m.isAfter(now.plus(Duration.ofHours(window.toLong()))))) null else t to m
 	}.sortedBy { it.second }.map { it.first }
-	val noDate = ofCompany.filter { moment(it, zone) == null }
-		.sortedWith(compareBy({ -it.priority }, { it.title.lowercase() }))	/* 1.0: 5 the highest, 0 none */
+	val noDate = ofCompany.filter { planMoment(it, emptyList(), zone) == null }
+		.sortedWith(compareBy({ -it.priority }, { it.activity.orEmpty().lowercase() }))	/* 1.0: 5 the highest, 0 none */
 	return PlannedSplit(dated, noDate)
 }
 
 /*
- * Where the "Chiuse" window starts (issue #59): "today" begins at the
- * day-attribution carry-over boundary (06:00 by default), so an entry closed
- * at night belongs to the previous day as in the reports — before 06:00 the
- * working day began yesterday at 06:00; the other windows count back from
- * [now].
+ * Where "today" starts: at the day-attribution carry-over boundary (06:00 by
+ * default), so an activity closed at night belongs to the previous day as in
+ * the reports — before 06:00 the working day began yesterday at 06:00; the
+ * other windows count back from [now].
  */
 internal fun closedBoundary(window: Int, carryOverMin: Int, now: Instant, zone: ZoneId): Instant {
 	if (window != 0)
@@ -109,37 +83,37 @@ internal fun closedBoundary(window: Int, carryOverMin: Int, now: Instant, zone: 
 	return if (start.isAfter(now)) today.minusDays(1).atMinute(carryOverMin, zone) else start
 }
 
-/* What the Home list can show (owner, 2026-10-27: one list with a state filter, AppSettings.homeShow). */
-enum class HomeShow { TODO, MISSING, DONE, IGNORED }
+/*
+ * What the Home list can show (AppSettings.homeShow keeps the names): the
+ * TODO activities (to do, planned, late), the closed ones left incomplete
+ * ("MISSING" in the stored name), the done ones. The absences are always
+ * listed. The old IGNORED is gone from the Home: the bin is on the lists.
+ */
+enum class HomeShow { TODO, MISSING, DONE }
 
 /* The groups of the Home list, in this order. */
-enum class HomeSection { OVERDUE, MISSING, TODAY, NEXT, EARLIER, NO_DATE, IGNORED }
+enum class HomeSection { LATE, INCOMPLETE, TODAY, NEXT, EARLIER, NO_DATE }
 
-/* One row of the Home list: a to-do or a stopped entry, drawn alike. */
-internal sealed interface HomeItem {
-	val key: String
-
-	data class Todo(val todo: TodoEntity) : HomeItem {
-		override val key get() = "todo-${todo.id}"
-	}
-
-	data class Entry(val card: EntryCard) : HomeItem {
-		override val key get() = "entry-${card.entry.id}"
-	}
+/* One row of the Home list: an activity and the state it shows. */
+internal data class HomeItem(val card: EntryCard, val displayed: Displayed) {
+	val key: String get() = "entry-${card.entry.id}"
+	val state: DisplayState get() = displayed.state
 }
 
+/* When a closed activity ended: its last segment, else when it was closed. */
+internal fun closedAt(c: EntryCard): Long = c.endUtcMs ?: c.entry.closedUtcMs ?: c.entry.updatedUtcMs
+
 /*
- * The Home list (owner, 2026-10-27). [window]: -1 today, 0 everything, else
- * hours; ahead for the open to-dos (the overdue always shown), behind for
- * what was done or ignored (today from the carry-over boundary, as the
- * reports). Entries with details missing are always shown: they wait for
- * the user. A tag keeps only the entries with it. Empty groups are left out.
+ * The Home list (owner, 2026-10-27, adapted to 1.0). [window]: -1 today, 0
+ * everything, else hours; ahead for the to-dos (the late ones always shown),
+ * behind for what was closed (today from the carry-over boundary, as the
+ * reports). The incomplete ones are always shown: they wait for the user. A
+ * tag keeps only the activities with it. Empty groups are left out.
  */
 internal fun homeSections(
-	open: List<TodoEntity>,
-	ignored: List<TodoEntity>,
-	done: List<TodoEntity>,
-	stopped: List<EntryCard>,
+	todos: List<EntryCard>,
+	closed: List<EntryCard>,
+	absences: List<EntryCard>,
 	show: Set<HomeShow>,
 	company: Long?,
 	tag: String?,
@@ -147,13 +121,12 @@ internal fun homeSections(
 	carryOverMin: Int,
 	now: Instant,
 	zone: ZoneId,
-	/* to-dos with an activity still open (running, paused, suspended, details missing): shown by that activity (issue #107) */
-	working: Set<Long> = emptySet(),
 ): List<Pair<HomeSection, List<HomeItem>>> {
 	val today = now.atZone(zone).toLocalDate()
 	val todayFrom = closedBoundary(0, carryOverMin, now, zone)
+	val tomorrow = today.plusDays(1).atMinute(0, zone)
 	val ahead: Instant? = when (window) {
-		-1 -> today.plusDays(1).atStartOfDay(zone).toInstant()
+		-1 -> tomorrow
 		0 -> null
 		else -> now.plus(Duration.ofHours(window.toLong()))
 	}
@@ -163,44 +136,48 @@ internal fun homeSections(
 		else -> now.minus(Duration.ofHours(window.toLong()))
 	}
 	fun ofCompany(c: Long?) = company == null || c == company
-	val todos = tag == null
 	val groups = HomeSection.entries.associateWith { mutableListOf<Pair<Long, HomeItem>>() }
 
-	if (HomeShow.TODO in show && todos)
-		for (t in open.filter { ofCompany(it.companyId) && it.id !in working }) {
-			val m = moment(t, zone)
+	if (HomeShow.TODO in show)
+		for (c in todos.filter { ofCompany(it.entry.companyId) && (tag == null || tag in it.tags) }) {
+			val d = c.displayed(now, zone)
+			val item = HomeItem(c, d)
+			val m = planMoment(c.entry, c.segments, zone)
 			when {
-				todoState(t, now) == TodoState.OVERDUE ->
-					groups.getValue(HomeSection.OVERDUE) += (m?.toEpochMilli() ?: 0L) to HomeItem.Todo(t)
-				m == null -> groups.getValue(HomeSection.NO_DATE) += (5L - t.priority) to HomeItem.Todo(t)
+				d.state == DisplayState.LATE -> groups.getValue(HomeSection.LATE) += (m?.toEpochMilli() ?: 0L) to item
+				m == null -> groups.getValue(HomeSection.NO_DATE) += (5L - c.entry.priority) to item
 				ahead != null && m.isAfter(ahead) -> {}
-				m.atZone(zone).toLocalDate().isAfter(today) -> groups.getValue(HomeSection.NEXT) += m.toEpochMilli() to HomeItem.Todo(t)
-				else -> groups.getValue(HomeSection.TODAY) += m.toEpochMilli() to HomeItem.Todo(t)
+				m.atZone(zone).toLocalDate().isAfter(today) -> groups.getValue(HomeSection.NEXT) += m.toEpochMilli() to item
+				else -> groups.getValue(HomeSection.TODAY) += m.toEpochMilli() to item
 			}
 		}
-	for (c in stopped.filter { ofCompany(it.entry.companyId) && (tag == null || tag in it.tags) }) {
-		val end = c.endUtcMs ?: c.entry.updatedUtcMs
-		val missing = c.entry.legacy == LegacyStatus.TO_COMPLETE
+	for (c in closed.filter { ofCompany(it.entry.companyId) && (tag == null || tag in it.tags) }) {
+		val d = c.displayed(now, zone)
+		val item = HomeItem(c, d)
+		val end = closedAt(c)
 		when {
-			missing -> if (HomeShow.MISSING in show) groups.getValue(HomeSection.MISSING) += -end to HomeItem.Entry(c)
-			HomeShow.DONE !in show || end < behind.toEpochMilli() -> {}
+			d.state == DisplayState.INCOMPLETE -> if (HomeShow.MISSING in show) groups.getValue(HomeSection.INCOMPLETE) += -end to item
+			d.state != DisplayState.DONE || HomeShow.DONE !in show || end < behind.toEpochMilli() -> {}
 			/* after today's to-dos: the most recent first */
-			end >= todayFrom.toEpochMilli() -> groups.getValue(HomeSection.TODAY) += (Long.MAX_VALUE - end) to HomeItem.Entry(c)
-			else -> groups.getValue(HomeSection.EARLIER) += -end to HomeItem.Entry(c)
+			end >= todayFrom.toEpochMilli() -> groups.getValue(HomeSection.TODAY) += (Long.MAX_VALUE - end) to item
+			else -> groups.getValue(HomeSection.EARLIER) += -end to item
 		}
 	}
-	if (HomeShow.DONE in show && todos)
-		for (t in done.filter { ofCompany(it.companyId) }) {
-			val at = t.doneUtcMs ?: t.updatedUtcMs
+	/* an absence of no company counts for every one */
+	if (tag == null)
+		for (c in absences.filter { company == null || it.entry.companyId == null || it.entry.companyId == company }) {
+			val real = c.segments.filter { !it.planned }
+			val start = real.minOfOrNull { it.startUtcMs } ?: continue
+			val end = real.maxOf { it.endUtcMs ?: it.startUtcMs }
+			if (end <= behind.toEpochMilli() || (ahead != null && start >= ahead.toEpochMilli()))
+				continue
+			val item = HomeItem(c, c.displayed(now, zone))
 			when {
-				at < behind.toEpochMilli() -> {}
-				at >= todayFrom.toEpochMilli() -> groups.getValue(HomeSection.TODAY) += (Long.MAX_VALUE - at) to HomeItem.Todo(t)
-				else -> groups.getValue(HomeSection.EARLIER) += -at to HomeItem.Todo(t)
+				start >= tomorrow.toEpochMilli() -> groups.getValue(HomeSection.NEXT) += start to item
+				end > todayFrom.toEpochMilli() -> groups.getValue(HomeSection.TODAY) += (Long.MIN_VALUE / 2 + start) to item
+				else -> groups.getValue(HomeSection.EARLIER) += -end to item
 			}
 		}
-	if (HomeShow.IGNORED in show && todos)
-		for (t in ignored.filter { ofCompany(it.companyId) && (it.ignoredUtcMs ?: 0L) >= behind.toEpochMilli() })
-			groups.getValue(HomeSection.IGNORED) += -(t.ignoredUtcMs ?: 0L) to HomeItem.Todo(t)
 
 	return HomeSection.entries.mapNotNull { s ->
 		groups.getValue(s).takeIf { it.isNotEmpty() }?.sortedBy { it.first }?.map { it.second }?.let { s to it }

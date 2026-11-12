@@ -891,4 +891,13 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="priority_high">High</string>
   <string name="priority_urgent">Urgent</string>
   <string name="priority_emergency">Emergency</string>
+  <!-- ui-home -->
+  <string name="travel_done_question">Have you completed the work activity?</string>
+  <string name="stop_choice_travel_back">Start return trip</string>
+  <string name="stop_choice_end">End the activity</string>
+  <string name="stop_choice_end_return">End the activity and add the return trip</string>
+  <string name="reopen_title">Reopen “%1$s”?</string>
+  <string name="reopen_text">The activity goes back to running; the time in between stays a gap.</string>
+  <string name="home_pulled_back">The end of “%1$s” was moved back to %2$s (another activity started)</string>
+  <string name="home_pulled_back_many">The end of %1$d activities was moved back (another activity started)</string>
 </resources>

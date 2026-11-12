@@ -879,4 +879,13 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="priority_high">Hoch</string>
   <string name="priority_urgent">Dringend</string>
   <string name="priority_emergency">Notfall</string>
+  <!-- ui-home -->
+  <string name="travel_done_question">Hast du die Arbeitstätigkeit abgeschlossen?</string>
+  <string name="stop_choice_travel_back">Rückfahrt starten</string>
+  <string name="stop_choice_end">Tätigkeit beenden</string>
+  <string name="stop_choice_end_return">Tätigkeit beenden und die Rückfahrt hinzufügen</string>
+  <string name="reopen_title">„%1$s“ wieder öffnen?</string>
+  <string name="reopen_text">Die Tätigkeit läuft wieder; die Zeit dazwischen bleibt eine Lücke.</string>
+  <string name="home_pulled_back">Das Ende von „%1$s“ wurde auf %2$s vorverlegt (eine andere Tätigkeit hat begonnen)</string>
+  <string name="home_pulled_back_many">Das Ende von %1$d Tätigkeiten wurde vorverlegt (eine andere Tätigkeit hat begonnen)</string>
 </resources>

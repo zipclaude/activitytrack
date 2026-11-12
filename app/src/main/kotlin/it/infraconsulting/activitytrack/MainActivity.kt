@@ -75,6 +75,7 @@ import it.infraconsulting.activitytrack.ui.TABS
 import it.infraconsulting.activitytrack.ui.agenda.AgendaScreen
 import it.infraconsulting.activitytrack.ui.entry.EntryScreen
 import it.infraconsulting.activitytrack.ui.entry.QuickExpenseScreen
+import it.infraconsulting.activitytrack.ui.home.CreateMode
 import it.infraconsulting.activitytrack.ui.home.HomeScreen
 import it.infraconsulting.activitytrack.ui.home.LateEntryScreen
 import it.infraconsulting.activitytrack.ui.home.MoreScreen
@@ -300,8 +301,15 @@ private fun RequestRuntimePermissions() {
 private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, selectTab: (Screen) -> Unit) {
 	when (top) {
 		Screen.Home -> HomeScreen(
-			onStart = { open(Screen.Start) },
-			onStartTravel = { open(Screen.StartTravel) },
+			/* TODO(activity-1.0-ui): retarget to the creation dialogs of the create agent */
+			openCreate = { mode ->
+				open(
+					when (mode) {
+						CreateMode.WORK -> Screen.Start
+						CreateMode.TODO, CreateMode.ABSENCE -> Screen.Todos
+					},
+				)
+			},
 			onOpenEntry = { open(Screen.Entry(it)) },
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
 			onOpenGestures = { open(Screen.Gestures) },
