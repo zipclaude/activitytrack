@@ -57,6 +57,8 @@ import it.infraconsulting.activitytrack.ui.common.SwipeAction
 import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.ui.common.TagDots
 import it.infraconsulting.activitytrack.ui.common.TagFilterChip
+import it.infraconsulting.activitytrack.domain.activity.Priority
+import it.infraconsulting.activitytrack.ui.common.priorityName
 import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.formatMin
@@ -250,7 +252,7 @@ internal fun HomeListRow(item: HomeItem, gestures: GestureSettings, canDelete: B
 	}
 	val since = item.displayed.since?.let { sinceText(it, zone) }
 	val stateText = stringResource(displayName(state)).let { if (since != null) stringResource(R.string.since_fmt, it, since) else it }
-	val subtitle = listOfNotNull(detail, stateText, e.priority.takeIf { todo && it > 0 }?.let { "P$it" }).joinToString(" · ")
+	val subtitle = listOfNotNull(detail, stateText, e.priority.takeIf { todo && it > 0 }?.let { stringResource(priorityName(Priority.of(it))) }).joinToString(" · ")
 	val alert = state == DisplayState.LATE || state == DisplayState.INCOMPLETE
 	val time = rowTime(item, zone)
 	SwipeCard(
