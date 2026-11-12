@@ -26,7 +26,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 
 /*
@@ -53,7 +54,7 @@ fun commandStyle(cmd: EntryCommand): CommandStyle? = when (cmd) {
 	EntryCommand.PAUSE -> CommandStyle(R.drawable.ic_cmd_pause, YELLOW, ON_YELLOW)
 	EntryCommand.SUSPEND -> CommandStyle(R.drawable.ic_cmd_suspend, ORANGE, Color.White)
 	EntryCommand.TRAVEL -> CommandStyle(R.drawable.ic_cmd_travel, BLUE, Color.White)
-	EntryCommand.COMPLETE, EntryCommand.REOPEN -> null
+	EntryCommand.REOPEN -> null
 }
 
 /* Round coloured icon button; [label] is the accessibility description. */
@@ -69,16 +70,18 @@ fun CommandIconButton(style: CommandStyle, label: String, onClick: () -> Unit, m
 }
 
 /* Colour and icon of an entry state, matching the command that leads to it; closed is neutral (owner, 2026-10-19). */
-fun stateStyle(status: EntryStatus, mode: SegmentKind?): CommandStyle? =
-	if (status == EntryStatus.CLOSED) CommandStyle(R.drawable.ic_cmd_stop, Color.Transparent, NEUTRAL) else commandStyle(
+fun stateStyle(status: LegacyStatus, mode: SegmentKind?): CommandStyle? =
+	if (status == LegacyStatus.CLOSED) CommandStyle(R.drawable.ic_cmd_stop, Color.Transparent, NEUTRAL) else commandStyle(
 	when (status) {
-		EntryStatus.ACTIVE -> when (mode) {
+		LegacyStatus.ACTIVE -> when (mode) {
 			SegmentKind.TRAVEL -> EntryCommand.TRAVEL
 			SegmentKind.PAUSE -> EntryCommand.PAUSE
 			else -> EntryCommand.WORK
 		}
-		EntryStatus.SUSPENDED -> EntryCommand.SUSPEND
-		EntryStatus.TO_COMPLETE, EntryStatus.CLOSED -> EntryCommand.STOP
+		LegacyStatus.SUSPENDED -> EntryCommand.SUSPEND
+		LegacyStatus.TO_COMPLETE, LegacyStatus.CLOSED -> EntryCommand.STOP
+		/* TODO(activity-1.0-ui): the icon of a to-do (ActivityDisplay) */
+		LegacyStatus.TODO -> return null
 	},
 )
 

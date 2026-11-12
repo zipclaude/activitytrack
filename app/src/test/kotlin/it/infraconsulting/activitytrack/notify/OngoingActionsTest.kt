@@ -1,8 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.notify
 
-import it.infraconsulting.activitytrack.domain.model.EntryState
-import it.infraconsulting.activitytrack.domain.model.EntryStateMachine
+import it.infraconsulting.activitytrack.domain.activity.ActivityCommand
+import it.infraconsulting.activitytrack.domain.activity.ActivityKind
+import it.infraconsulting.activitytrack.domain.activity.ActivityState
+import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import java.time.Instant
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -15,7 +20,18 @@ class OngoingActionsTest {
 			val actions = ongoingActions(mode)
 			assertTrue(actions.isNotEmpty())
 			assertTrue(actions.size <= 3, "notifications show at most 3 actions")
-			actions.forEach { EntryStateMachine.apply(EntryState.active(mode), it) }
+			val state = ActivityState(ActivityKind.ACTIVITY, ActivityStatus.RUNNING, mode)
+			val at = Instant.EPOCH
+			/* the buttons as EntryRepository.apply maps them on a running activity */
+			actions.forEach {
+				val cmd = when (it) {
+					EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.PAUSE -> ActivityCommand.Switch(SegmentKind.valueOf(it.name), at)
+					EntryCommand.SUSPEND -> ActivityCommand.Suspend(at)
+					EntryCommand.STOP -> ActivityCommand.Stop(at)
+					EntryCommand.REOPEN -> ActivityCommand.Reopen(SegmentKind.WORK, at)
+				}
+				ActivityStateMachine.apply(state, cmd, at)
+			}
 		}
 	}
 }

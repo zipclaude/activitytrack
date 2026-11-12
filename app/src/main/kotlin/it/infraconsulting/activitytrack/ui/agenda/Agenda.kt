@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.ui.common.TagDots
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.flow.drop
@@ -74,7 +88,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.LaunchedEffect
 import it.infraconsulting.activitytrack.ui.common.rgb
 import it.infraconsulting.activitytrack.data.repo.isAbsence
-import it.infraconsulting.activitytrack.data.repo.isOpen
 import it.infraconsulting.activitytrack.domain.time.atMinute
 import it.infraconsulting.activitytrack.ui.todo.ABSENCE_COLOR
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -89,12 +102,11 @@ import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import androidx.compose.ui.graphics.RectangleShape
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
-import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
@@ -232,7 +244,7 @@ class AgendaViewModel(
 					activity = meta?.activity.orEmpty(),
 					reported = l.reported,
 					companyId = e?.companyId,
-					running = e?.status == EntryStatus.ACTIVE,
+					running = e?.legacy == LegacyStatus.ACTIVE,
 					entry = e,
 					tags = meta?.tags.orEmpty(),
 				)
@@ -444,7 +456,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 					}
 				}
 				items(items.filter { it.day == day }.sortedBy { it.start }, key = { "e${it.entryId}/$day" }) { it ->
-					val e = it.entry?.takeIf { e -> e.status == EntryStatus.ACTIVE || e.status == EntryStatus.SUSPENDED }
+					val e = it.entry?.takeIf { e -> e.legacy == LegacyStatus.ACTIVE || e.legacy == LegacyStatus.SUSPENDED }
 					SwipeCard(
 						toStart = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToStart) { swipes.run(e, it) } }.orEmpty(),
 						toEnd = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToEnd) { swipes.run(e, it) } }.orEmpty(),

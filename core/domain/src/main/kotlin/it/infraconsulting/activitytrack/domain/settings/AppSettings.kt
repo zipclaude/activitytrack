@@ -115,6 +115,12 @@ data class AppSettings(
 	 * settable by policy later.
 	 */
 	val editableTimes: Boolean = true,
+	/*
+	 * Saving rounded times (ACTIVITY-MODEL.md 4.2, Settings → Arrotondamento):
+	 * the action buttons store instants rounded to the quantum of the segment's
+	 * kind; only with [editableTimes]. Manual entry always stores what is typed.
+	 */
+	val roundStoredTimes: Boolean = false,
 	/* tags typed freely besides the ones of the master data (issue #133); off = only the master data's */
 	val tagsFreeText: Boolean = true,
 	/*

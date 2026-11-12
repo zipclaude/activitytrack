@@ -27,7 +27,13 @@ sealed interface Expr {
 	companion object {
 		val NULL = Literal(JsonNull)
 
-		val ROOTS = setOf("option", "identity", "lookup", "parent", "entry", "todo", "block", "field", "list", "remote")
+		/*
+		 * "activity": the planned fields of an activity imported from the
+		 * plugin (null for one of the app); "todo" before 1.0, still read as an
+		 * alias of "activity".
+		 */
+		val ROOTS = setOf("option", "identity", "lookup", "parent", "entry", "activity", "block", "field", "list", "remote")
+		const val LEGACY_ACTIVITY = "todo"
 
 		/*
 		 * Transforms: name → (number of arguments, -1 = a list of any
@@ -106,11 +112,13 @@ sealed interface Expr {
 			else -> Literal(JsonPrimitive(s))
 		}
 
-		private fun ref(root: String, rest: String, error: (String, String) -> Unit): Ref? =
-			if (root !in ROOTS)
+		private fun ref(root: String, rest: String, error: (String, String) -> Unit): Ref? {
+			val r = if (root == LEGACY_ACTIVITY) "activity" else root
+			return if (r !in ROOTS)
 				null.also { error("", "unknown reference \"@$root\" (known: ${ROOTS.joinToString()})") }
 			else
-				Ref(root, rest.split('.').filter { it.isNotEmpty() })
+				Ref(r, rest.split('.').filter { it.isNotEmpty() })
+		}
 
 		private fun op(o: JsonObject, error: (String, String) -> Unit): Expr? {
 			val names = o.keys.filter { it in OPS }

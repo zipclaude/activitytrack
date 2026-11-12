@@ -85,7 +85,8 @@ import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryDetails
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
@@ -378,10 +379,10 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			modifier = Modifier.fillMaxWidth().padding(16.dp),
 			horizontalArrangement = Arrangement.spacedBy(8.dp),
 		) {
-			if (e.status == EntryStatus.TO_COMPLETE || e.status == EntryStatus.CLOSED)
+			if (e.legacy == LegacyStatus.TO_COMPLETE || e.legacy == LegacyStatus.CLOSED)
 				OutlinedButton(onClick = vm::reopen, modifier = Modifier.height(52.dp)) { Text(stringResource(R.string.cmd_reopen)) }
 			/* the main action fills the row (issue #94): Completa when details are missing, else Salva */
-			if (e.status == EntryStatus.TO_COMPLETE) {
+			if (e.legacy == LegacyStatus.TO_COMPLETE) {
 				OutlinedButton(onClick = { vm.save(details(), onBack) }, modifier = Modifier.height(52.dp)) { Text(stringResource(R.string.action_save)) }
 				Button(
 					onClick = { vm.complete(details(), onBack) },
@@ -834,12 +835,12 @@ private fun EntrySummary(e: TimeEntryEntity, segments: List<SegmentEntity>, edit
 			if (e.needsReview)
 				Text(stringResource(if (editableTimes) R.string.entry_needs_review else R.string.entry_needs_review_locked), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
 			Row(verticalAlignment = Alignment.CenterVertically) {
-				val style = it.infraconsulting.activitytrack.ui.common.stateStyle(e.status, e.mode)
+				val style = it.infraconsulting.activitytrack.ui.common.stateStyle(e.legacy, e.mode)
 				Box(Modifier.weight(1f)) {
 					if (style != null && style.container != Color.Transparent)
-						it.infraconsulting.activitytrack.ui.common.StatePill(style, statusText(e.status, e.mode))
+						it.infraconsulting.activitytrack.ui.common.StatePill(style, statusText(e.legacy, e.mode))
 					else
-						Text(statusText(e.status, e.mode), color = MaterialTheme.colorScheme.primary)
+						Text(statusText(e.legacy, e.mode), color = MaterialTheme.colorScheme.primary)
 				}
 				Text(hmOf(sum(SegmentKind.WORK) + sum(SegmentKind.TRAVEL)), style = MaterialTheme.typography.titleLarge)
 			}

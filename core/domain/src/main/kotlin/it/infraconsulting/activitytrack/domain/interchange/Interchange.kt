@@ -7,6 +7,10 @@ import kotlinx.serialization.Serializable
  * Interchange model (M4, docs/INTERCHANGE.md): what connectors read from and
  * write to management systems, and what the generic XML/JSON plugin stores.
  * Every section is optional, so a file may carry only clients or only to-dos.
+ * Version 2 (activity model 1.0, docs/ACTIVITY-MODEL.md 6.2): the to-do is an
+ * entry with status TODO, an absence an entry of kind ABSENCE; [todos] and
+ * [absences] are read from version 1 files only, which InterchangeUpgrade
+ * turns into version 2 through the migration function.
  *
  * Records are identified by [key]: the management system's code, or for data
  * born in the app its uid (entries) or name (master data). References between
@@ -24,14 +28,16 @@ data class Interchange(
 	val sites: List<XSite> = emptyList(),
 	val roles: List<XRole> = emptyList(),
 	val presets: List<XPreset> = emptyList(),
+	/* version 1 only */
 	val todos: List<XTodo> = emptyList(),
 	val entries: List<XEntry> = emptyList(),
+	/* version 1 only */
 	val absences: List<XAbsence> = emptyList(),
 	val daysOff: List<XDayOff> = emptyList(),
 ) {
 	companion object {
 		const val FORMAT = "activitytrack-interchange"
-		const val VERSION = 1
+		const val VERSION = 2
 	}
 }
 
@@ -69,7 +75,7 @@ data class XRole(val name: String, val archived: Boolean = false)
 @Serializable
 data class XPreset(val text: String, val companyKey: String? = null, val roleName: String? = null)
 
-/* A planned activity from a management system (owner decision 2026-10-17). */
+/* Version 1: a planned activity from a management system (owner decision 2026-10-17); an entry with status TODO since version 2. */
 @Serializable
 data class XTodo(
 	val key: String,
@@ -98,15 +104,35 @@ data class XTodo(
 	val plannedEndDate: String? = null,
 )
 
+/*
+ * An activity. Version 2: [status] TODO, RUNNING or CLOSED, [kind] ACTIVITY
+ * or ABSENCE, and the planned fields; [todoKey] is version 1 only.
+ */
 @Serializable
 data class XEntry(
 	val key: String,
 	val companyKey: String? = null,
 	val clientKey: String? = null,
+	/* version 1 only */
 	val todoKey: String? = null,
 	val role: String? = null,
 	val activity: String? = null,
 	val status: String,
+	val kind: String = "ACTIVITY",
+	/* ISO instants: deleted (restorable), closed */
+	val deletedUtc: String? = null,
+	val closedUtc: String? = null,
+	/* key in the management system: an imported TODO activity is matched by it */
+	val externalKey: String? = null,
+	val dueDate: String? = null,
+	val dueTime: String? = null,
+	val plannedDate: String? = null,
+	val plannedTime: String? = null,
+	val durationMin: Int? = null,
+	/* 0 none ... 5 emergency (ACTIVITY-MODEL.md 5) */
+	val priority: Int = 0,
+	/* ABSENCE, HOLIDAY, LEAVE, SICK: set for kind ABSENCE only */
+	val absenceKind: String? = null,
 	val locality: String? = null,
 	val locationKind: String? = null,
 	val notes: String? = null,
@@ -128,6 +154,8 @@ data class XSegment(
 	val source: String = "TRACKED",
 	val kmEstimated: Double? = null,
 	val kmDeclared: Double? = null,
+	/* version 2: a planned segment of a TODO activity */
+	val planned: Boolean = false,
 )
 
 /* A consumable left (issue #41): quantity and unit cost (EUR) optional. */
@@ -138,6 +166,7 @@ data class XMaterial(val description: String, val quantity: String? = null, val 
 @Serializable
 data class XExpense(val amount: String, val description: String, val createdUtc: String, val receipt: Boolean = false)
 
+/* Version 1 only. */
 @Serializable
 data class XAbsence(val date: String, val kind: String, val time: String? = null)
 

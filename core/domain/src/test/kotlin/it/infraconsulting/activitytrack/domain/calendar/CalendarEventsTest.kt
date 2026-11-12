@@ -75,7 +75,7 @@ class CalendarEventsTest {
 		val e = CalendarEvents.planTodos(
 			listOf(TodoEvent("t-1", 5, start, start.plusSeconds(3600), "Patch", "Bank", "Rack 3", listOf("INC1"))), tagged,
 		).single()
-		assertEquals("todo:t-1", e.key)
+		assertEquals("plan:t-1", e.key)
 		assertEquals("Bank – Patch", e.title)
 		assertEquals("Rack 3\nRefs: INC1\n#planned", e.description)
 		assertEquals(true, e.tentative)

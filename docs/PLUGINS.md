@@ -123,7 +123,7 @@ Wherever a value is expected the descriptor may write:
   `"$[?(@.type == 'antares:person:id')].value"` (a JSONPath subset: fields,
   indexes, filters with `==`/`!=`, `null` tests);
 - a **reference** to app data or context: `@entry.activity`,
-  `@entry.notes`, `@entry.client.code`, `@todo.externalKey`, `@block.from`,
+  `@entry.notes`, `@entry.client.code`, `@activity.externalKey`, `@block.from`,
   `@block.travelMinutes`, `@identity.personId`, `@option.pauseSplitMin`,
   `@lookup.ticketStates`, `@field.activityType` (§8), `@remote.Timestamp` (§9);
 - a **transform** object, from this closed list:
@@ -200,7 +200,8 @@ PR #29 with one generic table.
 		"map": {
 			"title": { "coalesce": ["$.Name", "$.Code"] },
 			"notes": "$.Description", "refs": "$.Code",
-			"clientCode": "$.CustomerId", "priority": "$.Priority",
+			"clientCode": "$.CustomerId",
+			"priority": { "map": "$.Priority", "cases": { "1": 5, "2": 4, "3": 3, "4": 2, "5": 1 }, "default": 0 },
 			"done": { "notIn": ["$.State", "@lookup.ticketStates"] },
 			"fields": { "portfolio": "$.PortfolioId" }
 		}
@@ -216,15 +217,25 @@ the option asks for them); their keys must not clash (`request-…`,
 
 Targets: `clients`, `contacts`, `todos`. Matching is by `key`
 (external code), idempotent as in the generic import; the app's own
-changes win on conflict and are listed in the report. `fields` pre-fills
-the entry fields (§8) of entries started from the to-do.
+changes win on conflict and are listed in the report.
+
+Since 1.0 (docs/ACTIVITY-MODEL.md 7) an imported to-do is an activity with
+status `TODO`, matched by (company, `key`) = its external key. While it is
+`TODO` an import updates its description (`title`), notes, client, plan,
+due date and priority; once started or closed only the plan, due date and
+priority; a deleted one stays in the bin, and `done` closes a `TODO` one,
+never reopens one. `refs` adds a reference row. `fields` goes into the
+activity's plugin fields (one JSON object with the entry fields of §8,
+which they pre-fill). `priority` is the app's scale, 0 none, 1 low,
+2 medium, 3 high, 4 urgent, 5 emergency: a management system with another
+scale maps its values with a `map` transform, as above.
 
 ## 8. Entry fields
 
 ```json
 "entryFields": [
-	{ "key": "portfolio", "list": "portfolio", "label": { "it": "Servizio o progetto" }, "required": { "eq": ["@todo", null] },
-	  "hidden": { "ne": ["@todo", null] }, "filter": { "clientCode": "@entry.client.code" } },
+	{ "key": "portfolio", "list": "portfolio", "label": { "it": "Servizio o progetto" }, "required": { "eq": ["@activity", null] },
+	  "hidden": { "ne": ["@activity", null] }, "filter": { "clientCode": "@entry.client.code" } },
 	{ "key": "activityType", "list": "activityType", "parent": "@field.portfolio", "required": true },
 	{ "key": "included", "type": "bool", "default": "@list.activityType.selected.extra.included" }
 ]
@@ -241,9 +252,9 @@ An entry missing a required field is not sent: the sync report says which.
 	"entries": "closed",
 	"group": { "by": "dayBlock", "splitPauseMin": "@option.pauseSplitMin", "travel": "nearestBlock", "round": "work" },
 	"body": {
-		"RelationType": { "if": { "ne": ["@todo", null] }, "then": 2, "else": { "map": "@list.portfolio.selected.kind", "cases": { "service": 1, "project": 5 } } },
-		"TicketId": { "if": { "ne": ["@todo", null] }, "then": "@todo.externalKey" },
-		"PortfolioId": { "if": { "eq": ["@todo", null] }, "then": "@field.portfolio" },
+		"RelationType": { "if": { "ne": ["@activity", null] }, "then": 2, "else": { "map": "@list.portfolio.selected.kind", "cases": { "service": 1, "project": 5 } } },
+		"TicketId": { "if": { "ne": ["@activity", null] }, "then": "@activity.externalKey" },
+		"PortfolioId": { "if": { "eq": ["@activity", null] }, "then": "@field.portfolio" },
 		"ActivityTypeId": "@field.activityType",
 		"OwnerId": "@identity.personId",
 		"FromDate": { "date": "@block.from", "format": "isoOffset" },
@@ -280,19 +291,26 @@ service activity). Each record sent keeps its remote id and the hash of its body
 deletes them; a `404` there counts as already deleted. `fetchFirst` reads the current remote record before the update
 (Antares' `Timestamp` guards against overwriting someone else's change).
 
-The create path may use `@todo` (`"/api/v3/${todo.fields.path}/worklogs"`)
+The create path may use `@activity` (`"/api/v3/${activity.fields.path}/worklogs"`)
 and its `id` may build the remote id with it
-(`{"concat": ["@todo.fields.path", "/worklogs/", "$.worklog.id"], "separator": ""}`):
+(`{"concat": ["@activity.fields.path", "/worklogs/", "$.worklog.id"], "separator": ""}`):
 the update and the delete then need only `${remote.id}`, also for an entry
 already deleted in the app.
 
-`todoDone` (optional) closes on the remote side, once, a to-do imported by
-the plugin and marked done in the app, after the entries went:
-`{ "method": "PUT", "path": "/api/v3/${todo.fields.path}", "body": { … } }`,
-with `@todo` (`id`, `externalKey`, `title`, `refs`, `fields`, `activities`:
-the descriptions of its entries, oldest first). The to-do's plugin fields
-then carry `"_closed": true`; a to-do the remote reports closed gets it
-at the import, so it is never closed twice.
+`activityClosed` (optional; `todoDone` before 1.0, still read) closes on
+the remote side, once, an activity imported by the plugin and closed in
+the app, after its records went:
+`{ "method": "PUT", "path": "/api/v3/${activity.fields.path}", "body": { … } }`,
+with `@activity` (`id`, `externalKey`, `title`, `refs`, `fields`,
+`activities`: its description and those of the activities pointing at it
+with a UUID reference, oldest first). Its plugin fields then carry
+`"_closed": true`; one the remote reports closed gets it at the import, so
+it is never closed twice.
+
+`@activity` (`@todo` before 1.0, still read as an alias) is the planned
+side of the same record: present for an activity imported by the plugin
+(it has an external key), `null` for one created in the app, so
+`{ "eq": ["@activity", null] }` still tells the two apart.
 
 ## 10. Schedule
 

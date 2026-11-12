@@ -90,7 +90,7 @@ Dentro un percorso si usa `${…}`: `"/timesheets/${remote.id}"`.
 **Campi dell'attività** (`entryFields`): una lista (`list`, con `parent` e
 `filter`) o un valore semplice (`type: "bool"`). Un campo può essere
 `required` o `hidden`, anche in base a un'espressione
-(`{ "eq": ["@todo", null] }`). Se manca un campo obbligatorio l'attività non
+(`{ "eq": ["@activity", null] }`). Se manca un campo obbligatorio l'attività non
 viene inviata, e il resoconto dice quale campo manca.
 
 **Invio** (`export`):

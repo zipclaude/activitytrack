@@ -19,7 +19,8 @@ import it.infraconsulting.activitytrack.domain.calendar.ItalianHolidays
 import it.infraconsulting.activitytrack.domain.calls.CallRules
 import it.infraconsulting.activitytrack.domain.calls.CallSettings
 import it.infraconsulting.activitytrack.domain.calls.RunningEntry
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.notify.NotificationChannels
@@ -96,7 +97,7 @@ object CallMonitor {
 		val zone = ZoneId.systemDefault()
 		val start = Instant.ofEpochMilli(call.startMs)
 		val end = start.plusSeconds(call.seconds)
-		val running = c.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+		val running = c.entries.openEntries.first().filter { it.legacy == LegacyStatus.ACTIVE }
 			.map { RunningEntry(it.id, it.clientId, it.mode == SegmentKind.WORK) }
 		val outcome = CallRules.decide(
 			call.incoming, start, end, client.id, running,

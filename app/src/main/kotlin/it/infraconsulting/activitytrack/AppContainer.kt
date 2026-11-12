@@ -1,6 +1,21 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.data.repo.TimeRules
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import kotlinx.coroutines.flow.map
 import android.content.Context
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
@@ -13,7 +28,6 @@ import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.LocationRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
-import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.data.storage.DatabaseBackup
 import it.infraconsulting.activitytrack.data.storage.UserDataDir
@@ -34,9 +48,12 @@ class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	val database: ActivityTrackDatabase by lazy { ActivityTrackDatabase.build(appContext) }
 	val masterData: MasterDataRepository by lazy { MasterDataRepository(database, settings.settings.map { it.listOrders }, clock) }
 	val entries: EntryRepository by lazy {
-		EntryRepository(database, clock, { policies.current.value.behaviours }) {
-			policies.current.value.enabled(Feature.CONCURRENT_ENTRIES)
-		}
+		EntryRepository(
+			database, clock, { policies.current.value.behaviours },
+			{ policies.current.value.enabled(Feature.CONCURRENT_ENTRIES) },
+			/* editable times and rounded stored times (ACTIVITY-MODEL.md 4) */
+			{ settings.current().let { s -> TimeRules(s.editableTimes, s.roundStoredTimes, s.rounding) } },
+		)
 	}
 	val calls: it.infraconsulting.activitytrack.data.repo.CallRepository by lazy { it.infraconsulting.activitytrack.data.repo.CallRepository(database) }
 	val materials: it.infraconsulting.activitytrack.data.repo.MaterialRepository by lazy { it.infraconsulting.activitytrack.data.repo.MaterialRepository(database, clock) }
@@ -60,7 +77,8 @@ class AppContainer(context: Context, scope: kotlinx.coroutines.CoroutineScope) {
 	val userAgent: String by lazy { "ActivityTrack/$appVersion (+https://gitlab.com/activitytrack/activitytrack)" }
 	val nominatim: Nominatim by lazy { Nominatim(userAgent) }
 	val exporter: Exporter by lazy { Exporter(database) }
-	val todos: TodoRepository by lazy { TodoRepository(database, clock) }
+	/* TODO(activity-1.0-ui): the 0.9 to-do screens on TODO activities */
+	val todos: TodoRepository by lazy { TodoRepository(entries) }
 	val importer: Importer by lazy { Importer(database, clock) }
 
 	/* "ActivityTrack/<version>" written into interchange files */

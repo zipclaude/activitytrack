@@ -2,7 +2,7 @@
 package it.infraconsulting.activitytrack.domain.interchange
 
 import it.infraconsulting.activitytrack.domain.model.EntryInvariants
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.model.Segment
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import java.io.File
@@ -28,7 +28,7 @@ class SamplesTest {
 		assertEquals(11, d.entries.size)
 		for (e in d.entries) {
 			val segs = e.segments.map { Segment(SegmentKind.valueOf(it.kind), Instant.parse(it.startUtc), it.endUtc?.let(Instant::parse)) }
-			assertTrue(EntryInvariants.violations(EntryStatus.valueOf(e.status), null, segs).isEmpty(), e.key)
+			assertTrue(EntryInvariants.violations(ActivityStatus.valueOf(e.status), null, segs).isEmpty(), e.key)
 		}
 	}
 }

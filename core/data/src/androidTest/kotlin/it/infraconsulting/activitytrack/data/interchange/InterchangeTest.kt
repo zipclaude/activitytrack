@@ -4,14 +4,11 @@ package it.infraconsulting.activitytrack.data.interchange
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import it.infraconsulting.activitytrack.data.db.AbsenceEntity
-import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.ClientSiteEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.db.DayOffEntity
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.domain.interchange.FileFormat
@@ -55,20 +52,21 @@ class InterchangeTest {
 		/* same client name in two companies */
 		m.insertClient(ClientEntity(companyId = other, name = "Bank"))
 		m.insertClientSite(ClientSiteEntity(clientId = bank, label = "HQ", lat = 45.46, lon = 9.19, address = "Via Roma 1"))
-		val todo = a.todoDao().insert(
-			TodoEntity(
-				uid = "u-1", companyId = acme, clientId = bank, externalKey = "T-9", title = "Patch",
-				refs = "INC1", dueEpochDay = 20_744, createdUtcMs = 0, updatedUtcMs = 0,
-				planEpochDay = 20_743, planStartMin = 9 * 60, durationMin = 45,
+		val entries = EntryRepository(a, clock)
+		/* a TODO activity started (ACTIVITY-MODEL.md 3), another left to do, an absence with times */
+		val todo = entries.saveTodo(
+			null,
+			it.infraconsulting.activitytrack.data.repo.TodoRequest(
+				acme, bank, "Patch", dueEpochDay = 20_744, planEpochDay = 20_743, planStartMin = 9 * 60, durationMin = 45, priority = 4, externalKey = "T-9",
 			),
 		)
-		val entries = EntryRepository(a, clock)
+		entries.saveTodo(null, it.infraconsulting.activitytrack.data.repo.TodoRequest(acme, bank, "Backup", priority = 2, externalKey = "T-10"))
 		val id = entries.start(StartRequest(SegmentKind.WORK, bank, activity = "Patched", todoId = todo))
 		entries.addExpense(id, 1250, "Parking")
 		entries.addExternalRef(id, "INC1")
 		entries.setTags(id, listOf("remoto"))
 		entries.apply(id, EntryCommand.STOP)
-		a.entryDao().insertAbsence(AbsenceEntity(dateEpochDay = 20_745, kind = AbsenceKind.LATE_ENTRY, timeMin = 630))
+		entries.createAbsence(it.infraconsulting.activitytrack.data.repo.AbsenceRequest(fromEpochDay = 20_745, startMin = 9 * 60, endMin = 630))
 		m.upsertDayOff(DayOffEntity(20_800, "Patrono"))
 	}
 
@@ -95,7 +93,7 @@ class InterchangeTest {
 		assertTrue(report.skipped.isEmpty(), "skipped: ${report.skipped}")
 		assertEquals(2, report.inserted["companies"])
 		assertEquals(2, report.inserted["clients"])
-		assertEquals(1, report.inserted["entries"])
+		assertEquals(3, report.inserted["entries"])
 		assertEquals(export(a).copy(createdUtc = null), export(b).copy(createdUtc = null))
 
 		val again = Importer(b, clock).import(first)
@@ -116,17 +114,16 @@ class InterchangeTest {
 	@Test
 	fun appDataWinsAndConflictsAreReported() = runBlocking<Unit> {
 		Importer(b, clock).import(export(a))
-		val changed = export(a).copy(
-			todos = listOf(XTodo("T-9", "ACME", "C-1", "Patch everything", refs = listOf("INC1"), dueDate = "2026-10-18")),
-		)
+		val changed = export(a).let { x -> x.copy(entries = x.entries.map { if (it.externalKey == "T-10") it.copy(activity = "Backup everything") else it }) }
 		val report = Importer(b, clock).import(changed)
-		assertEquals(listOf("todos"), report.conflicts.map { it.section })
-		assertEquals("Patch", b.todoDao().all().single().title)
+		assertEquals(listOf("entries"), report.conflicts.map { it.section })
+		assertEquals("Backup", b.interchangeDao().allEntries().single { it.externalKey == "T-10" }.activity)
 	}
 
 	@Test
 	fun partialImportAndUnknownReferences() = runBlocking<Unit> {
-		val report = Importer(b, clock).import(Interchange(todos = listOf(XTodo("T-1", "NOPE", title = "Orphan"))))
+		/* a version 1 file: its to-do goes through the migration and arrives as an activity */
+		val report = Importer(b, clock).import(Interchange(version = 1, todos = listOf(XTodo("T-1", "NOPE", title = "Orphan"))))
 		assertEquals(0, report.total)
 		assertEquals("unknown company NOPE", report.skipped.single().detail)
 	}

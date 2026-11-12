@@ -247,8 +247,8 @@ object PolicyValidator {
 				add("$path.required" to "a hidden or disabled field cannot be required")
 		}
 
-		if (p.entrySource == EntrySource.TODOS_ONLY && !p.enabled(Feature.TODOS))
-			add("entries.source" to "\"todosOnly\" needs the feature \"todos\"")
+		if (p.entrySource == EntrySource.PLANNED_ONLY && !p.enabled(Feature.TODOS))
+			add("entries.source" to "\"plannedOnly\" needs the feature \"todos\"")
 		if (!p.enabled(Feature.PLANNING) && p.fields[Field.TODO_PLAN]?.required == true)
 			add("fields.todoPlan.required" to "planning is disabled")
 		if (p.masterData == MasterDataSource.IMPORT_ONLY && !p.enabled(Feature.IMPORT) && p.integrations.values.none { it.enabled })

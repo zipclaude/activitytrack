@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +48,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.domain.time.atMinute
 import it.infraconsulting.activitytrack.ui.common.TagFilterChip
 import it.infraconsulting.activitytrack.ui.todo.CompanyFilter
@@ -42,7 +55,8 @@ import it.infraconsulting.activitytrack.ui.todo.TodosViewModel
 import it.infraconsulting.activitytrack.ui.todo.moment
 import it.infraconsulting.activitytrack.ui.todo.todoState
 import it.infraconsulting.activitytrack.ui.todo.TodoState
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -76,7 +90,7 @@ internal fun plannedSplit(open: List<TodoEntity>, company: Long?, window: Int, n
 		if (m == null || (window != 0 && m.isAfter(now.plus(Duration.ofHours(window.toLong()))))) null else t to m
 	}.sortedBy { it.second }.map { it.first }
 	val noDate = ofCompany.filter { moment(it, zone) == null }
-		.sortedWith(compareBy({ it.priority ?: Int.MAX_VALUE }, { it.title.lowercase() }))
+		.sortedWith(compareBy({ -it.priority }, { it.title.lowercase() }))	/* 1.0: 5 the highest, 0 none */
 	return PlannedSplit(dated, noDate)
 }
 
@@ -158,7 +172,7 @@ internal fun homeSections(
 			when {
 				todoState(t, now) == TodoState.OVERDUE ->
 					groups.getValue(HomeSection.OVERDUE) += (m?.toEpochMilli() ?: 0L) to HomeItem.Todo(t)
-				m == null -> groups.getValue(HomeSection.NO_DATE) += (t.priority?.toLong() ?: Long.MAX_VALUE) to HomeItem.Todo(t)
+				m == null -> groups.getValue(HomeSection.NO_DATE) += (5L - t.priority) to HomeItem.Todo(t)
 				ahead != null && m.isAfter(ahead) -> {}
 				m.atZone(zone).toLocalDate().isAfter(today) -> groups.getValue(HomeSection.NEXT) += m.toEpochMilli() to HomeItem.Todo(t)
 				else -> groups.getValue(HomeSection.TODAY) += m.toEpochMilli() to HomeItem.Todo(t)
@@ -166,7 +180,7 @@ internal fun homeSections(
 		}
 	for (c in stopped.filter { ofCompany(it.entry.companyId) && (tag == null || tag in it.tags) }) {
 		val end = c.endUtcMs ?: c.entry.updatedUtcMs
-		val missing = c.entry.status == EntryStatus.TO_COMPLETE
+		val missing = c.entry.legacy == LegacyStatus.TO_COMPLETE
 		when {
 			missing -> if (HomeShow.MISSING in show) groups.getValue(HomeSection.MISSING) += -end to HomeItem.Entry(c)
 			HomeShow.DONE !in show || end < behind.toEpochMilli() -> {}

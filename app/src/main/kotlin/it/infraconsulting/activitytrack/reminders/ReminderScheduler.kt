@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.reminders
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.domain.todo.nextWorkingDay
 import android.app.AlarmManager
 import android.app.NotificationManager
@@ -20,10 +34,10 @@ import it.infraconsulting.activitytrack.domain.reminder.ReminderConfig
 import it.infraconsulting.activitytrack.domain.reminder.ReminderEntry
 import it.infraconsulting.activitytrack.domain.reminder.ReminderPlanner
 import it.infraconsulting.activitytrack.domain.reminder.ReminderTodo
-import it.infraconsulting.activitytrack.data.repo.isOpen
 import it.infraconsulting.activitytrack.data.repo.isAbsence
 import it.infraconsulting.activitytrack.data.repo.plan
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.notify.EntryInfo
 import it.infraconsulting.activitytrack.notify.NotificationIds
 import java.time.Duration
@@ -113,7 +127,7 @@ class ReminderScheduler(
 	 */
 	private suspend fun plannedTodos(zone: ZoneId, nm: NotificationManager): List<ReminderTodo> {
 		val now = Instant.now()
-		val started = container.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }.mapNotNull { it.todoId }.toSet()
+		val started = container.entries.openEntries.first().filter { it.legacy == LegacyStatus.ACTIVE }.mapNotNull { it.todoId }.toSet()
 		val out = ArrayList<ReminderTodo>()
 		for (t in container.todos.all.first()) {
 			/* no reminder for a plan by day only (issue #52, answer 3), nor for an absence (issue #158) */

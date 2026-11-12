@@ -67,7 +67,7 @@ Package root: `it.infraconsulting.activitytrack`.
   midnight; dates as epoch days.
 - Open segments have `end_utc_ms = NULL`; computations resolve them with `now`.
 
-## 4. Data model (Room, DB version 3)
+## 4. Data model (Room)
 
 Source: `core/data/src/main/kotlin/it/infraconsulting/activitytrack/data/db/Entities.kt`.
 
@@ -80,20 +80,19 @@ Source: `core/data/src/main/kotlin/it/infraconsulting/activitytrack/data/db/Enti
 | `place` | id, kind HOME/OTHER, label, lat, lon, radius_m | location kind HOME |
 | `role` | id, name (unique), archived | |
 | `activity_preset` | id, text, default_role_id?, company_id? | |
-| `time_entry` | id, company_id?, client_id?, role_id?, activity?, status, mode?, locality?, location_kind?, notes?, zone_id, last_confirmed_utc_ms?, unanswered_reminders, created/updated | company known before client is allowed; client null only before the client is chosen |
-| `segment` | id, entry_id → time_entry (CASCADE), kind WORK/TRAVEL/PAUSE, start_utc_ms, end_utc_ms?, zone_id, source TRACKED/MANUAL, km_estimated?, km_declared? | |
+| `time_entry` | id, company_id?, client_id?, role_id?, activity?, kind ACTIVITY/ABSENCE, status TODO/RUNNING/CLOSED, mode?, locality?, location_kind?, notes?, zone_id, last_confirmed_utc_ms?, unanswered_reminders, created/updated; since v22 deleted_utc_ms?, closed_utc_ms?, external_key?, due_epoch_day?, due_time_min?, plan_epoch_day?, plan_start_min?, duration_min?, plan_reminded_utc_ms?, priority 0–5, absence_kind? | the **activity** (docs/ACTIVITY-MODEL.md): a to-do is one with status TODO, an absence one of kind ABSENCE; unique (company_id, external_key); company known before client is allowed |
+| `segment` | id, entry_id → time_entry (CASCADE), kind WORK/TRAVEL/PAUSE/ABSENCE, start_utc_ms, end_utc_ms?, zone_id, source TRACKED/MANUAL, km_estimated?, km_declared?, planned | planned: of a TODO activity, never counted |
 | `location_sample` | id, entry_id, segment_id?, ts_utc_ms, lat, lon, accuracy_m, provider | exported only by the explicit track export (GPX / KML) |
 | `attachment` | id, entry_id, kind PHOTO/AUDIO/RECEIPT/FILE, rel_path, mime, transcript?, created | path relative to SAF root |
 | `expense` | id, entry_id, segment_id?, amount_cents, description, attachment_id?, created | EUR |
 | `external_ref` | id, entry_id, kind TICKET/URL/UUID/OTHER, value | kind auto-classified |
-| `absence` | id, date_epoch_day, kind FULL_DAY/LATE_ENTRY/EARLY_EXIT, time_min? | |
 | `work_schedule` | id, day_of_week 1–7, start_min, end_min | n intervals/day |
 | `lunch_break` | id, day_of_week (unique), start_min, end_min | pause-reminder mute |
 
 Invariants enforced in repositories (not expressible in Room annotations):
-1. at most one open segment per entry;
-2. `status = ACTIVE ⇔ mode ≠ NULL ⇔` an open segment of kind `mode` exists;
-3. segments of the same entry never overlap;
+1. at most one open segment per activity, never a planned or ABSENCE one;
+2. `mode ≠ NULL ⇔` an open segment of kind `mode` exists, only while `RUNNING`;
+3. real segments of the same activity never overlap (planned ones among themselves), planned ones only while `TODO`;
 4. `updated_utc_ms` bumped on every entry change;
 5. `client_id ≠ NULL ⇒ company_id = client.company_id`.
 
@@ -141,6 +140,22 @@ ones are suspended and a notification on the "sync" channel says so. v20 (issue 
 `concurrentEntries` every command that puts an entry to work or travel
 suspends the other active ones, a paused one stops (`EntryRepository.apply`,
 issue #132): the Start screen, Home, widget, tile and notification alike.
+v22 (activity model 1.0, manual `MIGRATION_21_22`, `ActivityModelMigration`):
+the to-do becomes a state of the activity. The DB 21 rows go through the
+shared pure function `ActivityMigration` (core:domain, the same cases as the
+server and the Python library, docs/samples/activity-migration.json):
+`time_entry` is rebuilt without `todo_id` keeping every id, gains the
+columns above, `segment.planned` is added, `todo` and `absence` are dropped;
+the sync triggers are dropped during the rebuild and re-created, the wire-2
+log and shadows go and `sync_state.realign` makes the next sync a full
+realignment (pull from the start, the server's version wins, then push what
+it lacks). A restored older backup takes the same path. `EntryRepository`
+is the one writer of activities: creation (TODO, RUNNING, past CLOSED,
+anonymous travel, ABSENCE via `AbsencePlanner`), the commands of
+`ActivityStateMachine`, travel from work, the return trip, delete to the bin
+and purge, rounded stored times and closing up to 60 minutes ahead (only
+with editable times). Without `concurrentEntries` a start suspends every
+other running activity, a paused one too. Wire schema 3, interchange version 2.
 `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)

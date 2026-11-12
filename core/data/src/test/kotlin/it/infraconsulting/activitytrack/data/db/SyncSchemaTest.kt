@@ -27,21 +27,7 @@ class SyncSchemaTest {
 
 	private fun sql(c: Connection) = JdbcSql(c)
 
-	/* what Room compares: columns, indexes and foreign keys of every table, and the triggers */
-	private fun shape(c: Connection): Map<String, Any> {
-		val tables = rows(c, "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ('room_master_table', 'sqlite_sequence') ORDER BY name")
-			.map { it[0] as String }
-		val out = sortedMapOf<String, Any>()
-		for (t in tables) {
-			val columns = rows(c, "PRAGMA table_info(`$t`)").map { listOf(it[1], it[2], it[3], it[4], it[5]) }.sortedBy { it[0] as String }
-			val indexes = rows(c, "PRAGMA index_list(`$t`)").filter { (it[1] as String).startsWith("index_") }
-				.map { listOf(it[1], it[2], rows(c, "PRAGMA index_info(`${it[1]}`)").map { col -> col[2] }) }.sortedBy { it[0] as String }
-			val keys = rows(c, "PRAGMA foreign_key_list(`$t`)").map { it.drop(2) }.sortedBy { it.toString() }
-			out[t] = listOf(columns, indexes, keys)
-		}
-		out["triggers"] = rows(c, "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' ORDER BY name")
-		return out
-	}
+	private fun shape(c: Connection) = JdbcSql.shape(c)
 
 	private fun fresh16(): Connection = create(16).also { SyncSchema.onCreate(sql(it)) }
 
@@ -114,6 +100,57 @@ class SyncSchemaTest {
 		val urgente = SyncIds.random()
 		exec(c, "INSERT INTO tag (name, color, archived, uid, central) VALUES ('urgente', 14042181, 0, ?, 0)", urgente)
 		assertEquals(listOf(listOf("tag", urgente, "upsert")), changes(c))
+	}
+
+	/*
+	 * 21 -> 22 (activity model 1.0) on the shipped schema 21 of a paired
+	 * phone: the schema Room expects for 22 with every trigger, the to-dos
+	 * and absences turned into activities, entry ids kept, and the sync
+	 * told to realign (its wire-2 log and shadows dropped, the cursor reset).
+	 */
+	@Test
+	fun migration21To22GivesTheSchemaRoomExpectsAndRealigns() {
+		val c = create(21).also { SyncSchema.onCreate(sql(it)) }
+		exec(c, "INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, 'company-1')")
+		exec(c, "INSERT INTO client (id, company_id, name, archived, uid) VALUES (1, 1, 'Banca', 0, 'client-1')")
+		exec(c, "INSERT INTO work_schedule (day_of_week, start_min, end_min, uid) VALUES (5, 540, 1080, 'ws-5')")
+		exec(c, "UPDATE sync_state SET enabled = 1, cursor = 42")
+		exec(c, "INSERT INTO todo (id, uid, company_id, client_id, external_key, title, refs, priority, done, created_utc_ms, updated_utc_ms, kind) VALUES (7, 'todo-7', 1, 1, 'T-7', 'Patch', 'INC1', 1, 0, 1, 2, 'TASK')")
+		exec(c, "INSERT INTO todo (id, uid, title, refs, done, created_utc_ms, updated_utc_ms, plan_epoch_day, kind) VALUES (8, 'todo-8', 'Ferie', '', 1, 1, 2, 20770, 'ABSENCE')")
+		val entry = "INSERT INTO time_entry (id, uid, todo_id, company_id, client_id, status, mode, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) VALUES (?, ?, ?, 1, 1, ?, ?, 'Europe/Rome', 0, 1, 2)"
+		exec(c, entry, 10, "e-10", 7, "ACTIVE", "WORK")
+		exec(c, entry, 11, "e-11", null, "TO_COMPLETE", null)
+		exec(c, "INSERT INTO segment (id, entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 10, 'WORK', 1000, NULL, 'Europe/Rome', 'TRACKED', 's-1'), (2, 11, 'WORK', 0, 900, 'Europe/Rome', 'TRACKED', 's-2')")
+		exec(c, "INSERT INTO location_sample (entry_id, segment_id, ts_utc_ms, lat, lon) VALUES (10, 1, 1000, 46.0, 11.0)")
+		exec(c, "INSERT INTO sync_shadow (type, uid, json) VALUES ('todo', 'todo-7', '{}')")
+		assertTrue(changes(c).isNotEmpty())
+		/* as Room runs a migration: foreign keys off, then checked */
+		exec(c, "PRAGMA foreign_keys = OFF")
+		ActivityModelMigration.migrate21To22(sql(c), java.time.ZoneId.of("Europe/Rome"))
+		exec(c, "PRAGMA foreign_keys = ON")
+		assertEquals(shape(create(22).also { SyncSchema.onCreate(sql(it)) }), shape(c))
+		assertEquals(emptyList(), rows(c, "PRAGMA foreign_key_check"))
+		val got = rows(c, "SELECT id, uid, status, mode, kind, external_key, priority, absence_kind FROM time_entry ORDER BY id")
+		assertEquals(
+			listOf(
+				/* running, absorbed the to-do (a running entry): its key and priority P1 -> 5 */
+				listOf(10L, "e-10", "RUNNING", "WORK", "ACTIVITY", "T-7", 5L, null),
+				listOf(11L, "e-11", "CLOSED", null, "ACTIVITY", null, 0L, null),
+				/* the absence to-do: an ABSENCE activity with its uid, on Friday 2026-11-13 */
+				listOf(12L, "todo-8", "CLOSED", null, "ABSENCE", null, 0L, "HOLIDAY"),
+			),
+			got,
+		)
+		assertEquals(listOf(listOf("ABSENCE", 12L)), rows(c, "SELECT kind, entry_id FROM segment WHERE id > 2"))
+		assertEquals(listOf(listOf("INC1")), rows(c, "SELECT value FROM external_ref WHERE entry_id = 10"))
+		assertEquals(1L, rows(c, "SELECT COUNT(*) FROM location_sample WHERE entry_id = 10")[0][0])
+		/* the realignment */
+		assertEquals(listOf(listOf(1L, 1L, 0L, 0L)), rows(c, "SELECT enabled, realign, cursor, applying FROM sync_state"))
+		assertEquals(emptyList(), changes(c))
+		assertEquals(0L, rows(c, "SELECT COUNT(*) FROM sync_shadow")[0][0])
+		/* the rebuilt table logs again */
+		exec(c, "UPDATE time_entry SET notes = 'x' WHERE id = 11")
+		assertEquals(listOf(listOf("entry", "e-11", "upsert")), changes(c))
 	}
 
 	@Test

@@ -1,8 +1,21 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.ui.common.parseDate
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.domain.time.atMinute
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.Flow
@@ -16,10 +29,10 @@ import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.StartRequest
-import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.start.ClientChoice
@@ -226,13 +239,11 @@ class StartViewModel(
 		run(onStarted) {
 			val client = f.clientId?.let { master.client(it) }
 			val company = client?.companyId ?: f.companyId ?: throw ValidationException(ValidationException.Reason.CLIENT_REQUIRED)
-			val now = System.currentTimeMillis()
 			todos.save(
-				TodoEntity(
-					uid = java.util.UUID.randomUUID().toString(), companyId = company, clientId = client?.id,
-					title = f.activity.trim().ifEmpty { client?.name.orEmpty() },
-					planEpochDay = day.toEpochDay(), planStartMin = startMin,
-					durationMin = end?.let { it - startMin }, createdUtcMs = now, updatedUtcMs = now,
+				todoDraft(
+					companyId = company, clientId = client?.id, title = f.activity.trim().ifEmpty { client?.name.orEmpty() }, notes = null,
+					dueEpochDay = null, dueTimeMin = null, priority = null,
+					planEpochDay = day.toEpochDay(), planStartMin = startMin, durationMin = end?.let { it - startMin },
 				),
 			)
 		}
@@ -339,8 +350,8 @@ class StartViewModel(
 			return fail(ValidationException.Reason.INVALID_TIME)
 		val f = _form.value
 		/* entries only from to-dos, e.g. a management system's tickets (policy entries.source, issue #48) */
-		if (todoId == null && policy().entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.TODOS_ONLY)
-			return fail(ValidationException.Reason.TODOS_ONLY)
+		if (todoId == null && policy().entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.PLANNED_ONLY)
+			return fail(ValidationException.Reason.PLANNED_ONLY)
 		val company = f.companyId ?: allChoices.value.firstOrNull { it.id == f.clientId }?.companyId
 		policy().missingRequired(
 			mapOf(
@@ -403,7 +414,7 @@ class StartViewModel(
 		viewModelScope.launch {
 			val clients = master.clients.first().associateBy { it.id }
 			val companies = master.companies.first().associateBy { it.id }
-			val all = entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+			val all = entries.openEntries.first().filter { it.legacy == LegacyStatus.ACTIVE }
 			/* "is the travel completed?" not asked (policy behaviours.askTravelDone, issue #48): a running travel stops */
 			val active = if (policy().behaviours.askTravelDone) all else all.filter { e ->
 				(e.mode != SegmentKind.TRAVEL).also { asked -> if (!asked) decisions[e.id] = EntryCommand.STOP }

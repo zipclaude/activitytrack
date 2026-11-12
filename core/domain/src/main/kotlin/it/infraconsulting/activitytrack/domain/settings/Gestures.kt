@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.settings
 
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 
 /* What a swipe on a to-do card offers (M10, owner decisions 2026-10-18). */
@@ -65,10 +65,14 @@ object Gestures {
 
 	private val BACK = setOf(TodoSwipe.POSTPONE_OR_IGNORE, TodoSwipe.POSTPONE, TodoSwipe.IGNORE)
 
-	/* What a swipe on a stopped entry offers: complete one with details missing, reopen either. */
-	fun pastCommands(swipe: PastSwipe, status: EntryStatus): List<EntryCommand> = when (swipe) {
-		PastSwipe.COMPLETE -> listOfNotNull(EntryCommand.COMPLETE.takeIf { status == EntryStatus.TO_COMPLETE })
-		PastSwipe.REOPEN -> listOfNotNull(EntryCommand.REOPEN.takeIf { status == EntryStatus.TO_COMPLETE || status == EntryStatus.CLOSED })
+	/*
+	 * What a swipe on a closed activity offers: reopen it. COMPLETE (an
+	 * incomplete one's details) is no command of the activity model 1.0: the
+	 * screen opens the details itself. TODO(activity-1.0-ui)
+	 */
+	fun pastCommands(swipe: PastSwipe, status: ActivityStatus): List<EntryCommand> = when (swipe) {
+		PastSwipe.COMPLETE -> emptyList()
+		PastSwipe.REOPEN -> listOfNotNull(EntryCommand.REOPEN.takeIf { status == ActivityStatus.CLOSED })
 		PastSwipe.NONE -> emptyList()
 	}
 
@@ -77,10 +81,11 @@ object Gestures {
 	 * pause while working or travelling, resume (WORK) from a pause or a
 	 * suspension; stop and suspend where the state machine allows them.
 	 */
-	fun entryCommands(swipe: EntrySwipe, status: EntryStatus, mode: SegmentKind?): List<EntryCommand> {
-		val running = status == EntryStatus.ACTIVE && (mode == SegmentKind.WORK || mode == SegmentKind.TRAVEL)
-		val resting = (status == EntryStatus.ACTIVE && mode == SegmentKind.PAUSE) || status == EntryStatus.SUSPENDED
-		val stop = EntryCommand.STOP.takeIf { status == EntryStatus.ACTIVE || status == EntryStatus.SUSPENDED }
+	fun entryCommands(swipe: EntrySwipe, status: ActivityStatus, mode: SegmentKind?): List<EntryCommand> {
+		val live = status == ActivityStatus.RUNNING
+		val running = live && (mode == SegmentKind.WORK || mode == SegmentKind.TRAVEL)
+		val resting = live && (mode == SegmentKind.PAUSE || mode == null)
+		val stop = EntryCommand.STOP.takeIf { live }
 		val suspend = EntryCommand.SUSPEND.takeIf { running }
 		return when (swipe) {
 			EntrySwipe.PAUSE_RESUME -> listOfNotNull(

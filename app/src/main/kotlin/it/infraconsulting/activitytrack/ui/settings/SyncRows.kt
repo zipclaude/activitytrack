@@ -121,7 +121,13 @@ fun SyncRows() {
 		if (!paired.pluginHolder) Text(stringResource(R.string.plugin_not_holder), style = MaterialTheme.typography.bodySmall)
 		incompatible?.let { code ->
 			Text(
-				stringResource(if (code == WireVersion.SERVER_TOO_OLD) R.string.sync_incompatible_server else R.string.sync_incompatible_app),
+				stringResource(
+					when (code) {
+						WireVersion.SERVER_TOO_OLD -> R.string.sync_incompatible_server
+						WireVersion.UPGRADE_REQUIRED -> R.string.sync_upgrade_required
+						else -> R.string.sync_incompatible_app
+					},
+				),
 				color = MaterialTheme.colorScheme.error,
 			)
 		}

@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.ui.common.TagDots
 import it.infraconsulting.activitytrack.ui.common.LocalPolicy
 import it.infraconsulting.activitytrack.domain.policy.Feature
@@ -61,11 +75,11 @@ import it.infraconsulting.activitytrack.ui.common.SwipeAction
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
@@ -116,7 +130,7 @@ class HomeViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
-	todos: it.infraconsulting.activitytrack.data.repo.TodoRepository? = null,
+	todos: it.infraconsulting.activitytrack.ui.todo.TodoRepository? = null,
 ) : EntryCommander(entries, todos) {
 	val cards = combine(
 		entries.openEntries, entries.openEntrySegments, entries.openEntryTags, master.clients, master.companies,
@@ -258,7 +272,7 @@ fun HomeScreen(
 	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
 	/* the ones with details missing sit in the list when it shows them (owner, 2026-10-27) */
 	val listsMissing = settings?.homeShow?.contains(HomeShow.MISSING.name) == true
-	val small = cards.filter { it !== big && !(listsMissing && it.entry.status == EntryStatus.TO_COMPLETE) }
+	val small = cards.filter { it !== big && !(listsMissing && it.entry.legacy == LegacyStatus.TO_COMPLETE) }
 
 	/*
 	 * The bottom tabs (issue #59): planned to-dos ahead, entries and done
@@ -490,7 +504,7 @@ private fun SmallEntryCard(
 						listOfNotNull(card.title ?: stringResource(R.string.entry_no_client), e.activity).joinToString(" · "),
 						style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
 					)
-					val state = statusText(e.status, e.mode)
+					val state = statusText(e.legacy, e.mode)
 					/* "11:00–11:45 (0:45)": from the first start to the last end, work and travel (owner, 2026-10-19) */
 					val from = card.segments.minOfOrNull { it.startUtcMs }
 					val to = card.segments.takeIf { s -> s.all { it.endUtcMs != null } }?.maxOfOrNull { it.endUtcMs!! }
@@ -502,7 +516,7 @@ private fun SmallEntryCard(
 					val span = from?.let { listOfNotNull(dayText, clock(it, zone) + "–" + (to?.let { t -> clock(t, zone) } ?: "…")).joinToString(" ") }
 					val length = hm(total(card.segments, SegmentKind.WORK, now) + total(card.segments, SegmentKind.TRAVEL, now))
 					Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-						val style = stateStyle(e.status, e.mode)
+						val style = stateStyle(e.legacy, e.mode)
 						if (style != null) StatePill(style, state) else Text(state, style = MaterialTheme.typography.bodySmall)
 						Text(
 							listOfNotNull(span, "($length)").joinToString(" "),
@@ -510,12 +524,12 @@ private fun SmallEntryCard(
 						)
 					}
 				}
-				val resting = (e.status == EntryStatus.ACTIVE && e.mode == SegmentKind.PAUSE) || e.status == EntryStatus.SUSPENDED
-				val running = e.status == EntryStatus.ACTIVE && !resting
+				val resting = (e.legacy == LegacyStatus.ACTIVE && e.mode == SegmentKind.PAUSE) || e.legacy == LegacyStatus.SUSPENDED
+				val running = e.legacy == LegacyStatus.ACTIVE && !resting
 				when {
 					resting -> commandStyle(EntryCommand.WORK)?.let { CommandIconButton(it, stringResource(R.string.cmd_resume), { onCommand(EntryCommand.WORK) }, button) }
 					running -> commandStyle(EntryCommand.PAUSE)?.let { CommandIconButton(it, stringResource(R.string.cmd_pause), { onCommand(EntryCommand.PAUSE) }, button) }
-					e.status == EntryStatus.TO_COMPLETE -> TextButton(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
+					e.legacy == LegacyStatus.TO_COMPLETE -> TextButton(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
 				}
 			}
 			}
@@ -538,7 +552,7 @@ private fun EntryCardView(
 			Column(modifier = Modifier.padding(if (compact) 10.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)) {
 				val last = card.segments.lastOrNull()
 				val since = when {
-					e.status == EntryStatus.ACTIVE -> last?.startUtcMs
+					e.legacy == LegacyStatus.ACTIVE -> last?.startUtcMs
 					else -> card.segments.mapNotNull { it.endUtcMs }.maxOrNull()
 				}
 				Row(verticalAlignment = Alignment.Top) {
@@ -552,14 +566,14 @@ private fun EntryCardView(
 						/* the tags' colours, top right (issue #133) */
 						TagDots(card.tags)
 						/* the running segment's time, the number one looks for */
-						if (e.status == EntryStatus.ACTIVE && last?.endUtcMs == null && last != null)
+						if (e.legacy == LegacyStatus.ACTIVE && last?.endUtcMs == null && last != null)
 							Text(hm(now - last.startUtcMs), style = MaterialTheme.typography.headlineMedium)
 					}
 				}
 
-				val state = statusText(e.status, e.mode)
+				val state = statusText(e.legacy, e.mode)
 				val text = if (since != null) stringResource(R.string.since_fmt, state, clock(since, zone)) else state
-				val style = stateStyle(e.status, e.mode)
+				val style = stateStyle(e.legacy, e.mode)
 				if (style != null)
 					StatePill(style, text)
 				else
@@ -580,7 +594,7 @@ private fun EntryCardView(
 					verticalArrangement = Arrangement.spacedBy(8.dp),
 					itemVerticalAlignment = Alignment.CenterVertically,
 				) {
-					for ((cmd, label) in commands(e.status, e.mode)) {
+					for ((cmd, label) in commands(e.legacy, e.mode)) {
 						val style = commandStyle(cmd)
 						if (style != null)
 							/* the label under each button: the moon alone did not say "suspend" (issue #91) */
@@ -590,7 +604,7 @@ private fun EntryCardView(
 						else
 							OutlinedButton(onClick = { onCommand(cmd) }) { Text(stringResource(label)) }
 					}
-					if (e.status == EntryStatus.TO_COMPLETE)
+					if (e.legacy == LegacyStatus.TO_COMPLETE)
 						Button(onClick = onOpen) { Text(stringResource(R.string.cmd_complete)) }
 				}
 			}
@@ -608,8 +622,10 @@ private fun LabeledCommand(label: String, button: @Composable () -> Unit) {
 }
 
 /* Commands offered per state; the state machine stays the authority. */
-private fun commands(status: EntryStatus, mode: SegmentKind?): List<Pair<EntryCommand, Int>> = when (status) {
-	EntryStatus.ACTIVE -> when (mode) {
+private fun commands(status: LegacyStatus, mode: SegmentKind?): List<Pair<EntryCommand, Int>> = when (status) {
+	/* TODO(activity-1.0-ui): a to-do starts in work or travel */
+	LegacyStatus.TODO -> listOf(EntryCommand.WORK to R.string.cmd_work, EntryCommand.TRAVEL to R.string.cmd_travel)
+	LegacyStatus.ACTIVE -> when (mode) {
 		SegmentKind.WORK -> listOf(
 			EntryCommand.PAUSE to R.string.cmd_pause,
 			EntryCommand.TRAVEL to R.string.cmd_travel,
@@ -627,13 +643,13 @@ private fun commands(status: EntryStatus, mode: SegmentKind?): List<Pair<EntryCo
 			EntryCommand.STOP to R.string.cmd_stop,
 		)
 	}
-	EntryStatus.SUSPENDED -> listOf(
+	LegacyStatus.SUSPENDED -> listOf(
 		EntryCommand.WORK to R.string.cmd_resume,
 		EntryCommand.TRAVEL to R.string.cmd_travel,
 		EntryCommand.STOP to R.string.cmd_stop,
 	)
-	EntryStatus.TO_COMPLETE -> listOf(EntryCommand.REOPEN to R.string.cmd_reopen)
-	EntryStatus.CLOSED -> emptyList()
+	LegacyStatus.TO_COMPLETE -> listOf(EntryCommand.REOPEN to R.string.cmd_reopen)
+	LegacyStatus.CLOSED -> emptyList()
 }
 
 private fun total(segments: List<SegmentEntity>, kind: SegmentKind, now: Long): Long =
@@ -652,15 +668,17 @@ private fun clock(ms: Long, zone: ZoneId): String {
 }
 
 @Composable
-fun statusText(status: EntryStatus, mode: SegmentKind?): String = when (status) {
-	EntryStatus.ACTIVE -> stringResource(
+fun statusText(status: LegacyStatus, mode: SegmentKind?): String = when (status) {
+	LegacyStatus.ACTIVE -> stringResource(
 		when (mode) {
 			SegmentKind.TRAVEL -> R.string.mode_travel
 			SegmentKind.PAUSE -> R.string.mode_pause
 			else -> R.string.mode_work
 		},
 	)
-	EntryStatus.SUSPENDED -> stringResource(R.string.status_suspended)
-	EntryStatus.TO_COMPLETE -> stringResource(R.string.status_to_complete)
-	EntryStatus.CLOSED -> stringResource(R.string.status_closed)
+	LegacyStatus.SUSPENDED -> stringResource(R.string.status_suspended)
+	LegacyStatus.TO_COMPLETE -> stringResource(R.string.status_to_complete)
+	LegacyStatus.CLOSED -> stringResource(R.string.status_closed)
+	/* TODO(activity-1.0-ui): the states of ActivityDisplay */
+	LegacyStatus.TODO -> stringResource(R.string.todo_title)
 }

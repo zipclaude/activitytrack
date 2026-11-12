@@ -1,9 +1,23 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
-import it.infraconsulting.activitytrack.data.db.TodoEntity
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.test.Test
@@ -15,13 +29,11 @@ class HomeListTest {
 	private val day = LocalDate.of(2026, 10, 27)
 	private val now = day.atTime(12, 0).atZone(zone).toInstant()
 
-	private fun todo(id: Long, planDay: LocalDate? = null, start: Int? = null, doneAt: Long? = null) = TodoEntity(
-		id = id, uid = "", companyId = null, title = "t$id", createdUtcMs = 0, updatedUtcMs = 0,
-		planEpochDay = planDay?.toEpochDay(), planStartMin = start, done = doneAt != null, doneUtcMs = doneAt,
-	)
+	private fun todo(id: Long, planDay: LocalDate? = null, start: Int? = null, doneAt: Long? = null) =
+		it.infraconsulting.activitytrack.ui.todo.todoRow(id = id, title = "t$id", planEpochDay = planDay?.toEpochDay(), planStartMin = start, done = doneAt != null, doneUtcMs = doneAt)
 
-	private fun entry(id: Long, status: EntryStatus, end: Long) = EntryCard(
-		TimeEntryEntity(id = id, companyId = null, clientId = null, status = status, zoneId = zone.id, createdUtcMs = 0, updatedUtcMs = end),
+	private fun entry(id: Long, status: LegacyStatus, end: Long) = EntryCard(
+		it.infraconsulting.activitytrack.ui.todo.entryRow(id, status, zone.id, end),
 		null, null, emptyList(), endUtcMs = end,
 	)
 
@@ -38,9 +50,9 @@ class HomeListTest {
 			todo(4),				/* no date */
 		)
 		val stopped = listOf(
-			entry(10, EntryStatus.TO_COMPLETE, at(day.minusDays(5), 10)),
-			entry(11, EntryStatus.CLOSED, at(day, 9)),
-			entry(12, EntryStatus.CLOSED, at(day.minusDays(1), 17)),
+			entry(10, LegacyStatus.TO_COMPLETE, at(day.minusDays(5), 10)),
+			entry(11, LegacyStatus.CLOSED, at(day, 9)),
+			entry(12, LegacyStatus.CLOSED, at(day.minusDays(1), 17)),
 		)
 		val done = listOf(todo(20, doneAt = at(day, 10)))
 		val all = homeSections(open, emptyList(), done, stopped, HomeShow.entries.toSet(), null, null, 168, 6 * 60, now, zone)
@@ -54,7 +66,7 @@ class HomeListTest {
 
 	@Test
 	fun theDefaultShowsWhatIsLeftToDo() {
-		val stopped = listOf(entry(10, EntryStatus.TO_COMPLETE, at(day.minusDays(30), 10)), entry(11, EntryStatus.CLOSED, at(day, 9)))
+		val stopped = listOf(entry(10, LegacyStatus.TO_COMPLETE, at(day.minusDays(30), 10)), entry(11, LegacyStatus.CLOSED, at(day, 9)))
 		val shown = homeSections(listOf(todo(2, day, 15 * 60)), emptyList(), emptyList(), stopped, setOf(HomeShow.TODO, HomeShow.MISSING), null, null, -1, 6 * 60, now, zone)
 		/* details missing always shown, whatever the window; the closed one is not */
 		assertEquals(mapOf(HomeSection.MISSING to listOf("entry-10"), HomeSection.TODAY to listOf("todo-2")), keys(shown))

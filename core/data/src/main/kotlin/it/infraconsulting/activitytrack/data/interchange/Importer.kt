@@ -5,8 +5,6 @@ import it.infraconsulting.activitytrack.data.db.EntryMaterialEntity
 import it.infraconsulting.activitytrack.data.db.EntryTagEntity
 import it.infraconsulting.activitytrack.domain.tag.Tags
 import androidx.room.withTransaction
-import it.infraconsulting.activitytrack.data.db.AbsenceEntity
-import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.db.ActivityPresetEntity
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.ClientEntity
@@ -19,19 +17,20 @@ import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.RoleEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
-import it.infraconsulting.activitytrack.data.db.TodoEntity
-import it.infraconsulting.activitytrack.data.db.TodoKind
-import it.infraconsulting.activitytrack.data.repo.TodoRepository
+import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
+import it.infraconsulting.activitytrack.domain.activity.ActivityKind
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+import it.infraconsulting.activitytrack.domain.activity.Priority
 import it.infraconsulting.activitytrack.domain.interchange.Interchange
+import it.infraconsulting.activitytrack.domain.interchange.InterchangeUpgrade
+import it.infraconsulting.activitytrack.domain.reminder.DayWindow
 import it.infraconsulting.activitytrack.domain.interchange.XClient
 import it.infraconsulting.activitytrack.domain.interchange.XCompany
 import it.infraconsulting.activitytrack.domain.interchange.XEntry
 import it.infraconsulting.activitytrack.domain.interchange.XSite
 import it.infraconsulting.activitytrack.domain.interchange.XColor
-import it.infraconsulting.activitytrack.domain.interchange.XTodo
 import it.infraconsulting.activitytrack.domain.todo.TodoPlan
 import it.infraconsulting.activitytrack.domain.model.EntryInvariants
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.Segment
@@ -44,7 +43,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-import java.util.UUID
+import kotlinx.coroutines.flow.first
 
 /* What an import did, per section ("clients", "entries"...). Never blocking. */
 data class ImportReport(
@@ -64,11 +63,13 @@ data class ImportNote(val section: String, val key: String, val detail: String)
  * Applies an interchange package to the database (M4): idempotent, matched by
  * external code / uid / name, never overwriting app data. One transaction:
  * either the package is applied as reported, or nothing changes on failure.
+ * A version 1 file goes through the migration function first
+ * (InterchangeUpgrade, ACTIVITY-MODEL.md 6.2): its to-dos and absences
+ * arrive as activities, reported under "entries".
  */
 class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) {
 	private val master = db.masterDataDao()
 	private val entries = db.entryDao()
-	private val todos = db.todoDao()
 	private val bulk = db.interchangeDao()
 
 	private class Run {
@@ -98,8 +99,17 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		}
 	}
 
-	suspend fun import(data: Interchange): ImportReport = db.withTransaction {
+	suspend fun import(file: Interchange): ImportReport = db.withTransaction {
 		val r = Run()
+		val upgraded = InterchangeUpgrade.toV2(
+			file, clock.zone,
+			schedule = (1..7).flatMap { d -> master.scheduleOf(d).map { DayWindow(it.dayOfWeek, it.startMin, it.endMin) } },
+			lunchBreaks = master.observeLunchBreaks().first().map { DayWindow(it.dayOfWeek, it.startMin, it.endMin) },
+			daysOff = bulk.allDaysOff().map { LocalDate.ofEpochDay(it.dateEpochDay) }.toSet(),
+			now = clock.instant(),
+		)
+		upgraded.skipped.forEach { (key, why) -> r.skip("todos", key, why) }
+		val data = upgraded.data
 		data.companies.forEach { company(r, it) }
 		data.clients.forEach { client(r, it) }
 		data.sites.forEach { site(r, it) }
@@ -123,19 +133,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			else
 				r.same("presets")
 		}
-		data.todos.forEach { todo(r, it) }
 		data.entries.forEach { entry(r, it) }
-		data.absences.forEach { x ->
-			val day = runCatching { LocalDate.parse(x.date).toEpochDay() }.getOrNull() ?: return@forEach r.skip("absences", x.date, "date")
-			val kind = runCatching { AbsenceKind.valueOf(x.kind) }.getOrNull() ?: return@forEach r.skip("absences", x.date, "kind ${x.kind}")
-			val time = x.time?.let { minutes(it) ?: return@forEach r.skip("absences", x.date, "time ${x.time}") }
-			val existing = entries.absencesBetween(day, day).firstOrNull { it.kind == kind }
-			when {
-				existing == null -> { entries.insertAbsence(AbsenceEntity(dateEpochDay = day, kind = kind, timeMin = time)); r.added("absences") }
-				existing.timeMin != time -> r.conflict("absences", "${x.date} ${x.kind}", "time")
-				else -> r.same("absences")
-			}
-		}
 		data.daysOff.forEach { x ->
 			val day = runCatching { LocalDate.parse(x.date).toEpochDay() }.getOrNull() ?: return@forEach r.skip("daysOff", x.date, "date")
 			val existing = bulk.allDaysOff().firstOrNull { it.dateEpochDay == day }
@@ -244,99 +242,77 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 		master.allRoles().firstOrNull { it.name.equals(name.trim(), ignoreCase = true) }?.id
 			?: master.insertRole(RoleEntity(name = name.trim()))
 
-	private suspend fun todo(r: Run, x: XTodo) {
-		val kind = runCatching { TodoKind.valueOf(x.kind) }.getOrNull() ?: return r.skip("todos", x.key, "kind ${x.kind}")
-		val absence = kind == TodoKind.ABSENCE
-		val companyId = x.companyKey?.takeIf { !absence }?.let { companyId(r, it) ?: return r.skip("todos", x.key, "unknown company $it") }
-		val clientId = x.clientKey?.takeIf { !absence }?.let { clientId(r, companyId, it) ?: return r.skip("todos", x.key, "unknown client ${x.clientKey}") }
-		val due = x.dueDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "due date $it") }
-		val time = x.dueTime?.let { minutes(it) ?: return r.skip("todos", x.key, "due time $it") }
-		val planDay = x.plannedDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "planned date $it") }
-		val planTime = x.plannedTime?.let { minutes(it) ?: return r.skip("todos", x.key, "planned time $it") }
+	/*
+	 * An activity (version 2): matched by its uid (the key as a canonical
+	 * UUID), else an imported TODO by (company, external key); an existing
+	 * one is compared, never overwritten. A running one is skipped (it would
+	 * run on two devices).
+	 */
+	private suspend fun entry(r: Run, x: XEntry) {
+		val companyId = x.companyKey?.let { companyId(r, it) ?: return r.skip("entries", x.key, "unknown company $it") }
+		val clientId = x.clientKey?.let { clientId(r, companyId, it) ?: return r.skip("entries", x.key, "unknown client $it") }
+		val status = runCatching { ActivityStatus.valueOf(x.status) }.getOrNull() ?: return r.skip("entries", x.key, "status ${x.status}")
+		val kind = runCatching { ActivityKind.valueOf(x.kind) }.getOrNull() ?: return r.skip("entries", x.key, "kind ${x.kind}")
+		val due = x.dueDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("entries", x.key, "due date $it") }
+		val dueTime = x.dueTime?.let { minutes(it) ?: return r.skip("entries", x.key, "due time $it") }
+		val planDay = x.plannedDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("entries", x.key, "planned date $it") }
+		val planTime = x.plannedTime?.let { minutes(it) ?: return r.skip("entries", x.key, "planned time $it") }
 		/* a planned time needs its date; a date alone plans the whole day (issue #52) */
 		if (planDay == null && planTime != null)
-			return r.skip("todos", x.key, "planned time without date")
-		val duration = x.durationMin?.takeIf { it in 1..TodoPlan.MAX_DURATION_MIN }
-			?: x.durationMin?.let { return r.skip("todos", x.key, "duration $it") }
-		val planEnd = x.plannedEndDate?.let { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() ?: return r.skip("todos", x.key, "planned end date $it") }
-		if (absence && planDay == null)
-			return r.skip("todos", x.key, "absence without planned date")
-		if (planEnd != null && (planDay == null || planTime != null || planEnd < planDay || planEnd - planDay >= TodoRepository.MAX_ABSENCE_DAYS))
-			return r.skip("todos", x.key, "planned end date ${x.plannedEndDate}")
-		val color = XColor.parse(x.color)
-		val refs = x.refs.map(String::trim).filter(String::isNotEmpty).joinToString("\n")
-		val existing = todos.byExternalKey(companyId, x.key) ?: todos.byUid(SyncIds.canonical(x.key))
-		if (existing == null) {
-			val now = clock.millis()
-			todos.insert(
-				TodoEntity(
-					uid = UUID.randomUUID().toString(), companyId = companyId, clientId = clientId, externalKey = x.key,
-					title = x.title.trim(), notes = x.notes?.trim()?.ifEmpty { null }, refs = refs, dueEpochDay = due,
-					dueTimeMin = time, priority = x.priority, done = x.done, doneUtcMs = now.takeIf { x.done },
-					createdUtcMs = now, updatedUtcMs = now,
-					planEpochDay = planDay, planStartMin = planTime, durationMin = duration, planEndEpochDay = planEnd,
-					kind = kind, color = color,
-					ignoredUtcMs = now.takeIf { x.ignored },
-				),
-			)
-			r.added("todos")
-			return
-		}
-		val diff = listOfNotNull(
-			"title".takeIf { existing.title != x.title.trim() },
-			"client".takeIf { existing.clientId != clientId },
-			"notes".takeIf { existing.notes != x.notes?.trim()?.ifEmpty { null } },
-			"refs".takeIf { existing.refs != refs },
-			"due".takeIf { existing.dueEpochDay != due || existing.dueTimeMin != time },
-			"priority".takeIf { existing.priority != x.priority },
-			"plan".takeIf { existing.planEpochDay != planDay || existing.planStartMin != planTime || existing.durationMin != duration || existing.planEndEpochDay != planEnd },
-			"colour".takeIf { x.color != null && existing.color != color },
-			"done".takeIf { existing.done != x.done },
-			"ignored".takeIf { (existing.ignoredUtcMs != null) != x.ignored },
-		)
-		if (diff.isEmpty()) r.same("todos") else r.conflict("todos", x.key, diff.joinToString())
-	}
-
-	private suspend fun entry(r: Run, x: XEntry) {
+			return r.skip("entries", x.key, "planned time without date")
+		val duration = x.durationMin?.takeIf { it in 1..TodoPlan.MAX_DURATION_MIN && planTime != null }
+			?: x.durationMin?.let { return r.skip("entries", x.key, "duration $it") }
 		val existing = bulk.entryByUid(SyncIds.canonical(x.key))
+			?: x.externalKey?.let { entries.byExternalKey(clientId?.let { c -> master.client(c)?.companyId } ?: companyId, it) }
 		if (existing != null) {
 			val diff = listOfNotNull(
-				"status".takeIf { existing.status.name != x.status },
-				"activity".takeIf { existing.activity != x.activity },
+				"status".takeIf { existing.status != status },
+				"activity".takeIf { existing.activity != x.activity?.trim()?.ifEmpty { null } },
 				"segments".takeIf { entries.segments(existing.id).size != x.segments.size },
+				"due".takeIf { existing.dueEpochDay != due || existing.dueTimeMin != dueTime },
+				"plan".takeIf { existing.planEpochDay != planDay || existing.planStartMin != planTime || existing.durationMin != duration },
+				"priority".takeIf { existing.priority != Priority.of(x.priority).value },
+				"deleted".takeIf { (existing.deletedUtcMs != null) != (x.deletedUtc != null) },
 			)
 			if (diff.isEmpty()) r.same("entries") else r.conflict("entries", x.key, diff.joinToString())
 			return
 		}
-		val status = runCatching { EntryStatus.valueOf(x.status) }.getOrNull() ?: return r.skip("entries", x.key, "status ${x.status}")
-		/* another device's running entry would run twice */
-		if (status == EntryStatus.ACTIVE || x.segments.any { it.endUtc == null })
+		/* another device's running activity would run twice */
+		if (status == ActivityStatus.RUNNING || x.segments.any { it.endUtc == null })
 			return r.skip("entries", x.key, "running entry")
+		if (kind == ActivityKind.ABSENCE && status != ActivityStatus.CLOSED)
+			return r.skip("entries", x.key, "absence not closed")
 		val zone = runCatching { ZoneId.of(x.zone) }.getOrNull() ?: return r.skip("entries", x.key, "zone ${x.zone}")
 		val segs = x.segments.map { s ->
-			val kind = runCatching { SegmentKind.valueOf(s.kind) }.getOrNull() ?: return r.skip("entries", x.key, "segment kind ${s.kind}")
+			val sk = runCatching { SegmentKind.valueOf(s.kind) }.getOrNull() ?: return r.skip("entries", x.key, "segment kind ${s.kind}")
 			val start = runCatching { Instant.parse(s.startUtc) }.getOrNull() ?: return r.skip("entries", x.key, "segment start ${s.startUtc}")
 			val end = runCatching { Instant.parse(s.endUtc!!) }.getOrNull() ?: return r.skip("entries", x.key, "segment end ${s.endUtc}")
+			if ((sk == SegmentKind.ABSENCE) != (kind == ActivityKind.ABSENCE))
+				return r.skip("entries", x.key, "segment kind ${s.kind} in a $kind")
 			val source = runCatching { SegmentSource.valueOf(s.source) }.getOrDefault(SegmentSource.TRACKED)
-			SegmentEntity(entryId = 0, kind = kind, startUtcMs = start.toEpochMilli(), endUtcMs = end.toEpochMilli(), zoneId = zone.id, source = source, kmEstimated = s.kmEstimated, kmDeclared = s.kmDeclared)
+			SegmentEntity(
+				entryId = 0, kind = sk, startUtcMs = start.toEpochMilli(), endUtcMs = end.toEpochMilli(), zoneId = zone.id, source = source,
+				kmEstimated = s.kmEstimated, kmDeclared = s.kmDeclared, planned = s.planned,
+			)
 		}
-		val violations = EntryInvariants.violations(status, null, segs.map { Segment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli)) })
+		val violations = EntryInvariants.violations(status, null, segs.map { Segment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli), it.planned) })
 		if (violations.isNotEmpty())
 			return r.skip("entries", x.key, violations.joinToString())
-		val companyId = x.companyKey?.let { companyId(r, it) ?: return r.skip("entries", x.key, "unknown company $it") }
-		val clientId = x.clientKey?.let { clientId(r, companyId, it) ?: return r.skip("entries", x.key, "unknown client $it") }
 		val clientCompany = clientId?.let { master.client(it)?.companyId }
-		val todoId = x.todoKey?.let { key ->
-			(companyId?.let { todos.byExternalKey(it, key) } ?: todos.byUid(SyncIds.canonical(key)))?.id
-				?: return r.skip("entries", x.key, "unknown to-do $key")
-		}
 		val now = clock.millis()
+		fun instant(s: String?) = s?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
+		val real = segs.filter { !it.planned }
 		val id = entries.insertEntry(
 			TimeEntryEntity(
-				uid = SyncIds.canonical(x.key), todoId = todoId, companyId = clientCompany ?: companyId, clientId = clientId,
-				roleId = x.role?.let { role(it) }, activity = x.activity?.trim()?.ifEmpty { null }, status = status,
+				uid = SyncIds.canonical(x.key), companyId = clientCompany ?: companyId, clientId = clientId,
+				roleId = x.role?.let { role(it) }, activity = x.activity?.trim()?.ifEmpty { null }, status = status, kind = kind,
 				locality = x.locality, locationKind = x.locationKind?.let { runCatching { LocationKind.valueOf(it) }.getOrNull() },
-				notes = x.notes, zoneId = zone.id, createdUtcMs = segs.minOfOrNull { it.startUtcMs } ?: now, updatedUtcMs = now,
+				notes = x.notes, zoneId = zone.id, createdUtcMs = real.minOfOrNull { it.startUtcMs } ?: now, updatedUtcMs = now,
+				deletedUtcMs = instant(x.deletedUtc),
+				closedUtcMs = if (status == ActivityStatus.CLOSED) instant(x.closedUtc) ?: real.mapNotNull { it.endUtcMs }.maxOrNull() ?: now else null,
+				externalKey = x.externalKey?.trim()?.ifEmpty { null }, dueEpochDay = due, dueTimeMin = dueTime,
+				planEpochDay = planDay, planStartMin = planTime, durationMin = duration, priority = Priority.of(x.priority).value,
+				absenceKind = if (kind == ActivityKind.ABSENCE) AbsenceKind.of(x.absenceKind) ?: AbsenceKind.ABSENCE else null,
 			),
 		)
 		segs.forEach { entries.insertSegment(it.copy(entryId = id)) }
@@ -363,7 +339,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 				),
 			)
 		}
-		x.refs.map(String::trim).filter(String::isNotEmpty).forEach {
+		x.refs.map(String::trim).filter(String::isNotEmpty).distinct().forEach {
 			entries.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(it), value = it))
 		}
 		entries.insertTags(x.tags.mapNotNull(Tags::normalize).distinct().map { EntryTagEntity(id, it) })

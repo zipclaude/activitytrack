@@ -36,9 +36,11 @@ object PluginParser {
 	private val R_CONFIG = setOf("option")
 	private val R_REQUEST = setOf("option", "identity", "lookup")
 	private val R_RECORD = setOf("option", "identity", "lookup")
-	private val R_ENTRY_FORM = setOf("option", "entry", "todo", "field", "list")
-	private val R_BODY = setOf("option", "identity", "lookup", "entry", "todo", "block", "field", "list")
-	private val R_TODO_DONE = setOf("option", "identity", "lookup", "todo")
+	private val R_ENTRY_FORM = setOf("option", "entry", "activity", "field", "list")
+	private val R_BODY = setOf("option", "identity", "lookup", "entry", "activity", "block", "field", "list")
+	/* the hook's name before 1.0 */
+	private const val LEGACY_CLOSED = "todoDone"
+	private val R_CLOSED = setOf("option", "identity", "lookup", "activity")
 
 	fun parse(text: String, fileId: String? = null): PluginResult {
 		val root = try {
@@ -363,7 +365,7 @@ object PluginParser {
 
 		private fun export(e: JsonElement?): ExportSpec? {
 			val o = obj(e, "export") ?: return null
-			keys(o, "export", setOf("entries", "group", "body", "travelBody", "create", "update", "delete", "todoDone"))
+			keys(o, "export", setOf("entries", "group", "body", "travelBody", "create", "update", "delete", "activityClosed", LEGACY_CLOSED))
 			string(o["entries"], "export.entries")?.let { if (it != "closed") error("export.entries", "only \"closed\" for now") }
 			val g = obj(o["group"], "export.group")
 			val group = if (g == null) {
@@ -385,29 +387,29 @@ object PluginParser {
 			val travelBody = o["travelBody"]?.let { exprMap(it, "export.travelBody", R_BODY) }
 			if (group.travel == TravelMode.SEPARATE && travelBody == null)
 				error("export.travelBody", "required with \"travel\": \"separate\"")
-			/* the path may depend on the to-do (ServiceDesk Plus: /requests/{id}/worklogs) */
-			val create = call(o["create"], "export.create", R_CONFIG + "todo", idSelector = true) ?: return null.also { if (o["create"] == null) error("export.create", "required") }
+			/* the path may depend on the imported activity (ServiceDesk Plus: /requests/{id}/worklogs) */
+			val create = call(o["create"], "export.create", R_CONFIG + "activity", idSelector = true) ?: return null.also { if (o["create"] == null) error("export.create", "required") }
 			if (create.id == null)
 				error("export.create.id", "required: where the response gives the new record's id")
 			return ExportSpec(
 				group, body, travelBody, create,
 				call(o["update"], "export.update", R_CONFIG + "remote", addRoots = R_BODY + "remote"),
 				call(o["delete"], "export.delete", R_CONFIG + "remote"),
-				todoDone(o["todoDone"]),
+				activityClosed(o["activityClosed"] ?: o[LEGACY_CLOSED], if (o["activityClosed"] == null && o[LEGACY_CLOSED] != null) LEGACY_CLOSED else "activityClosed"),
 			)
 		}
 
-		private fun todoDone(e: JsonElement?): TodoDone? {
-			val path = "export.todoDone"
+		private fun activityClosed(e: JsonElement?, key: String): ActivityClosed? {
+			val path = "export.$key"
 			val o = obj(e, path) ?: return null
 			keys(o, path, setOf("method", "path", "body"))
 			val method = string(o["method"], "$path.method")?.uppercase() ?: return null.also { error("$path.method", "required") }
 			if (method !in METHODS)
 				error("$path.method", "one of ${METHODS.joinToString()}")
-			return TodoDone(
+			return ActivityClosed(
 				method,
-				expr(o["path"], "$path.path", R_TODO_DONE, required = true) ?: return null,
-				exprMap(o["body"], "$path.body", R_TODO_DONE),
+				expr(o["path"], "$path.path", R_CLOSED, required = true) ?: return null,
+				exprMap(o["body"], "$path.body", R_CLOSED),
 			)
 		}
 
@@ -421,7 +423,7 @@ object PluginParser {
 				method,
 				expr(o["path"], "$path.path", roots, required = true) ?: return null,
 				/* the response's id, or a key built with the to-do (an id that holds the whole remote path) */
-				if (idSelector) expr(o["id"], "$path.id", setOf("todo"), selector = true) else null,
+				if (idSelector) expr(o["id"], "$path.id", setOf("activity"), selector = true) else null,
 				addRoots != null && (bool(o["fetchFirst"], "$path.fetchFirst") ?: false),
 				addRoots?.let { exprMap(o["add"], "$path.add", it) }.orEmpty(),
 			)

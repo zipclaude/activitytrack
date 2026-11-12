@@ -4,14 +4,6 @@ package it.infraconsulting.activitytrack.domain.model
 import java.time.Duration
 import java.time.Instant
 
-/* Lifecycle of a time entry. */
-enum class EntryStatus {
-	ACTIVE,		/* one segment is open */
-	SUSPENDED,	/* no open segment, may be resumed */
-	TO_COMPLETE,	/* stopped, details still missing */
-	CLOSED,		/* stopped and complete */
-}
-
 /* Kind of a timed segment inside an entry. */
 enum class SegmentKind {
 	WORK,
@@ -53,11 +45,12 @@ data class Interval(val start: Instant, val end: Instant) {
 	}
 }
 
-/* A segment as seen by the domain layer; [end] is null while open. */
+/* A segment as seen by the domain layer; [end] is null while open; [planned] only in a TODO activity (never counted). */
 data class Segment(
 	val kind: SegmentKind,
 	val start: Instant,
 	val end: Instant?,
+	val planned: Boolean = false,
 ) {
 	init {
 		require(end == null || !end.isBefore(start)) { "end ($end) before start ($start)" }

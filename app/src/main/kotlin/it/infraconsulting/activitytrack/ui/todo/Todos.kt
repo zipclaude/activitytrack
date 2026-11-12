@@ -75,13 +75,10 @@ import androidx.compose.foundation.background
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
 import it.infraconsulting.activitytrack.ui.common.QuickCompanyDialog
 import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
-import it.infraconsulting.activitytrack.data.db.TodoEntity
-import it.infraconsulting.activitytrack.data.db.TodoKind
 import it.infraconsulting.activitytrack.data.repo.isAbsence
 import it.infraconsulting.activitytrack.ui.common.ColorPalette
 import it.infraconsulting.activitytrack.ui.common.NO_COLOR
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
-import it.infraconsulting.activitytrack.data.repo.TodoRepository
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
@@ -173,9 +170,17 @@ class TodosViewModel(
 		},
 	) { todos.setState(t.id, done = state == TodoState.DONE, ignored = state == TodoState.IGNORED) }
 	fun clearPlan(t: TodoEntity) = undoable(t, R.string.undo_todo_unplanned) { todos.clearPlan(t.id) }
+	/* TODO(activity-1.0-ui): the last day of an absence typed in the 0.9 dialog (no column for it since 1.0) */
+	var absenceLastDay: Long? = null
+
 	fun save(t: TodoEntity, done: () -> Unit) {
+		/* an absence: an ABSENCE activity, one segment per working day (ACTIVITY-MODEL.md 3.1) */
+		if (t.isAbsence()) {
+			run(done) { todos.saveAbsence(t.planEpochDay ?: throw ValidationException(ValidationException.Reason.INVALID_DATE), absenceLastDay, t.planStartMin, t.durationMin, t.notes) }
+			return
+		}
 		/* an absence has none of the fields a policy may require (issue #158) */
-		if (t.kind == TodoKind.TASK) policy().missingRequired(
+		if (!t.isAbsence()) policy().missingRequired(
 			mapOf(
 				PField.CLIENT to (t.clientId != null), PField.NOTES to !t.notes.isNullOrBlank(), PField.REFS to t.refs.isNotBlank(),
 				PField.TODO_PRIORITY to (t.priority != null), PField.TODO_DUE to (t.dueEpochDay != null), PField.TODO_PLAN to (t.planEpochDay != null),
@@ -197,9 +202,9 @@ internal fun todosViewModel() = appViewModel(key = "todos") { c -> TodosViewMode
 internal const val ABSENCE_COLOR = 0xD64545
 
 /* A new to-do, planned at [day] [startMin] when given (agenda). */
-internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = TodoEntity(
-	uid = "", companyId = null, title = "", createdUtcMs = 0, updatedUtcMs = 0,
-	planEpochDay = day?.toEpochDay(), planStartMin = startMin,
+internal fun newTodo(day: LocalDate? = null, startMin: Int? = null) = todoDraft(
+	companyId = null, clientId = null, title = "", notes = null, dueEpochDay = null, dueTimeMin = null, priority = null,
+	planEpochDay = day?.toEpochDay(), planStartMin = startMin, durationMin = null,
 )
 
 /*
@@ -257,7 +262,7 @@ private fun subtitle(t: TodoEntity, clientName: String?): String {
 	}
 	val due = t.dueEpochDay?.let { d -> dayText(d) + (t.dueTimeMin?.let { " ${formatMin(it)}" } ?: "") }
 	val late = stringResource(R.string.todo_overdue).takeIf { overdue(t) }
-	return listOfNotNull(late, clientName, planned, due, t.priority?.let { "P$it" }).joinToString(" · ")
+	return listOfNotNull(late, clientName, planned, due, t.priority.takeIf { it > 0 }?.let { "P$it" }).joinToString(" · ")
 }
 
 /* The time shown at the card's top right: when it was done, else the planned block, else the due date. */
@@ -330,7 +335,7 @@ fun TodoCard(t: TodoEntity, clientName: String?, band: Int? = null, onClick: () 
 					TodoState.PLANNED -> Chip(stringResource(R.string.todo_planned_chip), cs.secondaryContainer, cs.onSecondaryContainer)
 					TodoState.OPEN -> {}
 				}
-				t.priority?.takeIf { state != TodoState.IGNORED && state != TodoState.DONE }?.let { Chip("P$it", cs.surfaceVariant, cs.onSurfaceVariant) }
+				t.priority.takeIf { it > 0 }?.takeIf { state != TodoState.IGNORED && state != TodoState.DONE }?.let { Chip("P$it", cs.surfaceVariant, cs.onSurfaceVariant) }
 			}
 		}
 	}
@@ -809,13 +814,14 @@ internal fun TodoEditDialog(initial: TodoEntity, vm: TodosViewModel, onClose: ()
 				vm.invalid(ValidationException.Reason.INVALID_TIME_RANGE)
 				return@EditDialog
 			}
-			val todo = initial.copy(
-				title = title, companyId = company, clientId = clientId,
+			/* TODO(activity-1.0-ui): references, colour and the priority scale of the 1.0 dialog */
+			val todo = todoDraft(
+				id = initial.id, base = initial, title = title, companyId = company, clientId = clientId,
 				planEpochDay = pd.getOrNull(), planStartMin = pt.getOrNull(), durationMin = dur.getOrNull(),
 				dueEpochDay = dd.getOrNull(), dueTimeMin = dt.getOrNull(),
-				priority = priority.trim().toIntOrNull(), notes = notes, refs = refs,
-				kind = if (absence) TodoKind.ABSENCE else TodoKind.TASK, color = color, planEndEpochDay = ld.getOrNull()?.takeIf { it != pd.getOrNull() },
-			)
+				priority = priority.trim().toIntOrNull(), notes = notes,
+			).copy(kind = if (absence) it.infraconsulting.activitytrack.domain.activity.ActivityKind.ABSENCE else it.infraconsulting.activitytrack.domain.activity.ActivityKind.ACTIVITY)
+			vm.absenceLastDay = ld.getOrNull()?.takeIf { it != pd.getOrNull() }
 			/* the plan starts past the due date (also later the same day): ask before saving (issue #71) */
 			if (startsAfterDue(todo.plan(), todo.dueEpochDay?.let(LocalDate::ofEpochDay), todo.dueTimeMin, ZoneId.systemDefault())) {
 				alignDue = todo

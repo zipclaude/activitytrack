@@ -11,7 +11,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.data.repo.ValidationException
-import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
+import it.infraconsulting.activitytrack.domain.activity.IllegalActivityCommandException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -58,8 +58,10 @@ abstract class ActionViewModel : ViewModel() {
 				_error.value = null
 				onSuccess()
 			} catch (e: ValidationException) {
-				_error.value = e.reason
-			} catch (e: IllegalTransitionException) {
+				/* NOT_ALLOWED: a repeated tap raced the list update, as below */
+				if (e.reason != ValidationException.Reason.NOT_ALLOWED)
+					_error.value = e.reason
+			} catch (e: IllegalActivityCommandException) {
 				/* a repeated tap raced the list update: the state already changed */
 			}
 		}

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.reminder
 
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.time.atMinute
 import java.time.Duration
@@ -12,7 +12,7 @@ import java.time.ZoneId
 /* Reminder-relevant state of an entry. */
 data class ReminderEntry(
 	val id: Long,
-	val status: EntryStatus,
+	val status: ActivityStatus,
 	val mode: SegmentKind?,
 	/* last "still working?" yes, or the start of the current mode; last pause reminder while in PAUSE */
 	val lastConfirmedMs: Long?,
@@ -107,9 +107,11 @@ class ReminderPlanner(
 			if (t.remindedFor != t.start.toEpochMilli() && now.isBefore(t.end))
 				out += Reminder.Planned(t.id, t.start - config.planLead)
 		for (e in entries) {
-			if (e.status == EntryStatus.ACTIVE && e.plannedEndMs != null)
+			/* running with a segment open (a suspended activity has none) */
+			val active = e.status == ActivityStatus.RUNNING && e.mode != null
+			if (active && e.plannedEndMs != null)
 				out += Reminder.PlannedEnd(e.id, Instant.ofEpochMilli(e.plannedEndMs))
-			if (e.status != EntryStatus.ACTIVE || e.lastConfirmedMs == null)
+			if (!active || e.lastConfirmedMs == null)
 				continue
 			val base = Instant.ofEpochMilli(e.lastConfirmedMs)
 			when (e.mode) {

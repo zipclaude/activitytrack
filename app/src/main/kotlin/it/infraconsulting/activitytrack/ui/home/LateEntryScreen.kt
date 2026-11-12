@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.ui.ActionViewModel
@@ -37,7 +36,7 @@ class LateEntryViewModel(private val entries: EntryRepository) : ActionViewModel
 	fun save(day: LocalDate, time: String, done: () -> Unit) = run(done) {
 		val min = parseHhMm(time)?.takeIf { it < 24 * 60 }
 			?: throw ValidationException(ValidationException.Reason.INVALID_TIME)
-		entries.recordAbsence(day, AbsenceKind.LATE_ENTRY, min)
+		entries.recordLateEntry(day, min)
 	}
 }
 

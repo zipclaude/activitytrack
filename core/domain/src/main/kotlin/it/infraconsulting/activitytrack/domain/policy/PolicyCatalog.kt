@@ -85,13 +85,18 @@ enum class Field(val key: String, val essential: Boolean = false) {
 	}
 }
 
-/* Where entries come from: anywhere, or only from to-dos (e.g. a management system's tickets). */
+/*
+ * Where activities start: anywhere, or only from a TODO activity (planned
+ * or assigned, e.g. a management system's tickets). "todosOnly" (before 1.0)
+ * is read as an alias of "plannedOnly".
+ */
 enum class EntrySource(val key: String) {
 	FREE("free"),
-	TODOS_ONLY("todosOnly");
+	PLANNED_ONLY("plannedOnly");
 
 	companion object {
-		val byKey by lazy { entries.associateBy { it.key } }
+		const val LEGACY_PLANNED_ONLY = "todosOnly"
+		val byKey by lazy { entries.associateBy { it.key } + (LEGACY_PLANNED_ONLY to PLANNED_ONLY) }
 	}
 }
 
@@ -175,6 +180,7 @@ object SettingsCatalog {
 
 	val all: List<SettingSpec> = listOf(
 		bool("editableTimes") { s, v -> s.copy(editableTimes = v) },
+		bool("roundStoredTimes", since = "1.0.0") { s, v -> s.copy(roundStoredTimes = v) },
 		bool("tagsFreeText") { s, v -> s.copy(tagsFreeText = v) },
 		bool("updateCheck", since = "0.9.3") { s, v -> s.copy(updateCheck = v) },
 		/* the old switch of the betas: the beta channel of updateChannels */

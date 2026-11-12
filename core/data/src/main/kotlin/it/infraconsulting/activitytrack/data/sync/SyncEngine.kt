@@ -78,10 +78,17 @@ class SyncEngine(
 		try {
 			var pulled = 0
 			db.run { it.clearErrors() }
-			if (!db.run { it.state().enabled }) {
+			/*
+			 * The first sync, or the first after a migration of the data (the
+			 * realignment of ACTIVITY-MODEL.md 6: the migration reset the cursor and
+			 * dropped the log and the shadows, so the server's version wins for
+			 * every record it has; the changes made since are pushed as usual).
+			 */
+			val state = db.run { it.state() }
+			if (!state.enabled || state.realign) {
 				db.run { it.enable() }
 				pull(errors) { offset = it }.also { pulled += it }
-				db.run { it.seed() }
+				db.run { it.seed(); it.realigned() }
 			}
 			var pushed = 0
 			/* a pull may log changes of its own (adoption): they go out in the same sync */

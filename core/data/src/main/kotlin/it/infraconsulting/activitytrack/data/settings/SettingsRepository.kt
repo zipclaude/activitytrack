@@ -117,6 +117,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val travelSampleSec = intPreferencesKey("travel_sample_sec")
 		fun order(list: OrderedList) = stringPreferencesKey("order_${list.name.lowercase()}")
 		val editableTimes = booleanPreferencesKey("editable_times")
+		val roundStoredTimes = booleanPreferencesKey("round_stored_times")
 		val tagsFreeText = booleanPreferencesKey("tags_free_text")
 		val updateCheck = booleanPreferencesKey("update_check")
 		/* before 0.9.9 only a switch for the betas: read as the beta channel */
@@ -183,6 +184,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			lastClientId = p[K.lastClient],
 			listOrders = OrderedList.entries.fold(d.listOrders) { o, l -> o.with(l, enumOr(p[K.order(l)], d.listOrders.of(l))) },
 			editableTimes = p[K.editableTimes] ?: d.editableTimes,
+			roundStoredTimes = p[K.roundStoredTimes] ?: d.roundStoredTimes,
 			tagsFreeText = p[K.tagsFreeText] ?: d.tagsFreeText,
 			updateCheck = p[K.updateCheck] ?: d.updateCheck,
 			updateSource = p[K.updateSource]?.let { n -> runCatching { UpdateSource.valueOf(n) }.getOrNull() } ?: d.updateSource,
@@ -255,6 +257,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		s.lastClientId?.let { p[K.lastClient] = it } ?: p.remove(K.lastClient)
 		OrderedList.entries.forEach { p[K.order(it)] = s.listOrders.of(it).name }
 		p[K.editableTimes] = s.editableTimes
+		p[K.roundStoredTimes] = s.roundStoredTimes
 		p[K.tagsFreeText] = s.tagsFreeText
 		p[K.updateCheck] = s.updateCheck
 		p[K.updateSource] = s.updateSource.name

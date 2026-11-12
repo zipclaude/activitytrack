@@ -125,7 +125,7 @@ class PluginParserTest {
 	/* the expressions on records and app values */
 	private val env = object : EvalEnv {
 		override val zone: ZoneId = ZoneId.of("Europe/Rome")
-		val refs = mapOf("@todo" to JsonNull, "@field.portfolio" to JsonPrimitive("P1"), "@lookup.states" to Json.parseToJsonElement("[1, 2]"),
+		val refs = mapOf("@activity" to JsonNull, "@field.portfolio" to JsonPrimitive("P1"), "@lookup.states" to Json.parseToJsonElement("[1, 2]"),
 			"@block.from" to JsonPrimitive(1_792_400_400_000L), "@entry.activity" to JsonPrimitive("Install"))
 		override fun ref(r: Expr.Ref): JsonElement = refs[r.toString()] ?: JsonNull
 		override fun round(rule: String, minutes: Long) = (minutes + 14) / 15 * 15
@@ -167,5 +167,11 @@ class PluginParserTest {
 				if (r.root == "parent") r.path.fold(parent as JsonElement) { e, k -> (e as? kotlinx.serialization.json.JsonObject)?.get(k) ?: JsonNull } else JsonNull
 		}
 		assertEquals(JsonPrimitive("/v3/ServicePortfolios/S9/ActivityTypes"), path.eval(null, env))
+	}
+
+	@Test
+	fun theNamesBefore10AreReadAsAliases() {
+		val x = Expr.parse(kotlinx.serialization.json.JsonPrimitive("@todo.fields.path")) { _, _ -> error("refused") }
+		assertEquals(Expr.Ref("activity", listOf("fields", "path")), x)
 	}
 }

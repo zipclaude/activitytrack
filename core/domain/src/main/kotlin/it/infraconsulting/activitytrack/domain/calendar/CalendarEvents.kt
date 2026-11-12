@@ -28,7 +28,7 @@ data class EventTags(val work: String = "", val travel: String = "", val pause: 
 	}
 }
 
-/* A planned, open to-do to show as a tentative event (M9). */
+/* The plan of a TODO activity, shown as a tentative event (M9; [uid] the activity's). */
 data class TodoEvent(
 	val uid: String,
 	/* null: a to-do of no company (issue #48) */
@@ -47,7 +47,8 @@ data class TodoEvent(
 /*
  * An event to keep in an external calendar (M5): one per entry and report
  * day, [key] = "<entry uid>/<yyyy-mm-dd>" is stored in the event so the next
- * sync finds it again; planned to-dos use "todo:<uid>" and are [tentative].
+ * sync finds it again; the plan of a TODO activity uses "plan:<uid>" and is
+ * [tentative] (activity model 1.0; "todo:<uid>" before, removed once).
  */
 data class PlannedEvent(
 	val key: String,
@@ -122,7 +123,7 @@ object CalendarEvents {
 		}.filter(String::isNotBlank)
 		val utc = java.time.ZoneOffset.UTC
 		PlannedEvent(
-			key = TODO_KEY + t.uid,
+			key = PLAN_KEY + t.uid,
 			companyId = t.companyId,
 			start = if (t.allDay && t.day != null) t.day.atStartOfDay(utc).toInstant() else t.start,
 			end = if (t.allDay && t.day != null) t.day.plusDays(1).atStartOfDay(utc).toInstant() else maxOf(t.end, t.start.plusSeconds(60)),
@@ -134,7 +135,10 @@ object CalendarEvents {
 		)
 	}
 
-	const val TODO_KEY = "todo:"
+	const val PLAN_KEY = "plan:"
+
+	/* the key of the plans before 1.0: such events are stale, the sync removes them */
+	const val LEGACY_TODO_KEY = "todo:"
 
 	private fun hm(d: Duration): String = "%d:%02d".format(d.toHours(), d.toMinutesPart())
 }

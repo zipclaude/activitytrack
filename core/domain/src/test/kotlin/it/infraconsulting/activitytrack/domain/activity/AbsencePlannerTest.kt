@@ -37,12 +37,20 @@ class AbsencePlannerTest {
 	}
 
 	@Test
-	fun withTimesEveryDayOfTheRange() {
-		val got = AbsencePlanner.plan(d("2026-11-13"), d("2026-11-15"), 540, 660, schedule, lunch, { true }, rome)
-		assertEquals(listOf("2026-11-13", "2026-11-14", "2026-11-15"), got.map { it.day.toString() })
-		assertEquals(t("2026-11-14T08:00:00Z"), got[1].start)
-		assertEquals(t("2026-11-14T10:00:00Z"), got[1].end)
-		assertEquals(listOf(0, 0, 0), got.map { it.index })
+	fun withTimesEveryWorkingDayOfTheRange() {
+		/* Friday 13 to Tuesday 17: the weekend has no hours, Monday 16 is a day off */
+		val got = AbsencePlanner.plan(d("2026-11-13"), d("2026-11-17"), 540, 660, schedule, lunch, { it == d("2026-11-16") }, rome)
+		assertEquals(listOf("2026-11-13", "2026-11-17"), got.map { it.day.toString() })
+		assertEquals(t("2026-11-17T08:00:00Z"), got[1].start)
+		assertEquals(t("2026-11-17T10:00:00Z"), got[1].end)
+		assertEquals(listOf(0, 0), got.map { it.index })
+	}
+
+	@Test
+	fun withTimesOnASingleDayTheDayAsChosen() {
+		/* a Saturday, and a day off: the user picked that day */
+		val sat = AbsencePlanner.plan(d("2026-11-14"), d("2026-11-14"), 540, 660, schedule, lunch, { true }, rome).single()
+		assertEquals(t("2026-11-14T08:00:00Z"), sat.start)
 	}
 
 	@Test

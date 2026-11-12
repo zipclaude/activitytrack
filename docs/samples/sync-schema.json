@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "schema": 3,
   "types": [
     {
       "type": "company",
@@ -324,130 +325,10 @@
       ]
     },
     {
-      "type": "todo",
-      "scope": "user",
-      "parent": null,
-      "fields": [
-        {
-          "name": "companyUid",
-          "kind": "ref",
-          "null": true,
-          "ref": "company"
-        },
-        {
-          "name": "clientUid",
-          "kind": "ref",
-          "null": true,
-          "ref": "client"
-        },
-        {
-          "name": "externalKey",
-          "kind": "text",
-          "null": true
-        },
-        {
-          "name": "title",
-          "kind": "text",
-          "null": false
-        },
-        {
-          "name": "notes",
-          "kind": "text",
-          "null": true
-        },
-        {
-          "name": "refs",
-          "kind": "text",
-          "null": false
-        },
-        {
-          "name": "dueDate",
-          "kind": "date",
-          "null": true
-        },
-        {
-          "name": "dueTimeMin",
-          "kind": "int",
-          "null": true
-        },
-        {
-          "name": "priority",
-          "kind": "int",
-          "null": true
-        },
-        {
-          "name": "done",
-          "kind": "bool",
-          "null": false
-        },
-        {
-          "name": "doneUtcMs",
-          "kind": "instant",
-          "null": true
-        },
-        {
-          "name": "createdUtcMs",
-          "kind": "instant",
-          "null": false
-        },
-        {
-          "name": "updatedUtcMs",
-          "kind": "instant",
-          "null": false
-        },
-        {
-          "name": "planDate",
-          "kind": "date",
-          "null": true
-        },
-        {
-          "name": "planStartMin",
-          "kind": "int",
-          "null": true
-        },
-        {
-          "name": "durationMin",
-          "kind": "int",
-          "null": true
-        },
-        {
-          "name": "ignoredUtcMs",
-          "kind": "instant",
-          "null": true
-        },
-        {
-          "name": "pluginFields",
-          "kind": "json",
-          "null": true
-        },
-        {
-          "name": "kind",
-          "kind": "text",
-          "null": false
-        },
-        {
-          "name": "color",
-          "kind": "int",
-          "null": true
-        },
-        {
-          "name": "planEndDate",
-          "kind": "date",
-          "null": true
-        }
-      ]
-    },
-    {
       "type": "entry",
       "scope": "user",
       "parent": null,
       "fields": [
-        {
-          "name": "todoUid",
-          "kind": "ref",
-          "null": true,
-          "ref": "todo"
-        },
         {
           "name": "contactUid",
           "kind": "ref",
@@ -536,6 +417,61 @@
           "name": "updatedUtcMs",
           "kind": "instant",
           "null": false
+        },
+        {
+          "name": "kind",
+          "kind": "text",
+          "null": false
+        },
+        {
+          "name": "deletedUtcMs",
+          "kind": "instant",
+          "null": true
+        },
+        {
+          "name": "closedUtcMs",
+          "kind": "instant",
+          "null": true
+        },
+        {
+          "name": "externalKey",
+          "kind": "text",
+          "null": true
+        },
+        {
+          "name": "dueDate",
+          "kind": "date",
+          "null": true
+        },
+        {
+          "name": "dueTimeMin",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "planDate",
+          "kind": "date",
+          "null": true
+        },
+        {
+          "name": "planStartMin",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "durationMin",
+          "kind": "int",
+          "null": true
+        },
+        {
+          "name": "priority",
+          "kind": "int",
+          "null": false
+        },
+        {
+          "name": "absenceKind",
+          "kind": "text",
+          "null": true
         }
       ]
     },
@@ -589,6 +525,11 @@
           "name": "note",
           "kind": "text",
           "null": true
+        },
+        {
+          "name": "planned",
+          "kind": "bool",
+          "null": false
         }
       ]
     },
@@ -745,28 +686,6 @@
           "name": "value",
           "kind": "text",
           "null": false
-        }
-      ]
-    },
-    {
-      "type": "absence",
-      "scope": "user",
-      "parent": null,
-      "fields": [
-        {
-          "name": "date",
-          "kind": "date",
-          "null": false
-        },
-        {
-          "name": "kind",
-          "kind": "text",
-          "null": false
-        },
-        {
-          "name": "timeMin",
-          "kind": "int",
-          "null": true
         }
       ]
     },

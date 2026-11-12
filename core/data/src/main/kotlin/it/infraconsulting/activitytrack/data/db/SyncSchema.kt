@@ -31,14 +31,12 @@ object SyncSchema {
 		"activity_preset" to "preset",
 		"material" to "material",
 		"place" to "place",
-		"todo" to "todo",
 		"time_entry" to "entry",
 		"segment" to "segment",
 		"attachment" to "attachment",
 		"expense" to "expense",
 		"entry_material" to "entryMaterial",
 		"external_ref" to "externalRef",
-		"absence" to "absence",
 		"day_off" to "dayOff",
 		"work_schedule" to "workSchedule",
 		"lunch_break" to "lunchBreak",
@@ -51,11 +49,14 @@ object SyncSchema {
 		"entry_tag" to ("time_entry" to "entry_id"),
 	)
 
-	/* tables that got their uid in schema 16 (todo and time_entry had one) */
 	/* tables added after schema 16: Room creates them with their uid */
 	private val AFTER_16 = setOf("tag")
 
-	private val NEW_UID = TYPES.keys - setOf("todo", "time_entry") - AFTER_16
+	/* synced until schema 21, dropped by the activity model 1.0 (schema 22) */
+	private val BEFORE_22 = setOf("absence")
+
+	/* tables that got their uid in schema 16 (todo and time_entry had one) */
+	private val NEW_UID = TYPES.keys + BEFORE_22 - setOf("time_entry") - AFTER_16
 
 	private const val NOW = "CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)"
 	private const val RECORDING = "(SELECT enabled AND NOT applying FROM sync_state WHERE id = 1)"

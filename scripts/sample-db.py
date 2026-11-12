@@ -79,17 +79,19 @@ def main(out):
 
 	entry_id = [0]
 
-	def entry(day, client, company, activity, role, status, mode, segs, tags=(), notes=None, todo=None):
+	# activity model 1.0 (schema 22): status RUNNING (mode set = a segment open) or CLOSED
+	def entry(day, client, company, activity, role, status, mode, segs, tags=(), notes=None):
 		entry_id[0] += 1
 		eid = entry_id[0]
 		created = min(ms(day, *s[1]) for s in segs)
+		ends = [ms(day, *s[2]) for s in segs if s[2] is not None]
 		db.execute(
-			"INSERT INTO time_entry (id, uid, todo_id, company_id, client_id, role_id, activity, status, mode, location_kind, notes, "
-			"zone_id, last_confirmed_utc_ms, unanswered_reminders, created_utc_ms, updated_utc_ms) "
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'CLIENT', ?, 'Europe/Rome', ?, 0, ?, ?)",
+			"INSERT INTO time_entry (id, uid, company_id, client_id, role_id, activity, status, mode, location_kind, notes, "
+			"zone_id, last_confirmed_utc_ms, unanswered_reminders, created_utc_ms, updated_utc_ms, kind, closed_utc_ms, priority) "
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CLIENT', ?, 'Europe/Rome', ?, 0, ?, ?, 'ACTIVITY', ?, 0)",
 			# only the running one is updated now: the Home shows it in the big card
-			(eid, uuid.uuid4().hex, todo, company, client, role, activity, status, mode, notes, nowms, created,
-				nowms if status == "ACTIVE" else created),
+			(eid, str(uuid.uuid4()), company, client, role, activity, status, mode, notes, nowms, created,
+				nowms if mode is not None else created, max(ends) if status == "CLOSED" and ends else None),
 		)
 		for kind, start, end, km in segs:
 			db.execute(
@@ -125,13 +127,13 @@ def main(out):
 	hm = lambda t: (t.hour, t.minute)
 	entry(today, 4, 2, "Configurazione rete", 1, "CLOSED", None,
 		[("WORK", hm(start - timedelta(minutes=110)), hm(start - timedelta(minutes=65)), None)], tags=("remoto",))
-	entry(today, 6, 3, "Installazione stampanti", 1, "SUSPENDED", None,
+	entry(today, 6, 3, "Installazione stampanti", 1, "RUNNING", None,
 		[("WORK", hm(start - timedelta(minutes=55)), hm(start - timedelta(minutes=10)), None)])
 	travel_end = start + timedelta(minutes=25)
 	# a call of another client paused it for a few minutes (issue #28)
 	call_start = travel_end + timedelta(minutes=30)
 	call_end = call_start + timedelta(minutes=6)
-	running = entry(today, 1, 1, "Aggiornamento server", 1, "ACTIVE", "WORK",
+	running = entry(today, 1, 1, "Aggiornamento server", 1, "RUNNING", "WORK",
 		[("TRAVEL", hm(start), hm(travel_end), 12.7), ("WORK", hm(travel_end), hm(call_start), None),
 			("PAUSE", hm(call_start), hm(call_end), None), ("WORK", hm(call_end), None, None)],
 		tags=("manutenzione",))
@@ -140,19 +142,21 @@ def main(out):
 	db.execute("INSERT INTO external_ref (entry_id, kind, value) VALUES (?, 'TICKET', 'INC-2041')", (running,))
 	db.execute("INSERT INTO expense (entry_id, amount_cents, description, created_utc_ms) VALUES (?, 450, 'Parcheggio', ?)", (running, nowms))
 
-	# to-dos: planned soon, due tomorrow, overdue, ignored, open
-	def todo(tid, company, client, title, plan_day=None, plan_min=None, due_day=None, priority=None, ignored=False, dur=None):
+	# to-dos (TODO activities, schema 22): planned soon, due tomorrow, overdue, deleted, open; priority 0..5, 5 the highest
+	def todo(tid, company, client, title, plan_day=None, plan_min=None, due_day=None, priority=0, ignored=False, dur=None):
+		entry_id[0] += 1
 		db.execute(
-			"INSERT INTO todo (id, uid, company_id, client_id, title, refs, due_epoch_day, priority, done, created_utc_ms, updated_utc_ms, "
-			"plan_epoch_day, plan_start_min, duration_min, ignored_utc_ms) VALUES (?, ?, ?, ?, ?, '', ?, ?, 0, ?, ?, ?, ?, ?, ?)",
-			(tid, uuid.uuid4().hex, company, client, title, due_day.toordinal() - date(1970, 1, 1).toordinal() if due_day else None,
+			"INSERT INTO time_entry (id, uid, company_id, client_id, activity, status, kind, due_epoch_day, priority, zone_id, unanswered_reminders, "
+			"created_utc_ms, updated_utc_ms, plan_epoch_day, plan_start_min, duration_min, deleted_utc_ms) "
+			"VALUES (?, ?, ?, ?, ?, 'TODO', 'ACTIVITY', ?, ?, 'Europe/Rome', 0, ?, ?, ?, ?, ?, ?)",
+			(entry_id[0], str(uuid.uuid4()), company, client, title, due_day.toordinal() - date(1970, 1, 1).toordinal() if due_day else None,
 				priority, nowms, nowms, plan_day.toordinal() - date(1970, 1, 1).toordinal() if plan_day else None, plan_min, dur,
 				nowms if ignored else None),
 		)
 	soon = now + timedelta(hours=2)
-	todo(1, 2, 3, "Rinnovo certificati", today if soon.date() == today else soon.date(), soon.hour * 60 // 30 * 30 % 1440, priority=1, dur=60)
-	todo(2, 1, 2, "Sostituzione firewall", due_day=today + timedelta(days=1), priority=2)
-	todo(3, 3, 5, "Report trimestrale", due_day=today - timedelta(days=1), priority=1)
+	todo(1, 2, 3, "Rinnovo certificati", today if soon.date() == today else soon.date(), soon.hour * 60 // 30 * 30 % 1440, priority=5, dur=60)
+	todo(2, 1, 2, "Sostituzione firewall", due_day=today + timedelta(days=1), priority=4)
+	todo(3, 3, 5, "Report trimestrale", due_day=today - timedelta(days=1), priority=5)
 	todo(4, 2, 4, "Inventario hardware", today + timedelta(days=3), 600, dur=120)
 	todo(5, 1, 1, "Verifica UPS", ignored=True)
 	# contacts of the clients and the calls recognised with them (issue #28)

@@ -83,7 +83,7 @@ class PluginExportTest {
 		val antares = (PluginParser.parse(File("../../plugins/antares.json").readText()) as PluginResult.Valid).plugin
 		val block = blocks(ExportSegment(WORK, at(9, 0), at(12, 0)), ExportSegment(TRAVEL, at(12, 0), at(12, 20), 12.0)).single()
 		val refs = mapOf<String, JsonElement>(
-			"todo" to JsonNull,
+			"activity" to JsonNull,
 			"field" to Json.parseToJsonElement("""{ "portfolio": "S1", "activityType": "T1", "included": true }"""),
 			"list" to Json.parseToJsonElement("""{ "portfolio": { "selected": { "id": "S1", "kind": "service" } } }"""),
 			"entry" to Json.parseToJsonElement("""{ "activity": "Printer", "notes": "" }"""),

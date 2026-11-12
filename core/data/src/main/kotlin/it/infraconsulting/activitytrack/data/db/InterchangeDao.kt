@@ -22,9 +22,6 @@ interface InterchangeDao {
 	@Query("SELECT * FROM expense WHERE entry_id IN (:entryIds) ORDER BY entry_id, created_utc_ms")
 	suspend fun expensesOf(entryIds: List<Long>): List<ExpenseEntity>
 
-	@Query("SELECT * FROM absence ORDER BY date_epoch_day")
-	suspend fun allAbsences(): List<AbsenceEntity>
-
 	@Query("SELECT * FROM day_off ORDER BY date_epoch_day")
 	suspend fun allDaysOff(): List<DayOffEntity>
 }

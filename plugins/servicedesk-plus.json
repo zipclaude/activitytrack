@@ -92,7 +92,7 @@
 					                "else": { "if": { "ne": ["$.requester.department.id", null] },
 					                          "then": { "concat": ["department-", "$.requester.department.id"], "separator": "" },
 					                          "else": { "concat": ["requester-", "$.requester.id"], "separator": "" } } },
-					"priority": { "map": "$.priority.name", "cases": { "Urgent": 1, "High": 1, "Medium": 2, "Normal": 2, "Low": 3 } },
+					"priority": { "map": "$.priority.name", "cases": { "Urgent": 4, "High": 3, "Medium": 2, "Normal": 2, "Low": 1 }, "default": 0 },
 					"due": { "date": "$.due_by_time.value", "format": "isoOffset" },
 					"done": { "or": [ { "in": ["$.status.name", ["Resolved", "Closed"]] }, { "eq": ["$.status.name", "@option.resolvedStatus"] } ] },
 					"fields": { "path": { "concat": ["requests/", "$.id"], "separator": "" }, "kind": "request", "owner": "$.technician.id" }
@@ -108,7 +108,7 @@
 				"map": {
 					"title": "$.title",
 					"notes": { "plainText": "$.description" },
-					"priority": { "map": "$.priority.name", "cases": { "Urgent": 1, "High": 1, "Medium": 2, "Normal": 2, "Low": 3 } },
+					"priority": { "map": "$.priority.name", "cases": { "Urgent": 4, "High": 3, "Medium": 2, "Normal": 2, "Low": 1 }, "default": 0 },
 					"due": { "date": "$.scheduled_end_time.value", "format": "isoOffset" },
 					"done": { "or": [ { "in": ["$.status.name", ["Closed", "Completed"]] }, { "eq": ["$.status.name", "@option.taskDoneStatus"] } ] },
 					"fields": { "path": { "concat": ["tasks/", "$.id"], "separator": "" }, "kind": "task", "owner": "$.owner.id" }
@@ -118,7 +118,7 @@
 	},
 
 	"entryFields": [
-		{ "key": "worklogType", "list": "worklogType", "required": true, "hidden": { "eq": ["@todo", null] },
+		{ "key": "worklogType", "list": "worklogType", "required": true, "hidden": { "eq": ["@activity", null] },
 		  "label": { "it": "Tipo di worklog", "en": "Worklog type" } }
 	],
 
@@ -127,25 +127,25 @@
 		"group": { "by": "dayBlock", "splitPauseMin": 60, "travel": "nearestBlock", "round": "work" },
 		"body": {
 			"worklog": { "object": {
-				"owner": { "object": { "id": "@todo.fields.owner" } },
+				"owner": { "object": { "id": "@activity.fields.owner" } },
 				"description": { "concat": ["@entry.activity", { "materials": "text" }, "@entry.notes"], "separator": "\n\n" },
 				"start_time": { "object": { "value": { "date": "@block.from", "format": "epochMs" } } },
 				"end_time": { "object": { "value": { "date": "@block.to", "format": "epochMs" } } },
 				"worklog_type": { "object": { "id": "@field.worklogType" } }
 			} }
 		},
-		"create": { "method": "POST", "path": "/api/v3/${todo.fields.path}/worklogs",
-		            "id": { "concat": ["@todo.fields.path", "/worklogs/", "$.worklog.id"], "separator": "" } },
+		"create": { "method": "POST", "path": "/api/v3/${activity.fields.path}/worklogs",
+		            "id": { "concat": ["@activity.fields.path", "/worklogs/", "$.worklog.id"], "separator": "" } },
 		"update": { "method": "PUT", "path": "/api/v3/${remote.id}" },
 		"delete": { "method": "DELETE", "path": "/api/v3/${remote.id}" },
-		"todoDone": {
-			"method": "PUT", "path": "/api/v3/${todo.fields.path}",
+		"activityClosed": {
+			"method": "PUT", "path": "/api/v3/${activity.fields.path}",
 			"body": {
-				"request": { "if": { "eq": ["@todo.fields.kind", "request"] }, "then": { "object": {
+				"request": { "if": { "eq": ["@activity.fields.kind", "request"] }, "then": { "object": {
 					"status": { "object": { "name": "@option.resolvedStatus" } },
-					"resolution": { "object": { "content": { "coalesce": ["@todo.activities", "@todo.title"] } } }
+					"resolution": { "object": { "content": { "coalesce": ["@activity.activities", "@activity.title"] } } }
 				} } },
-				"task": { "if": { "eq": ["@todo.fields.kind", "task"] }, "then": { "object": {
+				"task": { "if": { "eq": ["@activity.fields.kind", "task"] }, "then": { "object": {
 					"status": { "object": { "name": "@option.taskDoneStatus" } }
 				} } }
 			}

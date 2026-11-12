@@ -15,7 +15,7 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		CLIENT_COMPANY_MISMATCH,	/* entry company differs from the client's company */
 		CLIENT_REQUIRED,		/* WORK entries need a client */
 		POLICY_REQUIRED,		/* a field the policy makes required is empty (issue #48) */
-		TODOS_ONLY,			/* the policy lets activities start from to-dos only */
+		PLANNED_ONLY,			/* the policy lets activities start from a TODO activity only (plannedOnly) */
 		IN_USE,				/* referenced by other rows */
 		COMPLETION_INCOMPLETE,		/* no activity text and no attachment */
 		INVALID_SEGMENT,
@@ -37,5 +37,7 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		LAST_SEGMENT,			/* an entry keeps at least one segment; the running one stays (backlog 11) */
 		FUTURE_TIME,			/* a chosen start or end time after now (M17) */
 		BEFORE_SEGMENT,			/* a chosen end time before the running segment started (M17) */
+		NOT_ALLOWED,			/* a command the activity's state does not allow (ACTIVITY-MODEL.md 3) */
+		NOT_DELETED,			/* only an activity in the bin is deleted for good */
 	}
 }

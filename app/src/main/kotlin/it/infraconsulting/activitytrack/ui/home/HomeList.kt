@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -37,9 +51,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.domain.settings.Gestures
 import it.infraconsulting.activitytrack.ui.common.Banded
@@ -227,19 +241,19 @@ internal fun HomeListRow(
 		is HomeItem.Entry -> {
 			val c = item.card
 			val e = c.entry
-			val missing = e.status == EntryStatus.TO_COMPLETE
+			val missing = e.legacy == LegacyStatus.TO_COMPLETE
 			val subtitle = listOfNotNull(
 				e.activity, stringResource(R.string.home_kind_entry),
 				stringResource(if (missing) R.string.status_to_complete else R.string.status_closed),
 			).joinToString(" · ")
 			val complete = stringResource(R.string.cmd_complete)
 			val reopen = stringResource(R.string.cmd_reopen)
-			fun actions(swipe: it.infraconsulting.activitytrack.domain.settings.PastSwipe) = Gestures.pastCommands(swipe, e.status).map { cmd ->
-				if (cmd == EntryCommand.COMPLETE)
-					SwipeAction(complete, R.drawable.ic_done, GREEN, Color.White) { onEntry(e.id) }
+			/* TODO(activity-1.0-ui): "complete" opens the details (no command in 1.0) */
+			fun actions(swipe: it.infraconsulting.activitytrack.domain.settings.PastSwipe) =
+				if (swipe == it.infraconsulting.activitytrack.domain.settings.PastSwipe.COMPLETE && missing)
+					listOf(SwipeAction(complete, R.drawable.ic_done, GREEN, Color.White) { onEntry(e.id) })
 				else
-					SwipeAction(reopen, R.drawable.ic_restore, ORANGE, Color.White) { onReopen(c) }
-			}
+					Gestures.pastCommands(swipe, e.status).map { SwipeAction(reopen, R.drawable.ic_restore, ORANGE, Color.White) { onReopen(c) } }
 			SwipeCard(
 				toStart = actions(gestures.pastToStart),
 				toEnd = actions(gestures.pastToEnd),
