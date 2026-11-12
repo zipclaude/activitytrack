@@ -181,6 +181,48 @@ class SyncEngineTest {
 		assertEquals(JsonArray(listOf(JsonPrimitive("rete"))), b.records.read("entry", e)!!["tags"])
 	}
 
+	/*
+	 * After a migration of the data (ACTIVITY-MODEL.md 6, a restored older
+	 * backup too) the next sync is a full realignment: the migration reset the
+	 * cursor, the log and the shadows; the server's version wins for every
+	 * record it has, what it lacks is pushed, and later changes go as usual.
+	 */
+	@Test
+	fun afterAMigrationTheServerWinsAndOnlyWhatItLacksGoesUp() {
+		val a = phone()
+		val acme = company(a, "Acme")
+		val e = entry(a, acme, "Patching")
+		sync(a)
+		/* the server migrated its copy (another description); the phone migrated its own */
+		server.records.getValue("entry" to e).let { it.fields["activity"] = JsonPrimitive("server's"); it.rev = ++server.rev }
+		a.sql.exec("UPDATE sync_state SET applying = 1")
+		a.sql.exec("UPDATE time_entry SET activity = 'phone''s migration' WHERE uid = ?", e)
+		val only = entry(a, acme, "only here")
+		a.sql.exec("UPDATE sync_state SET applying = 0, realign = 1, cursor = 0")
+		a.sql.exec("DELETE FROM sync_change")
+		a.sql.exec("DELETE FROM sync_shadow")
+		val before = server.rev
+		sync(a)
+		assertEquals("server's", a.one("SELECT activity FROM time_entry WHERE uid = ?", e))
+		assertEquals(JsonPrimitive("only here"), server.records["entry" to only]!!.fields["activity"])
+		/* the realigned record was not pushed back */
+		assertEquals(JsonPrimitive("server's"), server.records["entry" to e]!!.fields["activity"])
+		assertEquals(0L, a.one("SELECT realign FROM sync_state"))
+		assertTrue(server.rev > before)
+		/* a change made afterwards goes up as usual */
+		a.sql.exec("UPDATE time_entry SET notes = 'later' WHERE uid = ?", e)
+		sync(a)
+		assertEquals(JsonPrimitive("later"), server.records["entry" to e]!!.fields["notes"])
+	}
+
+	@Test
+	fun upgradeRequiredIsReportedAsIncompatible() {
+		val a = phone()
+		server.incompatible = "upgrade_required"
+		val ex = assertFailsWith<SyncIncompatible> { sync(a) }
+		assertEquals("upgrade_required", ex.code)
+	}
+
 	@Test
 	fun changesTravelBothWaysFieldByField() {
 		val a = phone()

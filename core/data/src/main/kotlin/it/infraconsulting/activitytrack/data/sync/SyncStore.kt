@@ -32,13 +32,17 @@ class SyncStore(
 	/* the changes of one record since the last push, collapsed */
 	data class Pending(val type: String, val uid: String, val op: String, val time: Long, val maxSeq: Long)
 
-	class State(val enabled: Boolean, val cursor: Long, val lastSyncUtcMs: Long?, val lastError: String?)
+	/* [realign]: the data were migrated (activity model 1.0, a restored older backup): the next sync realigns */
+	class State(val enabled: Boolean, val cursor: Long, val lastSyncUtcMs: Long?, val lastError: String?, val realign: Boolean = false)
 
 	fun state(): State {
-		val r = db.rows("SELECT enabled, cursor, last_sync_utc_ms, last_error FROM sync_state WHERE id = 1").firstOrNull()
+		val r = db.rows("SELECT enabled, cursor, last_sync_utc_ms, last_error, realign FROM sync_state WHERE id = 1").firstOrNull()
 			?: return State(false, 0, null, null)
-		return State((r[0] as Long) != 0L, r[1] as Long, r[2] as Long?, r[3] as String?)
+		return State((r[0] as Long) != 0L, r[1] as Long, r[2] as Long?, r[3] as String?, (r[4] as Long) != 0L)
 	}
+
+	/* the realignment is done: the full pull went through and what the server lacks is logged */
+	fun realigned() = db.exec("UPDATE sync_state SET realign = 0 WHERE id = 1")
 
 	fun setCursor(cursor: Long) = db.exec("UPDATE sync_state SET cursor = ? WHERE id = 1", cursor)
 
@@ -297,7 +301,10 @@ class SyncStore(
 
 	/*
 	 * First sync (SYNC.md §7), after pulling everything: every record of the
-	 * phone the server does not have yet is logged for the push, parents first.
+	 * phone the server does not have yet is logged for the push, parents
+	 * first. The same after a migration of the data (ACTIVITY-MODEL.md 6):
+	 * the pull from the start gave a shadow to every record the server has,
+	 * the server's version won; the others go up.
 	 */
 	fun seed() {
 		val time = now()
