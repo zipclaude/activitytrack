@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -97,6 +98,7 @@ class HomeViewModel(
 	private val master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
 ) : QuickActioner(entries) {
+	/* the four lists below start at null = not loaded yet: the Home shows nothing rather than "nothing to show" */
 	/* the running activities: a segment open, or suspended */
 	val cards = combine(
 		entries.openEntries, entries.openEntrySegments, entries.openEntryTags, master.clients, master.companies,
@@ -111,7 +113,7 @@ class HomeViewModel(
 				companyColor(e.companyId, e.companyId?.let { co[it]?.color }), tags = byTag[e.id].orEmpty().toSet(),
 			)
 		}.sortedByDescending { it.lastChange }
-	}.state(emptyList())
+	}.state(null)
 
 	val settings = settingsRepo.settings.state(null)
 
@@ -138,10 +140,10 @@ class HomeViewModel(
 	}
 
 	/* the TODO activities (to do, planned, late), not deleted */
-	val todoCards = combine(withSegments(entries.todos), master.clients, master.companies, ::cardsOf).state(emptyList())
+	val todoCards = combine(withSegments(entries.todos), master.clients, master.companies, ::cardsOf).state(null)
 
 	/* the absences, not deleted */
-	val absenceCards = combine(withSegments(entries.absences), master.clients, master.companies, ::cardsOf).state(emptyList())
+	val absenceCards = combine(withSegments(entries.absences), master.clients, master.companies, ::cardsOf).state(null)
 
 	/*
 	 * The closed activities: those with their last segment ending in the last
@@ -170,7 +172,7 @@ class HomeViewModel(
 				endUtcMs = bySeg[e.id].orEmpty().maxOfOrNull { it.endUtcMs ?: 0L }?.takeIf { it > 0 },
 			)
 		}
-	}.state(emptyList())
+	}.state(null)
 
 	/* no client yet (issue #98): the Home shows how to begin; null while loading */
 	val hasClients = master.clients.map { l -> l.any { !it.archived } }.state(null)
@@ -245,7 +247,8 @@ fun HomeScreen(
 	onOpenImport: (() -> Unit)? = null,
 ) {
 	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
-	val allCards by vm.cards.collectAsState()
+	val loadedCards by vm.cards.collectAsState()
+	val allCards = loadedCards.orEmpty()
 	val selected by vm.selected.collectAsState()
 	val settings by vm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
@@ -275,9 +278,14 @@ fun HomeScreen(
 	val big = cards.firstOrNull { it.entry.id == selected } ?: cards.firstOrNull()
 	val small = cards.filter { it !== big }
 
-	val todoCards by vm.todoCards.collectAsState()
-	val closedCards by vm.closed.collectAsState()
-	val absenceCards by vm.absenceCards.collectAsState()
+	val loadedTodos by vm.todoCards.collectAsState()
+	val loadedClosed by vm.closed.collectAsState()
+	val loadedAbsences by vm.absenceCards.collectAsState()
+	val todoCards = loadedTodos.orEmpty()
+	val closedCards = loadedClosed.orEmpty()
+	val absenceCards = loadedAbsences.orEmpty()
+	/* until every flow has emitted once, a spinner: the empty texts were shown for ~3 s at a cold start */
+	val loading = loadedCards == null || loadedTodos == null || loadedClosed == null || loadedAbsences == null || settings == null
 	val companies by vm.companies.collectAsState()
 	val allTags by vm.tags.collectAsState()
 	var tag by rememberSaveable { mutableStateOf<String?>(null) }
@@ -324,6 +332,10 @@ fun HomeScreen(
 		/* with activities running the panel's buttons move to the bar, on dark grey circles (owner, 2026-11-11) */
 		actions = { if (cards.isNotEmpty()) CreateBar(buttons) },
 	) { padding ->
+		if (loading) {
+			Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+			return@ScreenScaffold
+		}
 		Box(Modifier.fillMaxSize().padding(padding)) {
 			Column(Modifier.fillMaxSize()) {
 				/*
@@ -436,7 +448,7 @@ private fun CreateBar(buttons: List<CreateButton>) {
 	/* a gap between the discs and from the screen's edge: they touched each other and the edge */
 	androidx.compose.foundation.layout.Row(
 		modifier = Modifier.padding(end = 8.dp),
-		horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+		horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
 	) {
 	for (b in buttons) {
 		val st = displayStyle(b.state)
