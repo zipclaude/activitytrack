@@ -640,7 +640,20 @@ class RepositoryTest {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(true, entries.isDiscardable(id))
 		entries.discard(id)
-		assertNull(db.entryDao().entry(id))
+		/* born running: to the bin, restorable */
+		kotlin.test.assertNotNull(db.entryDao().entry(id)!!.deletedUtcMs)
+
+		/* a to-do started by mistake goes back to TODO, its description kept */
+		val todo = entries.saveTodo(null, TodoRequest(acme, client, activity = "Patch the server"))
+		clock.advance(10)
+		entries.startTodo(todo, SegmentKind.WORK)
+		assertEquals(true, entries.isDiscardable(todo))
+		entries.discard(todo)
+		val back = db.entryDao().entry(todo)!!
+		assertEquals(ActivityStatus.TODO, back.status)
+		assertNull(back.deletedUtcMs)
+		assertEquals("Patch the server", back.activity)
+		assertEquals(emptyList(), db.entryDao().segments(todo))
 
 		val kept = entries.start(StartRequest(SegmentKind.WORK, client))
 		entries.addExpense(kept, 1250, "parking")

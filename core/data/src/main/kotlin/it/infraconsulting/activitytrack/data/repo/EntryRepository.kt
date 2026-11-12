@@ -1210,18 +1210,40 @@ class EntryRepository(
 
 	/*
 	 * An activity under one minute is a mistake (owner, 2026-10-18): stopping
-	 * it from the app offers to discard it (for good, not to the bin). Only
-	 * without attachments or expenses, so nothing the user added is lost.
+	 * it from the app offers to discard it. Only without attachments or
+	 * expenses, so nothing the user added is lost.
 	 */
-	suspend fun isDiscardable(entryId: Long): Boolean =
-		recordedMs(entryId) < minLengthMs() && dao.attachmentCount(entryId) == 0 && dao.expenseCount(entryId) == 0
+	suspend fun isDiscardable(entryId: Long): Boolean {
+		val e = dao.entry(entryId) ?: return false
+		return e.kind == ActivityKind.ACTIVITY && e.deletedUtcMs == null &&
+			recordedMs(entryId) < minLengthMs() && dao.attachmentCount(entryId) == 0 && dao.expenseCount(entryId) == 0
+	}
 
+	/*
+	 * Discarding undoes the mistaken start, not the work planned before it:
+	 * a TODO started by mistake ([wasTodo]) goes back to TODO (its real
+	 * segments go, what was sent for them is deleted remotely); an activity
+	 * born running goes to the bin, restorable, never deleted for good.
+	 */
 	suspend fun discard(entryId: Long) = db.withTransaction {
-		load(entryId)
+		val e = load(entryId)
 		if (!isDiscardable(entryId))
 			throw ValidationException(Reason.TOO_SHORT, "entry $entryId is not discardable")
-		keepRemoteIds(load(entryId))
-		dao.deleteEntry(entryId)
+		val segments = dao.segments(entryId)
+		if (!wasTodo(e, segments)) {
+			delete(entryId)
+			return@withTransaction
+		}
+		keepRemoteIds(e)
+		db.pluginDao().sentAll(entryId).forEach { db.pluginDao().forgetSent(entryId, it.pluginId, it.blockKey) }
+		segments.filter { !it.planned }.forEach { dao.deleteSegment(it.id) }
+		dao.updateEntry(
+			e.copy(
+				status = ActivityStatus.TODO, mode = null, closedUtcMs = null, plannedEndUtcMs = null, lastConfirmedUtcMs = null,
+				unansweredReminders = 0, updatedUtcMs = clock.millis(),
+			),
+		)
+		verify(entryId)
 	}
 
 	companion object {
@@ -1277,6 +1299,21 @@ class EntryRepository(
 		if (e.clientId != null)
 			check(master.client(e.clientId)?.companyId == e.companyId) { "entry $entryId: company != client company" }
 	}
+}
+
+/*
+ * Whether [e] was a TODO before it started, for "discard" (there is no
+ * column for it): the fields only a to-do has (a plan, a due date, a
+ * priority, a key of the management system), or created before its first
+ * real segment. An activity born running ("Lavoro", "Viaggio", an import,
+ * "Passata") is created at or after its first start: a backdated or
+ * rounded start lies before the creation, never after it.
+ */
+fun wasTodo(e: TimeEntryEntity, segments: List<SegmentEntity>): Boolean {
+	if (e.planEpochDay != null || e.dueEpochDay != null || e.priority > 0 || e.externalKey != null)
+		return true
+	val first = segments.filter { !it.planned }.minOfOrNull { it.startUtcMs } ?: return true
+	return e.createdUtcMs < first
 }
 
 /* "Untick" (3): an activity, closed, not deleted, without real segments goes back to TODO. */
