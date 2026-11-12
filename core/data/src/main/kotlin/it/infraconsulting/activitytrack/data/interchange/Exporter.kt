@@ -5,9 +5,8 @@ import it.infraconsulting.activitytrack.domain.interchange.XMaterial
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
-import it.infraconsulting.activitytrack.data.db.TodoEntity
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.interchange.Interchange
-import it.infraconsulting.activitytrack.domain.interchange.XAbsence
 import it.infraconsulting.activitytrack.domain.interchange.XClient
 import it.infraconsulting.activitytrack.domain.interchange.XCompany
 import it.infraconsulting.activitytrack.domain.interchange.XDayOff
@@ -18,17 +17,18 @@ import it.infraconsulting.activitytrack.domain.interchange.XRole
 import it.infraconsulting.activitytrack.domain.interchange.XSegment
 import it.infraconsulting.activitytrack.domain.interchange.XSite
 import it.infraconsulting.activitytrack.domain.interchange.XColor
-import it.infraconsulting.activitytrack.domain.interchange.XTodo
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
+/* TODOS: the TODO activities; ENTRIES: the others (absences included); CALENDAR: the days off */
 enum class ExportSection { MASTER_DATA, TODOS, ENTRIES, CALENDAR }
 
 /*
- * What to export (M4): sections, an optional period (entries touching it,
- * absences and days off in it), an optional company and client.
+ * What to export (M4): sections, an optional period (activities touching
+ * it, days off in it), an optional company and client. Deleted activities
+ * stay in the bin; the format is version 2 (ACTIVITY-MODEL.md 6.2).
  */
 data class ExportFilter(
 	val sections: Set<ExportSection> = ExportSection.entries.toSet(),
@@ -47,7 +47,6 @@ data class ExportFilter(
 class Exporter(private val db: ActivityTrackDatabase) {
 	private val master = db.masterDataDao()
 	private val entries = db.entryDao()
-	private val todos = db.todoDao()
 	private val bulk = db.interchangeDao()
 
 	suspend fun build(f: ExportFilter, generator: String, now: Instant = Instant.now()): Interchange {
@@ -60,8 +59,6 @@ class Exporter(private val db: ActivityTrackDatabase) {
 		val clientIds = clients.map { it.id }.toSet()
 		val companyKey = master.allCompanies().associate { it.id to key(it) }
 		val clientKey = allClients.associate { it.id to key(it) }
-		val todoRows = todos.all()
-		val todoKey = todoRows.associate { it.id to key(it) }
 		val roles = master.allRoles().associateBy { it.id }
 
 		var out = Interchange(generator = generator, createdUtc = now.toString())
@@ -85,31 +82,12 @@ class Exporter(private val db: ActivityTrackDatabase) {
 			)
 		}
 
-		if (ExportSection.TODOS in f.sections) {
-			out = out.copy(
-				todos = todoRows.filter { inScope(it.companyId) && (f.clientId == null || it.clientId == f.clientId) }.map {
-					XTodo(
-						key = key(it), companyKey = it.companyId?.let(companyKey::getValue), clientKey = it.clientId?.let(clientKey::getValue),
-						title = it.title, notes = it.notes, refs = it.refs.lines().filter(String::isNotBlank),
-						dueDate = it.dueEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
-						dueTime = it.dueTimeMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },
-						priority = it.priority, done = it.done,
-						plannedDate = it.planEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
-						plannedTime = it.planStartMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },
-						durationMin = it.durationMin,
-						ignored = it.ignoredUtcMs != null,
-						kind = it.kind.name, color = XColor.format(it.color),
-						plannedEndDate = it.planEndEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
-					)
-				},
-			)
-		}
-
-		if (ExportSection.ENTRIES in f.sections) {
+		if (ExportSection.ENTRIES in f.sections || ExportSection.TODOS in f.sections) {
 			val fromMs = f.from?.atStartOfDay(f.zone)?.toInstant()?.toEpochMilli()
 			val toMs = f.to?.plusDays(1)?.atStartOfDay(f.zone)?.toInstant()?.toEpochMilli()
 			val candidates = bulk.allEntries().filter {
-				(f.companyId == null || it.companyId == f.companyId) && (f.clientId == null || it.clientId == f.clientId)
+				it.deletedUtcMs == null && (f.companyId == null || it.companyId == f.companyId) && (f.clientId == null || it.clientId == f.clientId) &&
+					(if (it.status == ActivityStatus.TODO) ExportSection.TODOS in f.sections else ExportSection.ENTRIES in f.sections)
 			}
 			val ids = candidates.map { it.id }
 			val segments = if (ids.isEmpty()) emptyMap() else bulk.segmentsOf(ids).groupBy { it.entryId }
@@ -119,27 +97,38 @@ class Exporter(private val db: ActivityTrackDatabase) {
 			val tags = if (ids.isEmpty()) emptyMap() else entries.tagsOf(ids).groupBy({ it.entryId }, { it.tag })
 			out = out.copy(
 				entries = candidates.filter { e ->
-					val segs = segments[e.id].orEmpty()
+					val segs = segments[e.id].orEmpty().filter { !it.planned }
 					(f.tag == null || f.tag in tags[e.id].orEmpty()) &&
+					/* a TODO activity has no time of its own: not filtered by the period */
+					(e.status == ActivityStatus.TODO || (
 					/* touching the period: an open segment counts as "until now" */
 					(fromMs == null || segs.any { (it.endUtcMs ?: now.toEpochMilli()) > fromMs }) &&
-						(toMs == null || segs.any { it.startUtcMs < toMs })
+						(toMs == null || segs.any { it.startUtcMs < toMs })))
 				}.map { e ->
 					XEntry(
 						key = e.uid ?: "entry-${e.id}",
 						companyKey = e.companyId?.let(companyKey::getValue),
 						clientKey = e.clientId?.let(clientKey::getValue),
-						todoKey = e.todoId?.let(todoKey::getValue),
 						role = e.roleId?.let { roles[it]?.name },
 						activity = e.activity,
 						status = e.status.name,
+						kind = e.kind.name,
+						closedUtc = e.closedUtcMs?.let { Instant.ofEpochMilli(it).toString() },
+						externalKey = e.externalKey,
+						dueDate = e.dueEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
+						dueTime = e.dueTimeMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },
+						plannedDate = e.planEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
+						plannedTime = e.planStartMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },
+						durationMin = e.durationMin,
+						priority = e.priority,
+						absenceKind = e.absenceKind?.name,
 						locality = e.locality,
 						locationKind = e.locationKind?.name,
 						notes = e.notes,
 						zone = e.zoneId,
 						segments = segments[e.id].orEmpty().map {
 							XSegment(it.kind.name, Instant.ofEpochMilli(it.startUtcMs).toString(), it.endUtcMs?.let { m -> Instant.ofEpochMilli(m).toString() },
-								it.source.name, it.kmEstimated, it.kmDeclared)
+								it.source.name, it.kmEstimated, it.kmDeclared, planned = it.planned)
 						},
 						expenses = expenses[e.id].orEmpty().map {
 							XExpense(BigDecimal.valueOf(it.amountCents, 2).toPlainString(), it.description,
@@ -161,9 +150,6 @@ class Exporter(private val db: ActivityTrackDatabase) {
 		if (ExportSection.CALENDAR in f.sections) {
 			val inPeriod = { d: Long -> (f.from == null || d >= f.from.toEpochDay()) && (f.to == null || d <= f.to.toEpochDay()) }
 			out = out.copy(
-				absences = bulk.allAbsences().filter { inPeriod(it.dateEpochDay) }.map {
-					XAbsence(LocalDate.ofEpochDay(it.dateEpochDay).toString(), it.kind.name, it.timeMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) })
-				},
 				daysOff = bulk.allDaysOff().filter { inPeriod(it.dateEpochDay) }.map { XDayOff(LocalDate.ofEpochDay(it.dateEpochDay).toString(), it.note) },
 			)
 		}
@@ -172,5 +158,4 @@ class Exporter(private val db: ActivityTrackDatabase) {
 
 	private fun key(c: CompanyEntity) = c.externalCode ?: c.name
 	private fun key(c: ClientEntity) = c.externalCode ?: c.name
-	private fun key(t: TodoEntity) = t.externalKey ?: t.uid
 }
