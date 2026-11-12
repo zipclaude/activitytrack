@@ -231,7 +231,7 @@
   <string name="entry_summary_totals">Work %1$s · Travel %2$s · Pause %3$s</string>
   <string name="field_locality">Locality</string>
   <string name="field_location_kind">Where</string>
-  <string name="segments">Times</string>
+  <string name="segments">Segments</string>
   <string name="segment_manual">manual</string>
   <string name="external_refs">External references</string>
   <string name="external_ref_new">Ticket, URL or code</string>

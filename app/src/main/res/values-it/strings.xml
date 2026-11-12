@@ -219,7 +219,7 @@
   <string name="entry_summary_totals">Lavoro %1$s · Viaggio %2$s · Pausa %3$s</string>
   <string name="field_locality">Località</string>
   <string name="field_location_kind">Dove</string>
-  <string name="segments">Tempi</string>
+  <string name="segments">Tratti</string>
   <string name="segment_manual">manuale</string>
   <string name="external_refs">Riferimenti esterni</string>
   <string name="external_ref_new">Ticket, URL o codice</string>
