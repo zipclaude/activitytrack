@@ -926,4 +926,26 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="create_absence_times">Time (optional)</string>
   <string name="create_absence_hint_days">Without a time: the working hours of each working day.</string>
   <string name="create_absence_hint_times">With a time: the same hours on each day of the range.</string>
+  <!-- ui-detail -->
+  <string name="detail_end_ahead">ends at %1$s</string>
+  <string name="detail_reopen_work">Reopen with work</string>
+  <string name="detail_reopen_travel">Reopen with travel</string>
+  <string name="detail_reopen_text">A new segment opens from now; the time since the activity was closed stays empty.</string>
+  <string name="detail_travel_question">Have you completed the work?</string>
+  <string name="detail_travel_hint">Yes: this activity closes and a new travel starts. No: the travel is part of this activity.</string>
+  <string name="detail_stop_title">End the activity</string>
+  <string name="detail_stop_at">End (empty = now)</string>
+  <string name="detail_stop_ahead_hint">Up to 60 minutes ahead.</string>
+  <string name="detail_return_question">There was an outbound travel: what about the way back?</string>
+  <string name="detail_stop_with_return">End the activity and add the return travel</string>
+  <string name="detail_days">Days</string>
+  <string name="detail_add_day">Day</string>
+  <string name="detail_segment_new">New segment</string>
+  <string name="detail_planned">planned</string>
+  <string name="detail_planned_hint">Planned: it does not count in the totals.</string>
+  <string name="detail_delete_text">The activity goes to the bin: it can be restored from there.</string>
+  <string name="detail_absence_absence">Absence</string>
+  <string name="detail_absence_holiday">Holiday</string>
+  <string name="detail_absence_leave">Leave</string>
+  <string name="detail_absence_sick">Sick leave</string>
 </resources>

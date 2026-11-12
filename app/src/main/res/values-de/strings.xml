@@ -914,4 +914,26 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="create_absence_times">Uhrzeit (optional)</string>
   <string name="create_absence_hint_days">Ohne Uhrzeit: die Arbeitszeit jedes Arbeitstags.</string>
   <string name="create_absence_hint_times">Mit Uhrzeit: dieselben Stunden an jedem Tag des Zeitraums.</string>
+  <!-- ui-detail -->
+  <string name="detail_end_ahead">endet um %1$s</string>
+  <string name="detail_reopen_work">Mit Arbeit wieder öffnen</string>
+  <string name="detail_reopen_travel">Mit Fahrt wieder öffnen</string>
+  <string name="detail_reopen_text">Ab jetzt beginnt ein neuer Abschnitt; die Zeit seit dem Abschluss bleibt leer.</string>
+  <string name="detail_travel_question">Ist die Arbeit erledigt?</string>
+  <string name="detail_travel_hint">Ja: diese Tätigkeit wird abgeschlossen und eine neue Fahrt beginnt. Nein: die Fahrt gehört zu dieser Tätigkeit.</string>
+  <string name="detail_stop_title">Tätigkeit beenden</string>
+  <string name="detail_stop_at">Ende (leer = jetzt)</string>
+  <string name="detail_stop_ahead_hint">Bis zu 60 Minuten in der Zukunft.</string>
+  <string name="detail_return_question">Es gab eine Hinfahrt: und die Rückfahrt?</string>
+  <string name="detail_stop_with_return">Tätigkeit beenden und Rückfahrt hinzufügen</string>
+  <string name="detail_days">Tage</string>
+  <string name="detail_add_day">Tag</string>
+  <string name="detail_segment_new">Neuer Abschnitt</string>
+  <string name="detail_planned">geplant</string>
+  <string name="detail_planned_hint">Geplant: zählt nicht in den Summen.</string>
+  <string name="detail_delete_text">Die Tätigkeit kommt in den Papierkorb: dort kann sie wiederhergestellt werden.</string>
+  <string name="detail_absence_absence">Abwesenheit</string>
+  <string name="detail_absence_holiday">Urlaub</string>
+  <string name="detail_absence_leave">Freistellung</string>
+  <string name="detail_absence_sick">Krankheit</string>
 </resources>
