@@ -68,6 +68,24 @@ class InterchangeUpgradeTest {
 		assertEquals(ActivityMigration.uid(SyncIds.canonical("A-1"), "abs/2026-11-13/0").length, 36)
 	}
 
+	/* the import skips what still runs elsewhere (a segment open); a SUSPENDED entry of version 1 comes in */
+	@Test
+	fun aSuspendedEntryOfVersion1IsNotRunningElsewhere() {
+		val v1 = Interchange(
+			version = 1,
+			entries = listOf(
+				XEntry(key = "s", companyKey = "ACME", clientKey = "C-1", status = "SUSPENDED", zone = "Europe/Rome",
+					segments = listOf(seg("2026-11-10T08:00:00Z", "2026-11-10T09:00:00Z"))),
+				XEntry(key = "a", companyKey = "ACME", clientKey = "C-1", status = "ACTIVE", zone = "Europe/Rome",
+					segments = listOf(seg("2026-11-10T08:00:00Z", null))),
+			),
+		)
+		val byKey = InterchangeUpgrade.toV2(v1, rome, week, now = now).data.entries.associateBy { it.key }
+		assertEquals("RUNNING", byKey.getValue("s").status)
+		assertEquals(false, byKey.getValue("s").runsElsewhere())
+		assertEquals(true, byKey.getValue("a").runsElsewhere())
+	}
+
 	@Test
 	fun aVersion2FileStaysAsItIs() {
 		val v2 = Interchange(entries = listOf(XEntry(key = "k", status = "TODO", zone = "Europe/Rome")))

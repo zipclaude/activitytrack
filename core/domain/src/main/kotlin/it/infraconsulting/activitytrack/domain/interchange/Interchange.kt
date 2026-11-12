@@ -146,6 +146,13 @@ data class XEntry(
 	val materials: List<XMaterial> = emptyList(),
 )
 
+/*
+ * Running on the device that wrote it (a segment still open): an import
+ * skips it, or it would run twice. A RUNNING activity with nothing open
+ * (suspended, e.g. a SUSPENDED entry of a version 1 file) is not.
+ */
+fun XEntry.runsElsewhere(): Boolean = segments.any { it.endUtc == null }
+
 @Serializable
 data class XSegment(
 	val kind: String,

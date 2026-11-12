@@ -27,6 +27,7 @@ import it.infraconsulting.activitytrack.domain.reminder.DayWindow
 import it.infraconsulting.activitytrack.domain.interchange.XClient
 import it.infraconsulting.activitytrack.domain.interchange.XCompany
 import it.infraconsulting.activitytrack.domain.interchange.XEntry
+import it.infraconsulting.activitytrack.domain.interchange.runsElsewhere
 import it.infraconsulting.activitytrack.domain.interchange.XSite
 import it.infraconsulting.activitytrack.domain.interchange.XColor
 import it.infraconsulting.activitytrack.domain.todo.TodoPlan
@@ -245,8 +246,8 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 	/*
 	 * An activity (version 2): matched by its uid (the key as a canonical
 	 * UUID), else an imported TODO by (company, external key); an existing
-	 * one is compared, never overwritten. A running one is skipped (it would
-	 * run on two devices).
+	 * one is compared, never overwritten. One with a segment open is skipped
+	 * (it would run on two devices).
 	 */
 	private suspend fun entry(r: Run, x: XEntry) {
 		val companyId = x.companyKey?.let { companyId(r, it) ?: return r.skip("entries", x.key, "unknown company $it") }
@@ -277,8 +278,8 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 			if (diff.isEmpty()) r.same("entries") else r.conflict("entries", x.key, diff.joinToString())
 			return
 		}
-		/* another device's running activity would run twice */
-		if (status == ActivityStatus.RUNNING || x.segments.any { it.endUtc == null })
+		/* another device's running activity would run twice; a suspended one (nothing open) comes in */
+		if (x.runsElsewhere())
 			return r.skip("entries", x.key, "running entry")
 		if (kind == ActivityKind.ABSENCE && status != ActivityStatus.CLOSED)
 			return r.skip("entries", x.key, "absence not closed")
