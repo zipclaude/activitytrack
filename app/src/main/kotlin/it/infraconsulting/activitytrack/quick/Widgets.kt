@@ -45,8 +45,10 @@ import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.domain.activity.DisplayState
+import it.infraconsulting.activitytrack.notify.displayedState
+import it.infraconsulting.activitytrack.notify.isTicking
+import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.domain.activity.IllegalActivityCommandException
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
@@ -72,7 +74,10 @@ private data class WidgetState(
 	val entryId: Long?,
 	val title: String,
 	val mode: SegmentKind?,
+	val state: DisplayState?,
 	val sinceMs: Long?,
+	/* what the buttons offer, from the state machine */
+	val commands: List<EntryCommand>,
 	val recent: List<Pair<Long, String>>,
 )
 
@@ -86,11 +91,11 @@ private suspend fun loadState(context: Context): WidgetState {
 		.mapNotNull { u -> clients[u.clientId]?.takeIf { !it.archived }?.let { it.id to it.name } }
 		.take(3)
 	if (e == null)
-		return WidgetState(null, context.getString(R.string.widget_no_activity), null, null, recent)
-	val since = c.entries.segments(e.id).first().lastOrNull { it.endUtcMs == null }?.startUtcMs
+		return WidgetState(null, context.getString(R.string.widget_no_activity), null, null, null, emptyList(), recent)
+	val shown = displayedState(e, c.entries.segments(e.id).first())
 	val title = e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name }
 		?: context.getString(R.string.app_name)
-	return WidgetState(e.id, title, e.mode, since, recent)
+	return WidgetState(e.id, title, e.mode, shown.state, shown.since?.toEpochMilli(), ongoingActions(e), recent)
 }
 
 private fun openScreen(context: Context, screen: Screen) =
@@ -192,13 +197,7 @@ class StatusWidget : GlanceAppWidget() {
 			) {
 				Text(s.title, maxLines = 1, style = TextStyle(color = text, fontWeight = FontWeight.Bold, fontSize = 15.sp))
 				if (s.entryId != null) {
-					val mode = context.getString(
-						when (s.mode) {
-							SegmentKind.TRAVEL -> R.string.mode_travel
-							SegmentKind.PAUSE -> R.string.mode_pause
-							else -> R.string.mode_work
-						},
-					)
+					val mode = context.getString(displayName(s.state ?: DisplayState.WORK))
 					Text(
 						s.sinceMs?.let { context.getString(R.string.widget_since, mode, clock(it)) } ?: mode,
 						maxLines = 1,
@@ -215,7 +214,7 @@ class StatusWidget : GlanceAppWidget() {
 				) {
 					Text("€", style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer, fontWeight = FontWeight.Bold, fontSize = 18.sp))
 				}
-				for (cmd in ongoingActions(s.mode)) {
+				for (cmd in s.commands) {
 					Spacer(GlanceModifier.width(6.dp))
 					CommandCircle(
 						cmd, 40, context.getString(commandLabel(cmd, s.mode)),
@@ -294,7 +293,7 @@ object QuickWidgets {
 		EntryWidget().updateAll(context)
 		TodoWidget().updateAll(context)
 		val c = (context.applicationContext as ActivityTrackApp).container
-		WidgetTicker.arm(context, c.entries.openEntries.first().any { e -> e.legacy == LegacyStatus.ACTIVE })
+		WidgetTicker.arm(context, c.entries.openEntries.first().any { e -> e.isTicking })
 	}
 
 	/*
@@ -306,7 +305,7 @@ object QuickWidgets {
 	fun start(context: Context, container: it.infraconsulting.activitytrack.AppContainer, scope: kotlinx.coroutines.CoroutineScope) {
 		scope.launch {
 			kotlinx.coroutines.flow.combine(
-				container.todos.all,
+				container.entries.todos,
 				container.masterData.clients,
 				container.settings.settings.map { it.widgetTodoWindowHours }.distinctUntilChanged(),
 			) { _, _, _ -> }.conflate().collect {

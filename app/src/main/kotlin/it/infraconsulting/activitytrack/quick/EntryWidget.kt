@@ -40,8 +40,10 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.domain.activity.DisplayState
+import it.infraconsulting.activitytrack.notify.displayedState
+import it.infraconsulting.activitytrack.notify.ongoingActions
+import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.common.commandStyle
@@ -71,8 +73,9 @@ private data class EntryWidgetState(
 	val company: String?,
 	val title: String,
 	val activity: String?,
-	val status: LegacyStatus,
+	val state: DisplayState?,
 	val mode: SegmentKind?,
+	val commands: List<EntryCommand>,
 	val sinceMs: Long?,
 	/* the running segment's length so far; null when nothing runs */
 	val runningMs: Long?,
@@ -103,40 +106,24 @@ private fun entryState(
 ): EntryWidgetState {
 	/* the entry the Home would show in its big card: the most recent open one */
 	val e = openEntries.firstOrNull()
-		?: return EntryWidgetState(null, null, context.getString(R.string.home_none), null, LegacyStatus.CLOSED, null, null, null, 0, 0)
+		?: return EntryWidgetState(null, null, context.getString(R.string.home_none), null, null, null, emptyList(), null, null, 0, 0)
 	val segs = allSegs.filter { it.entryId == e.id }.sortedBy { it.startUtcMs }
 	val open = segs.lastOrNull { it.endUtcMs == null }
-	val since = when (e.legacy) {
-		LegacyStatus.ACTIVE -> open?.startUtcMs
-		else -> segs.mapNotNull { it.endUtcMs }.maxOrNull()
-	}
+	val shown = displayedState(e, segs, java.time.Instant.ofEpochMilli(now))
 	fun total(kind: SegmentKind) = segs.filter { it.kind == kind }.sumOf { maxOf(0L, (it.endUtcMs ?: now) - it.startUtcMs) }
 	return EntryWidgetState(
 		entryId = e.id,
 		company = e.companyId?.let { companies[it]?.name },
 		title = e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name } ?: context.getString(R.string.app_name),
 		activity = e.activity,
-		status = e.legacy,
+		state = shown.state,
 		mode = e.mode,
-		sinceMs = since,
-		runningMs = open?.takeIf { e.legacy == LegacyStatus.ACTIVE }?.let { now - it.startUtcMs },
+		commands = ongoingActions(e),
+		sinceMs = shown.since?.toEpochMilli(),
+		runningMs = open?.let { now - it.startUtcMs },
 		workMs = total(SegmentKind.WORK),
 		travelMs = total(SegmentKind.TRAVEL),
 	)
-}
-
-/* the commands of the state, as on the Home card (no dialogs from a widget) */
-private fun widgetCommands(status: LegacyStatus, mode: SegmentKind?): List<EntryCommand> = when (status) {
-	LegacyStatus.ACTIVE -> when (mode) {
-		SegmentKind.WORK -> listOf(EntryCommand.PAUSE, EntryCommand.TRAVEL, EntryCommand.SUSPEND, EntryCommand.STOP)
-		SegmentKind.TRAVEL -> listOf(EntryCommand.WORK, EntryCommand.PAUSE, EntryCommand.SUSPEND, EntryCommand.STOP)
-		else -> listOf(EntryCommand.WORK, EntryCommand.STOP)
-	}
-	LegacyStatus.SUSPENDED -> listOf(EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.STOP)
-	LegacyStatus.TO_COMPLETE -> listOf(EntryCommand.REOPEN)
-	LegacyStatus.CLOSED -> emptyList()
-	/* TODO(activity-1.0-ui): a to-do's buttons */
-	LegacyStatus.TODO -> listOf(EntryCommand.WORK, EntryCommand.TRAVEL)
 }
 
 private fun hm(ms: Long): String {
@@ -189,23 +176,9 @@ class EntryWidget : GlanceAppWidget() {
 					Text(s.title, maxLines = 1, style = TextStyle(color = text, fontWeight = FontWeight.Bold, fontSize = 16.sp))
 					s.activity?.let { Text(it, maxLines = 1, style = TextStyle(color = dim, fontSize = 12.sp)) }
 				if (s.entryId != null) {
-					val state = when (s.status) {
-						LegacyStatus.ACTIVE -> context.getString(
-							R.string.widget_since,
-							context.getString(
-								when (s.mode) {
-									SegmentKind.TRAVEL -> R.string.mode_travel
-									SegmentKind.PAUSE -> R.string.mode_pause
-									else -> R.string.mode_work
-								},
-							),
-							s.sinceMs?.let { clock(it) } ?: "",
-						)
-						LegacyStatus.SUSPENDED -> context.getString(R.string.status_suspended)
-						LegacyStatus.TO_COMPLETE -> context.getString(R.string.status_to_complete)
-						LegacyStatus.CLOSED -> context.getString(R.string.status_closed)
-						LegacyStatus.TODO -> context.getString(R.string.todo_title)
-					}
+					/* "In <state> dalle <since>", the state from ActivityDisplay */
+					val name = context.getString(displayName(s.state ?: DisplayState.WORK))
+					val state = s.sinceMs?.let { context.getString(R.string.widget_since, name, clock(it)) } ?: name
 					Text(state, maxLines = 1, style = TextStyle(color = text, fontSize = 12.sp))
 					Text(
 						context.getString(R.string.totals_fmt, hm(s.workMs), hm(s.travelMs)),
@@ -226,25 +199,12 @@ class EntryWidget : GlanceAppWidget() {
 					Spacer(GlanceModifier.width(8.dp))
 					CommandCircle(EntryCommand.TRAVEL, 40, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
 				} else {
-					for ((i, cmd) in widgetCommands(s.status, s.mode).withIndex()) {
+					for ((i, cmd) in s.commands.withIndex()) {
 						if (i > 0) Spacer(GlanceModifier.width(8.dp))
 						CommandCircle(
 							cmd, 40, context.getString(commandLabel(cmd, s.mode)),
 							actionRunCallback<WidgetCommandAction>(actionParametersOf(ENTRY to s.entryId, COMMAND to cmd.name)),
 						)
-					}
-					if (s.status == LegacyStatus.TO_COMPLETE) {
-						Spacer(GlanceModifier.width(8.dp))
-						Box(
-							modifier = GlanceModifier.cornerRadius(24.dp).background(ColorProvider(commandStyle(EntryCommand.WORK)!!.container))
-								.padding(horizontal = 14.dp, vertical = 10.dp).clickable(open),
-							contentAlignment = Alignment.Center,
-						) {
-							Text(
-								context.getString(R.string.cmd_complete),
-								style = TextStyle(color = ColorProvider(commandStyle(EntryCommand.WORK)!!.content), fontSize = 13.sp),
-							)
-						}
 					}
 				}
 			}

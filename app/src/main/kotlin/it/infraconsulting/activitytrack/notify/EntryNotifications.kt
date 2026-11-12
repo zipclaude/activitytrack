@@ -12,8 +12,9 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.ui.common.displayName
+import it.infraconsulting.activitytrack.ui.common.displayStyle
+import androidx.compose.ui.graphics.toArgb
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.common.commandStyle
 
@@ -48,14 +49,6 @@ object NotificationIds {
 	const val UNWORKED = 10
 
 	fun of(entryId: Long, slot: Int): Int = (entryId * 16 + slot).toInt()
-}
-
-/* Actions shown on the ongoing notification per mode (the state machine stays the authority). */
-fun ongoingActions(mode: SegmentKind?): List<EntryCommand> = when (mode) {
-	SegmentKind.WORK -> listOf(EntryCommand.PAUSE, EntryCommand.TRAVEL, EntryCommand.STOP)
-	SegmentKind.TRAVEL -> listOf(EntryCommand.WORK, EntryCommand.PAUSE, EntryCommand.STOP)
-	SegmentKind.PAUSE -> listOf(EntryCommand.WORK, EntryCommand.STOP)
-	SegmentKind.ABSENCE, null -> emptyList()
 }
 
 object EntryNotifications {
@@ -93,13 +86,15 @@ object EntryNotifications {
 	fun commandIcon(context: Context, cmd: EntryCommand): Icon? =
 		commandStyle(cmd)?.let { Icon.createWithResource(context, it.icon) }
 
-	/* Ongoing notification of an ACTIVE entry: mode, chronometer of the open segment, commands. */
+	/* Ongoing notification of a running activity: its displayed state, chronometer of the open segment, commands. */
 	fun ongoing(context: Context, info: EntryInfo): Notification {
 		val e = info.entry
+		val state = displayedState(e, info.segments).state
 		val b = Notification.Builder(context, NotificationChannels.ONGOING)
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(info.title)
-			.setContentText(modeText(context, e.mode))
+			.setContentText(context.getString(displayName(state)))
+			.setColor(displayStyle(state).container.toArgb())
 			.setOngoing(true)
 			.setOnlyAlertOnce(true)
 			.setShowWhen(true)
@@ -108,7 +103,7 @@ object EntryNotifications {
 			.setCategory(Notification.CATEGORY_STOPWATCH)
 			.setContentIntent(openAppIntent(context))
 		e.activity?.let { b.setSubText(it) }
-		for (cmd in ongoingActions(e.mode))
+		for (cmd in ongoingActions(e))
 			b.addAction(
 				Notification.Action.Builder(
 					commandIcon(context, cmd),
@@ -119,20 +114,10 @@ object EntryNotifications {
 		return b.build()
 	}
 
-	/* Persistent reminder while the entry is TO_COMPLETE (SPEC §5). */
-	fun toComplete(context: Context, info: EntryInfo): Notification =
-		Notification.Builder(context, NotificationChannels.TO_COMPLETE)
-			.setSmallIcon(R.drawable.ic_stat_timer)
-			.setContentTitle(context.getString(R.string.notif_to_complete_title))
-			.setContentText(info.title)
-			.setOnlyAlertOnce(true)
-			.setContentIntent(EntryLinks.openEntry(context, info.id))
-			.build()
-
 	/*
 	 * Brings the posted notifications in line with the open entries:
-	 * ongoing for ACTIVE, to-complete for TO_COMPLETE, everything else
-	 * cancelled (including reminders of entries no longer ACTIVE).
+	 * ongoing for a running activity with a segment open, everything else
+	 * cancelled (including reminders of activities no longer ticking).
 	 */
 	fun sync(context: Context, infos: List<EntryInfo>, previous: Set<Long>) {
 		val nm = context.getSystemService(NotificationManager::class.java)
@@ -143,10 +128,9 @@ object EntryNotifications {
 			cancelAll(nm, id)
 		for (info in infos) {
 			val id = info.id
-			when (info.entry.legacy) {
-				LegacyStatus.ACTIVE -> {
+			when {
+				info.entry.isTicking -> {
 					nm.notify(NotificationIds.of(id, NotificationIds.ONGOING), ongoing(context, info))
-					nm.cancel(NotificationIds.of(id, NotificationIds.TO_COMPLETE))
 					/* a mode change answers the pending reminder of the other kind */
 					if (info.entry.mode == SegmentKind.PAUSE)
 						nm.cancel(NotificationIds.of(id, NotificationIds.CONFIRM))
@@ -157,10 +141,6 @@ object EntryNotifications {
 						nm.cancel(NotificationIds.of(id, NotificationIds.MOVEMENT))
 					if (info.entry.mode != SegmentKind.TRAVEL)
 						nm.cancel(NotificationIds.of(id, NotificationIds.ARRIVAL))
-				}
-				LegacyStatus.TO_COMPLETE -> {
-					cancelAll(nm, id)
-					nm.notify(NotificationIds.of(id, NotificationIds.TO_COMPLETE), toComplete(context, info))
 				}
 				else -> cancelAll(nm, id)
 			}

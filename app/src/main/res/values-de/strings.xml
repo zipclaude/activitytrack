@@ -424,11 +424,11 @@ Unten auf die grüne Schaltfläche tippen, um eine zu starten.</string>
   <string name="home_closed_empty">Nichts erledigt in diesem Zeitraum</string>
   <string name="todo_ignored">ignoriert</string>
   <string name="swipe_start">Starten</string>
-  <string name="swipe_ignore">Ignorieren</string>
+  <string name="swipe_ignore">Löschen</string>
   <string name="swipe_restore">Wiederherstellen</string>
   <string name="swipe_postpone">Verschieben</string>
   <string name="swipe_none">Keine</string>
-  <string name="swipe_postpone_or_ignore">Verschieben oder ignorieren</string>
+  <string name="swipe_postpone_or_ignore">Verschieben oder löschen</string>
   <string name="swipe_pause_resume">Pause / fortsetzen</string>
   <string name="swipe_stop_or_suspend">Beenden oder aussetzen</string>
   <string name="gestures_title">Gesten</string>
@@ -883,4 +883,18 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="absence_kind_holiday">Urlaub</string>
   <string name="absence_kind_leave">Freistellung</string>
   <string name="absence_kind_sick">Krankheit</string>
+  <!-- ui-lists -->
+  <string name="swipe_delete">Löschen</string>
+  <string name="undo_todo_deleted">„%1$s“ in den Papierkorb verschoben</string>
+  <string name="bin_title">Papierkorb</string>
+  <string name="bin_restore">Wiederherstellen</string>
+  <string name="bin_purge">Endgültig löschen</string>
+  <string name="bin_purge_confirm">„%1$s“ endgültig löschen? Das lässt sich nicht rückgängig machen.</string>
+  <string name="bin_purge_failed">Es hat Anhänge: zuerst entfernen.</string>
+  <string name="lists_absence_kind_absence">Abwesenheit</string>
+  <string name="lists_absence_kind_holiday">Urlaub</string>
+  <string name="lists_absence_kind_leave">Freistellung</string>
+  <string name="lists_absence_kind_sick">Krankheit</string>
+  <string name="set_round_stored">Gerundete Werte speichern</string>
+  <string name="set_round_stored_hint">Die Schaltflächen Start, Wechsel, Stopp und Wiedereröffnen speichern gerundete Zeiten; von Hand eingegebene Zeiten bleiben exakt. Braucht frei änderbare Zeiten.</string>
 </resources>
