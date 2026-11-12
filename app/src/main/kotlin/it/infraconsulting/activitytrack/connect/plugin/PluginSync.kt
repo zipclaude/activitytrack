@@ -219,8 +219,11 @@ class PluginSync(private val app: ActivityTrackApp) {
 		}
 		for (e in dao.entriesToSend(companyId, plugin.id).filter { only == null || it.id == only }) {
 			val zone = runCatching { ZoneId.of(e.zoneId) }.getOrDefault(ZoneId.systemDefault())
-			/* @activity: the planned fields of the same record, when the plugin imported it (activity model 1.0) */
-			val todo = e.takeIf { it.externalKey != null }
+			/*
+			 * @activity: the planned fields of the same record, when the plugin imported it (activity model 1.0),
+			 * else of the imported activity a UUID reference points at (an entry of the to-do before 1.0)
+			 */
+			val todo = e.takeIf { it.externalKey != null } ?: dao.linkedActivity(e.id, companyId)
 			val clientRow = e.clientId?.let { dao.client(it) }
 			val title = clientRow?.name ?: company.name
 			val lines = dao.materialsOf(e.id)

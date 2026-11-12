@@ -9,6 +9,21 @@ import androidx.room.Update
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import kotlinx.coroutines.flow.Flow
 
+/* imported activities of the company an entry may point at with a UUID reference (their uid) */
+private const val IMPORTED_UIDS =
+	"SELECT uid FROM time_entry WHERE company_id = :companyId AND external_key IS NOT NULL AND uid IS NOT NULL"
+
+/* the queries of the export, shared with the JVM test that runs them (PluginDaoSqlTest) */
+const val ENTRIES_TO_SEND =
+	"SELECT * FROM time_entry WHERE company_id = :companyId AND status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL " +
+		"AND (plugin_fields IS NOT NULL OR external_key IS NOT NULL " +
+		"OR id IN (SELECT entry_id FROM external_ref WHERE kind = 'UUID' AND value IN ($IMPORTED_UIDS)) " +
+		"OR id IN (SELECT entry_id FROM remote_record WHERE plugin_id = :pluginId)) ORDER BY id"
+
+const val LINKED_ACTIVITY =
+	"SELECT * FROM time_entry WHERE id != :entryId AND uid IN (SELECT value FROM external_ref WHERE entry_id = :entryId AND kind = 'UUID') " +
+		"AND company_id = :companyId AND external_key IS NOT NULL ORDER BY created_utc_ms, uid LIMIT 1"
+
 /* What the plugins' imports read and write (issue #48 B3). */
 @Dao
 interface PluginDao {
@@ -82,16 +97,17 @@ interface PluginDao {
 
 	/*
 	 * Closed activities of the company the plugin may send (B4): those with
-	 * its entry fields, those imported from it (an external key), and those
-	 * already sent (an edit or a deletion of blocks must reach the remote
-	 * side). Absences and deleted activities never go.
+	 * its entry fields, those imported from it (an external key) or worked
+	 * for one before 1.0 (a UUID reference to it, ACTIVITY-MODEL.md 6), and
+	 * those already sent (an edit or a deletion of blocks must reach the
+	 * remote side). Absences and deleted activities never go.
 	 */
-	@Query(
-		"SELECT * FROM time_entry WHERE company_id = :companyId AND status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL " +
-			"AND (plugin_fields IS NOT NULL OR external_key IS NOT NULL " +
-			"OR id IN (SELECT entry_id FROM remote_record WHERE plugin_id = :pluginId)) ORDER BY id",
-	)
+	@Query(ENTRIES_TO_SEND)
 	suspend fun entriesToSend(companyId: Long, pluginId: String): List<TimeEntryEntity>
+
+	/* @activity of an entry linked to an imported activity only by a UUID reference (a to-do's entry before 1.0) */
+	@Query(LINKED_ACTIVITY)
+	suspend fun linkedActivity(entryId: Long, companyId: Long): TimeEntryEntity?
 
 	@Query("SELECT * FROM segment WHERE entry_id = :entryId AND planned = 0 ORDER BY start_utc_ms")
 	suspend fun segmentsOf(entryId: Long): List<SegmentEntity>
