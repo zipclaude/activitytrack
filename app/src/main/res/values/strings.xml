@@ -891,4 +891,8 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="priority_high">High</string>
   <string name="priority_urgent">Urgent</string>
   <string name="priority_emergency">Emergency</string>
+  <string name="absence_kind_absence">Absence</string>
+  <string name="absence_kind_holiday">Holiday</string>
+  <string name="absence_kind_leave">Leave</string>
+  <string name="absence_kind_sick">Sick leave</string>
 </resources>

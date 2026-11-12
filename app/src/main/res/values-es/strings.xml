@@ -880,4 +880,8 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="priority_high">Alta</string>
   <string name="priority_urgent">Urgente</string>
   <string name="priority_emergency">Emergencia</string>
+  <string name="absence_kind_absence">Ausencia</string>
+  <string name="absence_kind_holiday">Vacaciones</string>
+  <string name="absence_kind_leave">Permiso</string>
+  <string name="absence_kind_sick">Enfermedad</string>
 </resources>

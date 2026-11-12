@@ -136,7 +136,9 @@ data class MigrationResult(val activities: List<ActivityRow>, val segments: List
  * same pure function for the Room migration, the import of an old file and,
  * written once more in Python, the server; docs/samples/activity-migration.json
  * holds the cases all of them pass. The choices the spec leaves open follow
- * the Python reference (scripts/activity_migration.py, marked CHOICE there).
+ * the Python reference (scripts/activity_migration.py, marked CHOICE there);
+ * two rules follow the server: an ignored absence to-do goes to the bin, and
+ * external_key stays unique with the company (the earliest created keeps it).
  * New uids are name-based: uuid5(NS, "<to-do uid>/<suffix>").
  */
 object ActivityMigration {
@@ -177,7 +179,22 @@ object ActivityMigration {
 				todo(t, byTodo[t.id].orEmpty())
 			for (a in d.absences.sortedBy { it.id })
 				legacyAbsence(a)
-			return MigrationResult(rows.values.toList() + created, newSegments, newRefs)
+			return MigrationResult(uniqueKeys(rows.values.toList() + created), newSegments, newRefs)
+		}
+
+		/*
+		 * external_key is unique with the company (the server's rule): on a
+		 * clash the earliest created activity, then the lower uid, keeps it.
+		 */
+		fun uniqueKeys(all: List<ActivityRow>): List<ActivityRow> {
+			val seen = HashSet<Pair<Long?, String>>()
+			val lose = HashSet<String>()
+			for (a in all.sortedWith(compareBy({ it.createdUtcMs }, { it.uid }))) {
+				val k = a.externalKey ?: continue
+				if (!seen.add(a.companyId to k))
+					lose += a.uid
+			}
+			return all.map { if (it.uid in lose) it.copy(externalKey = null) else it }
 		}
 
 		/* step 1: the entry's status; closed at its last segment end, else at its last update */
@@ -260,6 +277,8 @@ object ActivityMigration {
 				closedUtcMs = segs.maxOfOrNull { it.endUtcMs } ?: t.updatedUtcMs,
 				companyId = t.companyId, clientId = t.clientId, activity = t.title.takeUnless { it.isBlank() }, notes = t.notes,
 				absenceKind = AbsenceKind.fromTitle(t.title), zoneId = zoneName, createdUtcMs = t.createdUtcMs, updatedUtcMs = t.updatedUtcMs,
+				/* an ignored absence goes to the bin, as an ignored task does (the server's rule) */
+				deletedUtcMs = t.ignoredUtcMs,
 			)
 			newSegments += segs
 		}

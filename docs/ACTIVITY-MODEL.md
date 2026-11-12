@@ -234,6 +234,8 @@ New uids are deterministic, so the phone and the server produce the same records
 2. To-dos of kind ABSENCE → an activity with **the to-do's uid**, `kind = ABSENCE`,
    `absence_kind` from the title when it is one of the four labels in any language, else
    `ABSENCE`; segments per 3.1 (uid suffix `abs/<yyyy-mm-dd>/<n>`). Then the to-do goes.
+   An ignored absence to-do goes to the bin (`deleted_utc_ms = ignored_utc_ms`), as an
+   ignored task does.
 3. To-dos of kind TASK, by the entries linked to them:
    - **none** → an activity with the to-do's uid: `TODO`, or `CLOSED` when done
      (`closed_utc_ms = done_utc_ms`); ignored → `deleted_utc_ms = ignored_utc_ms`;
@@ -246,13 +248,21 @@ New uids are deterministic, so the phone and the server produce the same records
      `TODO` activity (with its uid) and each entry gets an `external_ref` of kind UUID
      with that uid (the work is not finished: the plan must not vanish).
 4. Priority per 5. `legacy absence` rows (none should be left since DB 21) follow 2.
+   `external_key` is unique with the company: when several resulting activities would share
+   `(company_id, external_key)`, the earliest created (then the lower uid) keeps it, the
+   others get none.
 5. Drop `todo`, `todo_id`, the `absence` table and wire type.
 
 Sync: the server rejects wire schema < 3 with the error `upgrade_required`, which the
 app and the PC interfaces show as "Aggiorna l'app per sincronizzare". After its own
 migration a node's first sync is a full realignment: the server's version wins for every
-migrated record; changes made after the migration are pushed as usual. Reimporting a
-phone's data on the server is the fallback (owner, 2026-11-11).
+migrated record, except for records with unsynced local changes, which are pushed (the
+record itself, the activity a dirty to-do or absence became or the entries that absorbed it,
+and what the migration derived from them: absence segments, references; coordinator,
+2026-11-12); changes made after the migration are pushed as usual, records the server never
+had too. The pushed changes carry the time of that sync, so they win over the fields the
+server's migration stamped. Reimporting a phone's data on the server is the fallback
+(owner, 2026-11-11).
 
 ### 6.1 Restoring an older backup
 

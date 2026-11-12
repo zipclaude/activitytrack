@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.data.sync
 
+import it.infraconsulting.activitytrack.data.db.ActivityModelMigration
 import it.infraconsulting.activitytrack.data.db.ActivityTrackDatabase
 import it.infraconsulting.activitytrack.data.db.JdbcSql
 import it.infraconsulting.activitytrack.data.db.SyncSchema
@@ -111,8 +112,8 @@ class SyncEngineTest {
 		}
 	}
 
-	private class Phone(val canEditCentral: Boolean = true) {
-		val c: Connection = JdbcSql.create(ActivityTrackDatabase.VERSION)
+	private class Phone(val canEditCentral: Boolean = true, version: Int = ActivityTrackDatabase.VERSION) {
+		val c: Connection = JdbcSql.create(version)
 		val sql = JdbcSql(c).also { SyncSchema.onCreate(it) }
 		val db = object : SyncDb {
 			override suspend fun <T> run(block: (SyncStore) -> T): T {
@@ -140,7 +141,7 @@ class SyncEngineTest {
 	private val server = FakeServer()
 	private val phones = mutableListOf<Phone>()
 
-	private fun phone(canEditCentral: Boolean = true) = Phone(canEditCentral).also { phones += it }
+	private fun phone(canEditCentral: Boolean = true, version: Int = ActivityTrackDatabase.VERSION) = Phone(canEditCentral, version).also { phones += it }
 
 	@AfterTest
 	fun close() = phones.forEach { it.c.close() }
@@ -213,6 +214,54 @@ class SyncEngineTest {
 		a.sql.exec("UPDATE time_entry SET notes = 'later' WHERE uid = ?", e)
 		sync(a)
 		assertEquals(JsonPrimitive("later"), server.records["entry" to e]!!.fields["notes"])
+	}
+
+	/*
+	 * No data loss on the realignment (coordinator, ACTIVITY-MODEL.md 6): a
+	 * phone of schema 21 with an entry and a to-do changed and not synced is
+	 * migrated; the server migrated its copy too. The realignment keeps and
+	 * pushes the local version of those two (the to-do as its activity), the
+	 * server's version wins for the clean entry.
+	 */
+	@Test
+	fun theRealignmentKeepsTheChangesNotSynced() {
+		val a = phone(version = 21)
+		val db = a.sql
+		db.exec("UPDATE sync_state SET enabled = 1")
+		db.exec("INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, ?)", SyncIds.random())
+		val entry = "INSERT INTO time_entry (id, uid, company_id, activity, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) VALUES (?, ?, 1, ?, 'CLOSED', 'Europe/Rome', 0, 1, 2)"
+		val clean = SyncIds.random()
+		val dirty = SyncIds.random()
+		val todo = SyncIds.random()
+		db.exec(entry, 1, clean, "clean")
+		db.exec(entry, 2, dirty, "before")
+		db.exec("INSERT INTO todo (id, uid, company_id, title, refs, done, created_utc_ms, updated_utc_ms, kind) VALUES (1, ?, 1, 'before', '', 0, 1, 2, 'TASK')", todo)
+		/* synced, then changed here only */
+		db.exec("DELETE FROM sync_change")
+		db.exec("UPDATE time_entry SET activity = 'local' WHERE id = 2")
+		db.exec("UPDATE todo SET title = 'local todo' WHERE id = 1")
+		/* the to-do's trigger of a 0.9 app (this SyncSchema no longer has it) */
+		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 5)", todo)
+		db.exec("PRAGMA foreign_keys = OFF")
+		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		db.exec("PRAGMA foreign_keys = ON")
+		/* the server's migrated copies, each with something else */
+		for ((uid, text) in listOf(clean to "server clean", dirty to "server dirty", todo to "server todo")) {
+			val r = a.records.read("entry", uid)!!.toMutableMap()
+			r["activity"] = JsonPrimitive(text)
+			if (uid == todo) r["status"] = JsonPrimitive("TODO")
+			server.put("entry", uid, r)
+		}
+		server.put("company", a.one("SELECT uid FROM company") as String, a.records.read("company", a.one("SELECT uid FROM company") as String)!!)
+		sync(a)
+		assertEquals("server clean", a.one("SELECT activity FROM time_entry WHERE uid = ?", clean))
+		assertEquals("local", a.one("SELECT activity FROM time_entry WHERE uid = ?", dirty))
+		assertEquals("local todo", a.one("SELECT activity FROM time_entry WHERE uid = ?", todo))
+		assertEquals(JsonPrimitive("local"), server.records.getValue("entry" to dirty).fields["activity"])
+		assertEquals(JsonPrimitive("local todo"), server.records.getValue("entry" to todo).fields["activity"])
+		assertEquals(JsonPrimitive("server clean"), server.records.getValue("entry" to clean).fields["activity"])
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(0L, a.one("SELECT realign FROM sync_state"))
 	}
 
 	@Test

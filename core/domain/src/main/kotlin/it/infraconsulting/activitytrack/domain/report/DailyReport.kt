@@ -31,18 +31,33 @@ data class EntryDayLine(
 		get() = roundedWork + roundedTravel
 }
 
+/* One absence (an ABSENCE activity, ACTIVITY-MODEL.md 3.1) on one day: its segments' time, never rounded. */
+data class AbsenceDayLine(
+	val entryId: Long,
+	val day: LocalDate,
+	val firstStart: Instant,
+	val lastEnd: Instant,
+	val duration: Duration,
+)
+
 /*
  * Totals of one day.
  * solar: wall-clock time covered by WORK or TRAVEL of any entry (overlaps
  *        between concurrent entries are counted once).
  * reported: sum of the rounded WORK and TRAVEL of every entry.
+ * absences: counted apart from work, travel and pause (3.1), not in the
+ *        totals above; [absent] their sum.
  */
 data class DayTotals(
 	val day: LocalDate,
 	val solar: Duration,
 	val reported: Duration,
 	val lines: List<EntryDayLine>,
-)
+	val absences: List<AbsenceDayLine> = emptyList(),
+) {
+	val absent: Duration
+		get() = absences.fold(Duration.ZERO) { acc, a -> acc + a.duration }
+}
 
 object DailyReport {
 	fun build(
@@ -53,11 +68,18 @@ object DailyReport {
 		policy: DayAttributionPolicy = DayAttributionPolicy(),
 	): List<DayTotals> {
 		val lines = ArrayList<EntryDayLine>()
+		val absences = ArrayList<AbsenceDayLine>()
 		val active = HashMap<LocalDate, MutableList<Interval>>()
 
 		for (t in timelines) {
+			val all = DayAttribution.attribute(t, zone, now, policy)
 			/* absence segments (activity model 1.0) are neither work, travel nor pause: reported apart */
-			val parts = DayAttribution.attribute(t, zone, now, policy).filter { it.kind != SegmentKind.ABSENCE }
+			for ((day, dayParts) in all.filter { it.kind == SegmentKind.ABSENCE }.groupBy { it.day })
+				absences += AbsenceDayLine(
+					t.entryId, day, dayParts.minOf { it.interval.start }, dayParts.maxOf { it.interval.end },
+					sum(dayParts.map { it.interval }),
+				)
+			val parts = all.filter { it.kind != SegmentKind.ABSENCE }
 			for ((day, dayParts) in parts.groupBy { it.day }.toSortedMap()) {
 				val work = sum(dayParts.filter { it.kind == SegmentKind.WORK }.map { it.interval })
 				val travel = sum(dayParts.filter { it.kind == SegmentKind.TRAVEL }.map { it.interval })
@@ -82,12 +104,16 @@ object DailyReport {
 			}
 		}
 
-		return lines.groupBy { it.day }.toSortedMap().map { (day, dayLines) ->
+		val byDay = lines.groupBy { it.day }
+		val absentByDay = absences.groupBy { it.day }
+		return (byDay.keys + absentByDay.keys).toSortedSet().map { day ->
+			val dayLines = byDay[day].orEmpty()
 			DayTotals(
 				day = day,
 				solar = sum(union(active[day].orEmpty())),
 				reported = dayLines.fold(Duration.ZERO) { acc, l -> acc + l.reported },
 				lines = dayLines.sortedBy { it.firstStart },
+				absences = absentByDay[day].orEmpty().sortedBy { it.firstStart },
 			)
 		}
 	}

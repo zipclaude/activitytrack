@@ -147,9 +147,10 @@ server and the Python library, docs/samples/activity-migration.json):
 `time_entry` is rebuilt without `todo_id` keeping every id, gains the
 columns above, `segment.planned` is added, `todo` and `absence` are dropped;
 the sync triggers are dropped during the rebuild and re-created, the wire-2
-log and shadows go and `sync_state.realign` makes the next sync a full
-realignment (pull from the start, the server's version wins, then push what
-it lacks). A restored older backup takes the same path. `EntryRepository`
+shadows go and `sync_state.realign` makes the next sync a full realignment:
+pull from the start, the server's version wins except for the records with
+unsynced changes (kept in the log under their 1.0 records, restamped with
+the sync's time and pushed), then push what the server lacks. A restored older backup takes the same path. `EntryRepository`
 is the one writer of activities: creation (TODO, RUNNING, past CLOSED,
 anonymous travel, ABSENCE via `AbsencePlanner`), the commands of
 `ActivityStateMachine`, travel from work, the return trip, delete to the bin
