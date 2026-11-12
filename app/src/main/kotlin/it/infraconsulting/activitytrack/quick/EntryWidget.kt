@@ -39,14 +39,14 @@ import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.notify.displayedState
 import it.infraconsulting.activitytrack.notify.ongoingActions
 import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.Screen
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.common.style
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import it.infraconsulting.activitytrack.data.db.ClientEntity
@@ -75,7 +75,7 @@ private data class EntryWidgetState(
 	val activity: String?,
 	val state: DisplayState?,
 	val mode: SegmentKind?,
-	val commands: List<EntryCommand>,
+	val commands: List<QuickAction>,
 	val sinceMs: Long?,
 	/* the running segment's length so far; null when nothing runs */
 	val runningMs: Long?,
@@ -178,7 +178,7 @@ class EntryWidget : GlanceAppWidget() {
 				if (s.entryId != null) {
 					/* "In <state> dalle <since>", the state from ActivityDisplay */
 					val name = context.getString(displayName(s.state ?: DisplayState.WORK))
-					val state = s.sinceMs?.let { context.getString(R.string.widget_since, name, clock(it)) } ?: name
+					val state = s.sinceMs?.let { context.getString(R.string.since_fmt, name, clock(it)) } ?: name
 					Text(state, maxLines = 1, style = TextStyle(color = text, fontSize = 12.sp))
 					Text(
 						context.getString(R.string.totals_fmt, hm(s.workMs), hm(s.travelMs)),
@@ -195,9 +195,9 @@ class EntryWidget : GlanceAppWidget() {
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				if (s.entryId == null) {
 					/* the empty card of the Home: start (start screen) and travel (at once) */
-					CommandCircle(EntryCommand.WORK, 40, context.getString(R.string.start_action), widgetOpenScreen(context, Screen.Start))
+					CommandCircle(QuickAction.WORK, 40, context.getString(R.string.start_action), widgetOpenScreen(context, Screen.Start))
 					Spacer(GlanceModifier.width(8.dp))
-					CommandCircle(EntryCommand.TRAVEL, 40, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
+					CommandCircle(QuickAction.TRAVEL, 40, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
 				} else {
 					for ((i, cmd) in s.commands.withIndex()) {
 						if (i > 0) Spacer(GlanceModifier.width(8.dp))

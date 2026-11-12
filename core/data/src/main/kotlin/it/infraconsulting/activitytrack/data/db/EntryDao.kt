@@ -155,10 +155,6 @@ interface EntryDao {
 	@Query("SELECT entry_tag.* FROM entry_tag JOIN time_entry ON time_entry.id = entry_tag.entry_id WHERE time_entry.status = 'RUNNING' AND time_entry.deleted_utc_ms IS NULL")
 	fun observeOpenEntryTags(): Flow<List<EntryTagEntity>>
 
-	/* The last [n] completed entries (Home keeps a few in view, owner 2026-10-19). */
-	@Query("SELECT * FROM time_entry WHERE status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL ORDER BY updated_utc_ms DESC LIMIT :n")
-	fun observeRecentClosed(n: Int): Flow<List<TimeEntryEntity>>
-
 	/*
 	 * The "Chiuse" tab of the Home (issue #59): closed activities (not
 	 * absences, not deleted) with their last segment ending after
@@ -192,12 +188,27 @@ interface EntryDao {
 	fun observeClosedTagsSince(fromUtcMs: Long, limit: Int): Flow<List<EntryTagEntity>>
 
 
+	/*
+	 * The ticked tasks (CLOSED without a real segment, ACTIVITY-MODEL.md 2.4)
+	 * closed after [fromUtcMs], newest first: no segment end to order them by,
+	 * so the "Chiuse" tab takes them by closed_utc_ms.
+	 */
 	@Query(
-		"SELECT * FROM segment WHERE entry_id IN " +
-			"(SELECT id FROM time_entry WHERE status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL ORDER BY updated_utc_ms DESC LIMIT :n) " +
-			"ORDER BY entry_id, start_utc_ms",
+		"SELECT * FROM time_entry WHERE status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL " +
+			"AND closed_utc_ms > :fromUtcMs " +
+			"AND NOT EXISTS (SELECT 1 FROM segment WHERE segment.entry_id = time_entry.id AND segment.planned = 0) " +
+			"ORDER BY closed_utc_ms DESC LIMIT :limit",
 	)
-	fun observeRecentClosedSegments(n: Int): Flow<List<SegmentEntity>>
+	fun observeTickedSince(fromUtcMs: Long, limit: Int): Flow<List<TimeEntryEntity>>
+
+	@Query(
+		"SELECT entry_tag.* FROM entry_tag WHERE entry_tag.entry_id IN (" +
+			"SELECT id FROM time_entry WHERE status = 'CLOSED' AND kind = 'ACTIVITY' AND deleted_utc_ms IS NULL " +
+			"AND closed_utc_ms > :fromUtcMs " +
+			"AND NOT EXISTS (SELECT 1 FROM segment WHERE segment.entry_id = time_entry.id AND segment.planned = 0) " +
+			"ORDER BY closed_utc_ms DESC LIMIT :limit)",
+	)
+	fun observeTickedTagsSince(fromUtcMs: Long, limit: Int): Flow<List<EntryTagEntity>>
 
 	@Query(
 		"SELECT * FROM time_entry WHERE status = 'RUNNING' AND mode IS NULL AND deleted_utc_ms IS NULL AND id != :excludeId " +

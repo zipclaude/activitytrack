@@ -44,7 +44,7 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.plan
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.notify.isTicking
@@ -224,12 +224,12 @@ class TodoWidget : GlanceAppWidget() {
 						Spacer(GlanceModifier.width(6.dp))
 						if (r.directStart) {
 							CommandCircle(
-								EntryCommand.WORK, 34, context.getString(R.string.todo_start),
+								QuickAction.WORK, 34, context.getString(R.string.action_start_entry),
 								actionRunCallback<WidgetTodoStartAction>(actionParametersOf(TODO to r.todo.id)),
 							)
 						} else {
 							CommandCircle(
-								EntryCommand.WORK, 34, context.getString(R.string.todo_start),
+								QuickAction.WORK, 34, context.getString(R.string.action_start_entry),
 								widgetOpenScreen(context, Screen.StartFromTodo(r.todo.id)),
 							)
 						}

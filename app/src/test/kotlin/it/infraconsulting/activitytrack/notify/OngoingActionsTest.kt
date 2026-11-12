@@ -6,7 +6,7 @@ import it.infraconsulting.activitytrack.domain.activity.ActivityKind
 import it.infraconsulting.activitytrack.domain.activity.ActivityState
 import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import java.time.Instant
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
@@ -21,12 +21,10 @@ class OngoingActionsTest {
 
 	/* no "Sospendi" anywhere (3); from a pause WORK and TRAVEL; from WORK a pause, a travel (same activity) and stop */
 	@Test
-	fun noSuspendButton() {
-		assertEquals(listOf(EntryCommand.PAUSE, EntryCommand.TRAVEL, EntryCommand.STOP), ongoingActions(running(SegmentKind.WORK)))
-		assertEquals(listOf(EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.STOP), ongoingActions(running(SegmentKind.PAUSE)))
-		assertEquals(listOf(EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.STOP), ongoingActions(running(null)))
-		for (m in listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.PAUSE, null))
-			assertTrue(EntryCommand.SUSPEND !in ongoingActions(running(m)))
+	fun actionsFollowTheMode() {
+		assertEquals(listOf(QuickAction.PAUSE, QuickAction.TRAVEL, QuickAction.STOP), ongoingActions(running(SegmentKind.WORK)))
+		assertEquals(listOf(QuickAction.WORK, QuickAction.TRAVEL, QuickAction.STOP), ongoingActions(running(SegmentKind.PAUSE)))
+		assertEquals(listOf(QuickAction.WORK, QuickAction.TRAVEL, QuickAction.STOP), ongoingActions(running(null)))
 	}
 
 	/* every action offered on the notification must be legal for the state machine */
@@ -38,13 +36,11 @@ class OngoingActionsTest {
 			assertTrue(actions.size <= 3, "notifications show at most 3 actions")
 			val state = ActivityState(ActivityKind.ACTIVITY, ActivityStatus.RUNNING, mode)
 			val at = Instant.EPOCH
-			/* the buttons as EntryRepository.apply maps them on a running activity */
+			/* the buttons as EntryRepository.quick maps them on a running activity */
 			actions.forEach {
 				val cmd = when (it) {
-					EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.PAUSE -> ActivityCommand.Switch(SegmentKind.valueOf(it.name), at)
-					EntryCommand.SUSPEND -> ActivityCommand.Suspend(at)
-					EntryCommand.STOP -> ActivityCommand.Stop(at)
-					EntryCommand.REOPEN -> ActivityCommand.Reopen(SegmentKind.WORK, at)
+					QuickAction.WORK, QuickAction.TRAVEL, QuickAction.PAUSE -> ActivityCommand.Switch(SegmentKind.valueOf(it.name), at)
+									QuickAction.STOP -> ActivityCommand.Stop(at)
 				}
 				ActivityStateMachine.apply(state, cmd, at)
 			}

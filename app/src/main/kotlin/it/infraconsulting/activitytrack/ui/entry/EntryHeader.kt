@@ -49,7 +49,7 @@ import it.infraconsulting.activitytrack.domain.activity.ActivityState
 import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.domain.activity.ReturnChoice
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.ui.LocalCompact
@@ -58,7 +58,7 @@ import it.infraconsulting.activitytrack.ui.common.CommandStyle
 import it.infraconsulting.activitytrack.ui.common.StatePill
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.clockOf
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.common.STOP_STYLE
 import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.enabled
@@ -108,7 +108,8 @@ internal fun DetailHeader(
 					val name = stringResource(displayName(shown.state))
 					StatePill(displayStyle(shown.state), shown.since?.let { stringResource(R.string.since_fmt, name, sinceText(it, zone, now)) } ?: name)
 				}
-				val total = if (e.kind == ActivityKind.ABSENCE) sum(SegmentKind.ABSENCE) else sum(SegmentKind.WORK) + sum(SegmentKind.TRAVEL)
+				/* work time only: the total of work (owner: "il tempo totale di lavoro"), the travel and pause are in the line below */
+				val total = if (e.kind == ActivityKind.ABSENCE) sum(SegmentKind.ABSENCE) else sum(SegmentKind.WORK)
 				Text(hmOf(total), style = MaterialTheme.typography.titleLarge)
 			}
 			/* a closed activity ending ahead (4.1): its end highlighted */
@@ -207,12 +208,12 @@ internal fun detailActions(e: TimeEntryEntity, segments: List<SegmentEntity>, vm
 			is ActivityCommand.Resume -> if (ok(cmd.kind))
 				main += DetailAction(if (cmd.kind == SegmentKind.WORK) R.string.cmd_resume else kindName(cmd.kind), segmentStyle(cmd.kind)) { vm.resume(cmd.kind) }
 			is ActivityCommand.Suspend -> {}
-			is ActivityCommand.Stop -> main += DetailAction(R.string.cmd_stop, commandStyle(EntryCommand.STOP)!!) { vm.askStop() }
+			is ActivityCommand.Stop -> main += DetailAction(R.string.cmd_stop, STOP_STYLE) { vm.askStop() }
 			ActivityCommand.Tick -> main += DetailAction(R.string.todo_mark_done, displayStyle(DisplayState.DONE)) { vm.tick() }
 			is ActivityCommand.Reopen -> if (ok(cmd.kind))
 				main += DetailAction(if (cmd.kind == SegmentKind.TRAVEL) R.string.detail_reopen_travel else R.string.detail_reopen_work, segmentStyle(cmd.kind)) { vm.askReopen(cmd.kind) }
 			ActivityCommand.Delete -> if (canDelete) last += DetailAction(R.string.action_delete, displayStyle(DisplayState.DELETED)) { vm.askDelete() }
-			ActivityCommand.Restore -> last += DetailAction(R.string.swipe_restore, CommandStyle(R.drawable.ic_restore, commandStyle(EntryCommand.WORK)!!.container, androidx.compose.ui.graphics.Color.White)) { vm.restore() }
+			ActivityCommand.Restore -> last += DetailAction(R.string.swipe_restore, CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.WORK).container, androidx.compose.ui.graphics.Color.White)) { vm.restore() }
 		}
 	if (canUntick(e, segments))
 		main += DetailAction(R.string.state_todo, displayStyle(DisplayState.TODO)) { vm.untick() }
@@ -224,7 +225,7 @@ private fun kindName(k: SegmentKind): Int = when (k) {
 	SegmentKind.WORK -> R.string.cmd_work
 	SegmentKind.TRAVEL -> R.string.cmd_travel
 	SegmentKind.PAUSE -> R.string.cmd_pause
-	SegmentKind.ABSENCE -> R.string.todo_absence
+	SegmentKind.ABSENCE -> R.string.state_absence
 }
 
 /* The questions the commands ask: travel from work, stop (end time and return trip), reopen. */
@@ -234,7 +235,7 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 	if (travelAsk)
 		AlertDialog(
 			onDismissRequest = vm::cancelTravel,
-			title = { Text(stringResource(R.string.detail_travel_question)) },
+			title = { Text(stringResource(R.string.travel_done_question)) },
 			text = { Text(stringResource(R.string.detail_travel_hint)) },
 			confirmButton = { TextButton(onClick = { vm.answerTravel(true) }) { Text(stringResource(R.string.action_yes)) } },
 			dismissButton = { TextButton(onClick = { vm.answerTravel(false) }) { Text(stringResource(R.string.action_no)) } },
@@ -248,7 +249,7 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 		val options = p.choices.ifEmpty { listOf(ReturnChoice.STOP) }
 		AlertDialog(
 			onDismissRequest = vm::cancelStop,
-			title = { Text(stringResource(R.string.detail_stop_title)) },
+			title = { Text(stringResource(R.string.stop_choice_end)) },
 			text = {
 				Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 					if (editable) {
@@ -262,8 +263,8 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 						val label = stringResource(
 							when (c) {
 								ReturnChoice.TRAVEL_BACK -> R.string.stop_return
-								ReturnChoice.STOP -> R.string.detail_stop_title
-								ReturnChoice.STOP_WITH_RETURN -> R.string.detail_stop_with_return
+								ReturnChoice.STOP -> R.string.stop_choice_end
+								ReturnChoice.STOP_WITH_RETURN -> R.string.stop_choice_end_return
 							},
 						)
 						if (i == options.lastIndex)

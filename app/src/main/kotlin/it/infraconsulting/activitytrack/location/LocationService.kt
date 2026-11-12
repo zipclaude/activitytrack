@@ -17,8 +17,7 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.geo.SamplingPlan
 import it.infraconsulting.activitytrack.domain.settings.AppSettings
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.data.repo.isActive
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryInfo
 import it.infraconsulting.activitytrack.notify.EntryNotifications
@@ -87,7 +86,7 @@ class LocationService : Service() {
 		/* the policy may switch location tracking off (issue #48): only the placeholder, then stop */
 		val tracking = (application as it.infraconsulting.activitytrack.ActivityTrackApp).container.policies.current.value
 			.enabled(it.infraconsulting.activitytrack.domain.policy.Feature.LOCATION)
-		val active = if (tracking) latest.filter { it.entry.legacy == LegacyStatus.ACTIVE } else emptyList()
+		val active = if (tracking) latest.filter { it.entry.isActive() } else emptyList()
 		val chosen = active.firstOrNull { it.id == fgsEntry } ?: active.firstOrNull()
 		val id = chosen?.let { NotificationIds.of(it.id, NotificationIds.ONGOING) } ?: PLACEHOLDER_ID
 		/* startForeground is due after startForegroundService even when there is nothing to track any more */
@@ -136,7 +135,7 @@ class LocationService : Service() {
 	}
 
 	private fun cancelOngoing(entryId: Long) {
-		if (latest.none { it.id == entryId && it.entry.legacy == LegacyStatus.ACTIVE })
+		if (latest.none { it.id == entryId && it.entry.isActive() })
 			getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(entryId, NotificationIds.ONGOING))
 	}
 
@@ -169,7 +168,7 @@ class LocationService : Service() {
 					running.update()
 					return@post
 				}
-				if (infos.none { it.entry.legacy == LegacyStatus.ACTIVE } || !LocationTracker.hasPermission(app))
+				if (infos.none { it.entry.isActive() } || !LocationTracker.hasPermission(app))
 					return@post
 				try {
 					app.startForegroundService(Intent(app, LocationService::class.java))

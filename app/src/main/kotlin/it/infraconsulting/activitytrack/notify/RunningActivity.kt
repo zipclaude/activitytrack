@@ -8,7 +8,7 @@ import it.infraconsulting.activitytrack.domain.activity.ActivityDisplay
 import it.infraconsulting.activitytrack.domain.activity.ActivityState
 import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.activity.Displayed
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.common.snapshot
 import java.time.Instant
@@ -39,20 +39,20 @@ fun displayedState(e: TimeEntryEntity, segments: List<SegmentEntity>, now: Insta
  * open is a switch within the same activity: a widget cannot ask "Hai
  * completato l'attivita lavorativa?" (the Home does).
  */
-fun ongoingActions(e: TimeEntryEntity): List<EntryCommand> {
+fun ongoingActions(e: TimeEntryEntity): List<QuickAction> {
 	val allowed = ActivityStateMachine.allowed(e.activityState())
 	val found = allowed.mapNotNull { c ->
 		when (c) {
 			is ActivityCommand.Switch -> when (c.kind) {
-				SegmentKind.PAUSE -> EntryCommand.PAUSE
-				SegmentKind.WORK -> EntryCommand.WORK
-				SegmentKind.TRAVEL -> EntryCommand.TRAVEL
+				SegmentKind.PAUSE -> QuickAction.PAUSE
+				SegmentKind.WORK -> QuickAction.WORK
+				SegmentKind.TRAVEL -> QuickAction.TRAVEL
 				SegmentKind.ABSENCE -> null
 			}
-			is ActivityCommand.Resume -> if (c.kind == SegmentKind.WORK) EntryCommand.WORK else EntryCommand.TRAVEL
-			is ActivityCommand.Stop -> EntryCommand.STOP
+			is ActivityCommand.Resume -> if (c.kind == SegmentKind.WORK) QuickAction.WORK else QuickAction.TRAVEL
+			is ActivityCommand.Stop -> QuickAction.STOP
 			else -> null
 		}
 	}.toSet()
-	return listOf(EntryCommand.PAUSE, EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.STOP).filter { it in found }
+	return listOf(QuickAction.PAUSE, QuickAction.WORK, QuickAction.TRAVEL, QuickAction.STOP).filter { it in found }
 }

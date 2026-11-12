@@ -29,7 +29,7 @@ import it.infraconsulting.activitytrack.domain.activity.ReturnTrip
 import it.infraconsulting.activitytrack.domain.activity.TravelFromWork
 import it.infraconsulting.activitytrack.domain.activity.TripSegment
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.EntryInvariants
 import it.infraconsulting.activitytrack.domain.model.ExternalRefClassifier
 import it.infraconsulting.activitytrack.domain.model.InvariantViolationException
@@ -89,8 +89,6 @@ class EntryRepository(
 	val openEntries = dao.observeOpenEntries()
 	val openEntrySegments = dao.observeOpenEntrySegments()
 	val openEntryTags = dao.observeOpenEntryTags()
-	val recentClosed = dao.observeRecentClosed(RECENT_CLOSED)
-	val recentClosedSegments = dao.observeRecentClosedSegments(RECENT_CLOSED)
 	val clientLastUse = dao.observeClientLastUse()
 
 	/* TODO activities not deleted, by plan, due date and priority */
@@ -111,6 +109,9 @@ class EntryRepository(
 	fun closedEntriesSince(fromUtcMs: Long, limit: Int) = dao.observeClosedSince(fromUtcMs, limit)
 	fun closedSegmentsSince(fromUtcMs: Long, limit: Int) = dao.observeClosedSegmentsSince(fromUtcMs, limit)
 	fun closedTagsSince(fromUtcMs: Long, limit: Int) = dao.observeClosedTagsSince(fromUtcMs, limit)
+	/* the ticked tasks of the same tab (closed without a segment), newest closed first */
+	fun tickedSince(fromUtcMs: Long, limit: Int) = dao.observeTickedSince(fromUtcMs, limit)
+	fun tickedTagsSince(fromUtcMs: Long, limit: Int) = dao.observeTickedTagsSince(fromUtcMs, limit)
 
 	fun entry(id: Long) = dao.observeEntry(id)
 	suspend fun find(id: Long): TimeEntryEntity? = dao.entry(id)
@@ -144,12 +145,12 @@ class EntryRepository(
 	/*
 	 * "Lavoro · Adesso / Già iniziata" and "Viaggio" (and the start of a TODO
 	 * activity with [StartRequest.todoId]): RUNNING in WORK or TRAVEL; in the
-	 * same transaction the commands chosen for the activities already
-	 * running ([others]: SUSPEND or STOP; absent = left as the policy says).
+	 * same transaction what was chosen for the activities already running
+	 * ([others]; absent = left running as the policy says).
 	 */
-	suspend fun start(req: StartRequest, others: Map<Long, EntryCommand> = emptyMap()): Long =
+	suspend fun start(req: StartRequest, others: Map<Long, OnRunning> = emptyMap()): Long =
 		db.withTransaction {
-			others.forEach { (id, cmd) -> apply(id, cmd) }
+			others.forEach { (id, choice) -> if (choice == OnRunning.STOP) stop(id) else this.suspend(id) }
 			val id = if (req.todoId != null) startTodoFrom(req) else startNew(req)
 			req.endUtcMs?.let { end -> if (end <= clock.millis()) stop(id, end) }
 			id
@@ -602,36 +603,23 @@ class EntryRepository(
 		}
 
 	/*
-	 * The 0.9 buttons (EntryCommand) on the commands of 1.0: WORK and TRAVEL
-	 * switch, resume, start a TODO or reopen a closed activity; PAUSE
-	 * switches; SUSPEND, STOP; REOPEN in WORK. [atUtcMs] backdates the
-	 * transition (detected departure or arrival), clamped between the latest
-	 * recorded boundary and now. TODO(activity-1.0-ui): the new screens call
-	 * the commands above.
+	 * The buttons of notifications and widgets ([QuickAction]) on the commands
+	 * of the activity model: work and travel start a TODO, reopen a closed
+	 * activity, resume a suspended one or switch; pause switches; stop closes.
+	 * [atUtcMs] backdates the transition (detected departure or arrival),
+	 * clamped between the latest recorded boundary and now.
 	 */
-	suspend fun apply(entryId: Long, cmd: EntryCommand, atUtcMs: Long? = null) {
+	suspend fun quick(entryId: Long, action: QuickAction, atUtcMs: Long? = null) {
 		db.withTransaction {
 			val e = load(entryId)
 			val at = Instant.ofEpochMilli(if (atUtcMs == null) 0 else writeInstant(entryId, atUtcMs))
-			command(entryId, legacy(e, cmd, at), exact = atUtcMs != null, retag = atUtcMs != null)
+			command(entryId, quickCommand(e, action, at), exact = atUtcMs != null, retag = atUtcMs != null)
 		}
 	}
 
-	/*
-	 * A 0.9 button at a time the user chose (M17 editable times, e.g.
-	 * "stopped at 17:30"): not in the future (a stop up to 60 minutes ahead,
-	 * 4.1) and not before the running segment started. Unlike [apply], a
-	 * wrong time is an error, never clamped.
-	 */
-	suspend fun applyAt(entryId: Long, cmd: EntryCommand, atUtcMs: Long) = db.withTransaction {
-		checkChosen(entryId, atUtcMs, future = cmd == EntryCommand.STOP)
-		val e = load(entryId)
-		command(entryId, legacy(e, cmd, Instant.ofEpochMilli(atUtcMs)), exact = true, retag = true)
-	}
-
-	private fun legacy(e: TimeEntryEntity, cmd: EntryCommand, at: Instant): ActivityCommand = when (cmd) {
-		EntryCommand.WORK, EntryCommand.TRAVEL -> {
-			val kind = SegmentKind.valueOf(cmd.name)
+	private fun quickCommand(e: TimeEntryEntity, action: QuickAction, at: Instant): ActivityCommand = when (action) {
+		QuickAction.WORK, QuickAction.TRAVEL -> {
+			val kind = SegmentKind.valueOf(action.name)
 			when {
 				e.status == ActivityStatus.TODO -> ActivityCommand.Start(kind, at)
 				e.status == ActivityStatus.CLOSED -> ActivityCommand.Reopen(kind, at)
@@ -639,10 +627,8 @@ class EntryRepository(
 				else -> ActivityCommand.Switch(kind, at)
 			}
 		}
-		EntryCommand.PAUSE -> ActivityCommand.Switch(SegmentKind.PAUSE, at)
-		EntryCommand.SUSPEND -> ActivityCommand.Suspend(at)
-		EntryCommand.STOP -> ActivityCommand.Stop(at)
-		EntryCommand.REOPEN -> ActivityCommand.Reopen(SegmentKind.WORK, at)
+		QuickAction.PAUSE -> ActivityCommand.Switch(SegmentKind.PAUSE, at)
+		QuickAction.STOP -> ActivityCommand.Stop(at)
 	}
 
 	/* a chosen time: not after now (a stop: the 4.1 limit), not before the latest boundary of the activity */
@@ -951,7 +937,7 @@ class EntryRepository(
 				),
 			)
 		}
-		apply(entryId, EntryCommand.WORK, atUtcMs)
+		quick(entryId, QuickAction.WORK, atUtcMs)
 	}
 
 	/* "Still working?" answered yes. */
@@ -1008,21 +994,6 @@ class EntryRepository(
 			),
 		)
 		verify(entryId)
-	}
-
-	/*
-	 * The details of a closed activity completed (the 0.9 "complete"): a
-	 * client is required; without description and attachments only when the
-	 * user confirmed it ([allowEmpty]). TODO(activity-1.0-ui): the detail
-	 * dialog saves with [updateDetails]; completeness is only shown (2.4).
-	 */
-	suspend fun complete(entryId: Long, d: EntryDetails, allowEmpty: Boolean = false) = db.withTransaction {
-		updateDetails(entryId, d)
-		val e = load(entryId)
-		if (e.clientId == null)
-			throw ValidationException(Reason.CLIENT_REQUIRED)
-		if (!allowEmpty && e.activity == null && dao.attachmentCount(entryId) == 0)
-			throw ValidationException(Reason.COMPLETION_INCOMPLETE)
 	}
 
 	/* The description typed in the stop sheet (issue #93); the rest of the details stays. */
@@ -1230,9 +1201,6 @@ class EntryRepository(
 		return Deletion(dao.attachmentCount(entryId), e.activity.takeIf { e.externalKey != null }, db.pluginDao().sentAll(entryId).isNotEmpty())
 	}
 
-	/* The 0.9 "delete": now to the bin (restorable). TODO(activity-1.0-ui): call [delete] / [purge]. */
-	suspend fun deleteEntry(entryId: Long) = delete(entryId)
-
 	/* what a plugin sent for the activity is deleted on the remote side at the next sync (issue #48) */
 	private suspend fun keepRemoteIds(e: TimeEntryEntity) {
 		val company = e.companyId ?: return
@@ -1261,8 +1229,6 @@ class EntryRepository(
 		const val MIN_LENGTH_MS = 60_000L
 		/* the end of a running segment when checking overlaps: it goes on */
 		const val RUNNING_END = Long.MAX_VALUE
-		/* the most Home shows (compact display) */
-		const val RECENT_CLOSED = 3
 		/* the longest absence: a year (issue #158) */
 		const val MAX_ABSENCE_DAYS = 366
 	}

@@ -13,6 +13,9 @@ import it.infraconsulting.activitytrack.domain.todo.TodoPlan
  * EntryRepository (docs/ACTIVITY-MODEL.md 3, the table "Creation").
  */
 
+/* What to do with an activity already running when another starts. */
+enum class OnRunning { STOP, SUSPEND }
+
 /*
  * "Lavoro · Adesso / Già iniziata", "Viaggio": a RUNNING activity; only the
  * client is required, except for a TRAVEL start. With [todoId] the TODO

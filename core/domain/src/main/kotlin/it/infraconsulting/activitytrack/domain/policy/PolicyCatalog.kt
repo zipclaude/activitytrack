@@ -235,8 +235,8 @@ object SettingsCatalog {
 		/* the swipe gestures (Settings → Gestures) */
 		string("gestureTodoToStart", names<TodoSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(todoToStart = TodoSwipe.valueOf(v))) },
 		string("gestureTodoToEnd", names<TodoSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(todoToEnd = TodoSwipe.valueOf(v))) },
-		string("gestureEntryToStart", names<EntrySwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(entryToStart = EntrySwipe.valueOf(v))) },
-		string("gestureEntryToEnd", names<EntrySwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(entryToEnd = EntrySwipe.valueOf(v))) },
+		string("gestureEntryToStart", names<EntrySwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(entryToStart = EntrySwipe.parse(v) ?: EntrySwipe.PAUSE_RESUME)) },
+		string("gestureEntryToEnd", names<EntrySwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(entryToEnd = EntrySwipe.parse(v) ?: EntrySwipe.STOP)) },
 		string("gesturePastToStart", names<PastSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(pastToStart = PastSwipe.valueOf(v))) },
 		string("gesturePastToEnd", names<PastSwipe>()) { s, v -> s.copy(gestures = s.gestures.copy(pastToEnd = PastSwipe.valueOf(v))) },
 		bool("gestureFullSwipe") { s, v -> s.copy(gestures = s.gestures.copy(fullSwipe = v)) },

@@ -41,7 +41,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.data.repo.OnRunning
+import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.domain.policy.Field
@@ -62,7 +63,7 @@ import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.WithAddButton
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.enabled
 import it.infraconsulting.activitytrack.ui.common.fieldImportance
 import it.infraconsulting.activitytrack.ui.common.fieldLabel
@@ -249,11 +250,11 @@ fun StartScreen(
 				) { Text(stringResource(R.string.action_save), style = MaterialTheme.typography.titleMedium) }
 			else
 				Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-					StartButton(R.string.cmd_work, EntryCommand.WORK, f.ready && f.hasClient && pending.isEmpty(), Modifier.weight(1f)) {
+					StartButton(R.string.cmd_work, DisplayState.WORK, f.ready && f.hasClient && pending.isEmpty(), Modifier.weight(1f)) {
 						vm.requestStart(SegmentKind.WORK, onBack)
 					}
 					if (enabled(Feature.TRAVEL))
-						StartButton(R.string.cmd_travel, EntryCommand.TRAVEL, f.ready && pending.isEmpty(), Modifier.weight(1f)) {
+						StartButton(R.string.cmd_travel, DisplayState.TRAVEL, f.ready && pending.isEmpty(), Modifier.weight(1f)) {
 							vm.requestStart(SegmentKind.TRAVEL, onBack)
 						}
 				}
@@ -294,8 +295,8 @@ fun StartScreen(
 
 /* "Lavoro" green with the work icon, "Viaggio" blue with the travel icon (owner, 2026-11-11). */
 @Composable
-private fun StartButton(label: Int, cmd: EntryCommand, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
-	val style = commandStyle(cmd)!!
+private fun StartButton(label: Int, state: DisplayState, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
+	val style = displayStyle(state)
 	Button(
 		onClick = onClick,
 		enabled = enabled,
@@ -342,7 +343,7 @@ private fun RunningDialog(r: RunningEntry, vm: StartViewModel) {
 		text = { if (travel) Text(r.title) },
 		confirmButton = {
 			Column(horizontalAlignment = Alignment.End) {
-				TextButton(onClick = { vm.decide(EntryCommand.STOP) }) {
+				TextButton(onClick = { vm.decide(OnRunning.STOP) }) {
 					Text(stringResource(if (travel) R.string.action_yes else R.string.running_close))
 				}
 				/* no concurrent entries (policy, issue #48): the running one is closed or suspended */
@@ -351,7 +352,7 @@ private fun RunningDialog(r: RunningEntry, vm: StartViewModel) {
 						Text(stringResource(if (travel) R.string.action_no else R.string.running_leave))
 					}
 				if (!pause)
-					TextButton(onClick = { vm.decide(EntryCommand.SUSPEND) }) {
+					TextButton(onClick = { vm.decide(OnRunning.SUSPEND) }) {
 						Text(stringResource(if (travel) R.string.travel_suspend else R.string.running_suspend))
 					}
 			}

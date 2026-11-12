@@ -15,15 +15,11 @@
   <string name="action_add">Aggiungi</string>
   <string name="action_edit">Modifica</string>
   <string name="action_back">Indietro</string>
-  <string name="action_more">Altro</string>
   <string name="confirm_delete">Eliminare \"%1$s\"?</string>
   <string name="no_items">Ancora nessun elemento.</string>
   <string name="archived_suffix">Archiviato</string>
 
-  <string name="home_no_open_entries">Nessuna attività aperta.</string>
 
-  <string name="home_empty_hint">Nessuna attività in corso.
-Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="entry_no_client">Cliente non impostato</string>
   <string name="mode_work">In lavoro</string>
   <string name="mode_travel">In trasferta</string>
@@ -33,7 +29,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="tile_add_hint">Pausa / riprendi dal pannello delle notifiche</string>
   <string name="tile_added">Aggiunto</string>
   <string name="widget_no_activity">Nessuna attività</string>
-  <string name="widget_since">%1$s dalle %2$s</string>
   <string name="widget_status_name">Stato attività</string>
   <string name="widget_status_description">Attività in corso con i comandi, o clienti recenti</string>
   <string name="widget_toggle_name">Pausa / riprendi</string>
@@ -43,9 +38,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="widget_todo_name">Da fare 4×2</string>
   <string name="widget_todo_description">I prossimi Da fare pianificati, ognuno con il pulsante Avvia</string>
   <string name="widget_todo_empty">Niente di pianificato</string>
-  <string name="status_suspended">Sospesa</string>
-  <string name="status_to_complete">Dettagli mancanti</string>
-  <string name="status_closed">Chiusa</string>
 
   <string name="setup_title">Cartella dati</string>
   <string name="setup_text">Scegli la cartella per allegati, backup ed esportazioni: ti proponiamo %1$s nella memoria principale (il selettore si apre lì; se manca creala con “Nuova cartella”). L\'app ne mantiene l\'accesso; i file restano anche se l\'app viene disinstallata.</string>
@@ -176,31 +168,17 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="perm_battery_optimized">Ottimizzata: il sistema può interrompere il tracciamento</string>
   <string name="set_change_root">Cambia</string>
   <string name="set_backup_retention">Backup conservati</string>
-  <string name="home_start">Avvia attività</string>
   <string name="cmd_work">Lavoro</string>
   <string name="cmd_resume">Riprendi</string>
   <string name="cmd_travel">Viaggio</string>
   <string name="cmd_pause">Pausa</string>
-  <string name="cmd_suspend">Sospendi</string>
   <string name="cmd_stop">Stop</string>
-  <string name="suspend_hint_text">Sospendi lascia l\'attività per riprenderla più tardi, per esempio per lavorare a un\'altra; il tempo nel frattempo non conta. Pausa è un\'interruzione dentro l\'attività e conta come pausa.</string>
   <string name="cmd_complete">Completa</string>
-  <string name="empty_activity_title">Attività non descritta</string>
-  <string name="empty_activity_text">Completare con il solo cliente?</string>
-  <string name="empty_activity_leave">Lascia vuoto</string>
-  <string name="empty_activity_copy">Copia l\'ultima: %1$s</string>
-  <string name="empty_activity_edit">Torna a modificare</string>
   <string name="cmd_reopen">Riapri</string>
   <string name="since_fmt">%1$s dalle %2$s</string>
   <string name="totals_fmt">Lavoro %1$s · Viaggio %2$s</string>
   <string name="stop_title">Fermare \"%1$s\"</string>
-  <string name="stop_now">Ferma ora</string>
   <string name="stop_return">Avvia rientro</string>
-  <string name="stop_quick">Stop rapido</string>
-  <string name="stop_end_work">Fine lavoro</string>
-  <string name="stop_close">Chiudi</string>
-  <string name="stop_no_activity_hint">Senza descrizione resta «dettagli mancanti».</string>
-  <string name="stop_todo_done">Voce Da fare completata</string>
   <string name="resume_title">Riprendere \"%1$s\"?</string>
   <string name="action_yes">Sì</string>
   <string name="action_no">No</string>
@@ -220,9 +198,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="running_suspend">Sospendila</string>
   <string name="travel_done_title">Il viaggio è completato?</string>
   <string name="travel_suspend">Sospendi viaggio</string>
-  <string name="err_completion_incomplete">Descrivi l\'attività.</string>
   <string name="err_client_required">Scegli un cliente.</string>
-  <string name="notif_to_complete_title">Attività: dettagli mancanti</string>
   <string name="notif_confirm_title">Ancora su %1$s?</string>
   <string name="notif_confirm_text">Ultima conferma alle %1$s</string>
   <string name="notif_stop_at">Stop alle %1$s</string>
@@ -244,8 +220,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="field_locality">Località</string>
   <string name="field_location_kind">Dove</string>
   <string name="segments">Tempi</string>
-  <string name="add_travel">+ Viaggio</string>
-  <string name="add_pause">+ Pausa</string>
   <string name="segment_manual">manuale</string>
   <string name="external_refs">Riferimenti esterni</string>
   <string name="external_ref_new">Ticket, URL o codice</string>
@@ -263,9 +237,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="att_audio">Nota vocale</string>
   <string name="att_receipt">Scontrino</string>
   <string name="att_file">File</string>
-  <string name="att_add_photo">Foto</string>
   <string name="att_add_voice">Nota vocale</string>
-  <string name="att_add_file">File</string>
   <string name="att_recording">Registrazione… %1$s</string>
   <string name="att_record_failed">Il microfono non è disponibile.</string>
   <string name="att_stop_save">Ferma e salva</string>
@@ -306,7 +278,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="nav_agenda">Agenda</string>
   <string name="nav_report">Report</string>
   <string name="nav_more">Altro</string>
-  <string name="agenda_today">Oggi</string>
   <string name="agenda_list">Lista</string>
   <string name="agenda_day">Giorno</string>
   <string name="agenda_week">Settimana</string>
@@ -319,23 +290,16 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="connector_not_set">Non impostato</string>
   <string name="connector_generic_hint">Scambio con file JSON / XML da Importa / esporta.</string>
   <string name="todo_title">Da fare</string>
-  <string name="todo_due_today">Da fare · prossime 24 h</string>
   <string name="todo_today">oggi</string>
   <string name="todo_align_due">La pianificazione inizia dopo la scadenza. Allineare la scadenza al giorno pianificato (%1$s)?</string>
   <string name="todo_align_due_yes">Allinea la scadenza</string>
   <string name="todo_will_overdue">Risulterà in ritardo: la pianificazione inizia dopo la scadenza.</string>
   <string name="todo_align_due_no">Mantieni</string>
-  <string name="todo_start">Avvia attività</string>
   <string name="todo_mark_done">Segna come fatta</string>
   <string name="todo_edit">Modifica</string>
-  <string name="todo_show_done">Mostra anche le fatte</string>
   <string name="todo_field_title">Descrizione</string>
   <string name="todo_field_due">Scadenza</string>
   <string name="todo_field_time">Ora scadenza</string>
-  <string name="todo_field_priority">Priorità (1 = massima)</string>
-  <string name="todo_field_refs">Riferimenti (uno per riga)</string>
-  <string name="todo_done_question">L\'attività da fare è conclusa?</string>
-  <string name="todo_later">No, ci tornerò</string>
   <string name="export_all">Tutti</string>
   <string name="export_section">Esporta</string>
   <string name="export_sections">Contenuto</string>
@@ -366,9 +330,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="export_from">Dal</string>
   <string name="export_to">Al</string>
   <string name="export_hint">Una riga per attività e giorno, arrotondata come nelle Impostazioni. Il file va nella cartella export della cartella dati; le coordinate non vengono mai esportate.</string>
-  <string name="export_csv">Esporta CSV</string>
   <string name="export_invalid">Intervallo non valido: date come aaaa-mm-gg, al massimo un anno.</string>
-  <string name="export_failed">Esportazione non riuscita: controlla la cartella dati.</string>
   <string name="backup_now">Esegui backup ora</string>
   <string name="backup_started">Backup avviato</string>
   <plurals name="export_done">
@@ -382,7 +344,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="action_postpone">Posticipa %1$d min</string>
   <string name="action_replan">Ripianifica</string>
   <string name="todo_field_plan_date">Data pianificata</string>
-  <string name="todo_field_plan_time">Ora pianificata</string>
   <string name="todo_field_duration">Durata (min; vuota = 1 h, si allunga)</string>
   <string name="todo_planned">pianificata %1$s</string>
   <string name="todo_overdue">in ritardo</string>
@@ -398,40 +359,25 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="first_text">Crea il cliente per cui lavori, con la sua azienda: poi ▶ avvia la prima attività.</string>
   <string name="first_client">Crea il primo cliente</string>
   <string name="first_import">Importa da un file o da un gestionale</string>
-  <string name="home_none_hint">Tocca il pulsante verde qui sotto per iniziarne una.</string>
-  <string name="home_tab_planned">Da fare</string>
   <string name="home_tab_closed">Fatte</string>
   <string name="home_no_date">Senza data</string>
-  <string name="home_window_today">Oggi</string>
-  <string name="home_planned_empty">Niente di pianificato in questo intervallo</string>
   <string name="home_all_todos">Tutte le Da fare →</string>
   <string name="home_filter_state">Stato</string>
   <string name="home_filter_company">Azienda</string>
   <string name="home_filter_tag">Tag</string>
   <string name="home_show_todo">Da fare</string>
-  <string name="home_show_ignored">Ignorate</string>
   <string name="home_show_all">Tutti</string>
-  <string name="home_show_none">Nessuno</string>
-  <string name="home_show_fmt">Stato: %1$s</string>
   <string name="home_show_only_todo">Solo da fare</string>
   <string name="home_show_only_done">Solo fatte</string>
-  <string name="home_sec_overdue">In ritardo</string>
   <string name="home_sec_next">Prossimi giorni</string>
   <string name="home_sec_earlier">Giorni precedenti</string>
-  <string name="home_state_open">aperta</string>
-  <string name="home_kind_entry">Attività</string>
   <string name="home_list_empty">Niente da mostrare con questi filtri</string>
-  <string name="undo_entry_reopened">«%1$s» riaperta</string>
-  <string name="home_closed_empty">Niente di fatto in questo intervallo</string>
-  <string name="todo_ignored">ignorata</string>
   <string name="swipe_start">Avvia</string>
-  <string name="swipe_ignore">Elimina</string>
   <string name="swipe_restore">Ripristina</string>
   <string name="swipe_postpone">Posticipa</string>
   <string name="swipe_none">Nessuna</string>
   <string name="swipe_postpone_or_ignore">Posticipa o elimina</string>
   <string name="swipe_pause_resume">Pausa / riprendi</string>
-  <string name="swipe_stop_or_suspend">Termina o sospendi</string>
   <string name="gestures_title">Gesti</string>
   <string name="gesture_hint_text">Suggerimento: trascina una scheda di lato per i suoi comandi — uno scorrimento breve mostra i pulsanti (pausa, stop, avvia…), uno lungo esegue il primo.</string>
   <string name="gesture_hint_ok">Ho capito</string>
@@ -440,21 +386,14 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="gestures_todos">Attività da fare</string>
   <string name="gestures_past">Attività fermate</string>
   <string name="swipe_start_or_done">Avvia o fatta</string>
-  <string name="todo_reopen_short">Riapri</string>
   <string name="gestures_to_start">Trascina a sinistra</string>
   <string name="gestures_to_end">Trascina a destra</string>
   <string name="gestures_full">Trascinamento lungo: esegue subito la prima azione</string>
   <string name="todo_due_at">scad. %1$s</string>
-  <string name="todo_planned_chip">pianificata</string>
-  <string name="todo_done_chip">fatta</string>
   <string name="todo_done_at">fatta %1$s</string>
-  <string name="todo_state">Stato</string>
-  <string name="todo_state_done">Fatta</string>
-  <string name="todo_state_ignored">Ignorata</string>
   <string name="todo_clear_plan">Togli pianificazione</string>
   <string name="action_undo">Annulla</string>
   <string name="undo_todo_done">«%1$s» segnata come fatta</string>
-  <string name="undo_todo_open">«%1$s» riaperta</string>
   <string name="undo_todo_ignored">«%1$s» ignorata</string>
   <string name="undo_todo_postponed">«%1$s» posticipata</string>
   <string name="undo_todo_unplanned">Pianificazione tolta da «%1$s»</string>
@@ -483,9 +422,7 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="color_grey">grigio</string>
   <string name="color_none">Nessun colore</string>
   <string name="sec_color">Colore</string>
-  <string name="todo_filter_all">Tutte le aziende</string>
   <!-- M13 backlog -->
-  <string name="todo_plan_time_missing">Indica anche l\'ora pianificata</string>
   <string name="todo_plan_date_missing">Indica anche la data pianificata</string>
   <string name="quick_role">Nuovo ruolo</string>
   <string name="quick_preset">Nuova scelta rapida</string>
@@ -493,14 +430,9 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="short_title">\"%1$s\" è durata meno di un minuto</string>
   <string name="short_text">Probabilmente avviata per errore. La scarto?</string>
   <string name="short_discard">Scarta</string>
-  <string name="short_keep">Tieni e termina</string>
   <string name="sec_notifications">Notifiche</string>
   <string name="notif_settings_hint">Banner, suono e vibrazione di ogni tipo di notifica si impostano in Android: toccane uno per cambiarlo.</string>
   <string name="notif_all">Tutte le notifiche dell\'app</string>
-  <string name="agenda_fit">Adatta</string>
-  <string name="agenda_scroll">Scorri</string>
-  <string name="todo_filter_next24h">Prossime 24 h</string>
-  <string name="todo_filter_ignored">Ignorate</string>
   <!-- M15 tags, segments -->
   <string name="tags">Tag</string>
   <string name="tag_new">Nuovi tag (es. #urgente remoto)</string>
@@ -528,7 +460,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="grid_exact">Orario esatto</string>
   <!-- M19 tag filters -->
   <string name="tag_filter_all">Tutti i tag</string>
-  <string name="more_details">Altri dettagli</string>
   <string name="todo_window_24h">24 h</string>
   <string name="todo_window_3d">3 gg</string>
   <string name="todo_window_7d">7 gg</string>
@@ -536,28 +467,17 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="todo_window_all">Tutti</string>
   <!-- M22 end at start -->
   <string name="notif_planned_end_title">%1$s finita?</string>
-  <string name="notif_planned_end_text">Fine prevista %1$s</string>
   <string name="notif_planned_end_stop">Sì, stop alle %1$s</string>
   <string name="notif_planned_end_go_on">No, continua</string>
-  <string name="field_end_optional">Fine (facoltativa)</string>
-  <string name="end_hint">Vuota = aperta; già passata = l\'attività viene registrata come conclusa.</string>
-  <string name="ended_title">L\'attività è conclusa?</string>
-  <string name="ended_text">La fine %1$s è già passata.</string>
   <string name="planned_end_fmt">Fine prevista %1$s</string>
   <string name="todo_filters">Filtri</string>
   <string name="todo_filter_any">Qualsiasi</string>
-  <string name="todo_filter_state">Stato</string>
-  <string name="todo_filter_planned">Pianificata</string>
-  <string name="todo_state_open">Aperta</string>
-  <string name="todo_state_planned">Pianificata</string>
-  <string name="todo_state_overdue">In ritardo</string>
   <string name="todo_filters_reset">Azzera</string>
   <!-- issue #28 calls -->
   <string name="md_contacts">Contatti</string>
   <string name="contacts_import">Importa dalla rubrica</string>
   <string name="contact_edit">Contatto</string>
   <string name="contact_numbers">Numeri (uno per riga)</string>
-  <string name="contact_numbers_missing">Serve almeno un numero.</string>
   <string name="client_calls">Chiamate</string>
   <string name="sec_calls">Chiamate</string>
   <string name="set_calls_incoming">Riconosci le chiamate in entrata</string>
@@ -572,7 +492,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="call_propose_text">%1$s–%2$s: registrarla come attività?</string>
   <string name="call_propose_action">Crea attività</string>
   <string name="segment_note">Descrizione</string>
-  <string name="start_end_hint">Inizio vuoto = adesso; Fine vuota = aperta; una Fine già passata registra l\'attività come conclusa.</string>
   <string name="start_when_now">Adesso</string>
   <string name="start_when_started">Già iniziata</string>
   <string name="start_when_past">Passata</string>
@@ -580,9 +499,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="start_when_started_hint">Resta aperta: la fermi con Stop.</string>
   <string name="start_started_at">Iniziata alle</string>
   <string name="start_minutes_ago">%1$d min fa</string>
-  <string name="start_now_action">Avvia adesso</string>
-  <string name="start_from_action">Avvia dalle %1$s</string>
-  <string name="start_record_action">Registra %1$s–%2$s</string>
   <!-- issue #37 add row -->
   <string name="short_expense">Spesa</string>
   <string name="short_photo">Foto</string>
@@ -594,17 +510,13 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="future_plan">Pianifica oggi alle %1$s</string>
   <string name="future_now">Avvia adesso</string>
   <string name="future_yesterday">Avviata ieri alle %1$s</string>
-  <string name="todo_home_title">Da fare · %1$s ▾</string>
   <!-- issue #40 -->
   <string name="overlap_title">Tratti sovrapposti</string>
   <string name="overlap_text">Il tratto si sovrappone a:</string>
   <string name="overlap_hint">Confermando viene salvato: i tratti qui sopra vengono accorciati, divisi o eliminati dove li copre.</string>
   <string name="action_confirm">Conferma</string>
   <string name="entry_delete_title">Elimina l\'attività</string>
-  <string name="entry_delete_text">L\'attività viene eliminata con tratti, spese, riferimenti e tag.</string>
-  <string name="entry_delete_ticket">Il tempo registrato viene eliminato; la voce «%1$s» torna tra le cose da fare.</string>
   <string name="entry_delete_sent">Già inviata al gestionale: lì viene cancellata alla prossima sincronizzazione.</string>
-  <string name="entry_delete_attachments">L\'attività ha %1$d allegati: eliminali prima, dalla sezione Allegati.</string>
   <!-- issue #44 -->
   <string name="backup_section">Backup</string>
   <string name="backup_hint">Ogni giorno una copia dei dati va nella cartella \"backup\" della cartella dati; questo pulsante ne fa una adesso.</string>
@@ -625,8 +537,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="err_invalid_value">Valore non valido.</string>
   <string name="field_description">Descrizione</string>
   <!-- issue #47 -->
-  <string name="field_start_end">Inizio – Fine</string>
-  <string name="todo_more_details">Note e riferimenti</string>
   <!-- issue #44 -->
   <string name="set_backup_every">Backup automatico</string>
   <string name="set_backup_hour">Ora preferita</string>
@@ -639,8 +549,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <!-- issue #44 date -->
   <string name="err_start_required">Per un altro giorno serve l\'inizio.</string>
   <string name="err_end_required">Per un giorno passato serve anche la fine.</string>
-  <string name="plan_question">Pianificare per %1$s alle %2$s?</string>
-  <string name="plan_question_text">Diventa una voce Da fare pianificata con questo cliente e questa descrizione.</string>
   <!-- issue #48 policy -->
   <string name="ch_policy">Policy</string>
   <string name="policy_refused_title">policy.json rifiutata</string>
@@ -690,7 +598,6 @@ Tocca il pulsante verde qui sotto per avviarne una.</string>
   <string name="plugin_log_in">Accedi</string>
   <string name="plugin_log_out">Esci</string>
   <string name="plugin_logged_in_state">Accesso eseguito</string>
-  <string name="plugin_sync_now">Sincronizza ora</string>
   <string name="plugin_syncing">Sincronizzazione…</string>
   <string name="plugin_https_only">Un indirizzo https://</string>
   <string name="plugin_sync_done">%1$s: sincronizzazione eseguita</string>
@@ -855,11 +762,6 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="offline_map_err_failed">L\'operazione non è riuscita.</string>
   <string name="offline_map_hint_server">Una mappa basilare (strade, fiumi, confini, nomi dei luoghi) delle aree che l\'amministratore ha preparato su ActivityTrack Web: arriva con la sincronizzazione, su Wi-Fi. Puoi anche copiare file .pmtiles nella cartella «maps» della cartella dati e importarli. Compare al posto dei tile OSM quando questi sono spenti o manca la rete. © OpenStreetMap contributors · Protomaps.</string>
   <string name="offline_map_hint_folder">Copia i file di mappa .pmtiles (vettoriali, Protomaps) nella cartella «maps» della cartella dati e importali qui; docs/OFFLINE-MAPS.md spiega come prepararli. Una mappa compare al posto dei tile OSM quando questi sono spenti o manca la rete. © OpenStreetMap contributors · Protomaps.</string>
-  <string name="todo_kind_task">Da fare</string>
-  <string name="todo_absence">Assenza</string>
-  <string name="todo_absence_until">Fino al (ultimo giorno, facoltativo)</string>
-  <string name="todo_absence_label">Etichetta (facoltativa)</string>
-  <string name="todo_field_color">Colore</string>
   <!-- displayed states of an activity (ACTIVITY-MODEL.md 2.2) -->
   <string name="state_deleted">Eliminata</string>
   <string name="state_absence">Assenza</string>
@@ -880,70 +782,55 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="priority_high">Alta</string>
   <string name="priority_urgent">Urgenza</string>
   <string name="priority_emergency">Emergenza</string>
-  <!-- ui-home -->
+  <!-- start, stop and reopen questions (ACTIVITY-MODEL.md 3) -->
   <string name="travel_done_question">Hai completato l\'attività lavorativa?</string>
   <string name="stop_choice_travel_back">Avvia viaggio di ritorno</string>
   <string name="stop_choice_end">Termina l\'attività</string>
   <string name="stop_choice_end_return">Termina l\'attività ed aggiungi il viaggio di ritorno</string>
   <string name="reopen_title">Riaprire «%1$s»?</string>
   <string name="reopen_text">L\'attività torna in corso; il tempo trascorso resta un vuoto.</string>
+  <string name="detail_reopen_work">Riapri con lavoro</string>
+  <string name="detail_reopen_travel">Riapri con viaggio</string>
+  <string name="detail_reopen_text">Si apre un nuovo tratto da adesso; il tempo trascorso dalla chiusura resta vuoto.</string>
+  <string name="detail_travel_hint">Sì: questa attività si chiude e parte un nuovo viaggio. No: il viaggio fa parte di questa attività.</string>
+  <string name="detail_stop_at">Fine (vuoto = adesso)</string>
+  <string name="detail_stop_ahead_hint">Fino a 60 minuti nel futuro.</string>
+  <string name="detail_return_question">C\'è stato un viaggio di andata: e il ritorno?</string>
+  <string name="detail_end_ahead">termina alle %1$s</string>
+  <!-- pulled-back notice (ACTIVITY-MODEL.md 4.1) -->
   <string name="home_pulled_back">La fine di «%1$s» è stata anticipata alle %2$s (è iniziata un\'altra attività)</string>
   <string name="home_pulled_back_many">La fine di %1$d attività è stata anticipata (è iniziata un\'altra attività)</string>
+  <!-- absence kinds and the absence dialog -->
   <string name="absence_kind_absence">Assenza</string>
   <string name="absence_kind_holiday">Ferie</string>
   <string name="absence_kind_leave">Permesso</string>
   <string name="absence_kind_sick">Malattia</string>
-  <!-- ui-lists -->
-  <string name="swipe_delete">Elimina</string>
+  <string name="create_absence_title">Nuova assenza</string>
+  <string name="create_absence_from">Dal</string>
+  <string name="create_absence_to">Al (facoltativo)</string>
+  <string name="create_absence_hint_days">Senza orario: l\'orario di lavoro di ogni giorno lavorativo.</string>
+  <string name="create_absence_hint_times">Con orario: le stesse ore in ogni giorno dell\'intervallo.</string>
+  <!-- bin -->
   <string name="undo_todo_deleted">«%1$s» spostata nel cestino</string>
   <string name="bin_title">Cestino</string>
-  <string name="bin_restore">Ripristina</string>
   <string name="bin_purge">Elimina definitivamente</string>
   <string name="bin_purge_confirm">Eliminare definitivamente «%1$s»? Non si può annullare.</string>
   <string name="bin_purge_failed">Ha degli allegati: eliminali prima.</string>
-  <string name="lists_absence_kind_absence">Assenza</string>
-  <string name="lists_absence_kind_holiday">Ferie</string>
-  <string name="lists_absence_kind_leave">Permesso</string>
-  <string name="lists_absence_kind_sick">Malattia</string>
-  <string name="set_round_stored">Salva i valori arrotondati</string>
-  <string name="set_round_stored_hint">I pulsanti Avvia, Cambia, Termina e Riapri salvano orari arrotondati; gli orari digitati a mano restano esatti. Richiede orari liberamente modificabili.</string>
-  <!-- ui-create -->
+  <!-- creation dialogs: segments and references -->
   <string name="create_more_info">Altre informazioni</string>
   <string name="create_external_refs">Riferimenti esterni (uno per riga)</string>
   <string name="create_segments">Tratti</string>
   <string name="create_segments_hint">Nessun tratto: aggiungine uno con il pulsante.</string>
   <string name="create_segments_planned_hint">I tratti previsti sono tratteggiati e non vengono mai conteggiati.</string>
   <string name="create_add_segment">Aggiungi %1$s</string>
-  <string name="create_absence_title">Nuova assenza</string>
-  <string name="create_absence_kind_absence">Assenza</string>
-  <string name="create_absence_kind_holiday">Ferie</string>
-  <string name="create_absence_kind_leave">Permesso</string>
-  <string name="create_absence_kind_sick">Malattia</string>
-  <string name="create_absence_from">Dal</string>
-  <string name="create_absence_to">Al (facoltativo)</string>
-  <string name="create_absence_times">Orario (facoltativo)</string>
-  <string name="create_absence_hint_days">Senza orario: l\'orario di lavoro di ogni giorno lavorativo.</string>
-  <string name="create_absence_hint_times">Con orario: le stesse ore in ogni giorno dell\'intervallo.</string>
-  <!-- ui-detail -->
-  <string name="detail_end_ahead">termina alle %1$s</string>
-  <string name="detail_reopen_work">Riapri con lavoro</string>
-  <string name="detail_reopen_travel">Riapri con viaggio</string>
-  <string name="detail_reopen_text">Si apre un nuovo tratto da adesso; il tempo trascorso dalla chiusura resta vuoto.</string>
-  <string name="detail_travel_question">Hai completato l\'attività lavorativa?</string>
-  <string name="detail_travel_hint">Sì: questa attività si chiude e parte un nuovo viaggio. No: il viaggio fa parte di questa attività.</string>
-  <string name="detail_stop_title">Termina l\'attività</string>
-  <string name="detail_stop_at">Fine (vuoto = adesso)</string>
-  <string name="detail_stop_ahead_hint">Fino a 60 minuti nel futuro.</string>
-  <string name="detail_return_question">C\'è stato un viaggio di andata: e il ritorno?</string>
-  <string name="detail_stop_with_return">Termina l\'attività ed aggiungi il viaggio di ritorno</string>
+  <!-- detail dialog: days and segments -->
   <string name="detail_days">Giorni</string>
   <string name="detail_add_day">Giorno</string>
   <string name="detail_segment_new">Nuovo tratto</string>
   <string name="detail_planned">pianificato</string>
   <string name="detail_planned_hint">Pianificato: non conta nei totali.</string>
   <string name="detail_delete_text">L\'attività va nel cestino: da lì si può ripristinare.</string>
-  <string name="detail_absence_absence">Assenza</string>
-  <string name="detail_absence_holiday">Ferie</string>
-  <string name="detail_absence_leave">Permesso</string>
-  <string name="detail_absence_sick">Malattia</string>
+  <!-- settings: stored times -->
+  <string name="set_round_stored">Salva i valori arrotondati</string>
+  <string name="set_round_stored_hint">I pulsanti Avvia, Cambia, Termina e Riapri salvano orari arrotondati; gli orari digitati a mano restano esatti. Richiede orari liberamente modificabili.</string>
 </resources>

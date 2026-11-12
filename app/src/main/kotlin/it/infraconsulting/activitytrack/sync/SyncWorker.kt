@@ -16,9 +16,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.domain.model.QuickAction
+import it.infraconsulting.activitytrack.data.repo.isActive
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.data.sync.SyncEngine
@@ -141,11 +140,11 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 	 */
 	private suspend fun concurrent(app: ActivityTrackApp) {
 		if (app.container.policies.current.value.enabled(Feature.CONCURRENT_ENTRIES)) return
-		val active = app.container.entries.openEntries.first().filter { it.legacy == LegacyStatus.ACTIVE }
+		val active = app.container.entries.openEntries.first().filter { it.isActive() }
 		if (active.size < 2) return
 		/* one that cannot be suspended stays running: the sync and the policy go on */
 		val older = active.sortedByDescending { it.createdUtcMs }.drop(1).filter { e ->
-			runCatching { app.container.entries.apply(e.id, EntryCommand.SUSPEND) }
+			runCatching { app.container.entries.suspend(e.id) }
 				.onFailure { x -> if (x is kotlinx.coroutines.CancellationException) throw x else Log.w(TAG, "suspend ${e.id}", x) }
 				.isSuccess
 		}

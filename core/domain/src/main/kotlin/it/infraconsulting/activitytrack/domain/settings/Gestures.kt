@@ -2,14 +2,27 @@
 package it.infraconsulting.activitytrack.domain.settings
 
 import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 
 /* What a swipe on a to-do card offers (M10, owner decisions 2026-10-18). */
 enum class TodoSwipe { START, START_OR_DONE, POSTPONE_OR_IGNORE, POSTPONE, IGNORE, DONE, REPLAN, NONE }
 
 /* What a swipe on an open entry card offers. */
-enum class EntrySwipe { PAUSE_RESUME, STOP_OR_SUSPEND, STOP, SUSPEND, NONE }
+enum class EntrySwipe {
+	PAUSE_RESUME, STOP, NONE;
+
+	companion object {
+		/*
+		 * A stored name; suspend is no button any more (ACTIVITY-MODEL.md 3), so
+		 * the old SUSPEND and STOP_OR_SUSPEND choices become STOP. Null when unknown.
+		 */
+		fun parse(name: String?): EntrySwipe? = when (name) {
+			"STOP_OR_SUSPEND", "SUSPEND" -> STOP
+			else -> entries.firstOrNull { it.name == name }
+		}
+	}
+}
 
 /* What a swipe on a stopped entry (to complete or closed) offers on the Home list (one rule for every row). */
 enum class PastSwipe { COMPLETE, REOPEN, NONE }
@@ -32,7 +45,7 @@ data class GestureSettings(
 	val todoToStart: TodoSwipe = TodoSwipe.START_OR_DONE,
 	val todoToEnd: TodoSwipe = TodoSwipe.POSTPONE_OR_IGNORE,
 	val entryToStart: EntrySwipe = EntrySwipe.PAUSE_RESUME,
-	val entryToEnd: EntrySwipe = EntrySwipe.STOP_OR_SUSPEND,
+	val entryToEnd: EntrySwipe = EntrySwipe.STOP,
 	val pastToStart: PastSwipe = PastSwipe.COMPLETE,
 	val pastToEnd: PastSwipe = PastSwipe.REOPEN,
 	val fullSwipe: Boolean = true,
@@ -66,35 +79,20 @@ object Gestures {
 	private val BACK = setOf(TodoSwipe.POSTPONE_OR_IGNORE, TodoSwipe.POSTPONE, TodoSwipe.IGNORE)
 
 	/*
-	 * What a swipe on a closed activity offers: reopen it. COMPLETE (an
-	 * incomplete one's details) is no command of the activity model 1.0: the
-	 * screen opens the details itself. TODO(activity-1.0-ui)
-	 */
-	fun pastCommands(swipe: PastSwipe, status: ActivityStatus): List<EntryCommand> = when (swipe) {
-		PastSwipe.COMPLETE -> emptyList()
-		PastSwipe.REOPEN -> listOfNotNull(EntryCommand.REOPEN.takeIf { status == ActivityStatus.CLOSED })
-		PastSwipe.NONE -> emptyList()
-	}
-
-	/*
-	 * The commands an entry swipe reveals, among those valid in its state:
+	 * The buttons an entry swipe reveals, among those valid in its state:
 	 * pause while working or travelling, resume (WORK) from a pause or a
-	 * suspension; stop where the state machine allows it. Suspend is no
-	 * button any more (ACTIVITY-MODEL.md 3): the stored SUSPEND and
-	 * STOP_OR_SUSPEND choices reveal what is left of them.
+	 * suspension; stop where the state machine allows it.
 	 */
-	fun entryCommands(swipe: EntrySwipe, status: ActivityStatus, mode: SegmentKind?): List<EntryCommand> {
+	fun entryActions(swipe: EntrySwipe, status: ActivityStatus, mode: SegmentKind?): List<QuickAction> {
 		val live = status == ActivityStatus.RUNNING
 		val running = live && (mode == SegmentKind.WORK || mode == SegmentKind.TRAVEL)
 		val resting = live && (mode == SegmentKind.PAUSE || mode == null)
-		val stop = EntryCommand.STOP.takeIf { live }
 		return when (swipe) {
 			EntrySwipe.PAUSE_RESUME -> listOfNotNull(
-				EntryCommand.PAUSE.takeIf { running },
-				EntryCommand.WORK.takeIf { resting },
+				QuickAction.PAUSE.takeIf { running },
+				QuickAction.WORK.takeIf { resting },
 			)
-			EntrySwipe.STOP_OR_SUSPEND, EntrySwipe.STOP -> listOfNotNull(stop)
-			EntrySwipe.SUSPEND -> emptyList()
+			EntrySwipe.STOP -> listOfNotNull(QuickAction.STOP.takeIf { live })
 			EntrySwipe.NONE -> emptyList()
 		}
 	}

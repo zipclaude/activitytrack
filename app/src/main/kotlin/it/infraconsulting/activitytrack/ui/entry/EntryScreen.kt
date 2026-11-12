@@ -274,7 +274,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 						) { absenceKind = it }
 						ChoiceField(
 							stringResource(R.string.field_company),
-							listOf<Pair<Long?, String>>(null to stringResource(R.string.todo_filter_all)) +
+							listOf<Pair<Long?, String>>(null to stringResource(R.string.all_companies)) +
 								companies.filter { !it.archived || it.id == companyId }.map { it.id to it.name },
 							companyId,
 							importance = Importance.OPTIONAL,
@@ -703,10 +703,10 @@ private fun TagsSection(vm: EntryViewModel) {
 @Composable
 private fun absenceLabel(k: AbsenceKind) = stringResource(
 	when (k) {
-		AbsenceKind.ABSENCE -> R.string.detail_absence_absence
-		AbsenceKind.HOLIDAY -> R.string.detail_absence_holiday
-		AbsenceKind.LEAVE -> R.string.detail_absence_leave
-		AbsenceKind.SICK -> R.string.detail_absence_sick
+		AbsenceKind.ABSENCE -> R.string.absence_kind_absence
+		AbsenceKind.HOLIDAY -> R.string.absence_kind_holiday
+		AbsenceKind.LEAVE -> R.string.absence_kind_leave
+		AbsenceKind.SICK -> R.string.absence_kind_sick
 	},
 )
 

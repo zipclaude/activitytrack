@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.settings
 
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import kotlin.test.Test
@@ -17,7 +17,7 @@ class GesturesTest {
 		assertEquals(PastSwipe.REOPEN, g.pastToEnd)
 		assertEquals(TodoSwipe.POSTPONE_OR_IGNORE, g.todoToEnd)
 		assertEquals(EntrySwipe.PAUSE_RESUME, g.entryToStart)
-		assertEquals(EntrySwipe.STOP_OR_SUSPEND, g.entryToEnd)
+		assertEquals(EntrySwipe.STOP, g.entryToEnd)
 	}
 
 	@Test
@@ -37,30 +37,28 @@ class GesturesTest {
 	}
 
 	@Test
-	fun pastCommandsFollowTheState() {
-		/* completing opens the details: no command (activity model 1.0) */
-		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.COMPLETE, ActivityStatus.CLOSED))
-		assertEquals(listOf(EntryCommand.REOPEN), Gestures.pastCommands(PastSwipe.REOPEN, ActivityStatus.CLOSED))
-		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.REOPEN, ActivityStatus.RUNNING))
-		assertEquals(emptyList(), Gestures.pastCommands(PastSwipe.REOPEN, ActivityStatus.TODO))
+	fun entryActionsFollowTheState() {
+		val pr = EntrySwipe.PAUSE_RESUME
+		assertEquals(listOf(QuickAction.PAUSE), Gestures.entryActions(pr, ActivityStatus.RUNNING, SegmentKind.WORK))
+		assertEquals(listOf(QuickAction.PAUSE), Gestures.entryActions(pr, ActivityStatus.RUNNING, SegmentKind.TRAVEL))
+		assertEquals(listOf(QuickAction.WORK), Gestures.entryActions(pr, ActivityStatus.RUNNING, SegmentKind.PAUSE))
+		assertEquals(listOf(QuickAction.WORK), Gestures.entryActions(pr, ActivityStatus.RUNNING, null))
+
+		val stop = EntrySwipe.STOP
+		assertEquals(listOf(QuickAction.STOP), Gestures.entryActions(stop, ActivityStatus.RUNNING, SegmentKind.WORK))
+		assertEquals(listOf(QuickAction.STOP), Gestures.entryActions(stop, ActivityStatus.RUNNING, SegmentKind.PAUSE))
+		assertEquals(listOf(QuickAction.STOP), Gestures.entryActions(stop, ActivityStatus.RUNNING, null))
+		/* closed or to do: nothing */
+		assertEquals(emptyList(), Gestures.entryActions(stop, ActivityStatus.TODO, null))
+		assertEquals(emptyList(), Gestures.entryActions(pr, ActivityStatus.CLOSED, null))
 	}
 
 	@Test
-	fun entryCommandsFollowTheState() {
-		val pr = EntrySwipe.PAUSE_RESUME
-		assertEquals(listOf(EntryCommand.PAUSE), Gestures.entryCommands(pr, ActivityStatus.RUNNING, SegmentKind.WORK))
-		assertEquals(listOf(EntryCommand.PAUSE), Gestures.entryCommands(pr, ActivityStatus.RUNNING, SegmentKind.TRAVEL))
-		assertEquals(listOf(EntryCommand.WORK), Gestures.entryCommands(pr, ActivityStatus.RUNNING, SegmentKind.PAUSE))
-		assertEquals(listOf(EntryCommand.WORK), Gestures.entryCommands(pr, ActivityStatus.RUNNING, null))
-
-		val ss = EntrySwipe.STOP_OR_SUSPEND
-		/* no suspend button since 1.0 */
-		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, SegmentKind.WORK))
-		assertEquals(emptyList(), Gestures.entryCommands(EntrySwipe.SUSPEND, ActivityStatus.RUNNING, SegmentKind.WORK))
-		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, SegmentKind.PAUSE))
-		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, null))
-		/* closed or to complete: nothing */
-		assertEquals(emptyList(), Gestures.entryCommands(ss, ActivityStatus.TODO, null))
-		assertEquals(emptyList(), Gestures.entryCommands(pr, ActivityStatus.CLOSED, null))
+	fun storedSuspendChoicesBecomeStop() {
+		assertEquals(EntrySwipe.STOP, EntrySwipe.parse("STOP_OR_SUSPEND"))
+		assertEquals(EntrySwipe.STOP, EntrySwipe.parse("SUSPEND"))
+		assertEquals(EntrySwipe.PAUSE_RESUME, EntrySwipe.parse("PAUSE_RESUME"))
+		assertEquals(null, EntrySwipe.parse("nonsense"))
+		assertEquals(null, EntrySwipe.parse(null))
 	}
 }

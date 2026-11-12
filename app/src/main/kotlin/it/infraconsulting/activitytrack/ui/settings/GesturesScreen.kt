@@ -93,9 +93,7 @@ fun GesturesScreen(onBack: () -> Unit) {
 
 private fun entryLabel(s: EntrySwipe): Int = when (s) {
 	EntrySwipe.PAUSE_RESUME -> R.string.swipe_pause_resume
-	EntrySwipe.STOP_OR_SUSPEND -> R.string.swipe_stop_or_suspend
 	EntrySwipe.STOP -> R.string.cmd_stop
-	EntrySwipe.SUSPEND -> R.string.cmd_suspend
 	EntrySwipe.NONE -> R.string.swipe_none
 }
 
@@ -110,7 +108,7 @@ private fun todoLabel(s: TodoSwipe): Int = when (s) {
 	TodoSwipe.START_OR_DONE -> R.string.swipe_start_or_done
 	TodoSwipe.POSTPONE_OR_IGNORE -> R.string.swipe_postpone_or_ignore
 	TodoSwipe.POSTPONE -> R.string.swipe_postpone
-	TodoSwipe.IGNORE -> R.string.swipe_ignore
+	TodoSwipe.IGNORE -> R.string.action_delete
 	TodoSwipe.DONE -> R.string.todo_mark_done
 	TodoSwipe.REPLAN -> R.string.action_replan
 	TodoSwipe.NONE -> R.string.swipe_none

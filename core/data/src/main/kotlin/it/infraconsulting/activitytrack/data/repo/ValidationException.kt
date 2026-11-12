@@ -17,7 +17,6 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		POLICY_REQUIRED,		/* a field the policy makes required is empty (issue #48) */
 		PLANNED_ONLY,			/* the policy lets activities start from a TODO activity only (plannedOnly) */
 		IN_USE,				/* referenced by other rows */
-		COMPLETION_INCOMPLETE,		/* no activity text and no attachment */
 		INVALID_SEGMENT,
 		OVERLAPPING_SEGMENTS,
 		NOT_FOUND,

@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.reminders
 
-import it.infraconsulting.activitytrack.ui.todo.TodoRepository
 import it.infraconsulting.activitytrack.domain.todo.nextWorkingDay
 import android.app.AlarmManager
 import android.app.NotificationManager

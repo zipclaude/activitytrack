@@ -13,7 +13,7 @@ import it.infraconsulting.activitytrack.data.repo.TodoRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.isActive
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.data.repo.OnRunning
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.policy.EntrySource
@@ -118,7 +118,7 @@ class StartViewModel(
 	/* Running entries still to be asked about (head = current dialog). */
 	private val _pending = MutableStateFlow<List<RunningEntry>>(emptyList())
 	val pending = _pending.asStateFlow()
-	private val decisions = HashMap<Long, EntryCommand>()
+	private val decisions = HashMap<Long, OnRunning>()
 	private var onStarted: () -> Unit = {}
 	private var kind = SegmentKind.WORK
 
@@ -355,7 +355,7 @@ class StartViewModel(
 			val all = entries.openEntries.first().filter { it.isActive() }
 			/* "is the travel completed?" not asked (policy behaviours.askTravelDone, issue #48): a running travel stops */
 			val active = if (policy().behaviours.askTravelDone) all else all.filter { e ->
-				(e.mode != SegmentKind.TRAVEL).also { asked -> if (!asked) decisions[e.id] = EntryCommand.STOP }
+				(e.mode != SegmentKind.TRAVEL).also { asked -> if (!asked) decisions[e.id] = OnRunning.STOP }
 			}
 			_pending.value = active.map { e ->
 				RunningEntry(e, e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name }.orEmpty())
@@ -366,7 +366,7 @@ class StartViewModel(
 	}
 
 	/* Decision for the head of the queue: STOP, SUSPEND, or null = leave running. */
-	fun decide(cmd: EntryCommand?) {
+	fun decide(cmd: OnRunning?) {
 		val head = _pending.value.firstOrNull() ?: return
 		if (cmd != null)
 			decisions[head.entry.id] = cmd

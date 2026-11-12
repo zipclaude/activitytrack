@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import it.infraconsulting.activitytrack.domain.settings.EntrySwipe
 import it.infraconsulting.activitytrack.domain.settings.OrderedList
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -160,8 +161,8 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			gestures = GestureSettings(
 				todoToStart = enumOr(p[K.todoToStart], d.gestures.todoToStart),
 				todoToEnd = enumOr(p[K.todoToEnd], d.gestures.todoToEnd),
-				entryToStart = enumOr(p[K.entryToStart], d.gestures.entryToStart),
-				entryToEnd = enumOr(p[K.entryToEnd], d.gestures.entryToEnd),
+				entryToStart = EntrySwipe.parse(p[K.entryToStart]) ?: d.gestures.entryToStart,
+				entryToEnd = EntrySwipe.parse(p[K.entryToEnd]) ?: d.gestures.entryToEnd,
 				pastToStart = enumOr(p[K.pastToStart], d.gestures.pastToStart),
 				pastToEnd = enumOr(p[K.pastToEnd], d.gestures.pastToEnd),
 				fullSwipe = p[K.fullSwipe] ?: d.gestures.fullSwipe,

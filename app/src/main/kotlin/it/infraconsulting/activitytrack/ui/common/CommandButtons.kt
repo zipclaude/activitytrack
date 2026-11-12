@@ -25,12 +25,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.activity.DisplayState
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 
 /*
  * Command colours and icons (owner request 2026-10-17): start/resume green,
- * stop red, pause yellow, suspend orange, travel blue; media icons for
- * play/pause/stop, a moon for suspend, a car for travel. Shared with the
+ * stop red, pause yellow, travel blue; media icons for play/pause/stop, a
+ * car for travel. Shared with the
  * notification actions.
  */
 data class CommandStyle(@DrawableRes val icon: Int, val container: Color, val content: Color)
@@ -40,19 +41,16 @@ internal val RED = Color(0xFFC62828)
 internal val YELLOW = Color(0xFFF9A825)
 internal val ORANGE = Color(0xFFEF6C00)
 internal val BLUE = Color(0xFF1565C0)
-/* dark icon on yellow: white would fail contrast */
-private val ON_YELLOW = Color(0xFF212121)
 
 /* the Stop button of a running activity: red, white stop icon */
 val STOP_STYLE = CommandStyle(R.drawable.ic_cmd_stop, RED, Color.White)
 
-fun commandStyle(cmd: EntryCommand): CommandStyle? = when (cmd) {
-	EntryCommand.WORK -> CommandStyle(R.drawable.ic_cmd_play, GREEN, Color.White)
-	EntryCommand.STOP -> CommandStyle(R.drawable.ic_cmd_stop, RED, Color.White)
-	EntryCommand.PAUSE -> CommandStyle(R.drawable.ic_cmd_pause, YELLOW, ON_YELLOW)
-	EntryCommand.SUSPEND -> CommandStyle(R.drawable.ic_cmd_suspend, ORANGE, Color.White)
-	EntryCommand.TRAVEL -> CommandStyle(R.drawable.ic_cmd_travel, BLUE, Color.White)
-	EntryCommand.REOPEN -> null
+/* The colour and icon of a notification, widget or swipe button. */
+fun QuickAction.style(): CommandStyle = when (this) {
+	QuickAction.WORK -> displayStyle(DisplayState.WORK)
+	QuickAction.TRAVEL -> displayStyle(DisplayState.TRAVEL)
+	QuickAction.PAUSE -> displayStyle(DisplayState.PAUSE)
+	QuickAction.STOP -> STOP_STYLE
 }
 
 /* Round coloured icon button; [label] is the accessibility description. */

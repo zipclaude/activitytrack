@@ -17,7 +17,7 @@ import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.db.WorkScheduleEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
 import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.activity.ReturnChoice
@@ -160,17 +160,17 @@ class RepositoryTest {
 	fun lifecycleKeepsSegmentsConsistent() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.TRAVEL, client))
 		clock.advance(30)
-		entries.apply(id, EntryCommand.WORK)
+		entries.quick(id, QuickAction.WORK)
 		clock.advance(60)
-		entries.apply(id, EntryCommand.PAUSE)
+		entries.quick(id, QuickAction.PAUSE)
 		clock.advance(15)
-		entries.apply(id, EntryCommand.WORK)
+		entries.quick(id, QuickAction.WORK)
 		clock.advance(45)
-		entries.apply(id, EntryCommand.SUSPEND)
+		entries.suspend(id)
 		clock.advance(60)
-		entries.apply(id, EntryCommand.WORK)
+		entries.quick(id, QuickAction.WORK)
 		clock.advance(10)
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 
 		val segs = db.entryDao().segments(id)
 		assertEquals(
@@ -180,14 +180,14 @@ class RepositoryTest {
 		assertEquals(listOf(30L, 60L, 15L, 45L, 10L), segs.map { (it.endUtcMs!! - it.startUtcMs) / 60_000 })
 		assertEquals("CLOSED", state(id))
 
-		assertEquals(Reason.NOT_ALLOWED, reason { entries.apply(id, EntryCommand.PAUSE) })
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.quick(id, QuickAction.PAUSE) })
 	}
 
 	@Test
 	fun stopClosesWhenDetailsAreComplete() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Patch"))
 		clock.advance(30)
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		assertEquals("CLOSED", state(id))
 	}
 
@@ -204,20 +204,6 @@ class RepositoryTest {
 		assertEquals(clock.millis() + 1_800_000, db.entryDao().entry(open)?.plannedEndUtcMs)
 		entries.clearPlannedEnd(open)
 		assertNull(db.entryDao().entry(open)?.plannedEndUtcMs)
-	}
-
-	@Test
-	fun completionRequiresActivity() = runBlocking<Unit> {
-		val id = entries.start(StartRequest(SegmentKind.WORK, client))
-		clock.advance(60)
-		entries.apply(id, EntryCommand.STOP)
-		val details = EntryDetails(acme, client, null, "  ", null, null, null)
-		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, details) })
-		assertNull(entries.lastActivity(client))
-		/* the failed completion rolled back */
-		assertEquals("CLOSED", state(id))
-		entries.complete(id, details.copy(activity = "Patch Tuesday"))
-		assertEquals("CLOSED", state(id))
 	}
 
 	@Test
@@ -242,7 +228,7 @@ class RepositoryTest {
 	fun backwardsClockNeverOverlaps() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(-10)
-		entries.apply(id, EntryCommand.PAUSE)
+		entries.quick(id, QuickAction.PAUSE)
 		val segs = db.entryDao().segments(id)
 		assertEquals(segs[0].startUtcMs, segs[0].endUtcMs)
 		assertEquals(segs[0].endUtcMs, segs[1].startUtcMs)
@@ -270,7 +256,7 @@ class RepositoryTest {
 		clock.advance(20)
 		val c = entries.start(
 			StartRequest(SegmentKind.WORK, client),
-			mapOf(a to EntryCommand.SUSPEND, b to EntryCommand.STOP),
+			mapOf(a to OnRunning.SUSPEND, b to OnRunning.STOP),
 		)
 		val dao = db.entryDao()
 		assertEquals("SUSPENDED", state(a))
@@ -279,7 +265,7 @@ class RepositoryTest {
 
 		/* an illegal command for another entry rolls back the new start too */
 		val before = dao.observeOpenEntries().first().size
-		assertEquals(Reason.NOT_ALLOWED, reason { entries.start(StartRequest(SegmentKind.WORK, client), mapOf(a to EntryCommand.SUSPEND)) })
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.start(StartRequest(SegmentKind.WORK, client), mapOf(a to OnRunning.SUSPEND)) })
 		assertEquals(before, dao.observeOpenEntries().first().size)
 
 		/* a is the only suspended entry; b was stopped */
@@ -294,22 +280,22 @@ class RepositoryTest {
 		val dao = db.entryDao()
 		val a = repo.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(10)
-		repo.apply(a, EntryCommand.SUSPEND)
+		repo.suspend(a)
 		val b = repo.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(10)
 		/* allowed: both run */
-		repo.apply(a, EntryCommand.WORK)
+		repo.quick(a, QuickAction.WORK)
 		assertEquals("ACTIVE", state(b))
-		repo.apply(a, EntryCommand.SUSPEND)
+		repo.suspend(a)
 		clock.advance(10)
 		/* not allowed (issue #132): resuming a suspends b; a pause is suspended too (coordinator, 1.0) */
 		concurrent = false
-		repo.apply(a, EntryCommand.WORK)
+		repo.quick(a, QuickAction.WORK)
 		assertEquals("ACTIVE", state(a))
 		assertEquals("SUSPENDED", state(b))
-		repo.apply(a, EntryCommand.PAUSE)
+		repo.quick(a, QuickAction.PAUSE)
 		clock.advance(10)
-		repo.apply(b, EntryCommand.TRAVEL)
+		repo.quick(b, QuickAction.TRAVEL)
 		assertEquals("ACTIVE", state(b))
 		assertEquals("SUSPENDED", state(a))
 	}
@@ -321,7 +307,7 @@ class RepositoryTest {
 		assertEquals(ClientDefaults("Firewall review", role), entries.clientDefaults(client))
 		clock.advance(31L * 24 * 60)
 		assertNull(entries.clientDefaults(client))
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 	}
 
 	@Test
@@ -353,7 +339,7 @@ class RepositoryTest {
 	@Test
 	fun pauseReminderMovesBase() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
-		entries.apply(id, EntryCommand.PAUSE)
+		entries.quick(id, QuickAction.PAUSE)
 		clock.advance(20)
 		entries.markPauseReminded(id)
 		val e = db.entryDao().entry(id)!!
@@ -367,7 +353,7 @@ class RepositoryTest {
 		clock.now = Instant.parse("2026-10-14T22:00:00Z")
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.now = Instant.parse("2026-10-15T04:30:00Z")
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		val reports = ReportRepository(db, clock)
 		val d14 = java.time.LocalDate.of(2026, 10, 14)
 		val days = reports.days(d14, d14.plusDays(1), ZoneOffset.UTC, it.infraconsulting.activitytrack.domain.rounding.ReportRounding.DEFAULT, 360)
@@ -405,7 +391,7 @@ class RepositoryTest {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Audit"))
 		entries.addExternalRef(id, "OPS-7")
 		clock.advance(120)
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		entries.addManualSegment(id, SegmentKind.TRAVEL, start - 1_800_000, start, kmDeclared = 12.5)
 		val day = java.time.LocalDate.of(2026, 10, 14)
 		val rows = ReportRepository(db, clock).exportRows(
@@ -454,10 +440,10 @@ class RepositoryTest {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client, startUtcMs = t0))
 		assertEquals(t0, db.entryDao().segments(id).single().startUtcMs)
 		assertEquals(Reason.FUTURE_TIME, reason { entries.start(StartRequest(SegmentKind.WORK, client, startUtcMs = clock.millis() + 60_000)) })
-		assertEquals(Reason.BEFORE_SEGMENT, reason { entries.applyAt(id, EntryCommand.STOP, t0 - 60_000) })
+		assertEquals(Reason.BEFORE_SEGMENT, reason { entries.stop(id, t0 - 60_000) })
 		/* a stop may lie up to 60 minutes ahead (4.1), not beyond */
-		assertEquals(Reason.FUTURE_TIME, reason { entries.applyAt(id, EntryCommand.STOP, clock.millis() + 61 * 60_000) })
-		entries.applyAt(id, EntryCommand.STOP, t0 + 1_800_000)
+		assertEquals(Reason.FUTURE_TIME, reason { entries.stop(id, clock.millis() + 61 * 60_000) })
+		entries.stop(id, t0 + 1_800_000)
 		assertEquals(t0 + 1_800_000, db.entryDao().segments(id).single().endUtcMs)
 	}
 
@@ -499,11 +485,11 @@ class RepositoryTest {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(30)
 		/* departure detected 10 min after the start */
-		entries.apply(id, EntryCommand.TRAVEL, t0 + 10 * 60_000)
+		entries.quick(id, QuickAction.TRAVEL, t0 + 10 * 60_000)
 		/* an arrival before the travel start is clamped to it; one in the future to now */
 		clock.advance(30)
-		entries.apply(id, EntryCommand.WORK, t0)
-		entries.apply(id, EntryCommand.PAUSE, clock.millis() + 3_600_000)
+		entries.quick(id, QuickAction.WORK, t0)
+		entries.quick(id, QuickAction.PAUSE, clock.millis() + 3_600_000)
 		val segs = db.entryDao().segments(id)
 		assertEquals(listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.WORK, SegmentKind.PAUSE), segs.map { it.kind })
 		assertEquals(t0 + 10 * 60_000, segs[0].endUtcMs)
@@ -538,7 +524,7 @@ class RepositoryTest {
 		locations.record(fix.copy(atMs = fix.atMs - 600_000), "fused", nowMs = fix.atMs)
 		assertEquals(1, locations.fixesOfSegment(seg.id).size)
 		/* a stopped entry gets no periodic samples, but an explicit segment still does */
-		entries.apply(a, EntryCommand.STOP)
+		entries.stop(a)
 		locations.record(fix.copy(atMs = fix.atMs + 1), "fused", nowMs = fix.atMs + 1)
 		assertEquals(1, locations.fixesOfSegment(seg.id).size)
 		locations.record(fix.copy(atMs = fix.atMs + 2), "gps", seg.id, nowMs = fix.atMs + 2)
@@ -574,21 +560,10 @@ class RepositoryTest {
 			clock.now = Instant.ofEpochMilli(t0 + m * 60_000)
 			locations.record(it.infraconsulting.activitytrack.domain.geo.Fix(clock.millis(), p, 8.0), "fused", nowMs = clock.millis())
 		}
-		entries.apply(id, EntryCommand.TRAVEL, t0 + 10 * 60_000)
+		entries.quick(id, QuickAction.TRAVEL, t0 + 10 * 60_000)
 		val (work, travel) = db.entryDao().segments(id)
 		assertEquals(2, locations.fixesOfSegment(work.id).size)
 		assertEquals(2, locations.fixesOfSegment(travel.id).size)
-	}
-
-	@Test
-	fun completionWithClientOnlyAfterConfirmation() = runBlocking<Unit> {
-		val id = entries.start(StartRequest(SegmentKind.WORK, client))
-		entries.apply(id, EntryCommand.STOP)
-		val d = EntryDetails(acme, client, null, null, null, null, null)
-		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, d) })
-		entries.complete(id, d, allowEmpty = true)
-		assertEquals("CLOSED", state(id))
-		assertNull(db.entryDao().entry(id)!!.activity)
 	}
 
 	@Test
@@ -678,7 +653,7 @@ class RepositoryTest {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		val t0 = clock.millis()
 		clock.advance(120)
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		val s = db.entryDao().segments(id).single()
 		entries.updateSegment(s.id, t0 + 300_000, t0 + 7_000_000)
 		val c = db.entryDao().segment(s.id)!!
@@ -760,7 +735,7 @@ class RepositoryTest {
 		val t0 = clock.now.toEpochMilli()
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(60)
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		val m = { min: Int -> t0 + min * 60_000L }
 		assertEquals(1, entries.segmentConflicts(id, null, m(20), m(30)).size)
 		assertEquals(Reason.OVERLAPPING_SEGMENTS, reason { entries.addManualSegment(id, SegmentKind.PAUSE, m(20), m(30)) })
@@ -781,9 +756,9 @@ class RepositoryTest {
 		val m = { min: Int -> t0 + min * 60_000L }
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(30)
-		entries.apply(id, EntryCommand.PAUSE)
+		entries.quick(id, QuickAction.PAUSE)
 		clock.advance(20)
-		entries.apply(id, EntryCommand.WORK)
+		entries.quick(id, QuickAction.WORK)
 		clock.advance(10)
 		val running = entries.segments(id).first().last()
 		assertNull(running.endUtcMs)
@@ -801,11 +776,11 @@ class RepositoryTest {
 	fun deletedEntryKeepsItsRemoteIds() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(30)
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		val plugins = db.pluginDao()
 		plugins.recordSent(it.infraconsulting.activitytrack.data.db.RemoteRecordEntity(id, "antares", "2026-10-23#0", "r-1", "h", clock.millis()))
 		assertEquals(true, entries.deletion(id).sent)
-		entries.deleteEntry(id)
+		entries.delete(id)
 		assertEquals(listOf("r-1"), plugins.deleted(acme, "antares").map { it.remoteId })
 		plugins.forgetDeleted("antares", "r-1")
 		assertEquals(emptyList<Any>(), plugins.deleted(acme, "antares"))
@@ -859,6 +834,24 @@ class RepositoryTest {
 		assertEquals("CLOSED", state(other))
 		assertEquals(clock.millis(), entries.find(other)?.closedUtcMs)
 		assertEquals(Reason.NOT_ALLOWED, reason { entries.tick(todo) })
+	}
+
+	/* the Home "Chiuse" tab: a ticked task has no segment end, it is listed by when it was closed; untick takes it out */
+	@Test
+	fun tickedTasksAreListedByClosingTime() = runBlocking<Unit> {
+		val from = clock.millis() - 1_000
+		val first = entries.saveTodo(null, TodoRequest(acme, activity = "First"))
+		val second = entries.saveTodo(null, TodoRequest(acme, activity = "Second"))
+		val untouched = entries.saveTodo(null, TodoRequest(acme, activity = "Untouched"))
+		entries.tick(first)
+		clock.advance(60)
+		entries.tick(second)
+		assertEquals(listOf(second, first), entries.tickedSince(from, 10).first().map { it.id })
+		assertEquals(emptyList(), entries.tickedSince(clock.millis() + 1, 10).first())
+		assertEquals(listOf(second), entries.tickedSince(from, 1).first().map { it.id })
+		entries.untick(second)
+		assertEquals(listOf(first), entries.tickedSince(from, 10).first().map { it.id })
+		assertEquals("TODO", state(untouched))
 	}
 
 	/* 4.1, 4.2: rounded stored times and closing up to 60 minutes ahead, only with editable times */
@@ -952,7 +945,7 @@ class RepositoryTest {
 		entries.updateDetails(id, EntryDetails(acme, bank2, null, "Lavoro", null, null, null, rossi))
 		assertNull(entries.find(id)?.contactId)
 		/* deleting the entry sends it to the bin with its lines; purging deletes them */
-		entries.deleteEntry(id)
+		entries.delete(id)
 		assertEquals(2, materials.lines(id).first().size)
 		entries.purge(id)
 		assertEquals(0, materials.lines(id).first().size)

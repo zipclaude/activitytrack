@@ -15,7 +15,7 @@ import it.infraconsulting.activitytrack.domain.interchange.FileFormat
 import it.infraconsulting.activitytrack.domain.interchange.GenericConnector
 import it.infraconsulting.activitytrack.domain.interchange.Interchange
 import it.infraconsulting.activitytrack.domain.interchange.XTodo
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import java.io.ByteArrayOutputStream
 import java.time.Clock
@@ -65,7 +65,7 @@ class InterchangeTest {
 		entries.addExpense(id, 1250, "Parking")
 		entries.addExternalRef(id, "INC1")
 		entries.setTags(id, listOf("remoto"))
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		entries.createAbsence(it.infraconsulting.activitytrack.data.repo.AbsenceRequest(fromEpochDay = 20_745, startMin = 9 * 60, endMin = 630))
 		m.upsertDayOff(DayOffEntity(20_800, "Patrono"))
 	}

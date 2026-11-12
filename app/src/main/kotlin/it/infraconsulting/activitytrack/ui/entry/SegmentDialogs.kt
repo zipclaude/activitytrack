@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.policy.Field
 import it.infraconsulting.activitytrack.domain.time.atMinute
@@ -46,7 +46,6 @@ import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.TimeGridSheet
 import it.infraconsulting.activitytrack.ui.common.clockOf
-import it.infraconsulting.activitytrack.ui.common.commandStyle
 import it.infraconsulting.activitytrack.ui.common.dateText
 import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.fieldImportance
@@ -60,11 +59,11 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-/* Colour and icon of a segment kind, as the command that starts it (issue #57); an absence as its state. */
+/* Colour and icon of a segment kind, as the state it shows (issue #57). */
 fun segmentStyle(kind: SegmentKind): CommandStyle = when (kind) {
-	SegmentKind.WORK -> commandStyle(EntryCommand.WORK)!!
-	SegmentKind.PAUSE -> commandStyle(EntryCommand.PAUSE)!!
-	SegmentKind.TRAVEL -> commandStyle(EntryCommand.TRAVEL)!!
+	SegmentKind.WORK -> displayStyle(DisplayState.WORK)
+	SegmentKind.PAUSE -> displayStyle(DisplayState.PAUSE)
+	SegmentKind.TRAVEL -> displayStyle(DisplayState.TRAVEL)
 	SegmentKind.ABSENCE -> displayStyle(DisplayState.ABSENCE)
 }
 
@@ -93,7 +92,7 @@ internal fun kindLabel(k: SegmentKind) = stringResource(
 		SegmentKind.WORK -> R.string.cmd_work
 		SegmentKind.TRAVEL -> R.string.cmd_travel
 		SegmentKind.PAUSE -> R.string.cmd_pause
-		SegmentKind.ABSENCE -> R.string.todo_absence
+		SegmentKind.ABSENCE -> R.string.state_absence
 	},
 )
 
