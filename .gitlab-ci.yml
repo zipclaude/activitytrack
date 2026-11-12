@@ -133,7 +133,7 @@ release:
           echo
           echo "## Changes since $PREV"
           echo
-          git log --no-merges --format='- %s' "$PREV..$CI_COMMIT_TAG" | head -n 60
+          git log --no-merges -n 60 --format='- %s' "$PREV..$CI_COMMIT_TAG"
         fi
       } > notes.md
     - |
