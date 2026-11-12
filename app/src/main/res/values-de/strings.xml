@@ -871,4 +871,12 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="state_suspended">Unterbrochen</string>
   <string name="state_done">Erledigt</string>
   <string name="state_incomplete">Unvollständig</string>
+  <!-- priority levels (ACTIVITY-MODEL.md 5) -->
+  <string name="priority">Priorität</string>
+  <string name="priority_none">Keine</string>
+  <string name="priority_low">Niedrig</string>
+  <string name="priority_medium">Mittel</string>
+  <string name="priority_high">Hoch</string>
+  <string name="priority_urgent">Dringend</string>
+  <string name="priority_emergency">Notfall</string>
 </resources>

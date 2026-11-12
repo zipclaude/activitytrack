@@ -883,4 +883,12 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="state_suspended">Suspended</string>
   <string name="state_done">Done</string>
   <string name="state_incomplete">Incomplete</string>
+  <!-- priority levels (ACTIVITY-MODEL.md 5) -->
+  <string name="priority">Priority</string>
+  <string name="priority_none">None</string>
+  <string name="priority_low">Low</string>
+  <string name="priority_medium">Medium</string>
+  <string name="priority_high">High</string>
+  <string name="priority_urgent">Urgent</string>
+  <string name="priority_emergency">Emergency</string>
 </resources>
