@@ -1085,6 +1085,36 @@
 			"start_utc_ms": 1795006800000,
 			"uid": "a6aefbf2-6d65-5ab9-b40a-df62f533089d",
 			"zone_id": "Europe/Rome"
+		},
+		{
+			"end_utc_ms": 1795001400000,
+			"entry_uid": "c35-t1",
+			"kind": "ABSENCE",
+			"planned": 0,
+			"source": "MANUAL",
+			"start_utc_ms": 1794988800000,
+			"uid": "3b5f5730-0647-517a-8855-0f30b2203834",
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"end_utc_ms": 1795021200000,
+			"entry_uid": "c35-t1",
+			"kind": "ABSENCE",
+			"planned": 0,
+			"source": "MANUAL",
+			"start_utc_ms": 1795006800000,
+			"uid": "31699589-0f3f-587c-a886-5f06fa8eb643",
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"end_utc_ms": 1793696400000,
+			"entry_uid": "c36-e1",
+			"kind": "WORK",
+			"planned": 0,
+			"source": "TRACKED",
+			"start_utc_ms": 1793692800000,
+			"uid": "c36-seg-1",
+			"zone_id": "Europe/Rome"
 		}
 	],
 	"time_entry": [
@@ -2179,6 +2209,74 @@
 			"priority": 0,
 			"status": "CLOSED",
 			"uid": "c34-t8",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793606401000,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"absence_kind": "HOLIDAY",
+			"activity": "Ferie",
+			"closed_utc_ms": 1795021200000,
+			"created_utc_ms": 1793606400000,
+			"deleted_utc_ms": 1793606403000,
+			"kind": "ABSENCE",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "CLOSED",
+			"uid": "c35-t1",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793606401000,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Assorbita",
+			"closed_utc_ms": 1793696400000,
+			"company_id": 1,
+			"created_utc_ms": 1793606401000,
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "CLOSED",
+			"uid": "c36-e1",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793610000001,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Senza azienda",
+			"created_utc_ms": 1793606400100,
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "TODO",
+			"uid": "c36-t1",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793606401000,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Stessa chiave",
+			"created_utc_ms": 1793606400050,
+			"external_key": "K-7",
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "TODO",
+			"uid": "c36-t3",
+			"unanswered_reminders": 0,
+			"updated_utc_ms": 1793606401000,
+			"zone_id": "Europe/Rome"
+		},
+		{
+			"activity": "Stessa chiave, dopo",
+			"company_id": 1,
+			"created_utc_ms": 1793606400005,
+			"external_key": "K-8",
+			"kind": "ACTIVITY",
+			"needs_review": 0,
+			"priority": 0,
+			"status": "TODO",
+			"uid": "c36-t4",
 			"unanswered_reminders": 0,
 			"updated_utc_ms": 1793606401000,
 			"zone_id": "Europe/Rome"

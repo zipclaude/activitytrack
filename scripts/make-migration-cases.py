@@ -246,6 +246,16 @@ add(Case("everything together: ids of new rows follow the old ones",
 		todo(8, "c34-t8", "Libera", done=1, done_utc_ms=T0, refs="INC-9")],
 	absence=[{"id": 2, "date_epoch_day": ed("2026-11-19"), "kind": "FULL_DAY", "uid": "c34-a2"}],
 	work_schedule=sched(), lunch_break=lunch()))
+add(Case("an ignored absence to-do goes to the bin",
+	todo=[todo(1, "c35-t1", "Ferie", kind="ABSENCE", plan_epoch_day=ed("2026-11-18"), ignored_utc_ms=T0 + 3000)],
+	work_schedule=sched(), lunch_break=lunch()))
+add(Case("external_key unique with the company: the earliest created activity keeps it, the others lose it",
+	time_entry=[entry(1, "c36-e1", "CLOSED", todo=2, company_id=1)],
+	segment=[seg(1, 1, L("2026-11-03", "09:00"), L("2026-11-03", "10:00"))],
+	todo=[todo(1, "c36-t1", "Senza azienda", external_key="K-7", created_utc_ms=T0 + 100),
+		todo(2, "c36-t2", "Assorbita", external_key="K-8", company_id=2, done=1, done_utc_ms=T0 + 9000, created_utc_ms=T0 + 200),
+		todo(3, "c36-t3", "Stessa chiave", external_key="K-7", created_utc_ms=T0 + 50),
+		todo(4, "c36-t4", "Stessa chiave, dopo", external_key="K-8", company_id=1, created_utc_ms=T0 + 5)]))
 
 
 def build():
