@@ -558,6 +558,9 @@ class RepositoryTest {
 		assertEquals(it.infraconsulting.activitytrack.domain.activity.AbsenceKind.LEAVE, absence.absenceKind)
 		assertEquals(listOf(SegmentKind.ABSENCE), db.entryDao().segments(absence.id).map { it.kind })
 		assertEquals(setOf(tomorrow), entries.handledDays(today, tomorrow, zone))
+		/* a to-do ticked off today is no work */
+		entries.tick(entries.saveTodo(null, TodoRequest(acme, activity = "Call back")))
+		assertEquals(setOf(tomorrow), entries.handledDays(today, tomorrow, zone))
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(setOf(today, tomorrow), entries.handledDays(today, tomorrow, zone))
 		/* a day without working hours: nothing to record */

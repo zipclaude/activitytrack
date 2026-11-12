@@ -9,6 +9,17 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+/*
+ * The starts of real segments of activities not deleted in [fromMs, toMs):
+ * days with work recorded. Not the creation time: a to-do created or ticked
+ * off that day is no work, an activity typed afterwards ("Passata") is.
+ * Shared with the JVM test that runs it (DaoSqlTest).
+ */
+const val WORK_STARTS_BETWEEN =
+	"SELECT segment.start_utc_ms FROM segment JOIN time_entry ON time_entry.id = segment.entry_id " +
+		"WHERE time_entry.kind = 'ACTIVITY' AND time_entry.deleted_utc_ms IS NULL AND segment.planned = 0 " +
+		"AND segment.start_utc_ms >= :fromMs AND segment.start_utc_ms < :toMs"
+
 /* Newest entry creation time per client (client picker order). */
 data class ClientLastUse(
 	@ColumnInfo(name = "client_id") val clientId: Long,
@@ -310,7 +321,8 @@ interface EntryDao {
 	@Query("UPDATE location_sample SET segment_id = :segmentId WHERE entry_id = :entryId AND ts_utc_ms >= :fromUtcMs")
 	suspend fun retagSamples(entryId: Long, segmentId: Long, fromUtcMs: Long)
 
-	@Query("SELECT created_utc_ms FROM time_entry WHERE kind = 'ACTIVITY' AND status != 'TODO' AND deleted_utc_ms IS NULL AND created_utc_ms >= :fromMs AND created_utc_ms < :toMs")
+	/* when work began in [fromMs, toMs) (the day-start prompt, EntryRepository.handledDays) */
+	@Query(WORK_STARTS_BETWEEN)
 	suspend fun entryStartsBetween(fromMs: Long, toMs: Long): List<Long>
 
 	@Transaction

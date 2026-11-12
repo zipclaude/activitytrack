@@ -904,8 +904,9 @@ class EntryRepository(
 	suspend fun attachment(id: Long): AttachmentEntity? = dao.attachment(id)
 
 	/*
-	 * Days in [from, to] that need no day-start prompt: an activity started
-	 * or an absence on them; today too while an activity has a segment open
+	 * Days in [from, to] that need no day-start prompt: a real segment
+	 * starting or an absence on them (a to-do created or ticked off is no
+	 * work); today too while an activity has a segment open
 	 * (e.g. started before midnight).
 	 */
 	suspend fun handledDays(from: LocalDate, to: LocalDate, zone: ZoneId): Set<LocalDate> {
