@@ -157,14 +157,16 @@ private fun sinceText(at: Instant, zone: ZoneId, now: Long): String {
 @Composable
 private fun Timeline(segments: List<SegmentEntity>, now: Long, planned: Boolean, onTimes: () -> Unit) {
 	fun len(s: SegmentEntity) = maxOf(0L, (s.endUtcMs ?: now) - s.startUtcMs)
-	val total = segments.sumOf(::len)
+	/* a segment under a minute reads 0:00 in the list: no stripe for it here, unless nothing else would be drawn */
+	val shown = segments.filter { len(it) >= 60_000 }.ifEmpty { segments.filter { len(it) > 0 } }
+	val total = shown.sumOf(::len)
 	if (total <= 0)
 		return
 	Row(
 		Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)).clickable(onClick = onTimes),
 		horizontalArrangement = Arrangement.spacedBy(2.dp),
 	) {
-		for (s in segments.sortedBy { it.startUtcMs }) {
+		for (s in shown.sortedBy { it.startUtcMs }) {
 			val w = len(s).toFloat() / total
 			if (w > 0f) {
 				val c = segmentStyle(s.kind).container

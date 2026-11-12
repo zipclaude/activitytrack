@@ -256,12 +256,13 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	Column(modifier = modifier.fillMaxSize()) {
 		LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
 			item(key = "header") {
-				Box(Modifier.padding(start = pad, end = pad, top = pad, bottom = gap + 8.dp)) {	/* the first field's label sticks out above its box */
+				Box(Modifier.padding(start = pad, end = pad, top = pad, bottom = gap)) {
 					DetailHeader(e, segments, editableTimes, onTimes = { scope.launch { listState.animateScrollToItem(2) } }, actions)
 				}
 			}
 			item(key = "fields") {
-				Column(Modifier.padding(horizontal = pad), verticalArrangement = Arrangement.spacedBy(gap)) {
+				/* top: the first field's label sticks out above its box, it must clear the header card above */
+				Column(Modifier.padding(start = pad, end = pad, top = 12.dp), verticalArrangement = Arrangement.spacedBy(gap)) {
 					if (absence) {
 						ChoiceField(
 							stringResource(R.string.field_kind),
