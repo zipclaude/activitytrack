@@ -880,6 +880,15 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="priority_high">Alta</string>
   <string name="priority_urgent">Urgenza</string>
   <string name="priority_emergency">Emergenza</string>
+  <!-- ui-home -->
+  <string name="travel_done_question">Hai completato l\'attività lavorativa?</string>
+  <string name="stop_choice_travel_back">Avvia viaggio di ritorno</string>
+  <string name="stop_choice_end">Termina l\'attività</string>
+  <string name="stop_choice_end_return">Termina l\'attività ed aggiungi il viaggio di ritorno</string>
+  <string name="reopen_title">Riaprire «%1$s»?</string>
+  <string name="reopen_text">L\'attività torna in corso; il tempo trascorso resta un vuoto.</string>
+  <string name="home_pulled_back">La fine di «%1$s» è stata anticipata alle %2$s (è iniziata un\'altra attività)</string>
+  <string name="home_pulled_back_many">La fine di %1$d attività è stata anticipata (è iniziata un\'altra attività)</string>
   <string name="absence_kind_absence">Assenza</string>
   <string name="absence_kind_holiday">Ferie</string>
   <string name="absence_kind_leave">Permesso</string>

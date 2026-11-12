@@ -81,12 +81,11 @@ import kotlinx.coroutines.flow.map
  * and Viaggio, each starting the activity with an open segment of that
  * kind. [clientId] pre-fills the client (widget, shortcut), [todoId] starts
  * that TODO activity with the details typed here, [call] a recognised call.
- * [travel] is ignored: Home starts a travel without a dialog (startTravel).
  */
 @Composable
 fun StartScreen(
 	onBack: () -> Unit, clientId: Long? = null, todoId: Long? = null,
-	@Suppress("UNUSED_PARAMETER") travel: Boolean = false, call: CallPrefill? = null,
+	call: CallPrefill? = null,
 ) {
 	val context = LocalContext.current.applicationContext
 	val vm = appViewModel {

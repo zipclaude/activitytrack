@@ -301,7 +301,6 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, s
 	when (top) {
 		Screen.Home -> HomeScreen(
 			onStart = { open(Screen.Start) },
-			onStartTravel = { open(Screen.StartTravel) },
 			onOpenEntry = { open(Screen.Entry(it)) },
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
 			onOpenGestures = { open(Screen.Gestures) },
@@ -311,7 +310,6 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, s
 		Screen.Agenda -> AgendaScreen(onOpenEntry = { open(Screen.Entry(it)) }, onStartTodo = { open(Screen.StartFromTodo(it)) })
 		Screen.More -> MoreScreen(open)
 		Screen.Start -> StartScreen(back)
-		Screen.StartTravel -> StartScreen(back, travel = true)
 		is Screen.StartFor -> StartScreen(back, top.clientId)
 		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
 		is Screen.StartFromCall -> StartScreen(back, top.clientId, call = CallPrefill(top.startMs, top.endMs, top.contact))

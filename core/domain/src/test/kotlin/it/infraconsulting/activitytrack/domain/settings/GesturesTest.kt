@@ -54,8 +54,9 @@ class GesturesTest {
 		assertEquals(listOf(EntryCommand.WORK), Gestures.entryCommands(pr, ActivityStatus.RUNNING, null))
 
 		val ss = EntrySwipe.STOP_OR_SUSPEND
-		assertEquals(listOf(EntryCommand.STOP, EntryCommand.SUSPEND), Gestures.entryCommands(ss, ActivityStatus.RUNNING, SegmentKind.WORK))
-		/* no suspension from a pause or a suspension */
+		/* no suspend button since 1.0 */
+		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, SegmentKind.WORK))
+		assertEquals(emptyList(), Gestures.entryCommands(EntrySwipe.SUSPEND, ActivityStatus.RUNNING, SegmentKind.WORK))
 		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, SegmentKind.PAUSE))
 		assertEquals(listOf(EntryCommand.STOP), Gestures.entryCommands(ss, ActivityStatus.RUNNING, null))
 		/* closed or to complete: nothing */

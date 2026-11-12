@@ -79,22 +79,22 @@ object Gestures {
 	/*
 	 * The commands an entry swipe reveals, among those valid in its state:
 	 * pause while working or travelling, resume (WORK) from a pause or a
-	 * suspension; stop and suspend where the state machine allows them.
+	 * suspension; stop where the state machine allows it. Suspend is no
+	 * button any more (ACTIVITY-MODEL.md 3): the stored SUSPEND and
+	 * STOP_OR_SUSPEND choices reveal what is left of them.
 	 */
 	fun entryCommands(swipe: EntrySwipe, status: ActivityStatus, mode: SegmentKind?): List<EntryCommand> {
 		val live = status == ActivityStatus.RUNNING
 		val running = live && (mode == SegmentKind.WORK || mode == SegmentKind.TRAVEL)
 		val resting = live && (mode == SegmentKind.PAUSE || mode == null)
 		val stop = EntryCommand.STOP.takeIf { live }
-		val suspend = EntryCommand.SUSPEND.takeIf { running }
 		return when (swipe) {
 			EntrySwipe.PAUSE_RESUME -> listOfNotNull(
 				EntryCommand.PAUSE.takeIf { running },
 				EntryCommand.WORK.takeIf { resting },
 			)
-			EntrySwipe.STOP_OR_SUSPEND -> listOfNotNull(stop, suspend)
-			EntrySwipe.STOP -> listOfNotNull(stop)
-			EntrySwipe.SUSPEND -> listOfNotNull(suspend)
+			EntrySwipe.STOP_OR_SUSPEND, EntrySwipe.STOP -> listOfNotNull(stop)
+			EntrySwipe.SUSPEND -> emptyList()
 			EntrySwipe.NONE -> emptyList()
 		}
 	}
