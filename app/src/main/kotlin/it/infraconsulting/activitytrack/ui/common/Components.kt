@@ -181,8 +181,11 @@ fun TextInput(
 	importance: Importance? = null,
 	/* a taller field for long text, e.g. the description (issue #47) */
 	minLines: Int = 1,
+	/* the message under the field, which is then marked as wrong; the caller clears it when the value changes */
+	error: String? = null,
 ) {
 	val editable = LocalFieldEnabled.current
+	Column(Modifier.fillMaxWidth()) {
 	CompactTextField(
 		value = value,
 		onValueChange = onChange,
@@ -198,11 +201,14 @@ fun TextInput(
 		}),
 		singleLine = singleLine,
 		minLines = minLines,
-		isError = isError,
+		isError = isError || error != null,
 		colors = importanceColors(importance, value.isNotBlank()),
 		keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
 		modifier = Modifier.fillMaxWidth(),
 	)
+	if (error != null)
+		Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+	}
 }
 
 /*

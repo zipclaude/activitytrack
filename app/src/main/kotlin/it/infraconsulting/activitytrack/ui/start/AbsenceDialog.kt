@@ -109,7 +109,7 @@ fun AbsenceDialog(onClose: () -> Unit) {
 			}
 		/* the description is one of four, never free text */
 		ChoiceField(
-			stringResource(R.string.field_description),
+			stringResource(R.string.field_kind),
 			AbsenceKind.entries.map { it to stringResource(absenceKindName(it)) },
 			kind,
 			importance = Importance.REQUIRED,

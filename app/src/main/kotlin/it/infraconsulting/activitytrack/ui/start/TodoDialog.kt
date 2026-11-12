@@ -57,6 +57,7 @@ import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.common.lastPick
 import it.infraconsulting.activitytrack.ui.common.lastPickViewModel
 import it.infraconsulting.activitytrack.ui.common.parseDate
+import it.infraconsulting.activitytrack.ui.common.reasonText
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
 import java.time.LocalDate
 import java.time.ZoneId
@@ -202,7 +203,8 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 
 	EditDialog(
 		title = stringResource(if (isNew) R.string.todo_new else R.string.todo_edit),
-		error = error,
+		/* a blank title is shown on its own field */
+		error = error.takeIf { it != Reason.BLANK_VALUE },
 		onDismiss = onClose,
 		onConfirm = confirm@{
 			if (!loaded)
@@ -281,7 +283,8 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 			) { clientId = it }
 		} }
 		PolicyField(Field.DESCRIPTION) {
-			DictationInput(fieldLabel(Field.DESCRIPTION, R.string.todo_field_title), title, { title = it }, Importance.REQUIRED)
+			DictationInput(fieldLabel(Field.DESCRIPTION, R.string.todo_field_title), title, { title = it; if (error == Reason.BLANK_VALUE) error = null }, Importance.REQUIRED,
+				error = if (error == Reason.BLANK_VALUE) reasonText(error!!) else null)
 		}
 		/* the planned slot only with planning (policy, issue #48) */
 		if (planning && fieldShown(Field.TODO_PLAN)) PolicyField(Field.TODO_PLAN) {
