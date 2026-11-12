@@ -224,6 +224,20 @@ class RepositoryTest {
 		assertEquals(2, db.entryDao().segments(id).size)
 	}
 
+	/* locked times (setting or policy editableTimes): no real segment typed by hand, an absence's days still */
+	@Test
+	fun lockedTimesRefuseManualSegments() = runBlocking<Unit> {
+		val locked = EntryRepository(db, clock, times = { TimeRules(editableTimes = false) })
+		val start = clock.millis()
+		val id = locked.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(120)
+		locked.stop(id)
+		val h = 3_600_000L
+		for (k in listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.PAUSE))
+			assertEquals(Reason.NOT_ALLOWED, reason { locked.addManualSegment(id, k, start - 2 * h, start - h) })
+		assertEquals(1, db.entryDao().segments(id).size)
+	}
+
 	@Test
 	fun backwardsClockNeverOverlaps() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))

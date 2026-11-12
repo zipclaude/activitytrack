@@ -58,6 +58,7 @@ import it.infraconsulting.activitytrack.data.db.ExternalRefEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.EntryDetails
+import it.infraconsulting.activitytrack.data.repo.manualSegmentKinds
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
 import it.infraconsulting.activitytrack.domain.activity.ActivityKind
@@ -250,12 +251,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	val actions = detailActions(e, segments, vm)
 	val pad = if (compact) 10.dp else 16.dp
 	val gap = if (compact) 4.dp else 8.dp
-	/* the kinds a segment typed by hand may take: work only once the activity is no longer running */
-	val kinds = when {
-		absence -> listOf(SegmentKind.ABSENCE)
-		e.status == ActivityStatus.RUNNING -> listOf(SegmentKind.TRAVEL, SegmentKind.PAUSE)
-		else -> listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.PAUSE)
-	}.filter { it != SegmentKind.TRAVEL || travelOn }
+	/* the kinds a segment typed by hand may take: work only once the activity is no longer running, none with locked times */
+	val kinds = manualSegmentKinds(e, editableTimes).filter { it != SegmentKind.TRAVEL || travelOn }
 	Column(modifier = modifier.fillMaxSize()) {
 		LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
 			item(key = "header") {

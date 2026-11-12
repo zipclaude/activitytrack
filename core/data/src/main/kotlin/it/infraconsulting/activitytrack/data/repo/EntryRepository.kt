@@ -1023,9 +1023,9 @@ class EntryRepository(
 	}
 
 	/*
-	 * Manual segment added afterwards: TRAVEL or PAUSE in an activity (WORK
-	 * too once it is closed), ABSENCE in an absence only; in the past and
-	 * not overlapping.
+	 * Manual segment added afterwards ([manualSegmentKinds]): TRAVEL or PAUSE
+	 * in an activity (WORK too once it is closed), only with editable times;
+	 * ABSENCE in an absence only; in the past and not overlapping.
 	 */
 	suspend fun addManualSegment(
 		entryId: Long,
@@ -1041,12 +1041,11 @@ class EntryRepository(
 		/* an absence may lie ahead (planned holidays, ACTIVITY-MODEL.md 3.1) */
 		val limit = if (e.kind == ActivityKind.ABSENCE) Long.MAX_VALUE else now
 		checkSegment(SegmentInput(kind, startUtcMs, endUtcMs, kmDeclared), limit, limit)
-		val allowed = when (e.kind) {
-			ActivityKind.ABSENCE -> kind == SegmentKind.ABSENCE
-			ActivityKind.ACTIVITY -> kind != SegmentKind.ABSENCE && e.status != ActivityStatus.TODO && (kind != SegmentKind.WORK || e.status == ActivityStatus.CLOSED)
-		}
-		if (!allowed)
+		/* a TODO activity's segments are planned ones, saved with it (saveTodo) */
+		if (e.status == ActivityStatus.TODO && e.kind == ActivityKind.ACTIVITY)
 			throw ValidationException(Reason.INVALID_SEGMENT)
+		if (kind !in manualSegmentKinds(e, times().editableTimes))
+			throw ValidationException(if (kind in manualSegmentKinds(e, true)) Reason.NOT_ALLOWED else Reason.INVALID_SEGMENT)
 		if (resolve)
 			makeRoom(entryId, null, startUtcMs, endUtcMs)
 		val id = dao.insertSegment(
@@ -1338,6 +1337,22 @@ fun remoteTick(e: TimeEntryEntity, nowMs: Long): Pair<TimeEntryEntity, Boolean>?
 	val state = ActivityState(e.kind, e.status, e.mode, e.closedUtcMs?.let(Instant::ofEpochMilli), null)
 	val t = ActivityStateMachine.apply(state, ActivityCommand.Tick, Instant.ofEpochMilli(nowMs))
 	return e.copy(status = t.next.status, mode = t.next.mode, closedUtcMs = t.next.closedAt?.toEpochMilli()) to t.deletePlanned
+}
+
+/*
+ * The kinds of segment the user may add by hand to [e] (detail dialog):
+ * the days of an absence always (declared, not recorded, as before 1.0);
+ * the planned segments of a TODO activity always; real segments only with
+ * editable times (setting and policy editableTimes: a locked policy must
+ * not be bypassed by typing the time instead), TRAVEL and PAUSE while it
+ * runs, WORK too once it is closed.
+ */
+fun manualSegmentKinds(e: TimeEntryEntity, editableTimes: Boolean): List<SegmentKind> = when {
+	e.kind == ActivityKind.ABSENCE -> listOf(SegmentKind.ABSENCE)
+	e.status == ActivityStatus.TODO -> listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.PAUSE)
+	!editableTimes -> emptyList()
+	e.status == ActivityStatus.RUNNING -> listOf(SegmentKind.TRAVEL, SegmentKind.PAUSE)
+	else -> listOf(SegmentKind.WORK, SegmentKind.TRAVEL, SegmentKind.PAUSE)
 }
 
 /* "Untick" (3): an activity, closed, not deleted, without real segments goes back to TODO. */
