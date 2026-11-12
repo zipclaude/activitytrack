@@ -121,6 +121,8 @@ class StartViewModel(
 	val pending = _pending.asStateFlow()
 	private val decisions = HashMap<Long, OnRunning>()
 	private var onStarted: () -> Unit = {}
+	/* a start or a save under way (or done: the screen closes): a second tap does not create a second activity */
+	private var saving = false
 	private var kind = SegmentKind.WORK
 
 	/*
@@ -394,7 +396,7 @@ class StartViewModel(
 
 	private fun doStart() {
 		val f = _form.value
-		run(onStarted) {
+		saveOnce(onStarted) {
 			entries.start(
 				StartRequest(
 					mode = kind,
@@ -424,7 +426,7 @@ class StartViewModel(
 		if (day.isAfter(LocalDate.now()))
 			return fail(ValidationException.Reason.FUTURE_TIME)
 		val zone = ZoneId.systemDefault()
-		run(onDone) {
+		saveOnce(onDone) {
 			val id = entries.createPast(
 				PastRequest(
 					EntryDetails(
@@ -437,6 +439,21 @@ class StartViewModel(
 			f.pluginFields?.let { pluginData.setEntryFields(id, it) }
 			for (r in refLines(f.refs))
 				entries.addExternalRef(id, r)
+		}
+	}
+
+	/* [action] once: ignored while one runs or after one succeeded; a failure allows a retry */
+	private fun saveOnce(onDone: () -> Unit, action: suspend () -> Unit) {
+		if (saving)
+			return
+		saving = true
+		run(onDone) {
+			try {
+				action()
+			} catch (e: Exception) {
+				saving = false
+				throw e
+			}
 		}
 	}
 }

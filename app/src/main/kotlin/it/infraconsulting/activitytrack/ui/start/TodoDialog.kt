@@ -131,6 +131,7 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 	var segmentsDay by remember { mutableStateOf<LocalDate?>(null) }
 	var existingRefs by remember { mutableStateOf<List<it.infraconsulting.activitytrack.data.db.ExternalRefEntity>>(emptyList()) }
 	var loaded by remember { mutableStateOf(isNew) }
+	var saving by remember { mutableStateOf(false) }
 	LaunchedEffect(editId) {
 		if (editId == null)
 			return@LaunchedEffect
@@ -159,6 +160,10 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 	val planning = enabled(Feature.PLANNING)
 
 	fun save(req: TodoRequest) {
+		/* a second tap while saving would create a second to-do */
+		if (saving)
+			return
+		saving = true
 		scope.launch {
 			try {
 				val id = c.entries.saveTodo(editId, req)
@@ -173,6 +178,8 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 				onClose()
 			} catch (x: ValidationException) {
 				error = x.reason
+			} finally {
+				saving = false
 			}
 		}
 	}

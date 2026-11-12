@@ -63,12 +63,16 @@ fun AbsenceDialog(onClose: () -> Unit) {
 	var start by remember { mutableStateOf("") }
 	var end by remember { mutableStateOf("") }
 	var grid by remember { mutableStateOf(false) }
+	/* a second tap while saving would create a second absence */
+	var saving by remember { mutableStateOf(false) }
 
 	EditDialog(
 		title = stringResource(R.string.create_absence_title),
 		error = error,
 		onDismiss = onClose,
 		onConfirm = confirm@{
+			if (saving)
+				return@confirm
 			val f = parseDate(from)
 			val t = if (to.isBlank()) f else parseDate(to)
 			if (f == null || t == null) {
@@ -82,6 +86,7 @@ fun AbsenceDialog(onClose: () -> Unit) {
 				error = Reason.INVALID_TIME_RANGE
 				return@confirm
 			}
+			saving = true
 			scope.launch {
 				try {
 					c.entries.createAbsence(
@@ -93,6 +98,8 @@ fun AbsenceDialog(onClose: () -> Unit) {
 					onClose()
 				} catch (x: ValidationException) {
 					error = x.reason
+				} finally {
+					saving = false
 				}
 			}
 		},
