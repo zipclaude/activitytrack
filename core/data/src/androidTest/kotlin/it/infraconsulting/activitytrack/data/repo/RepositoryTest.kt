@@ -18,9 +18,9 @@ import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.db.WorkScheduleEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
 import it.infraconsulting.activitytrack.domain.model.ExternalRefKind
-import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+import it.infraconsulting.activitytrack.domain.activity.ReturnChoice
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.SegmentSource
 import java.time.Clock
@@ -72,6 +72,15 @@ class RepositoryTest {
 
 	@After
 	fun tearDown() = db.close()
+
+	/* the 0.9 names of the states the tests were written with: ACTIVE, SUSPENDED (running), CLOSED, TODO */
+	private suspend fun state(id: Long): String {
+		val e = db.entryDao().entry(id)!!
+		return when (e.status) {
+			ActivityStatus.RUNNING -> if (e.mode != null) "ACTIVE" else "SUSPENDED"
+			else -> e.status.name
+		}
+	}
 
 	private fun reason(block: suspend () -> Unit): Reason =
 		assertFailsWith<ValidationException> { runBlocking { block() } }.reason
@@ -146,9 +155,9 @@ class RepositoryTest {
 			segs.map { it.kind },
 		)
 		assertEquals(listOf(30L, 60L, 15L, 45L, 10L), segs.map { (it.endUtcMs!! - it.startUtcMs) / 60_000 })
-		assertEquals(EntryStatus.TO_COMPLETE, db.entryDao().entry(id)?.status)
+		assertEquals("CLOSED", state(id))
 
-		assertFailsWith<IllegalTransitionException> { runBlocking { entries.apply(id, EntryCommand.PAUSE) } }
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.apply(id, EntryCommand.PAUSE) })
 	}
 
 	@Test
@@ -156,7 +165,7 @@ class RepositoryTest {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Patch"))
 		clock.advance(30)
 		entries.apply(id, EntryCommand.STOP)
-		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(id)?.status)
+		assertEquals("CLOSED", state(id))
 	}
 
 	@Test
@@ -165,7 +174,7 @@ class RepositoryTest {
 		clock.advance(120)
 		/* past end: recorded as stopped, closed since client and activity are there */
 		val past = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Call", startUtcMs = t0, endUtcMs = t0 + 3_600_000))
-		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(past)?.status)
+		assertEquals("CLOSED", state(past))
 		assertEquals(t0 + 3_600_000, db.entryDao().segments(past).single().endUtcMs)
 		/* future end: running, planned end kept until asked */
 		val open = entries.start(StartRequest(SegmentKind.WORK, client, endUtcMs = clock.millis() + 1_800_000))
@@ -183,9 +192,9 @@ class RepositoryTest {
 		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, details) })
 		assertNull(entries.lastActivity(client))
 		/* the failed completion rolled back */
-		assertEquals(EntryStatus.TO_COMPLETE, db.entryDao().entry(id)?.status)
+		assertEquals("CLOSED", state(id))
 		entries.complete(id, details.copy(activity = "Patch Tuesday"))
-		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(id)?.status)
+		assertEquals("CLOSED", state(id))
 	}
 
 	@Test
@@ -241,15 +250,13 @@ class RepositoryTest {
 			mapOf(a to EntryCommand.SUSPEND, b to EntryCommand.STOP),
 		)
 		val dao = db.entryDao()
-		assertEquals(EntryStatus.SUSPENDED, dao.entry(a)?.status)
-		assertEquals(EntryStatus.TO_COMPLETE, dao.entry(b)?.status)
-		assertEquals(EntryStatus.ACTIVE, dao.entry(c)?.status)
+		assertEquals("SUSPENDED", state(a))
+		assertEquals("CLOSED", state(b))
+		assertEquals("ACTIVE", state(c))
 
 		/* an illegal command for another entry rolls back the new start too */
 		val before = dao.observeOpenEntries().first().size
-		assertFailsWith<IllegalTransitionException> {
-			runBlocking { entries.start(StartRequest(SegmentKind.WORK, client), mapOf(a to EntryCommand.SUSPEND)) }
-		}
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.start(StartRequest(SegmentKind.WORK, client), mapOf(a to EntryCommand.SUSPEND)) })
 		assertEquals(before, dao.observeOpenEntries().first().size)
 
 		/* a is the only suspended entry; b was stopped */
@@ -269,19 +276,19 @@ class RepositoryTest {
 		clock.advance(10)
 		/* allowed: both run */
 		repo.apply(a, EntryCommand.WORK)
-		assertEquals(EntryStatus.ACTIVE, dao.entry(b)?.status)
+		assertEquals("ACTIVE", state(b))
 		repo.apply(a, EntryCommand.SUSPEND)
 		clock.advance(10)
-		/* not allowed (issue #132): resuming a suspends b, a pause stops */
+		/* not allowed (issue #132): resuming a suspends b; a pause is suspended too (coordinator, 1.0) */
 		concurrent = false
 		repo.apply(a, EntryCommand.WORK)
-		assertEquals(EntryStatus.ACTIVE, dao.entry(a)?.status)
-		assertEquals(EntryStatus.SUSPENDED, dao.entry(b)?.status)
+		assertEquals("ACTIVE", state(a))
+		assertEquals("SUSPENDED", state(b))
 		repo.apply(a, EntryCommand.PAUSE)
 		clock.advance(10)
 		repo.apply(b, EntryCommand.TRAVEL)
-		assertEquals(EntryStatus.ACTIVE, dao.entry(b)?.status)
-		assertEquals(EntryStatus.TO_COMPLETE, dao.entry(a)?.status)
+		assertEquals("ACTIVE", state(b))
+		assertEquals("SUSPENDED", state(a))
 	}
 
 	@Test
@@ -316,7 +323,7 @@ class RepositoryTest {
 		assertEquals(2, db.entryDao().entry(id)?.unansweredReminders)
 		entries.stopAtLastConfirmation(id)
 		val e = db.entryDao().entry(id)!!
-		assertEquals(EntryStatus.TO_COMPLETE, e.status)
+		assertEquals("CLOSED", state(e.id))
 		assertEquals(confirmed, db.entryDao().segments(id).single().endUtcMs)
 	}
 
@@ -519,18 +526,18 @@ class RepositoryTest {
 		val zone = ZoneOffset.UTC
 		val today = java.time.LocalDate.now(clock)
 		val tomorrow = today.plusDays(1)
+		master.saveSchedule(WorkScheduleEntity(dayOfWeek = tomorrow.dayOfWeek.value, startMin = 9 * 60, endMin = 18 * 60))
 		assertEquals(emptySet(), entries.handledDays(today, tomorrow, zone))
-		entries.recordAbsence(tomorrow, it.infraconsulting.activitytrack.data.db.AbsenceKind.LATE_ENTRY, 10 * 60)
-		/* recording the same kind again replaces it */
-		entries.recordAbsence(tomorrow, it.infraconsulting.activitytrack.data.db.AbsenceKind.LATE_ENTRY, 11 * 60)
-		assertEquals(1, db.entryDao().absencesBetween(tomorrow.toEpochDay(), tomorrow.toEpochDay()).size)
+		/* late entry at 10:00: a LEAVE from 9:00 (ACTIVITY-MODEL.md 3.1) */
+		entries.recordLateEntry(tomorrow, 10 * 60)
+		val absence = entries.absences.first().single()
+		assertEquals(it.infraconsulting.activitytrack.domain.activity.AbsenceKind.LEAVE, absence.absenceKind)
+		assertEquals(listOf(SegmentKind.ABSENCE), db.entryDao().segments(absence.id).map { it.kind })
 		assertEquals(setOf(tomorrow), entries.handledDays(today, tomorrow, zone))
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(setOf(today, tomorrow), entries.handledDays(today, tomorrow, zone))
-		assertEquals(
-			Reason.INVALID_TIME,
-			reason { entries.recordAbsence(today, it.infraconsulting.activitytrack.data.db.AbsenceKind.FULL_DAY, 600) },
-		)
+		/* a day without working hours: nothing to record */
+		assertEquals(Reason.INVALID_DATE, reason { entries.createAbsence(AbsenceRequest(fromEpochDay = today.plusDays(2).toEpochDay())) })
 	}
 
 	@Test
@@ -556,7 +563,7 @@ class RepositoryTest {
 		val d = EntryDetails(acme, client, null, null, null, null, null)
 		assertEquals(Reason.COMPLETION_INCOMPLETE, reason { entries.complete(id, d) })
 		entries.complete(id, d, allowEmpty = true)
-		assertEquals(EntryStatus.CLOSED, db.entryDao().entry(id)!!.status)
+		assertEquals("CLOSED", state(id))
 		assertNull(db.entryDao().entry(id)!!.activity)
 	}
 
@@ -780,36 +787,115 @@ class RepositoryTest {
 		assertEquals(emptyList<Any>(), plugins.deleted(acme, "antares"))
 	}
 
-	/* issue #40: deleting an entry; attachments first; a ticket's to-do opens again; hand-made to-dos deletable */
+	/* issue #40 and 1.0: deleting moves to the bin; for good only from there and without attachments */
 	@Test
-	fun deleteEntryAndTodos() = runBlocking<Unit> {
+	fun deleteRestorePurge() = runBlocking<Unit> {
 		val now = clock.now.toEpochMilli()
-		val ticket = db.todoDao().insert(
-			it.infraconsulting.activitytrack.data.db.TodoEntity(
-				uid = "t1", companyId = acme, clientId = client, title = "Ticket", externalKey = "T-1", done = true, createdUtcMs = now, updatedUtcMs = now,
-			),
-		)
-		val id = entries.start(StartRequest(SegmentKind.WORK, client, todoId = ticket))
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Ticket"))
 		clock.advance(30)
-		entries.apply(id, EntryCommand.STOP)
+		entries.stop(id)
 		val att = db.entryDao().insertAttachment(
 			it.infraconsulting.activitytrack.data.db.AttachmentEntity(
 				entryId = id, kind = it.infraconsulting.activitytrack.data.db.AttachmentKind.PHOTO, relPath = "x.jpg", mime = "image/jpeg", createdUtcMs = now,
 			),
 		)
-		assertEquals(EntryRepository.Deletion(1, "Ticket"), entries.deletion(id))
-		assertEquals(Reason.HAS_ATTACHMENTS, reason { entries.deleteEntry(id) })
+		assertEquals(Reason.NOT_DELETED, reason { entries.purge(id) })
+		entries.delete(id)
+		assertEquals(clock.millis(), entries.find(id)?.deletedUtcMs)
+		assertEquals(listOf(id), entries.deleted.first().map { it.id })
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.reopen(id) })
+		entries.restore(id)
+		assertNull(entries.find(id)?.deletedUtcMs)
+		entries.delete(id)
+		assertEquals(Reason.HAS_ATTACHMENTS, reason { entries.purge(id) })
 		db.entryDao().deleteAttachment(att)
-		entries.deleteEntry(id)
+		entries.purge(id)
 		assertNull(entries.find(id))
-		assertEquals(false, db.todoDao().byId(ticket)?.done)
-		val todos = TodoRepository(db, clock)
-		assertEquals(Reason.IN_USE, reason { todos.delete(ticket) })
-		val own = db.todoDao().insert(
-			it.infraconsulting.activitytrack.data.db.TodoEntity(uid = "t2", companyId = acme, title = "Mine", createdUtcMs = now, updatedUtcMs = now),
+	}
+
+	/* ACTIVITY-MODEL.md 3: a TODO with planned segments; the start drops them; tick closes another */
+	@Test
+	fun todoStartAndTick() = runBlocking<Unit> {
+		val h = 3_600_000L
+		val t0 = clock.millis()
+		val todo = entries.saveTodo(
+			null,
+			TodoRequest(acme, client, "Patch", priority = 4, planned = listOf(SegmentInput(SegmentKind.WORK, t0 + h, t0 + 2 * h))),
 		)
-		todos.delete(own)
-		assertNull(db.todoDao().byId(own))
+		assertEquals("TODO", state(todo))
+		assertEquals(listOf(true), db.entryDao().segments(todo).map { it.planned })
+		/* the planned segment never counts */
+		assertEquals(0L, entries.recordedMs(todo))
+		assertEquals(Reason.BLANK_VALUE, reason { entries.saveTodo(null, TodoRequest(acme, activity = " ")) })
+		entries.startTodo(todo, SegmentKind.WORK)
+		assertEquals("ACTIVE", state(todo))
+		assertEquals(listOf(false), db.entryDao().segments(todo).map { it.planned })
+		val other = entries.saveTodo(null, TodoRequest(acme, activity = "Call back"))
+		entries.tick(other)
+		assertEquals("CLOSED", state(other))
+		assertEquals(clock.millis(), entries.find(other)?.closedUtcMs)
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.tick(todo) })
+	}
+
+	/* 4.1, 4.2: rounded stored times and closing up to 60 minutes ahead, only with editable times */
+	@Test
+	fun roundedTimesAndFutureClose() = runBlocking<Unit> {
+		var rules = TimeRules(editableTimes = true, roundStoredTimes = true)
+		val repo = EntryRepository(db, clock, times = { rules })
+		clock.now = Instant.parse("2026-10-14T08:07:00Z")
+		val id = repo.start(StartRequest(SegmentKind.WORK, client, activity = "x"))
+		/* a start rounds down to the work quantum (15) */
+		assertEquals(Instant.parse("2026-10-14T08:00:00Z").toEpochMilli(), db.entryDao().segments(id).single().startUtcMs)
+		clock.now = Instant.parse("2026-10-14T09:31:00Z")
+		repo.stop(id)
+		/* a stop rounds up */
+		assertEquals(Instant.parse("2026-10-14T09:45:00Z").toEpochMilli(), db.entryDao().segments(id).single().endUtcMs)
+		/* a typed end up to 60 minutes ahead */
+		val b = repo.start(StartRequest(SegmentKind.WORK, client, activity = "y", startUtcMs = clock.millis()))
+		assertEquals(Reason.FUTURE_TIME, reason { repo.stop(b, clock.millis() + 61 * 60_000) })
+		repo.stop(b, clock.millis() + 30 * 60_000)
+		/* another start before that end pulls it back to the new start */
+		clock.advance(10)
+		val c = repo.start(StartRequest(SegmentKind.WORK, client, activity = "z", startUtcMs = clock.millis()))
+		assertEquals(clock.millis(), db.entryDao().segments(b).single().endUtcMs)
+		/* without editable times neither rounding nor future ends */
+		rules = TimeRules(editableTimes = false, roundStoredTimes = true)
+		assertEquals(Reason.FUTURE_TIME, reason { repo.stop(c, clock.millis() + 60_000) })
+	}
+
+	/* 3.2: stop with the return trip, as long as the outbound one, samples swapped */
+	@Test
+	fun stopWithReturnTrip() = runBlocking<Unit> {
+		val locations = LocationRepository(db)
+		val t0 = clock.millis()
+		val id = entries.start(StartRequest(SegmentKind.TRAVEL, client))
+		locations.record(it.infraconsulting.activitytrack.domain.geo.Fix(t0, it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.0, 11.0), 8.0), "fused", nowMs = t0)
+		clock.advance(40)
+		locations.record(it.infraconsulting.activitytrack.domain.geo.Fix(clock.millis(), it.infraconsulting.activitytrack.domain.geo.GeoPoint(45.5, 11.5), 8.0), "fused", nowMs = clock.millis())
+		entries.switchTo(id, SegmentKind.WORK)
+		clock.advance(120)
+		assertEquals(ReturnChoice.entries.toList(), entries.returnChoices(id))
+		val ret = entries.stopWithReturn(id)
+		val segs = db.entryDao().segments(id)
+		assertEquals(listOf(SegmentKind.TRAVEL, SegmentKind.WORK, SegmentKind.TRAVEL), segs.map { it.kind })
+		assertEquals(40L * 60_000, segs[2].endUtcMs!! - segs[2].startUtcMs)
+		assertEquals(listOf(45.5, 45.0), locations.fixesOfSegment(ret).map { it.point.lat })
+		assertEquals("CLOSED", state(id))
+	}
+
+	/* 3: travel asked during work: "work done?" yes = a new anonymous travel, no = a switch */
+	@Test
+	fun travelFromWork() = runBlocking<Unit> {
+		val id = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		val travel = entries.travelFromWork(id, workDone = true)
+		assertEquals("CLOSED", state(id))
+		assertEquals("ACTIVE", state(travel))
+		assertNull(entries.find(travel)?.clientId)
+		val again = entries.start(StartRequest(SegmentKind.WORK, client))
+		clock.advance(30)
+		assertEquals(again, entries.travelFromWork(again, workDone = false))
+		assertEquals(SegmentKind.TRAVEL, entries.find(again)?.mode)
 	}
 
 	/* issue #41: consumables; #44: contacts without numbers, e-mail, the entry's contact */

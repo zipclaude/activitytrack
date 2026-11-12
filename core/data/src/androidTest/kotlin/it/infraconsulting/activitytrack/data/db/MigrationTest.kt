@@ -253,6 +253,38 @@ class MigrationTest {
 		}
 	}
 
+	/*
+	 * 20 -> 21 -> 22 in a row, as a restored v20 backup (ACTIVITY-MODEL.md
+	 * 6.1): the legacy absence becomes an absence to-do, then an ABSENCE
+	 * activity; the open to-do with a running entry is absorbed by it; Room
+	 * validates the schema 22, the sync realigns.
+	 */
+	@Test
+	fun v20ToV22TurnsToDosAndAbsencesIntoActivities() {
+		helper.createDatabase(DB, 20).use { db ->
+			SyncSchema.onCreate(ActivityTrackDatabase.SupportSql(db))
+			db.execSQL("UPDATE sync_state SET enabled = 1, cursor = 9")
+			db.execSQL("INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, 'c1')")
+			db.execSQL("INSERT INTO work_schedule (day_of_week, start_min, end_min, uid) VALUES (5, 540, 1080, 'w5')")
+			db.execSQL("INSERT INTO todo (id, uid, company_id, title, refs, done, priority, created_utc_ms, updated_utc_ms) VALUES (1, 't1', 1, 'Patch', 'INC1', 0, 2, 0, 0)")
+			db.execSQL("INSERT INTO time_entry (id, uid, todo_id, company_id, status, mode, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) VALUES (5, 'e5', 1, 1, 'ACTIVE', 'WORK', 'Europe/Rome', 0, 1, 2)")
+			db.execSQL("INSERT INTO segment (entry_id, kind, start_utc_ms, zone_id, source, uid) VALUES (5, 'WORK', 1, 'Europe/Rome', 'TRACKED', 's1')")
+			/* Friday 2026-11-13, the whole day */
+			db.execSQL("INSERT INTO absence (date_epoch_day, kind, uid) VALUES (20770, 'FULL_DAY', 'a1')")
+		}
+		helper.runMigrationsAndValidate(DB, 22, true, ActivityTrackDatabase.MIGRATION_21_22).use { db ->
+			db.query("SELECT uid, status, mode, kind, external_key, priority FROM time_entry ORDER BY id").use { c ->
+				c.moveToFirst()
+				assertEquals(listOf("e5", "RUNNING", "WORK", "ACTIVITY", null, 4L), listOf(c.getString(0), c.getString(1), c.getString(2), c.getString(3), c.getString(4), c.getLong(5)))
+				c.moveToNext()
+				assertEquals("ABSENCE", c.getString(3))
+				assertTrue(!c.moveToNext())
+			}
+			db.query("SELECT COUNT(*) FROM sqlite_master WHERE name IN ('todo', 'absence')").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
+			db.query("SELECT realign, cursor FROM sync_state").use { c -> c.moveToFirst(); assertEquals(1, c.getInt(0)); assertEquals(0, c.getInt(1)) }
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}
