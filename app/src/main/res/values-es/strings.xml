@@ -805,6 +805,7 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="update_err_package">El archivo descargado no es esta aplicación.</string>
   <string name="sync_incompatible_title">Sincronización detenida</string>
   <string name="sync_incompatible_app">El servidor ActivityTrack Web ya no acepta esta versión de la app: actualiza ActivityTrack. Los datos se quedan aquí y se sincronizan después de la actualización.</string>
+  <string name="sync_upgrade_required">Actualiza la app para sincronizar</string>
   <string name="sync_incompatible_server">Esta app es más reciente que el servidor ActivityTrack Web: hay que actualizar el servidor (avisa al administrador). Los datos se quedan aquí y se sincronizan después de la actualización.</string>
   <string name="track_title">Recorridos</string>
   <string name="track_day">Día</string>

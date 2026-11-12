@@ -17,7 +17,8 @@ import androidx.work.WorkerParameters
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.data.sync.SyncEngine
@@ -115,7 +116,14 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
 	/* the sync stops until the app or the server is updated: once per change */
 	private fun incompatible(app: ActivityTrackApp, code: String) {
-		val text = app.getString(if (code == WireVersion.SERVER_TOO_OLD) R.string.sync_incompatible_server else R.string.sync_incompatible_app)
+		val text = app.getString(
+			when (code) {
+				WireVersion.SERVER_TOO_OLD -> R.string.sync_incompatible_server
+				/* a schema 3 server to an app of an older schema (activity model 1.0) */
+				WireVersion.UPGRADE_REQUIRED -> R.string.sync_upgrade_required
+				else -> R.string.sync_incompatible_app
+			},
+		)
 		val n = android.app.Notification.Builder(app, NotificationChannels.SYNC)
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(app.getString(R.string.sync_incompatible_title))
@@ -133,7 +141,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 	 */
 	private suspend fun concurrent(app: ActivityTrackApp) {
 		if (app.container.policies.current.value.enabled(Feature.CONCURRENT_ENTRIES)) return
-		val active = app.container.entries.openEntries.first().filter { it.status == EntryStatus.ACTIVE }
+		val active = app.container.entries.openEntries.first().filter { it.legacy == LegacyStatus.ACTIVE }
 		if (active.size < 2) return
 		/* one that cannot be suspended stays running: the sync and the policy go on */
 		val older = active.sortedByDescending { it.createdUtcMs }.drop(1).filter { e ->

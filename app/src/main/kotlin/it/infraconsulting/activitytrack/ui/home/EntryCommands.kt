@@ -1,6 +1,22 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import java.time.ZoneId
 import java.time.Instant
 import it.infraconsulting.activitytrack.ui.common.reasonText
@@ -51,7 +67,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 open class EntryCommander(
 	private val entries: EntryRepository,
-	private val todos: it.infraconsulting.activitytrack.data.repo.TodoRepository? = null,
+	private val todos: it.infraconsulting.activitytrack.ui.todo.TodoRepository? = null,
 ) : ActionViewModel() {
 	/* Suspended entry proposed for resumption after a stop. */
 	private val _resume = MutableStateFlow<TimeEntryEntity?>(null)
@@ -87,14 +103,9 @@ open class EntryCommander(
 		if (!activity.isNullOrBlank() && e.activity.isNullOrBlank())
 			entries.setActivity(e.id, activity)
 		if (atUtcMs != null) entries.applyAt(e.id, cmd, atUtcMs) else entries.apply(e.id, cmd)
-		if (cmd == EntryCommand.STOP) {
-			e.todoId?.let { todo ->
-				if (todoDone == true)
-					todos?.setDone(todo, true)
-				entries.closeIfComplete(e.id)
-			}
+		/* TODO(activity-1.0-ui): no separate to-do to mark done since 1.0; the return-trip choices (ReturnTrip) */
+		if (cmd == EntryCommand.STOP)
 			_resume.value = entries.suspendedToResume(e.id)
-		}
 	}
 
 	/* the last description on [clientId], offered by the stop sheet */
@@ -119,8 +130,6 @@ open class EntryCommander(
 		it.infraconsulting.activitytrack.ui.common.Undo.post(
 			it.infraconsulting.activitytrack.ui.common.UndoEvent(R.string.undo_entry_reopened, title) {
 				entries.apply(e.id, EntryCommand.STOP)
-				if (e.status == it.infraconsulting.activitytrack.domain.model.EntryStatus.CLOSED)
-					entries.closeIfComplete(e.id)
 			},
 		)
 	}) { entries.apply(e.id, EntryCommand.REOPEN) }
@@ -188,7 +197,7 @@ private fun StopSheet(e: TimeEntryEntity, short: Boolean, editableTimes: Boolean
 	var todoDone by remember { mutableStateOf(true) }
 	val needsActivity = e.activity.isNullOrBlank()
 	val last by androidx.compose.runtime.produceState<String?>(null, e.clientId) { value = e.clientId?.let { vm.lastActivity(it) } }
-	val todo by androidx.compose.runtime.produceState<it.infraconsulting.activitytrack.data.db.TodoEntity?>(null, e.id) { value = vm.openTodo(e) }
+	val todo by androidx.compose.runtime.produceState<it.infraconsulting.activitytrack.ui.todo.TodoEntity?>(null, e.id) { value = vm.openTodo(e) }
 	fun dismiss() {
 		vm.clearError()
 		onClose()

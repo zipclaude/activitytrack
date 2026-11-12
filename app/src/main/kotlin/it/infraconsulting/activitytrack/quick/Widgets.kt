@@ -45,8 +45,9 @@ import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
-import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.domain.activity.IllegalActivityCommandException
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.notify.ongoingActions
@@ -127,7 +128,7 @@ class WidgetCommandAction : ActionCallback {
 		val c = (context.applicationContext as ActivityTrackApp).container
 		try {
 			c.entries.apply(parameters[ENTRY] ?: return, EntryCommand.valueOf(parameters[COMMAND] ?: return))
-		} catch (e: IllegalTransitionException) {
+		} catch (e: IllegalActivityCommandException) {
 			Log.i("Widget", "ignored: ${e.message}")
 		}
 	}
@@ -139,7 +140,7 @@ class WidgetToggleAction : ActionCallback {
 		val c = (context.applicationContext as ActivityTrackApp).container
 		try {
 			QuickToggle.toggle(c)
-		} catch (e: IllegalTransitionException) {
+		} catch (e: IllegalActivityCommandException) {
 			Log.i("Widget", "ignored: ${e.message}")
 		}
 	}
@@ -293,7 +294,7 @@ object QuickWidgets {
 		EntryWidget().updateAll(context)
 		TodoWidget().updateAll(context)
 		val c = (context.applicationContext as ActivityTrackApp).container
-		WidgetTicker.arm(context, c.entries.openEntries.first().any { e -> e.status == EntryStatus.ACTIVE })
+		WidgetTicker.arm(context, c.entries.openEntries.first().any { e -> e.legacy == LegacyStatus.ACTIVE })
 	}
 
 	/*

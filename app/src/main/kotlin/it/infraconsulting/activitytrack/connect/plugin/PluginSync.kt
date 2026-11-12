@@ -1,12 +1,25 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.connect.plugin
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.data.db.ClientEntity
 import it.infraconsulting.activitytrack.data.db.ContactEntity
 import it.infraconsulting.activitytrack.data.db.ContactPhoneEntity
 import it.infraconsulting.activitytrack.data.db.RemoteItemEntity
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.domain.plugin.ImportTarget
 import it.infraconsulting.activitytrack.domain.plugin.ImportedRecord
 import it.infraconsulting.activitytrack.domain.plugin.PluginImport
@@ -16,6 +29,9 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.util.UUID
+import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
+import it.infraconsulting.activitytrack.domain.activity.Priority
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
@@ -115,40 +131,55 @@ class PluginSync(private val app: ActivityTrackApp) {
 		}
 
 		val zone = env.zone
+		/*
+		 * Imported to-dos are TODO activities matched by (company, key)
+		 * (activity model 1.0, ACTIVITY-MODEL.md 7). Once the user started or
+		 * closed one, the import updates only its plan, due date and priority;
+		 * a deleted one stays in the bin; the remote closes a TODO one.
+		 */
 		for (r in PluginImport.records(plugin, ImportTarget.TODOS, client, env)) {
-			val existing = dao.todoByKey(companyId, r.key)
+			val existing = dao.activityByKey(companyId, r.key)
 			if (existing == null && r.skipIfNew)
 				continue
 			val now = System.currentTimeMillis()
-			val base = existing ?: TodoEntity(uid = UUID.randomUUID().toString(), companyId = companyId, title = "", createdUtcMs = now, updatedUtcMs = now)
-			val title = r.text("title") ?: base.title.ifEmpty { r.key }
+			val base = existing ?: TimeEntryEntity(
+				uid = UUID.randomUUID().toString(), companyId = companyId, clientId = null, status = ActivityStatus.TODO,
+				zoneId = zone.id, createdUtcMs = now, updatedUtcMs = now,
+			)
+			val todo = base.status == ActivityStatus.TODO
+			val title = r.text("title") ?: base.activity?.ifEmpty { null } ?: r.key
 			val due = r.text("due")?.let { day(it, zone) }
 			val plan = r.text("planStart")?.let { dateTime(it, zone) }
-			val t = base.copy(
+			val remoteDone = r.bool("done") == true
+			val clientId = if (todo) clientOf(r.text("clientCode"))?.id ?: base.clientId else base.clientId
+			var t = base.copy(
 				externalKey = r.key,
-				title = title,
-				notes = r.text("notes") ?: base.notes,
-				refs = r.text("refs") ?: base.refs,
-				clientId = clientOf(r.text("clientCode"))?.id ?: base.clientId,
-				priority = r.text("priority")?.toDoubleOrNull()?.toInt()?.takeIf { it > 0 } ?: base.priority,
+				activity = if (todo) title else base.activity,
+				notes = if (todo) r.text("notes") ?: base.notes else base.notes,
+				clientId = clientId,
+				companyId = if (clientId != null) clientOf(r.text("clientCode"))?.companyId ?: base.companyId else base.companyId,
+				/* the descriptor maps the remote scale onto 0..5 (ACTIVITY-MODEL.md 5) */
+				priority = r.text("priority")?.toDoubleOrNull()?.toInt()?.let { Priority.of(it).value } ?: base.priority,
 				dueEpochDay = due?.first ?: base.dueEpochDay,
 				dueTimeMin = due?.second ?: base.dueTimeMin,
 				planEpochDay = plan?.toLocalDate()?.toEpochDay() ?: base.planEpochDay,
 				planStartMin = plan?.let { it.hour * 60 + it.minute } ?: base.planStartMin,
-				/* the remote closes a to-do; it never reopens one the user marked done */
-				done = base.done || r.bool("done") == true,
-				doneUtcMs = base.doneUtcMs ?: now.takeIf { r.bool("done") == true },
-				pluginFields = importedFields(r.fields, base.pluginFields, r.bool("done") == true),
+				pluginFields = importedFields(r.fields, base.pluginFields, remoteDone, overwrite = todo),
 				updatedUtcMs = if (existing == null) now else base.updatedUtcMs,
 			)
+			/* the remote closes a to-do; it never reopens one the user closed */
+			if (remoteDone && t.status == ActivityStatus.TODO && t.deletedUtcMs == null)
+				t = t.copy(status = ActivityStatus.CLOSED, closedUtcMs = now)
 			if (t.copy(updatedUtcMs = 0) != existing?.copy(updatedUtcMs = 0)) {
 				if (existing == null) {
-					val id = dao.insertTodo(t)
-					report = report.copy(newTodos = report.newTodos + (id to t.title))
+					val id = dao.insertActivity(t)
+					report = report.copy(newTodos = report.newTodos + (id to title))
 				} else {
-					dao.updateTodo(t.copy(updatedUtcMs = now))
+					dao.updateActivity(t.copy(updatedUtcMs = now))
 				}
 			}
+			val id = existing?.id ?: dao.activityByKey(companyId, r.key)?.id
+			r.text("refs")?.let { v -> id?.let { c.entries.ensureExternalRef(it, v) } }
 			report = report.copy(todos = report.todos + 1)
 		}
 		report
@@ -200,13 +231,13 @@ class PluginSync(private val app: ActivityTrackApp) {
 		}
 		for (e in dao.entriesToSend(companyId, plugin.id).filter { only == null || it.id == only }) {
 			val zone = runCatching { ZoneId.of(e.zoneId) }.getOrDefault(ZoneId.systemDefault())
-			val todo = e.todoId?.let { dao.todo(it) }?.takeIf { it.companyId == companyId && it.externalKey != null }
+			/* @activity: the planned fields of the same record, when the plugin imported it (activity model 1.0) */
+			val todo = e.takeIf { it.externalKey != null }
 			val clientRow = e.clientId?.let { dao.client(it) }
 			val title = clientRow?.name ?: company.name
 			val lines = dao.materialsOf(e.id)
-			/* entry fields: the entry's own, else those its to-do pre-filled */
+			/* entry fields: one object since 1.0, the imported values overridden by the user's */
 			val fields = HashMap<String, JsonElement>()
-			obj(todo?.pluginFields)?.let { fields.putAll(it) }
 			obj(e.pluginFields)?.let { fields.putAll(it) }
 			val entryJson = JsonObject(
 				buildMap {
@@ -219,15 +250,8 @@ class PluginSync(private val app: ActivityTrackApp) {
 					clientRow?.let { put("client", JsonObject(mapOf("id" to JsonPrimitive(it.id), "name" to JsonPrimitive(it.name), "code" to (it.externalCode?.let(::JsonPrimitive) ?: JsonNull)))) }
 				},
 			)
-			/* @todo.fields: what the import kept of the remote record (e.g. Antares' customer premises) */
-			val todoJson: JsonElement = todo?.let {
-				JsonObject(
-					mapOf(
-						"id" to JsonPrimitive(it.id), "externalKey" to JsonPrimitive(it.externalKey!!), "title" to JsonPrimitive(it.title),
-						"refs" to JsonPrimitive(it.refs), "fields" to (obj(it.pluginFields) ?: JsonObject(emptyMap())),
-					),
-				)
-			} ?: JsonNull
+			/* @activity.fields: what the import kept of the remote record (e.g. Antares' customer premises) */
+			val todoJson: JsonElement = todo?.let { activityJson(it, null) } ?: JsonNull
 			var blockJson: JsonElement = JsonNull
 			var remoteJson: JsonElement = JsonNull
 			lateinit var eenv: PluginEnv
@@ -241,7 +265,7 @@ class PluginSync(private val app: ActivityTrackApp) {
 			eenv = base.withHooks(materials = { mode -> materials(lines, mode) }, zone = zone).with { r ->
 				when (r.root) {
 					"entry" -> PluginEnv.dig(entryJson, r.path)
-					"todo" -> if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)
+					"activity" -> if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)
 					"field" -> r.path.firstOrNull()?.let { fields[it] }?.let { PluginEnv.dig(it, r.path.drop(1)) } ?: JsonNull
 					"list" -> if (r.path.getOrNull(1) == "selected") PluginEnv.dig(selected(r.path[0]), r.path.drop(2)) else JsonNull
 					"block" -> PluginEnv.dig(blockJson, r.path)
@@ -312,37 +336,46 @@ class PluginSync(private val app: ActivityTrackApp) {
 				}
 			}
 		}
-		/* to-dos marked done in the app: closed on the remote side once, after their last records went */
-		spec.todoDone?.let { done ->
-			for (t in dao.doneImportedTodos(companyId)) {
+		/* activities imported from the plugin and closed in the app: closed on the remote side once, after their last records went */
+		spec.activityClosed?.let { done ->
+			for (t in dao.closedImported(companyId)) {
 				val fields = obj(t.pluginFields) ?: JsonObject(emptyMap())
 				if (fields[CLOSED] == JsonPrimitive(true))
 					continue
-				val todoJson = JsonObject(
-					mapOf(
-						"id" to JsonPrimitive(t.id), "externalKey" to JsonPrimitive(t.externalKey!!), "title" to JsonPrimitive(t.title),
-						"refs" to JsonPrimitive(t.refs), "fields" to fields,
-						"activities" to JsonPrimitive(dao.activitiesOfTodo(t.id).joinToString("\n\n")),
-					),
-				)
-				val env = base.with { r -> if (r.root == "todo") (if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)) else null }
+				val todoJson = activityJson(t, dao.activitiesOf(t.id, t.uid.orEmpty()).joinToString("\n\n"))
+				val env = base.with { r -> if (r.root == "activity") (if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)) else null }
 				client.call(done.method, done.path, env, PluginExport.body(done.body, env))
-				dao.updateTodo(t.copy(pluginFields = JsonObject(fields + (CLOSED to JsonPrimitive(true))).toString()))
+				dao.updateActivity(t.copy(pluginFields = JsonObject(fields + (CLOSED to JsonPrimitive(true))).toString()))
 			}
 		}
 		return report
 	}
 
+	/* @activity: id, external key, title (the description), references, the plugin fields, [activities] what was done */
+	private suspend fun activityJson(e: TimeEntryEntity, activities: String?): JsonObject = JsonObject(
+		buildMap {
+			put("id", JsonPrimitive(e.id))
+			put("externalKey", JsonPrimitive(e.externalKey.orEmpty()))
+			put("title", JsonPrimitive(e.activity.orEmpty()))
+			put("refs", JsonPrimitive(c.entries.externalRefValues(e.id).joinToString("\n")))
+			put("fields", obj(e.pluginFields) ?: JsonObject(emptyMap()))
+			activities?.let { put("activities", JsonPrimitive(it)) }
+		},
+	)
+
 	private fun obj(json: String?): JsonObject? = json?.let { runCatching { Json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
 
 	/*
-	 * A to-do's plugin fields after an import: the remote's, keeping the mark
+	 * An imported activity's plugin fields after an import: one object with
+	 * the user's entry fields (1.1), the remote's values over them while it
+	 * is a to-do ([overwrite]), only the missing ones afterwards; the mark
 	 * that it is closed on the remote side (set here when the remote says so,
-	 * or after export.todoDone), so a done to-do is closed there only once.
+	 * or after export.activityClosed) is kept, so it is closed there once.
 	 */
-	private fun importedFields(remote: Map<String, JsonElement>, old: String?, remoteDone: Boolean): String? {
-		val closed = remoteDone || obj(old)?.get(CLOSED) == JsonPrimitive(true)
-		val fields = remote + if (closed) mapOf(CLOSED to JsonPrimitive(true)) else emptyMap()
+	private fun importedFields(remote: Map<String, JsonElement>, old: String?, remoteDone: Boolean, overwrite: Boolean): String? {
+		val mine = obj(old) ?: JsonObject(emptyMap())
+		val closed = remoteDone || mine[CLOSED] == JsonPrimitive(true)
+		val fields = (if (overwrite) mine + remote else remote + mine) + if (closed) mapOf(CLOSED to JsonPrimitive(true)) else emptyMap()
 		return fields.takeIf { it.isNotEmpty() }?.let { JsonObject(it).toString() } ?: old
 	}
 
@@ -380,7 +413,7 @@ class PluginSync(private val app: ActivityTrackApp) {
 
 	private companion object {
 		val lock = Mutex()
-		/* in a to-do's plugin fields: closed on the remote side (export.todoDone) */
+		/* in an imported activity's plugin fields: closed on the remote side (export.activityClosed) */
 		const val CLOSED = "_closed"
 	}
 }

@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.entry
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -70,7 +84,8 @@ fun PluginFieldsSection(e: TimeEntryEntity, co: it.infraconsulting.activitytrack
 	val c = app.container
 	val itemsFlow = remember(co.id, plugin.id) { c.pluginData.observeAllItems(co.id, plugin.id) }
 	val items by itemsFlow.collectAsState(initial = emptyList())
-	val todo by produceState<it.infraconsulting.activitytrack.data.db.TodoEntity?>(null, e.todoId) { value = e.todoId?.let { c.pluginData.todo(it) } }
+	/* @activity: the planned fields of the same record, for an activity imported from the plugin (activity model 1.0) */
+	val todo = e.takeIf { it.externalKey != null }
 	val clientCode by produceState<String?>(null, e.clientId) { value = e.clientId?.let { c.masterData.client(it)?.externalCode } }
 	val language = LocalConfiguration.current.locales[0].language
 	val scope = rememberCoroutineScope()
@@ -78,10 +93,7 @@ fun PluginFieldsSection(e: TimeEntryEntity, co: it.infraconsulting.activitytrack
 
 	fun obj(s: String?) = s?.let { runCatching { Json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
 	val own = obj(e.pluginFields) ?: JsonObject(emptyMap())
-	val fields = HashMap<String, JsonElement>().apply {
-		obj(todo?.pluginFields)?.let { putAll(it) }
-		putAll(own)
-	}
+	val fields = HashMap<String, JsonElement>().apply { putAll(own) }
 	val todoJson: JsonElement = todo?.takeIf { it.externalKey != null }?.let {
 		JsonObject(mapOf("id" to JsonPrimitive(it.id), "externalKey" to JsonPrimitive(it.externalKey!!), "title" to JsonPrimitive(it.title)))
 	} ?: JsonNull
@@ -99,7 +111,7 @@ fun PluginFieldsSection(e: TimeEntryEntity, co: it.infraconsulting.activitytrack
 	env = app.plugins.env(co, plugin).with { r ->
 		when (r.root) {
 			"entry" -> PluginEnv.dig(entryJson, r.path)
-			"todo" -> if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)
+			"activity" -> if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)
 			"field" -> r.path.firstOrNull()?.let { fields[it] }?.let { PluginEnv.dig(it, r.path.drop(1)) } ?: JsonNull
 			"list" -> if (r.path.getOrNull(1) == "selected") PluginEnv.dig(selected(r.path[0]), r.path.drop(2)) else JsonNull
 			else -> null

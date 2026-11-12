@@ -40,7 +40,8 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.common.commandStyle
@@ -70,7 +71,7 @@ private data class EntryWidgetState(
 	val company: String?,
 	val title: String,
 	val activity: String?,
-	val status: EntryStatus,
+	val status: LegacyStatus,
 	val mode: SegmentKind?,
 	val sinceMs: Long?,
 	/* the running segment's length so far; null when nothing runs */
@@ -102,11 +103,11 @@ private fun entryState(
 ): EntryWidgetState {
 	/* the entry the Home would show in its big card: the most recent open one */
 	val e = openEntries.firstOrNull()
-		?: return EntryWidgetState(null, null, context.getString(R.string.home_none), null, EntryStatus.CLOSED, null, null, null, 0, 0)
+		?: return EntryWidgetState(null, null, context.getString(R.string.home_none), null, LegacyStatus.CLOSED, null, null, null, 0, 0)
 	val segs = allSegs.filter { it.entryId == e.id }.sortedBy { it.startUtcMs }
 	val open = segs.lastOrNull { it.endUtcMs == null }
-	val since = when (e.status) {
-		EntryStatus.ACTIVE -> open?.startUtcMs
+	val since = when (e.legacy) {
+		LegacyStatus.ACTIVE -> open?.startUtcMs
 		else -> segs.mapNotNull { it.endUtcMs }.maxOrNull()
 	}
 	fun total(kind: SegmentKind) = segs.filter { it.kind == kind }.sumOf { maxOf(0L, (it.endUtcMs ?: now) - it.startUtcMs) }
@@ -115,25 +116,27 @@ private fun entryState(
 		company = e.companyId?.let { companies[it]?.name },
 		title = e.clientId?.let { clients[it]?.name } ?: e.companyId?.let { companies[it]?.name } ?: context.getString(R.string.app_name),
 		activity = e.activity,
-		status = e.status,
+		status = e.legacy,
 		mode = e.mode,
 		sinceMs = since,
-		runningMs = open?.takeIf { e.status == EntryStatus.ACTIVE }?.let { now - it.startUtcMs },
+		runningMs = open?.takeIf { e.legacy == LegacyStatus.ACTIVE }?.let { now - it.startUtcMs },
 		workMs = total(SegmentKind.WORK),
 		travelMs = total(SegmentKind.TRAVEL),
 	)
 }
 
 /* the commands of the state, as on the Home card (no dialogs from a widget) */
-private fun widgetCommands(status: EntryStatus, mode: SegmentKind?): List<EntryCommand> = when (status) {
-	EntryStatus.ACTIVE -> when (mode) {
+private fun widgetCommands(status: LegacyStatus, mode: SegmentKind?): List<EntryCommand> = when (status) {
+	LegacyStatus.ACTIVE -> when (mode) {
 		SegmentKind.WORK -> listOf(EntryCommand.PAUSE, EntryCommand.TRAVEL, EntryCommand.SUSPEND, EntryCommand.STOP)
 		SegmentKind.TRAVEL -> listOf(EntryCommand.WORK, EntryCommand.PAUSE, EntryCommand.SUSPEND, EntryCommand.STOP)
 		else -> listOf(EntryCommand.WORK, EntryCommand.STOP)
 	}
-	EntryStatus.SUSPENDED -> listOf(EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.STOP)
-	EntryStatus.TO_COMPLETE -> listOf(EntryCommand.REOPEN)
-	EntryStatus.CLOSED -> emptyList()
+	LegacyStatus.SUSPENDED -> listOf(EntryCommand.WORK, EntryCommand.TRAVEL, EntryCommand.STOP)
+	LegacyStatus.TO_COMPLETE -> listOf(EntryCommand.REOPEN)
+	LegacyStatus.CLOSED -> emptyList()
+	/* TODO(activity-1.0-ui): a to-do's buttons */
+	LegacyStatus.TODO -> listOf(EntryCommand.WORK, EntryCommand.TRAVEL)
 }
 
 private fun hm(ms: Long): String {
@@ -187,7 +190,7 @@ class EntryWidget : GlanceAppWidget() {
 					s.activity?.let { Text(it, maxLines = 1, style = TextStyle(color = dim, fontSize = 12.sp)) }
 				if (s.entryId != null) {
 					val state = when (s.status) {
-						EntryStatus.ACTIVE -> context.getString(
+						LegacyStatus.ACTIVE -> context.getString(
 							R.string.widget_since,
 							context.getString(
 								when (s.mode) {
@@ -198,9 +201,10 @@ class EntryWidget : GlanceAppWidget() {
 							),
 							s.sinceMs?.let { clock(it) } ?: "",
 						)
-						EntryStatus.SUSPENDED -> context.getString(R.string.status_suspended)
-						EntryStatus.TO_COMPLETE -> context.getString(R.string.status_to_complete)
-						EntryStatus.CLOSED -> context.getString(R.string.status_closed)
+						LegacyStatus.SUSPENDED -> context.getString(R.string.status_suspended)
+						LegacyStatus.TO_COMPLETE -> context.getString(R.string.status_to_complete)
+						LegacyStatus.CLOSED -> context.getString(R.string.status_closed)
+						LegacyStatus.TODO -> context.getString(R.string.todo_title)
 					}
 					Text(state, maxLines = 1, style = TextStyle(color = text, fontSize = 12.sp))
 					Text(
@@ -229,7 +233,7 @@ class EntryWidget : GlanceAppWidget() {
 							actionRunCallback<WidgetCommandAction>(actionParametersOf(ENTRY to s.entryId, COMMAND to cmd.name)),
 						)
 					}
-					if (s.status == EntryStatus.TO_COMPLETE) {
+					if (s.status == LegacyStatus.TO_COMPLETE) {
 						Spacer(GlanceModifier.width(8.dp))
 						Box(
 							modifier = GlanceModifier.cornerRadius(24.dp).background(ColorProvider(commandStyle(EntryCommand.WORK)!!.container))

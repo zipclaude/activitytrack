@@ -8,10 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import it.infraconsulting.activitytrack.ActivityTrackApp
-import it.infraconsulting.activitytrack.data.db.AbsenceKind
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.IllegalTransitionException
+import it.infraconsulting.activitytrack.domain.activity.IllegalActivityCommandException
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +61,7 @@ class ActionReceiver : BroadcastReceiver() {
 				val nm = context.getSystemService(NotificationManager::class.java)
 				for (slot in ANSWERED)
 					nm.cancel(NotificationIds.of(entryId, slot))
-			} catch (e: IllegalTransitionException) {
+			} catch (e: IllegalActivityCommandException) {
 				/* stale notification: the entry already changed state */
 				Log.i(TAG, "ignored: ${e.message}")
 			} catch (e: ValidationException) {
@@ -83,7 +82,7 @@ class ActionReceiver : BroadcastReceiver() {
 		val day = LocalDate.ofEpochDay(epochDay)
 		scope.launch {
 			try {
-				app.container.entries.recordAbsence(day, AbsenceKind.FULL_DAY, null)
+				app.container.entries.createAbsence(it.infraconsulting.activitytrack.data.repo.AbsenceRequest(fromEpochDay = day.toEpochDay()))
 				context.getSystemService(NotificationManager::class.java).cancel(NotificationIds.of(0, NotificationIds.DAY_START))
 			} catch (e: ValidationException) {
 				Log.w(TAG, "rejected: ${e.message}")

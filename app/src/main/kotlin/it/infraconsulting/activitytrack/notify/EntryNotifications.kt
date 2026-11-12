@@ -12,7 +12,8 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.common.commandStyle
 
@@ -73,7 +74,6 @@ object EntryNotifications {
 			EntryCommand.PAUSE -> R.string.cmd_pause
 			EntryCommand.SUSPEND -> R.string.cmd_suspend
 			EntryCommand.STOP -> R.string.cmd_stop
-			EntryCommand.COMPLETE -> R.string.cmd_complete
 			EntryCommand.REOPEN -> R.string.cmd_reopen
 		},
 	)
@@ -143,8 +143,8 @@ object EntryNotifications {
 			cancelAll(nm, id)
 		for (info in infos) {
 			val id = info.id
-			when (info.entry.status) {
-				EntryStatus.ACTIVE -> {
+			when (info.entry.legacy) {
+				LegacyStatus.ACTIVE -> {
 					nm.notify(NotificationIds.of(id, NotificationIds.ONGOING), ongoing(context, info))
 					nm.cancel(NotificationIds.of(id, NotificationIds.TO_COMPLETE))
 					/* a mode change answers the pending reminder of the other kind */
@@ -158,7 +158,7 @@ object EntryNotifications {
 					if (info.entry.mode != SegmentKind.TRAVEL)
 						nm.cancel(NotificationIds.of(id, NotificationIds.ARRIVAL))
 				}
-				EntryStatus.TO_COMPLETE -> {
+				LegacyStatus.TO_COMPLETE -> {
 					cancelAll(nm, id)
 					nm.notify(NotificationIds.of(id, NotificationIds.TO_COMPLETE), toComplete(context, info))
 				}

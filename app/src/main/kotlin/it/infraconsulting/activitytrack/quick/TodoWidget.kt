@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.quick
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.Composable
@@ -36,12 +50,12 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.data.db.TodoEntity
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.ui.Screen
 import it.infraconsulting.activitytrack.ui.common.RED
@@ -116,7 +130,7 @@ private fun todoStates(context: Context): Flow<List<TodoRowState>> {
 private fun todoRows(open: List<TodoEntity>, entries: List<TimeEntryEntity>, clients: Map<Long, ClientEntity>, window: Int, now: Instant): List<TodoRowState> {
 	val zone = ZoneId.systemDefault()
 	val running = entries
-		.filter { it.status == EntryStatus.ACTIVE && it.todoId != null }
+		.filter { it.legacy == LegacyStatus.ACTIVE && it.todoId != null }
 		.associate { it.todoId!! to it.id }
 	/* the same split as the Home Pianificate tab: overdue first, by moment */
 	return plannedSplit(open, null, window, now, zone).dated
@@ -142,7 +156,7 @@ class WidgetTodoStartAction : ActionCallback {
 		val c = (context.applicationContext as ActivityTrackApp).container
 		val t = c.todos.find(parameters[TODO] ?: return) ?: return
 		for (e in c.entries.openEntries.first())
-			if (e.status == EntryStatus.ACTIVE && e.mode != SegmentKind.PAUSE)
+			if (e.legacy == LegacyStatus.ACTIVE && e.mode != SegmentKind.PAUSE)
 				try {
 					c.entries.apply(e.id, EntryCommand.SUSPEND)
 				} catch (x: Exception) {

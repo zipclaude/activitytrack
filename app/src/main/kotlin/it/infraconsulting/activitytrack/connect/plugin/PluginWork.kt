@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.connect.plugin
 
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import android.app.Activity
 import android.app.Application
 import android.app.Notification
@@ -26,7 +40,8 @@ import androidx.work.workDataOf
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.plugin.Auth
 import it.infraconsulting.activitytrack.domain.plugin.Plugin
 import it.infraconsulting.activitytrack.domain.plugin.eval
@@ -189,14 +204,15 @@ class PluginWatcher(private val app: ActivityTrackApp) {
 	private suspend fun closed(entryId: Long) {
 		val c = app.container
 		val e = c.entries.entry(entryId).first() ?: return
-		if (e.status != EntryStatus.CLOSED)
+		if (e.legacy != LegacyStatus.CLOSED)
 			return
 		val company = c.masterData.company(e.companyId ?: return) ?: return
 		val plugin = company.connectorId?.let { app.plugins.plugin(it) } ?: return
 		if (plugin.export == null || !PluginState.ready(app, company, plugin) || !app.syncAccount.sendsToPlugins())
 			return
 		val mode = PluginState.closeMode(app, company, plugin)
-		val fromTodo = e.todoId?.let { c.pluginData.todo(it) }?.let { it.companyId == company.id && it.externalKey != null } ?: false
+		/* imported from the plugin (activity model 1.0: the to-do is the activity itself) */
+		val fromTodo = e.externalKey != null
 		if (mode == "off" || (!fromTodo && PluginState.closeScope(app, company, plugin) != "all"))
 			return
 		val entryOnly = PluginState.closeEntryOnly(app, company, plugin)

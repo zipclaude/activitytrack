@@ -816,6 +816,7 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="update_err_package">The downloaded file is not this app.</string>
   <string name="sync_incompatible_title">Sync stopped</string>
   <string name="sync_incompatible_app">The ActivityTrack Web server no longer accepts this version of the app: update ActivityTrack. The data stay here and sync after the update.</string>
+  <string name="sync_upgrade_required">Update the app to sync</string>
   <string name="sync_incompatible_server">This app is newer than the ActivityTrack Web server: the server must be updated (tell the administrator). The data stay here and sync after the update.</string>
   <string name="track_title">Tracks</string>
   <string name="track_day">Day</string>

@@ -1,7 +1,20 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.home
 
-import it.infraconsulting.activitytrack.data.db.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoEntity
+import it.infraconsulting.activitytrack.ui.todo.TodoKind
+import it.infraconsulting.activitytrack.ui.todo.TodoRepository
+import it.infraconsulting.activitytrack.ui.todo.title
+import it.infraconsulting.activitytrack.ui.todo.done
+import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
+import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
+import it.infraconsulting.activitytrack.ui.todo.refs
+import it.infraconsulting.activitytrack.ui.todo.color
+import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
+import it.infraconsulting.activitytrack.ui.todo.todoKind
+import it.infraconsulting.activitytrack.ui.todo.todoId
+import it.infraconsulting.activitytrack.ui.todo.isOpen
+import it.infraconsulting.activitytrack.ui.todo.todoDraft
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -15,18 +28,18 @@ class HomeTabsTest {
 	private val zone = ZoneId.of("Europe/Rome")
 
 	/* a to-do planned on [day] at [startMin], without duration */
-	private fun planned(id: Long, day: LocalDate, startMin: Int?) = TodoEntity(
-		id = id, uid = "", companyId = null, title = "t$id", notes = null, refs = "", createdUtcMs = 0, updatedUtcMs = 0,
+	private fun planned(id: Long, day: LocalDate, startMin: Int?) = it.infraconsulting.activitytrack.ui.todo.todoRow(
+		id = id, title = "t$id",
 		planEpochDay = day.toEpochDay(), planStartMin = startMin,
 	)
 
-	private fun due(id: Long, day: LocalDate, timeMin: Int? = null) = TodoEntity(
-		id = id, uid = "", companyId = null, title = "t$id", notes = null, refs = "", createdUtcMs = 0, updatedUtcMs = 0,
+	private fun due(id: Long, day: LocalDate, timeMin: Int? = null) = it.infraconsulting.activitytrack.ui.todo.todoRow(
+		id = id, title = "t$id",
 		dueEpochDay = day.toEpochDay(), dueTimeMin = timeMin,
 	)
 
-	private fun undated(id: Long, priority: Int? = null) = TodoEntity(
-		id = id, uid = "", companyId = null, title = "t$id", notes = null, refs = "", createdUtcMs = 0, updatedUtcMs = 0,
+	private fun undated(id: Long, priority: Int? = null) = it.infraconsulting.activitytrack.ui.todo.todoRow(
+		id = id, title = "t$id",
 		priority = priority,
 	)
 
@@ -66,13 +79,13 @@ class HomeTabsTest {
 	@Test
 	fun noDateToDosGoToTheirOwnSection() {
 		val now = Instant.now()
-		val a = undated(1, 2)
-		val b = undated(2, 1)
+		val a = undated(1, 4)
+		val b = undated(2, 5)
 		val c = undated(3)
 		val dated = planned(4, LocalDate.now(zone), 9 * 60)
 		val split = plannedSplit(listOf(a, b, c, dated), null, 24, now, zone)
 		assertEquals(listOf(4L), split.dated.map { it.id })
-		/* priority first (1 = highest), then title; the dated one never lands here */
+		/* priority first (5 = highest, activity model 1.0), then title; the dated one never lands here */
 		assertEquals(listOf(2L, 1L, 3L), split.noDate.map { it.id })
 	}
 

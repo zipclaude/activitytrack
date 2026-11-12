@@ -149,6 +149,7 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			val windowStart = from.atStartOfDay(zone).toInstant().toEpochMilli()
 			/* planned to-dos reach into the future */
 			val windowEnd = to.plusDays(FUTURE_DAYS + 1).atStartOfDay(zone).toInstant().toEpochMilli()
+			dropLegacyPlans()
 			apply(planned, existing(windowStart, windowEnd), localCalendars()) { s.calendarFor(it) }
 		}
 	}
@@ -163,10 +164,10 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			if (p.day < from)
 				return@mapNotNull null
 			TodoEvent(
-				uid = t.uid, companyId = t.companyId, start = p.start(zone), end = p.end(zone), title = t.title,
+				uid = t.uid.orEmpty(), companyId = t.companyId, start = p.start(zone), end = p.end(zone), title = t.activity.orEmpty(),
 				allDay = p.allDay, day = p.day,
 				client = t.clientId?.let { clients[it]?.name } ?: companies[t.companyId]?.name.orEmpty(),
-				notes = t.notes.orEmpty(), refs = t.refs.lines().filter(String::isNotBlank),
+				notes = t.notes.orEmpty(), refs = emptyList(),
 			)
 		}
 	}
@@ -188,7 +189,9 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			while (c.moveToNext()) {
 				val uri = c.getString(2) ?: continue
 				val key = when {
-					uri.startsWith(TODO_URI_PREFIX) -> CalendarEvents.TODO_KEY + uri.removePrefix(TODO_URI_PREFIX)
+					uri.startsWith(PLAN_URI_PREFIX) -> CalendarEvents.PLAN_KEY + uri.removePrefix(PLAN_URI_PREFIX)
+					/* a to-do's event before 1.0: never planned again, so removed below */
+					uri.startsWith(TODO_URI_PREFIX) -> CalendarEvents.LEGACY_TODO_KEY + uri.removePrefix(TODO_URI_PREFIX)
 					uri.startsWith(URI_PREFIX) -> uri.removePrefix(URI_PREFIX)
 					else -> continue
 				}
@@ -272,7 +275,16 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		put(Events.CUSTOM_APP_PACKAGE, context.packageName)
 		put(
 			Events.CUSTOM_APP_URI,
-			if (p.key.startsWith(CalendarEvents.TODO_KEY)) TODO_URI_PREFIX + p.key.removePrefix(CalendarEvents.TODO_KEY) else URI_PREFIX + p.key,
+			if (p.key.startsWith(CalendarEvents.PLAN_KEY)) PLAN_URI_PREFIX + p.key.removePrefix(CalendarEvents.PLAN_KEY) else URI_PREFIX + p.key,
+		)
+	}
+
+	/* the to-dos' events of 0.9 (activity model 1.0, ACTIVITY-MODEL.md 7): the plans are keyed plan:<uid> now */
+	private fun dropLegacyPlans() {
+		resolver.delete(
+			Events.CONTENT_URI,
+			"${Events.CUSTOM_APP_PACKAGE} = ? AND ${Events.CUSTOM_APP_URI} LIKE ?",
+			arrayOf(context.packageName, "$TODO_URI_PREFIX%"),
 		)
 	}
 
@@ -281,6 +293,9 @@ class CalendarSync(private val context: Context, private val container: AppConta
 	companion object {
 		private const val TAG = "CalendarSync"
 		private const val URI_PREFIX = "activitytrack://entry/"
+		/* the plan of a TODO activity (activity model 1.0) */
+		private const val PLAN_URI_PREFIX = "activitytrack://plan/"
+		/* the to-dos' events before 1.0, keyed "todo:<uid>": removed wherever they are */
 		private const val TODO_URI_PREFIX = "activitytrack://todo/"
 		private const val SETTLE_MS = 3_000L
 		const val DEFAULT_DAYS = 14L

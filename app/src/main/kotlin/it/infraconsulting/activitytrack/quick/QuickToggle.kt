@@ -6,7 +6,8 @@ import android.content.Context
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.domain.model.EntryStatus
+import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.ui.Screen
@@ -21,7 +22,7 @@ import kotlinx.coroutines.flow.first
 object QuickToggle {
 	/* Most recently changed ACTIVE entry (open entries are ordered by last update). */
 	suspend fun target(container: AppContainer): TimeEntryEntity? =
-		container.entries.openEntries.first().firstOrNull { it.status == EntryStatus.ACTIVE }
+		container.entries.openEntries.first().firstOrNull { it.legacy == LegacyStatus.ACTIVE }
 
 	/* True when an entry was toggled, false when there is none to toggle. */
 	suspend fun toggle(container: AppContainer): Boolean {
