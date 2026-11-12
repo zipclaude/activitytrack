@@ -13,7 +13,7 @@ import android.util.Log
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.domain.activity.IllegalActivityCommandException
+import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.ui.Screen
@@ -45,7 +45,8 @@ class ToggleTileService : TileService() {
 				return@launch
 			val toggled = try {
 				withContext(Dispatchers.Default) { QuickToggle.toggle(container) }
-			} catch (e: IllegalActivityCommandException) {
+			} catch (e: ValidationException) {
+				/* double tap: the repository refuses the command as NOT_ALLOWED */
 				Log.i(TAG, "ignored: ${e.message}")
 				true
 			}

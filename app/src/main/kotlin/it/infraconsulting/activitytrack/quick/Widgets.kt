@@ -44,12 +44,12 @@ import androidx.glance.unit.ColorProvider
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.notify.displayedState
 import it.infraconsulting.activitytrack.notify.isTicking
 import it.infraconsulting.activitytrack.ui.common.displayName
-import it.infraconsulting.activitytrack.domain.activity.IllegalActivityCommandException
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.notify.ongoingActions
@@ -133,7 +133,8 @@ class WidgetCommandAction : ActionCallback {
 		val c = (context.applicationContext as ActivityTrackApp).container
 		try {
 			c.entries.quick(parameters[ENTRY] ?: return, QuickAction.entries.firstOrNull { it.name == parameters[COMMAND] } ?: return)
-		} catch (e: IllegalActivityCommandException) {
+		} catch (e: ValidationException) {
+			/* stale widget or double tap: the repository refuses the command as NOT_ALLOWED */
 			Log.i("Widget", "ignored: ${e.message}")
 		}
 	}
@@ -145,7 +146,8 @@ class WidgetToggleAction : ActionCallback {
 		val c = (context.applicationContext as ActivityTrackApp).container
 		try {
 			QuickToggle.toggle(c)
-		} catch (e: IllegalActivityCommandException) {
+		} catch (e: ValidationException) {
+			/* stale widget or double tap: the repository refuses the command as NOT_ALLOWED */
 			Log.i("Widget", "ignored: ${e.message}")
 		}
 	}
