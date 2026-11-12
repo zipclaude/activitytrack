@@ -159,6 +159,34 @@ def main(out):
 	todo(3, 3, 5, "Report trimestrale", due_day=today - timedelta(days=1), priority=5)
 	todo(4, 2, 4, "Inventario hardware", today + timedelta(days=3), 600, dur=120)
 	todo(5, 1, 1, "Verifica UPS", ignored=True)
+	# a ticked task: CLOSED without a segment, listed in the Home's "Fatte" by when it was closed
+	entry_id[0] += 1
+	db.execute(
+		"INSERT INTO time_entry (id, uid, company_id, client_id, activity, status, kind, zone_id, unanswered_reminders, "
+		"created_utc_ms, updated_utc_ms, closed_utc_ms, priority) VALUES (?, ?, 1, 2, 'Telefonare al fornitore', 'CLOSED', 'ACTIVITY', "
+		"'Europe/Rome', 0, ?, ?, ?, 0)",
+		(entry_id[0], str(uuid.uuid4()), nowms - 86_400_000, nowms - 3_600_000, nowms - 3_600_000),
+	)
+	# a planned segment of the first to-do (never counted), drawn dashed in the detail and the agenda
+	soon_day = today if soon.date() == today else soon.date()
+	db.execute(
+		"INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, planned) "
+		"VALUES (?, 'WORK', ?, ?, 'Europe/Rome', 'MANUAL', 1)",
+		(db.execute("SELECT id FROM time_entry WHERE activity = 'Rinnovo certificati'").fetchone()[0], ms(soon_day, soon.hour, 0), ms(soon_day, soon.hour, 0) + 3_600_000),
+	)
+	# an absence (schema 22): one ABSENCE segment per day, here next Friday over the working hours
+	friday = today + timedelta(days=(4 - today.weekday()) % 7 or 7)
+	entry_id[0] += 1
+	db.execute(
+		"INSERT INTO time_entry (id, uid, company_id, activity, status, kind, absence_kind, zone_id, unanswered_reminders, "
+		"created_utc_ms, updated_utc_ms, closed_utc_ms, priority) VALUES (?, ?, 1, NULL, 'CLOSED', 'ABSENCE', 'HOLIDAY', "
+		"'Europe/Rome', 0, ?, ?, ?, 0)",
+		(entry_id[0], str(uuid.uuid4()), nowms, nowms, ms(friday, 18, 0)),
+	)
+	db.execute(
+		"INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source) VALUES (?, 'ABSENCE', ?, ?, 'Europe/Rome', 'MANUAL')",
+		(entry_id[0], ms(friday, 9, 0), ms(friday, 18, 0)),
+	)
 	# contacts of the clients and the calls recognised with them (issue #28)
 	contacts = [(1, 1, "Marco Bianchi", ["+393331234567"]), (2, 2, "Laura Conti", ["0461234567", "+393477654321"]),
 		(3, 1, "Ufficio acquisti", ["0461987654"]), (4, 5, "Giulia Ferri", ["+393409876543"])]
