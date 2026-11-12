@@ -9,6 +9,7 @@ import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.PastRequest
 import it.infraconsulting.activitytrack.data.repo.PluginRepository
 import it.infraconsulting.activitytrack.data.repo.StartRequest
+import it.infraconsulting.activitytrack.data.repo.SegmentInput
 import it.infraconsulting.activitytrack.data.repo.TodoRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.isActive
@@ -225,17 +226,25 @@ class StartViewModel(
 		_askFuture.value = null
 	}
 
-	/* A planned to-do today from the form: client, description (or client), start. */
+	/*
+	 * A planned to-do today from the form: client, description (or client),
+	 * start. Started from a to-do, that one is planned (its due date,
+	 * priority, duration and planned segments stay).
+	 */
 	private fun plan(startMin: Int, day: LocalDate) {
 		val f = _form.value
 		run(onStarted) {
 			val client = f.clientId?.let { master.client(it) }
 			val company = client?.companyId ?: f.companyId ?: throw ValidationException(ValidationException.Reason.CLIENT_REQUIRED)
+			val t = todoId?.let { entries.find(it) }
+			val planned = t?.let { entries.segments(it.id).first() }.orEmpty()
+				.filter { it.planned && it.endUtcMs != null }.map { SegmentInput(it.kind, it.startUtcMs, it.endUtcMs!!, it.kmDeclared) }
 			entries.saveTodo(
-				null,
+				t?.id,
 				TodoRequest(
 					companyId = company, clientId = client?.id, activity = f.activity.trim().ifEmpty { client?.name.orEmpty() }, roleId = f.roleId,
 					notes = f.notes, planEpochDay = day.toEpochDay(), planStartMin = startMin, pluginFields = f.pluginFields,
+					dueEpochDay = t?.dueEpochDay, dueTimeMin = t?.dueTimeMin, durationMin = t?.durationMin, priority = t?.priority ?: 0, planned = planned,
 				),
 			)
 		}
