@@ -1054,7 +1054,9 @@ class EntryRepository(
 	): Long = db.withTransaction {
 		val e = load(entryId)
 		val now = clock.millis()
-		checkSegment(SegmentInput(kind, startUtcMs, endUtcMs, kmDeclared), now, now)
+		/* an absence may lie ahead (planned holidays, ACTIVITY-MODEL.md 3.1) */
+		val limit = if (e.kind == ActivityKind.ABSENCE) Long.MAX_VALUE else now
+		checkSegment(SegmentInput(kind, startUtcMs, endUtcMs, kmDeclared), limit, limit)
 		val allowed = when (e.kind) {
 			ActivityKind.ABSENCE -> kind == SegmentKind.ABSENCE
 			ActivityKind.ACTIVITY -> kind != SegmentKind.ABSENCE && e.status != ActivityStatus.TODO && (kind != SegmentKind.WORK || e.status == ActivityStatus.CLOSED)
@@ -1125,7 +1127,7 @@ class EntryRepository(
 	/*
 	 * A closed segment edited. Its end may lie up to 60 minutes ahead (4.1)
 	 * when it is the activity's last segment and times are editable; every
-	 * other end stays in the past. Planned segments take any time.
+	 * other end stays in the past. Planned and absence segments take any time.
 	 */
 	suspend fun updateSegment(segmentId: Long, startUtcMs: Long, endUtcMs: Long, kmDeclared: Double? = null, resolve: Boolean = false) = db.withTransaction {
 		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
@@ -1133,12 +1135,13 @@ class EntryRepository(
 			throw ValidationException(Reason.INVALID_SEGMENT, "running segment")
 		val now = clock.millis()
 		val last = dao.segments(s.entryId).filter { it.planned == s.planned }.maxByOrNull { it.startUtcMs }?.id == s.id
+		val ahead = s.planned || s.kind == SegmentKind.ABSENCE
 		val limit = when {
-			s.planned -> Long.MAX_VALUE
+			ahead -> Long.MAX_VALUE
 			last -> FutureClose.limit(Instant.ofEpochMilli(now), times().editableTimes).toEpochMilli()
 			else -> now
 		}
-		checkSegment(SegmentInput(s.kind, startUtcMs, endUtcMs, kmDeclared), if (s.planned) Long.MAX_VALUE else now, limit)
+		checkSegment(SegmentInput(s.kind, startUtcMs, endUtcMs, kmDeclared), if (ahead) Long.MAX_VALUE else now, limit)
 		val e = load(s.entryId)
 		if (resolve)
 			makeRoom(s.entryId, s.id, startUtcMs, endUtcMs)
