@@ -77,7 +77,8 @@ import it.infraconsulting.activitytrack.ui.common.companyColor
 import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.formatMin
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
+import it.infraconsulting.activitytrack.ui.start.AbsenceDialog
+import it.infraconsulting.activitytrack.ui.start.TodoDialog
 import it.infraconsulting.activitytrack.ui.todo.TodoRepository
 import java.time.Instant
 import java.time.ZoneId
@@ -245,12 +246,13 @@ class HomeViewModel(
  * buttons (Da fare, Lavoro, Viaggio, Assenza), which move to the top right
  * while one runs. Every other running activity gets a small card; the list
  * below holds the to-dos, the closed and the absences, each with its
- * displayed state. [openCreate] is the one place that knows where the
- * creation dialogs open.
+ * displayed state. [openCreate] below is the one place that knows where
+ * each creation mode opens: Lavoro the start screen, Da fare and Assenza
+ * their dialogs, shown here.
  */
 @Composable
 fun HomeScreen(
-	openCreate: (CreateMode) -> Unit,
+	onStart: () -> Unit,
 	onOpenEntry: (Long) -> Unit,
 	onStartTodo: (Long) -> Unit,
 	onOpenGestures: () -> Unit = {},
@@ -266,6 +268,13 @@ fun HomeScreen(
 	val titleOf: (Long) -> String = { id -> allCards.firstOrNull { it.entry.id == id }?.title ?: fallback }
 	val run = rememberRunCommands(vm, settings?.editableTimes == true, titleOf)
 	val askReopen = rememberReopen(vm, titleOf)
+	var creating by remember { mutableStateOf<CreateMode?>(null) }
+	val openCreate: (CreateMode) -> Unit = { if (it == CreateMode.WORK) onStart() else creating = it }
+	when (creating) {
+		CreateMode.TODO -> TodoDialog(null) { creating = null }
+		CreateMode.ABSENCE -> AbsenceDialog { creating = null }
+		else -> {}
+	}
 
 	/* elapsed times refresh every 30 s; the DB keeps exact timestamps */
 	val now by produceState(System.currentTimeMillis()) {
@@ -650,23 +659,4 @@ private fun hm(ms: Long): String {
 private fun clock(ms: Long, zone: ZoneId): String {
 	val t = Instant.ofEpochMilli(ms).atZone(zone).toLocalTime()
 	return formatMin(t.hour * 60 + t.minute)
-}
-
-/*
- * The 0.9 name of a state, for the detail screen until it is rebuilt.
- * TODO(activity-1.0-ui): delete with LegacyStatus.
- */
-@Composable
-fun statusText(status: LegacyStatus, mode: SegmentKind?): String = when (status) {
-	LegacyStatus.ACTIVE -> stringResource(
-		when (mode) {
-			SegmentKind.TRAVEL -> R.string.mode_travel
-			SegmentKind.PAUSE -> R.string.mode_pause
-			else -> R.string.mode_work
-		},
-	)
-	LegacyStatus.SUSPENDED -> stringResource(R.string.status_suspended)
-	LegacyStatus.TO_COMPLETE -> stringResource(R.string.status_to_complete)
-	LegacyStatus.CLOSED -> stringResource(R.string.status_closed)
-	LegacyStatus.TODO -> stringResource(R.string.todo_title)
 }

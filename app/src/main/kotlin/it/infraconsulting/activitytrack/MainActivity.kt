@@ -75,7 +75,6 @@ import it.infraconsulting.activitytrack.ui.TABS
 import it.infraconsulting.activitytrack.ui.agenda.AgendaScreen
 import it.infraconsulting.activitytrack.ui.entry.EntryScreen
 import it.infraconsulting.activitytrack.ui.entry.QuickExpenseScreen
-import it.infraconsulting.activitytrack.ui.home.CreateMode
 import it.infraconsulting.activitytrack.ui.home.HomeScreen
 import it.infraconsulting.activitytrack.ui.home.LateEntryScreen
 import it.infraconsulting.activitytrack.ui.home.MoreScreen
@@ -301,15 +300,7 @@ private fun RequestRuntimePermissions() {
 private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, selectTab: (Screen) -> Unit) {
 	when (top) {
 		Screen.Home -> HomeScreen(
-			/* TODO(activity-1.0-ui): retarget to the creation dialogs of the create agent */
-			openCreate = { mode ->
-				open(
-					when (mode) {
-						CreateMode.WORK -> Screen.Start
-						CreateMode.TODO, CreateMode.ABSENCE -> Screen.Todos
-					},
-				)
-			},
+			onStart = { open(Screen.Start) },
 			onOpenEntry = { open(Screen.Entry(it)) },
 			onStartTodo = { open(Screen.StartFromTodo(it)) },
 			onOpenGestures = { open(Screen.Gestures) },
@@ -319,7 +310,6 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, s
 		Screen.Agenda -> AgendaScreen(onOpenEntry = { open(Screen.Entry(it)) }, onStartTodo = { open(Screen.StartFromTodo(it)) })
 		Screen.More -> MoreScreen(open)
 		Screen.Start -> StartScreen(back)
-		Screen.StartTravel -> StartScreen(back, travel = true)
 		is Screen.StartFor -> StartScreen(back, top.clientId)
 		is Screen.StartFromTodo -> StartScreen(back, todoId = top.todoId)
 		is Screen.StartFromCall -> StartScreen(back, top.clientId, call = CallPrefill(top.startMs, top.endMs, top.contact))

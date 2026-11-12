@@ -26,9 +26,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
-import it.infraconsulting.activitytrack.domain.model.SegmentKind
 
 /*
  * Command colours and icons (owner request 2026-10-17): start/resume green,
@@ -45,8 +42,6 @@ internal val ORANGE = Color(0xFFEF6C00)
 internal val BLUE = Color(0xFF1565C0)
 /* dark icon on yellow: white would fail contrast */
 private val ON_YELLOW = Color(0xFF212121)
-/* closed: a quiet grey on the card background, readable in both themes */
-private val NEUTRAL = Color(0xFF9EA3B0)
 
 /* the Stop button of a running activity: red, white stop icon */
 val STOP_STYLE = CommandStyle(R.drawable.ic_cmd_stop, RED, Color.White)
@@ -71,22 +66,6 @@ fun CommandIconButton(style: CommandStyle, label: String, onClick: () -> Unit, m
 		Icon(painterResource(style.icon), contentDescription = label, modifier = Modifier.size(32.dp))
 	}
 }
-
-/* Colour and icon of an entry state, matching the command that leads to it; closed is neutral (owner, 2026-10-19). */
-fun stateStyle(status: LegacyStatus, mode: SegmentKind?): CommandStyle? =
-	if (status == LegacyStatus.CLOSED) CommandStyle(R.drawable.ic_cmd_stop, Color.Transparent, NEUTRAL) else commandStyle(
-	when (status) {
-		LegacyStatus.ACTIVE -> when (mode) {
-			SegmentKind.TRAVEL -> EntryCommand.TRAVEL
-			SegmentKind.PAUSE -> EntryCommand.PAUSE
-			else -> EntryCommand.WORK
-		}
-		LegacyStatus.SUSPENDED -> EntryCommand.SUSPEND
-		LegacyStatus.TO_COMPLETE, LegacyStatus.CLOSED -> EntryCommand.STOP
-		/* TODO(activity-1.0-ui): the icon of a to-do (ActivityDisplay) */
-		LegacyStatus.TODO -> return null
-	},
-)
 
 /* Coloured pill with the state icon and text ("Working since 13:36"). */
 @Composable
