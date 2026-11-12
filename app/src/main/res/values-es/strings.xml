@@ -860,4 +860,16 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="todo_absence_until">Hasta (último día, opcional)</string>
   <string name="todo_absence_label">Etiqueta (opcional)</string>
   <string name="todo_field_color">Color</string>
+  <!-- displayed states of an activity (ACTIVITY-MODEL.md 2.2) -->
+  <string name="state_deleted">Eliminada</string>
+  <string name="state_absence">Ausencia</string>
+  <string name="state_late">Con retraso</string>
+  <string name="state_planned">Planificada</string>
+  <string name="state_todo">Por hacer</string>
+  <string name="state_work">Trabajo</string>
+  <string name="state_travel">Viaje</string>
+  <string name="state_pause">Pausa</string>
+  <string name="state_suspended">Suspendida</string>
+  <string name="state_done">Hecha</string>
+  <string name="state_incomplete">Incompleta</string>
 </resources>

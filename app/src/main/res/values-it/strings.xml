@@ -860,4 +860,16 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="todo_absence_until">Fino al (ultimo giorno, facoltativo)</string>
   <string name="todo_absence_label">Etichetta (facoltativa)</string>
   <string name="todo_field_color">Colore</string>
+  <!-- displayed states of an activity (ACTIVITY-MODEL.md 2.2) -->
+  <string name="state_deleted">Eliminata</string>
+  <string name="state_absence">Assenza</string>
+  <string name="state_late">In ritardo</string>
+  <string name="state_planned">Pianificata</string>
+  <string name="state_todo">Da fare</string>
+  <string name="state_work">Lavoro</string>
+  <string name="state_travel">Viaggio</string>
+  <string name="state_pause">Pausa</string>
+  <string name="state_suspended">Sospesa</string>
+  <string name="state_done">Fatta</string>
+  <string name="state_incomplete">Incompleta</string>
 </resources>

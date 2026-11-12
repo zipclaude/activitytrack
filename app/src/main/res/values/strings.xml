@@ -871,4 +871,16 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="todo_absence_until">Until (last day, optional)</string>
   <string name="todo_absence_label">Label (optional)</string>
   <string name="todo_field_color">Colour</string>
+  <!-- displayed states of an activity (ACTIVITY-MODEL.md 2.2) -->
+  <string name="state_deleted">Deleted</string>
+  <string name="state_absence">Absence</string>
+  <string name="state_late">Late</string>
+  <string name="state_planned">Planned</string>
+  <string name="state_todo">To do</string>
+  <string name="state_work">Working</string>
+  <string name="state_travel">Travelling</string>
+  <string name="state_pause">Paused</string>
+  <string name="state_suspended">Suspended</string>
+  <string name="state_done">Done</string>
+  <string name="state_incomplete">Incomplete</string>
 </resources>

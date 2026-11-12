@@ -859,4 +859,16 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="todo_absence_until">Bis (letzter Tag, optional)</string>
   <string name="todo_absence_label">Bezeichnung (optional)</string>
   <string name="todo_field_color">Farbe</string>
+  <!-- displayed states of an activity (ACTIVITY-MODEL.md 2.2) -->
+  <string name="state_deleted">Gelöscht</string>
+  <string name="state_absence">Abwesenheit</string>
+  <string name="state_late">Verspätet</string>
+  <string name="state_planned">Geplant</string>
+  <string name="state_todo">Zu erledigen</string>
+  <string name="state_work">Arbeit</string>
+  <string name="state_travel">Reise</string>
+  <string name="state_pause">Pause</string>
+  <string name="state_suspended">Unterbrochen</string>
+  <string name="state_done">Erledigt</string>
+  <string name="state_incomplete">Unvollständig</string>
 </resources>
