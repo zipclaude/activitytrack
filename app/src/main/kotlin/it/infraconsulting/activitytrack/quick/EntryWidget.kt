@@ -37,6 +37,8 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
+import it.infraconsulting.activitytrack.domain.policy.EntrySource
+import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.data.repo.StartRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.domain.model.QuickAction
@@ -131,10 +133,19 @@ private fun hm(ms: Long): String {
 	return "%d:%02d".format(min / 60, min % 60)
 }
 
+/* Viaggio as the Home offers it (policy, issue #48): activities started freely and the travel feature on */
+private suspend fun travelAllowed(context: Context): Boolean =
+	(context.applicationContext as ActivityTrackApp).container.policies.now().let { p ->
+		p.entrySource == EntrySource.FREE && p.enabled(Feature.TRAVEL)
+	}
+
 /* Travel from the widget, as from the empty card of the Home: at once, no destination. */
 class WidgetTravelAction : ActionCallback {
 	override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
 		val c = (context.applicationContext as ActivityTrackApp).container
+		/* a widget drawn before the policy changed */
+		if (!travelAllowed(context))
+			return
 		try {
 			val p = c.entries.startProposal(c.masterData.knownSites())
 			c.entries.start(StartRequest(SegmentKind.TRAVEL, clientId = null, companyId = p.companyId, locationKind = p.locationKind), emptyMap())
@@ -150,14 +161,15 @@ class EntryWidget : GlanceAppWidget() {
 			return provideContent { GlanceTheme { DisabledWidget(context) } }
 		val states = entryStates(context)
 		val first = states.first()
+		val canTravel = travelAllowed(context)
 		provideContent {
 			val s by states.collectAsState(first)
-			GlanceTheme { EntryContent(context, s) }
+			GlanceTheme { EntryContent(context, s, canTravel) }
 		}
 	}
 
 	@Composable
-	private fun EntryContent(context: Context, s: EntryWidgetState) {
+	private fun EntryContent(context: Context, s: EntryWidgetState, canTravel: Boolean) {
 		val text = GlanceTheme.colors.onSurface
 		val dim = GlanceTheme.colors.onSurfaceVariant
 		val open: Action = if (s.entryId != null) widgetOpenScreen(context, Screen.Entry(s.entryId)) else widgetOpenScreen(context, Screen.Home)
@@ -196,8 +208,10 @@ class EntryWidget : GlanceAppWidget() {
 				if (s.entryId == null) {
 					/* the empty card of the Home: start (start screen) and travel (at once) */
 					CommandCircle(QuickAction.WORK, 40, context.getString(R.string.start_action), widgetOpenScreen(context, Screen.Start))
-					Spacer(GlanceModifier.width(8.dp))
-					CommandCircle(QuickAction.TRAVEL, 40, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
+					if (canTravel) {
+						Spacer(GlanceModifier.width(8.dp))
+						CommandCircle(QuickAction.TRAVEL, 40, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
+					}
 				} else {
 					for ((i, cmd) in s.commands.withIndex()) {
 						if (i > 0) Spacer(GlanceModifier.width(8.dp))
