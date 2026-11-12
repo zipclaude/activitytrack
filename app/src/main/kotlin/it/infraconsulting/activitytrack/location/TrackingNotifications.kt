@@ -5,7 +5,7 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.start.Arrival
 import it.infraconsulting.activitytrack.notify.ActionReceiver
 import it.infraconsulting.activitytrack.notify.EntryLinks
@@ -31,14 +31,14 @@ object TrackingNotifications {
 			.addAction(
 				action(
 					context.getString(R.string.notif_travel_from, hhmm),
-					ActionReceiver.commandAt(context, entryId, EntryCommand.TRAVEL, departureMs),
+					ActionReceiver.commandAt(context, entryId, QuickAction.TRAVEL, departureMs),
 				),
 			)
 			.addAction(action(context.getString(R.string.notif_ignore), ActionReceiver.ignoreMovement(context, entryId, segmentId)))
 			.addAction(
 				action(
 					context.getString(R.string.notif_stop_at, hhmm),
-					ActionReceiver.commandAt(context, entryId, EntryCommand.STOP, departureMs),
+					ActionReceiver.commandAt(context, entryId, QuickAction.STOP, departureMs),
 				),
 			)
 			.build()
@@ -67,7 +67,7 @@ object TrackingNotifications {
 			Arrival.Home -> b.addAction(
 				action(
 					context.getString(R.string.notif_stop_at, hhmm),
-					ActionReceiver.commandAt(context, entryId, EntryCommand.STOP, atMs, arrival = true),
+					ActionReceiver.commandAt(context, entryId, QuickAction.STOP, atMs, arrival = true),
 				),
 			)
 			Arrival.Work, Arrival.Unknown -> {}
@@ -76,7 +76,7 @@ object TrackingNotifications {
 			b.addAction(
 				action(
 					context.getString(R.string.notif_work_from, hhmm),
-					ActionReceiver.commandAt(context, entryId, EntryCommand.WORK, atMs),
+					ActionReceiver.commandAt(context, entryId, QuickAction.WORK, atMs),
 				),
 			)
 		b.addAction(action(context.getString(R.string.notif_still_travelling), ActionReceiver.dismissArrival(context, entryId)))

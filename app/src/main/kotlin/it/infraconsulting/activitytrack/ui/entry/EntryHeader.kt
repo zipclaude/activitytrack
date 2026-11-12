@@ -49,7 +49,7 @@ import it.infraconsulting.activitytrack.domain.activity.ActivityState
 import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.domain.activity.ReturnChoice
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.ui.LocalCompact
@@ -58,7 +58,7 @@ import it.infraconsulting.activitytrack.ui.common.CommandStyle
 import it.infraconsulting.activitytrack.ui.common.StatePill
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.clockOf
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.common.STOP_STYLE
 import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.enabled
@@ -207,12 +207,12 @@ internal fun detailActions(e: TimeEntryEntity, segments: List<SegmentEntity>, vm
 			is ActivityCommand.Resume -> if (ok(cmd.kind))
 				main += DetailAction(if (cmd.kind == SegmentKind.WORK) R.string.cmd_resume else kindName(cmd.kind), segmentStyle(cmd.kind)) { vm.resume(cmd.kind) }
 			is ActivityCommand.Suspend -> {}
-			is ActivityCommand.Stop -> main += DetailAction(R.string.cmd_stop, commandStyle(EntryCommand.STOP)!!) { vm.askStop() }
+			is ActivityCommand.Stop -> main += DetailAction(R.string.cmd_stop, STOP_STYLE) { vm.askStop() }
 			ActivityCommand.Tick -> main += DetailAction(R.string.todo_mark_done, displayStyle(DisplayState.DONE)) { vm.tick() }
 			is ActivityCommand.Reopen -> if (ok(cmd.kind))
 				main += DetailAction(if (cmd.kind == SegmentKind.TRAVEL) R.string.detail_reopen_travel else R.string.detail_reopen_work, segmentStyle(cmd.kind)) { vm.askReopen(cmd.kind) }
 			ActivityCommand.Delete -> if (canDelete) last += DetailAction(R.string.action_delete, displayStyle(DisplayState.DELETED)) { vm.askDelete() }
-			ActivityCommand.Restore -> last += DetailAction(R.string.swipe_restore, CommandStyle(R.drawable.ic_restore, commandStyle(EntryCommand.WORK)!!.container, androidx.compose.ui.graphics.Color.White)) { vm.restore() }
+			ActivityCommand.Restore -> last += DetailAction(R.string.swipe_restore, CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.WORK).container, androidx.compose.ui.graphics.Color.White)) { vm.restore() }
 		}
 	if (canUntick(e, segments))
 		main += DetailAction(R.string.state_todo, displayStyle(DisplayState.TODO)) { vm.untick() }

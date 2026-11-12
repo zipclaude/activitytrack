@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.agenda
 
-import it.infraconsulting.activitytrack.ui.todo.TodoRepository
 import it.infraconsulting.activitytrack.ui.common.TagDots
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.flow.drop
@@ -80,12 +79,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
 import it.infraconsulting.activitytrack.ui.todo.todoSwipeActions
 import it.infraconsulting.activitytrack.ui.todo.TodosViewModel
-import it.infraconsulting.activitytrack.ui.home.rememberEntryCommands
-import it.infraconsulting.activitytrack.ui.home.entrySwipeActions
-import it.infraconsulting.activitytrack.ui.home.EntryCommander
+import it.infraconsulting.activitytrack.ui.home.RunAction
+import it.infraconsulting.activitytrack.ui.home.rememberRunCommands
+import it.infraconsulting.activitytrack.ui.home.runSwipeActions
+import it.infraconsulting.activitytrack.ui.home.QuickActioner
 import it.infraconsulting.activitytrack.ui.common.SwipeCard
 import it.infraconsulting.activitytrack.domain.settings.GestureSettings
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import androidx.compose.ui.graphics.RectangleShape
 import it.infraconsulting.activitytrack.data.repo.ReportRepository
@@ -110,7 +109,7 @@ import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.fold
 import it.infraconsulting.activitytrack.ui.todo.TodoActions
-import it.infraconsulting.activitytrack.ui.todo.TodoEditDialog
+import it.infraconsulting.activitytrack.ui.start.TodoDialog
 import it.infraconsulting.activitytrack.ui.todo.newTodo
 import it.infraconsulting.activitytrack.ui.todo.todosViewModel
 import java.time.DayOfWeek
@@ -366,11 +365,11 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 	val plan: (LocalDate, Int) -> Unit = { day, min -> if (canPlan) { todosVm.clearError(); editing = newTodo(day, min) } }
 	val onTodo: (TimeEntryEntity) -> Unit = { if (it.isAbsence()) onOpenEntry(it.id) else selected = it }
 	/* swipes on open entries run the commands like Home (owner, 2026-10-18: gestures everywhere) */
-	val commander = appViewModel(key = "agenda-commands") { EntryCommander(it.entries) }
+	val commander = appViewModel(key = "agenda-commands") { QuickActioner(it.entries) }
 	val settings by todosVm.settings.collectAsState()
 	val gestures = settings?.gestures ?: GestureSettings()
 	val fallback = stringResource(R.string.entry_no_client)
-	val run = rememberEntryCommands(commander, settings?.editableTimes == true) { id -> data?.items?.firstOrNull { it.entryId == id }?.title?.ifBlank { null } ?: fallback }
+	val run = rememberRunCommands(commander, settings?.editableTimes == true) { id -> data?.items?.firstOrNull { it.entryId == id }?.title?.ifBlank { null } ?: fallback }
 	val swipes = ListSwipes(gestures, run, todosVm, onStartTodo) { todosVm.clearError(); editing = it }
 
 	val companies by todosVm.companies.collectAsState()
@@ -426,7 +425,7 @@ fun AgendaScreen(onOpenEntry: (Long) -> Unit, onStartTodo: (Long) -> Unit) {
 		selected?.let { t ->
 			TodoActions(t, todosVm, onStart = { onStartTodo(t.id) }, onEdit = { todosVm.clearError(); editing = t }) { selected = null }
 		}
-		editing?.let { t -> TodoEditDialog(t, todosVm) { editing = null } }
+		editing?.let { t -> TodoDialog(t) { editing = null } }
 	}
 }
 
@@ -443,7 +442,7 @@ private fun AgendaData.withTag(tag: String): AgendaData {
 /* What the list rows need to swipe (M10). */
 private class ListSwipes(
 	val gestures: GestureSettings,
-	val run: (TimeEntryEntity, EntryCommand) -> Unit,
+	val run: (TimeEntryEntity, RunAction) -> Unit,
 	val todos: TodosViewModel,
 	val onStartTodo: (Long) -> Unit,
 	val onReplan: (TimeEntryEntity) -> Unit,
@@ -502,8 +501,8 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 				items(items.filter { it.day == day }.sortedBy { it.start }, key = { "e${it.entryId}/$day" }) { it ->
 					val e = it.entry?.takeIf { e -> e.status == ActivityStatus.RUNNING }
 					SwipeCard(
-						toStart = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToStart) { swipes.run(e, it) } }.orEmpty(),
-						toEnd = e?.let { e -> entrySwipeActions(e, swipes.gestures.entryToEnd) { swipes.run(e, it) } }.orEmpty(),
+						toStart = e?.let { e -> runSwipeActions(e, SegmentKind.WORK, swipes.gestures.entryToStart) { swipes.run(e, it) } }.orEmpty(),
+						toEnd = e?.let { e -> runSwipeActions(e, SegmentKind.WORK, swipes.gestures.entryToEnd) { swipes.run(e, it) } }.orEmpty(),
 						fullSwipe = swipes.gestures.fullSwipe,
 						shape = RectangleShape,
 					) {

@@ -11,12 +11,12 @@ import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.ui.common.displayName
 import it.infraconsulting.activitytrack.ui.common.displayStyle
 import androidx.compose.ui.graphics.toArgb
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.common.style
 
 /* An open entry as notifications need it. */
 data class EntryInfo(
@@ -60,14 +60,12 @@ object EntryNotifications {
 			PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
 		)
 
-	fun commandLabel(context: Context, cmd: EntryCommand, mode: SegmentKind?): String = context.getString(
+	fun commandLabel(context: Context, cmd: QuickAction, mode: SegmentKind?): String = context.getString(
 		when (cmd) {
-			EntryCommand.WORK -> if (mode == SegmentKind.PAUSE) R.string.cmd_resume else R.string.cmd_work
-			EntryCommand.TRAVEL -> R.string.cmd_travel
-			EntryCommand.PAUSE -> R.string.cmd_pause
-			EntryCommand.SUSPEND -> R.string.cmd_suspend
-			EntryCommand.STOP -> R.string.cmd_stop
-			EntryCommand.REOPEN -> R.string.cmd_reopen
+			QuickAction.WORK -> if (mode == SegmentKind.PAUSE) R.string.cmd_resume else R.string.cmd_work
+			QuickAction.TRAVEL -> R.string.cmd_travel
+			QuickAction.PAUSE -> R.string.cmd_pause
+			QuickAction.STOP -> R.string.cmd_stop
 		},
 	)
 
@@ -83,8 +81,8 @@ object EntryNotifications {
 	 * Icon of a command action. Standard templates show action text only
 	 * (Android 7+); Wear OS and some launchers show the icon.
 	 */
-	fun commandIcon(context: Context, cmd: EntryCommand): Icon? =
-		commandStyle(cmd)?.let { Icon.createWithResource(context, it.icon) }
+	fun commandIcon(context: Context, cmd: QuickAction): Icon =
+		Icon.createWithResource(context, cmd.style().icon)
 
 	/* Ongoing notification of a running activity: its displayed state, chronometer of the open segment, commands. */
 	fun ongoing(context: Context, info: EntryInfo): Notification {

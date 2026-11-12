@@ -6,7 +6,7 @@ import android.content.Context
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.activity.ActivitySegment
 import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.ActionReceiver
 import it.infraconsulting.activitytrack.notify.EntryInfo
@@ -35,7 +35,7 @@ object ReminderNotifications {
 			.setAutoCancel(true)
 			.setCategory(Notification.CATEGORY_REMINDER)
 			.addAction(action(context.getString(R.string.action_yes), ActionReceiver.confirm(context, e.id)))
-			.addAction(action(context.getString(R.string.cmd_pause), ActionReceiver.command(context, e.id, EntryCommand.PAUSE)))
+			.addAction(action(context.getString(R.string.cmd_pause), ActionReceiver.command(context, e.id, QuickAction.PAUSE)))
 		if (last != null) {
 			val hhmm = clock(last)
 			b.setContentText(context.getString(R.string.notif_confirm_text, hhmm))
@@ -68,7 +68,7 @@ object ReminderNotifications {
 		val pauseStart = info.openSince?.let(Instant::ofEpochMilli)
 		val back = if (pauseStart != null && ActivityStateMachine.resumeKind(
 			info.segments.filter { !it.planned }.map { ActivitySegment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli)) }, pauseStart,
-		) == SegmentKind.TRAVEL) EntryCommand.TRAVEL else EntryCommand.WORK
+		) == SegmentKind.TRAVEL) QuickAction.TRAVEL else QuickAction.WORK
 		return Notification.Builder(context, NotificationChannels.PAUSE)
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(context.getString(R.string.notif_pause_title))
@@ -77,7 +77,7 @@ object ReminderNotifications {
 			.setAutoCancel(true)
 			.setCategory(Notification.CATEGORY_REMINDER)
 			.addAction(action(context.getString(R.string.cmd_resume), ActionReceiver.command(context, id, back)))
-			.addAction(action(context.getString(R.string.cmd_stop), ActionReceiver.command(context, id, EntryCommand.STOP)))
+			.addAction(action(context.getString(R.string.cmd_stop), ActionReceiver.command(context, id, QuickAction.STOP)))
 			.build()
 	}
 

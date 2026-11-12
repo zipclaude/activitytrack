@@ -44,7 +44,7 @@ import androidx.glance.unit.ColorProvider
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.MainActivity
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.notify.displayedState
 import it.infraconsulting.activitytrack.notify.isTicking
@@ -54,7 +54,7 @@ import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.notify.ongoingActions
 import it.infraconsulting.activitytrack.ui.Screen
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.common.style
 import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.flow.conflate
@@ -77,7 +77,7 @@ private data class WidgetState(
 	val state: DisplayState?,
 	val sinceMs: Long?,
 	/* what the buttons offer, from the state machine */
-	val commands: List<EntryCommand>,
+	val commands: List<QuickAction>,
 	val recent: List<Pair<Long, String>>,
 )
 
@@ -132,7 +132,7 @@ class WidgetCommandAction : ActionCallback {
 	override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
 		val c = (context.applicationContext as ActivityTrackApp).container
 		try {
-			c.entries.apply(parameters[ENTRY] ?: return, EntryCommand.valueOf(parameters[COMMAND] ?: return))
+			c.entries.quick(parameters[ENTRY] ?: return, QuickAction.entries.firstOrNull { it.name == parameters[COMMAND] } ?: return)
 		} catch (e: IllegalActivityCommandException) {
 			Log.i("Widget", "ignored: ${e.message}")
 		}
@@ -152,8 +152,8 @@ class WidgetToggleAction : ActionCallback {
 }
 
 @Composable
-internal fun CommandCircle(cmd: EntryCommand, size: Int, label: String, action: Action) {
-	val style = commandStyle(cmd) ?: return
+internal fun CommandCircle(cmd: QuickAction, size: Int, label: String, action: Action) {
+	val style = cmd.style()
 	Box(
 		modifier = GlanceModifier.size(size.dp).cornerRadius((size / 2).dp)
 			.background(ColorProvider(style.container)).clickable(action),
@@ -233,7 +233,7 @@ class StatusWidget : GlanceAppWidget() {
 					}
 				}
 				Spacer(GlanceModifier.width(6.dp))
-				CommandCircle(EntryCommand.WORK, 40, context.getString(R.string.start_action), openScreen(context, Screen.Start))
+				CommandCircle(QuickAction.WORK, 40, context.getString(R.string.start_action), openScreen(context, Screen.Start))
 			}
 		}
 	}
@@ -253,11 +253,11 @@ class ToggleWidget : GlanceAppWidget() {
 				) {
 					when {
 						s.entryId == null ->
-							CommandCircle(EntryCommand.WORK, 52, context.getString(R.string.start_action), openScreen(context, Screen.Start))
+							CommandCircle(QuickAction.WORK, 52, context.getString(R.string.start_action), openScreen(context, Screen.Start))
 						s.mode == SegmentKind.PAUSE ->
-							CommandCircle(EntryCommand.WORK, 52, context.getString(R.string.cmd_resume), actionRunCallback<WidgetToggleAction>())
+							CommandCircle(QuickAction.WORK, 52, context.getString(R.string.cmd_resume), actionRunCallback<WidgetToggleAction>())
 						else ->
-							CommandCircle(EntryCommand.PAUSE, 52, context.getString(R.string.cmd_pause), actionRunCallback<WidgetToggleAction>())
+							CommandCircle(QuickAction.PAUSE, 52, context.getString(R.string.cmd_pause), actionRunCallback<WidgetToggleAction>())
 					}
 				}
 			}
@@ -265,12 +265,11 @@ class ToggleWidget : GlanceAppWidget() {
 	}
 }
 
-internal fun commandLabel(cmd: EntryCommand, mode: SegmentKind?): Int = when (cmd) {
-	EntryCommand.WORK -> if (mode == SegmentKind.PAUSE) R.string.cmd_resume else R.string.cmd_work
-	EntryCommand.TRAVEL -> R.string.cmd_travel
-	EntryCommand.PAUSE -> R.string.cmd_pause
-	EntryCommand.SUSPEND -> R.string.cmd_suspend
-	EntryCommand.REOPEN -> R.string.cmd_reopen
+internal fun commandLabel(cmd: QuickAction, mode: SegmentKind?): Int = when (cmd) {
+	QuickAction.WORK -> if (mode == SegmentKind.PAUSE) R.string.cmd_resume else R.string.cmd_work
+	QuickAction.TRAVEL -> R.string.cmd_travel
+	QuickAction.PAUSE -> R.string.cmd_pause
+	QuickAction.STOP -> R.string.cmd_stop
 	else -> R.string.cmd_stop
 }
 

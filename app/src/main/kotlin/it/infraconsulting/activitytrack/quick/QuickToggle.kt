@@ -5,7 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.notify.isTicking
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
@@ -26,7 +26,7 @@ object QuickToggle {
 	/* True when an entry was toggled, false when there is none to toggle. */
 	suspend fun toggle(container: AppContainer): Boolean {
 		val e = target(container) ?: return false
-		container.entries.apply(e.id, if (e.mode == SegmentKind.PAUSE) EntryCommand.WORK else EntryCommand.PAUSE)
+		container.entries.quick(e.id, if (e.mode == SegmentKind.PAUSE) QuickAction.WORK else QuickAction.PAUSE)
 		return true
 	}
 

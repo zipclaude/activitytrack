@@ -647,9 +647,7 @@
       "kind": "STRING",
       "allowed": [
         "PAUSE_RESUME",
-        "STOP_OR_SUSPEND",
         "STOP",
-        "SUSPEND",
         "NONE"
       ],
       "doc": "text — PAUSE_RESUME, STOP_OR_SUSPEND, STOP, SUSPEND, NONE"
@@ -659,9 +657,7 @@
       "kind": "STRING",
       "allowed": [
         "PAUSE_RESUME",
-        "STOP_OR_SUSPEND",
         "STOP",
-        "SUSPEND",
         "NONE"
       ],
       "doc": "text — as above"

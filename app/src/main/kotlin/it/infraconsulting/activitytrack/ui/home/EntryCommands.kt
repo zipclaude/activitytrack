@@ -44,8 +44,8 @@ import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.domain.activity.FutureClose
 import it.infraconsulting.activitytrack.domain.activity.ReturnChoice
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.settings.EntrySwipe
 import it.infraconsulting.activitytrack.domain.settings.Gestures
 import it.infraconsulting.activitytrack.domain.time.atMinute
@@ -59,7 +59,6 @@ import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.parseHhMm
 import it.infraconsulting.activitytrack.ui.common.reasonText
 import it.infraconsulting.activitytrack.ui.common.snapshot
-import it.infraconsulting.activitytrack.ui.todo.TodoRepository
 import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -145,10 +144,7 @@ class StopRequest(val entry: TimeEntryEntity, val short: Boolean, val choices: L
  * Commands on running activities from the app (buttons and swipes, Home and
  * Agenda). After a stop, a suspended activity is proposed for resumption.
  */
-open class EntryCommander(
-	private val entries: EntryRepository,
-	@Suppress("unused") private val todos: TodoRepository? = null,
-) : ActionViewModel() {
+open class QuickActioner(private val entries: EntryRepository) : ActionViewModel() {
 	/* Suspended activity proposed for resumption after a stop. */
 	private val _resume = MutableStateFlow<TimeEntryEntity?>(null)
 	val resume = _resume.asStateFlow()
@@ -217,7 +213,7 @@ open class EntryCommander(
  * the dialogs. Returns the dispatcher.
  */
 @Composable
-fun rememberRunCommands(vm: EntryCommander, editableTimes: Boolean = false, titleOf: (Long) -> String): (TimeEntryEntity, RunAction) -> Unit {
+fun rememberRunCommands(vm: QuickActioner, editableTimes: Boolean = false, titleOf: (Long) -> String): (TimeEntryEntity, RunAction) -> Unit {
 	var stopping by remember { mutableStateOf<StopRequest?>(null) }
 	var travelling by remember { mutableStateOf<TimeEntryEntity?>(null) }
 	val resume by vm.resume.collectAsState()
@@ -253,7 +249,7 @@ fun rememberRunCommands(vm: EntryCommander, editableTimes: Boolean = false, titl
  * leaves it closed. Returns the function that asks.
  */
 @Composable
-fun rememberReopen(vm: EntryCommander, titleOf: (Long) -> String): (TimeEntryEntity) -> Unit {
+fun rememberReopen(vm: QuickActioner, titleOf: (Long) -> String): (TimeEntryEntity) -> Unit {
 	var asking by remember { mutableStateOf<TimeEntryEntity?>(null) }
 	asking?.let { e ->
 		AlertDialog(
@@ -279,7 +275,7 @@ fun rememberReopen(vm: EntryCommander, titleOf: (Long) -> String): (TimeEntryEnt
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StopSheet(r: StopRequest, editableTimes: Boolean, vm: EntryCommander, title: String, onClose: () -> Unit) {
+private fun StopSheet(r: StopRequest, editableTimes: Boolean, vm: QuickActioner, title: String, onClose: () -> Unit) {
 	val error by vm.error.collectAsState()
 	var end by remember { mutableStateOf("") }
 	fun dismiss() {
@@ -352,43 +348,13 @@ private fun ChoiceButton(@StringRes label: Int, style: CommandStyle, onClick: ()
  */
 @Composable
 fun runSwipeActions(e: TimeEntryEntity, back: SegmentKind, swipe: EntrySwipe, onAction: (RunAction) -> Unit): List<SwipeAction> =
-	Gestures.entryCommands(swipe, e.status, e.mode).mapNotNull { cmd ->
+	Gestures.entryActions(swipe, e.status, e.mode).mapNotNull { cmd ->
 		val a = when (cmd) {
-			EntryCommand.PAUSE -> RunAction.Pause
-			EntryCommand.WORK -> RunAction.Go(back, resume = true)
-			EntryCommand.STOP -> RunAction.Stop
+			QuickAction.PAUSE -> RunAction.Pause
+			QuickAction.WORK -> RunAction.Go(back, resume = true)
+			QuickAction.STOP -> RunAction.Stop
 			else -> return@mapNotNull null
 		}
 		val style = a.style()
 		SwipeAction(stringResource(a.label()), style.icon, style.container, style.content) { onAction(a) }
-	}
-
-/*
- * The 0.9 names, kept for the Agenda until it is rebuilt.
- * TODO(activity-1.0-ui): delete with the Agenda's use of EntryCommand.
- */
-@Composable
-fun rememberEntryCommands(vm: EntryCommander, editableTimes: Boolean = false, titleOf: (Long) -> String): (TimeEntryEntity, EntryCommand) -> Unit {
-	val run = rememberRunCommands(vm, editableTimes, titleOf)
-	return { e, cmd ->
-		when (cmd) {
-			EntryCommand.WORK -> run(e, RunAction.Go(SegmentKind.WORK, resume = true))
-			EntryCommand.TRAVEL -> run(e, RunAction.Go(SegmentKind.TRAVEL))
-			EntryCommand.PAUSE -> run(e, RunAction.Pause)
-			EntryCommand.STOP -> run(e, RunAction.Stop)
-			EntryCommand.SUSPEND, EntryCommand.REOPEN -> {}
-		}
-	}
-}
-
-@Composable
-fun entrySwipeActions(e: TimeEntryEntity, swipe: EntrySwipe, onCommand: (EntryCommand) -> Unit): List<SwipeAction> =
-	runSwipeActions(e, SegmentKind.WORK, swipe) { a ->
-		onCommand(
-			when (a) {
-				RunAction.Pause -> EntryCommand.PAUSE
-				is RunAction.Go -> if (a.kind == SegmentKind.TRAVEL) EntryCommand.TRAVEL else EntryCommand.WORK
-				RunAction.Stop -> EntryCommand.STOP
-			},
-		)
 	}

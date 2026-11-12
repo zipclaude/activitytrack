@@ -93,9 +93,7 @@ fun GesturesScreen(onBack: () -> Unit) {
 
 private fun entryLabel(s: EntrySwipe): Int = when (s) {
 	EntrySwipe.PAUSE_RESUME -> R.string.swipe_pause_resume
-	EntrySwipe.STOP_OR_SUSPEND -> R.string.swipe_stop_or_suspend
 	EntrySwipe.STOP -> R.string.cmd_stop
-	EntrySwipe.SUSPEND -> R.string.cmd_suspend
 	EntrySwipe.NONE -> R.string.swipe_none
 }
 

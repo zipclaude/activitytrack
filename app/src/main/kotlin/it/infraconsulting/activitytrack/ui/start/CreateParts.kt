@@ -50,7 +50,7 @@ import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.CompanyEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.SegmentInput
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.plugin.EntryField
 import it.infraconsulting.activitytrack.domain.plugin.FieldType
@@ -68,7 +68,7 @@ import it.infraconsulting.activitytrack.ui.common.SwitchRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.TimeGridSheet
-import it.infraconsulting.activitytrack.ui.common.commandStyle
+import it.infraconsulting.activitytrack.ui.entry.segmentStyle
 import it.infraconsulting.activitytrack.ui.common.fieldImportance
 import it.infraconsulting.activitytrack.ui.common.fieldLabel
 import it.infraconsulting.activitytrack.ui.common.formatMin
@@ -142,14 +142,6 @@ private fun kindName(kind: SegmentKind): String = stringResource(
 	},
 )
 
-private fun kindStyle(kind: SegmentKind) = commandStyle(
-	when (kind) {
-		SegmentKind.TRAVEL -> EntryCommand.TRAVEL
-		SegmentKind.PAUSE -> EntryCommand.PAUSE
-		else -> EntryCommand.WORK
-	},
-)!!
-
 /*
  * "Tratti": the list of segments with a split button to add one of work,
  * travel or pause. [planned] draws them dashed (a to-do's plan, never
@@ -176,7 +168,7 @@ fun SegmentsEditor(
 				color = if (required) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
 			)
 		segments.forEachIndexed { i, s ->
-			val style = kindStyle(s.kind)
+			val style = segmentStyle(s.kind)
 			val line = MaterialTheme.colorScheme.outline
 			Row(
 				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
@@ -228,7 +220,7 @@ fun SegmentsEditor(
 private fun SegmentAddButton(kinds: List<SegmentKind>, onPick: (SegmentKind) -> Unit) {
 	var open by remember { mutableStateOf(false) }
 	val main = kinds.first()
-	val style = kindStyle(main)
+	val style = segmentStyle(main)
 	Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
 		Button(
 			onClick = { onPick(main) },
@@ -248,7 +240,7 @@ private fun SegmentAddButton(kinds: List<SegmentKind>, onPick: (SegmentKind) -> 
 			) { Text("▾") }
 			DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
 				for (k in kinds) {
-					val s = kindStyle(k)
+					val s = segmentStyle(k)
 					DropdownMenuItem(
 						text = { Text(kindName(k)) },
 						leadingIcon = {

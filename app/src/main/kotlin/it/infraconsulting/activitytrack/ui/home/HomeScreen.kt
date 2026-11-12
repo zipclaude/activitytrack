@@ -79,7 +79,6 @@ import it.infraconsulting.activitytrack.ui.common.displayStyle
 import it.infraconsulting.activitytrack.ui.common.formatMin
 import it.infraconsulting.activitytrack.ui.start.AbsenceDialog
 import it.infraconsulting.activitytrack.ui.start.TodoDialog
-import it.infraconsulting.activitytrack.ui.todo.TodoRepository
 import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.delay
@@ -102,8 +101,7 @@ class HomeViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
-	todos: TodoRepository? = null,
-) : EntryCommander(entries, todos) {
+) : QuickActioner(entries) {
 	/* the running activities: a segment open, or suspended */
 	val cards = combine(
 		entries.openEntries, entries.openEntrySegments, entries.openEntryTags, master.clients, master.companies,
@@ -259,7 +257,7 @@ fun HomeScreen(
 	onOpenTodos: (() -> Unit)? = null,
 	onOpenImport: (() -> Unit)? = null,
 ) {
-	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings, it.todos) }
+	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
 	val allCards by vm.cards.collectAsState()
 	val selected by vm.selected.collectAsState()
 	val settings by vm.settings.collectAsState()

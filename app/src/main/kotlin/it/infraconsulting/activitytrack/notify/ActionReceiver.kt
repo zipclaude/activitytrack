@@ -9,7 +9,7 @@ import android.content.Intent
 import android.util.Log
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.data.repo.ValidationException
-import it.infraconsulting.activitytrack.domain.model.EntryCommand
+import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.activity.IllegalActivityCommandException
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
@@ -46,8 +46,8 @@ class ActionReceiver : BroadcastReceiver() {
 			try {
 				when (intent.action) {
 					ACTION_COMMAND -> {
-						val cmd = EntryCommand.valueOf(intent.getStringExtra(EXTRA_COMMAND) ?: return@launch)
-						entries.apply(entryId, cmd, intent.at())
+						val cmd = QuickAction.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_COMMAND) } ?: return@launch
+						entries.quick(entryId, cmd, intent.at())
 					}
 					ACTION_CONFIRM -> entries.confirm(entryId)
 					ACTION_STOP_AT_LAST -> entries.stopAtLastConfirmation(entryId)
@@ -177,14 +177,14 @@ class ActionReceiver : BroadcastReceiver() {
 		 * request codes: entryId * 16 + slot; 0..6 command ordinals, 7 dismiss,
 		 * 8 confirm, 9 stop at last confirmation, 10..15 movement/arrival answers
 		 */
-		fun command(context: Context, entryId: Long, cmd: EntryCommand): PendingIntent =
+		fun command(context: Context, entryId: Long, cmd: QuickAction): PendingIntent =
 			intent(context, ACTION_COMMAND, entryId, (entryId * 16 + cmd.ordinal).toInt()) { putExtra(EXTRA_COMMAND, cmd.name) }
 
 		/* Backdated command: departure (TRAVEL, STOP) or arrival (WORK, STOP at home). */
-		fun commandAt(context: Context, entryId: Long, cmd: EntryCommand, atMs: Long, arrival: Boolean = false): PendingIntent {
+		fun commandAt(context: Context, entryId: Long, cmd: QuickAction, atMs: Long, arrival: Boolean = false): PendingIntent {
 			val slot = when (cmd) {
-				EntryCommand.TRAVEL -> 10
-				EntryCommand.WORK -> 13
+				QuickAction.TRAVEL -> 10
+				QuickAction.WORK -> 13
 				else -> if (arrival) 14 else 11
 			}
 			return intent(context, ACTION_COMMAND, entryId, (entryId * 16 + slot).toInt()) {
@@ -235,7 +235,7 @@ class ActionReceiver : BroadcastReceiver() {
 		 */
 		fun stopAtPlannedEnd(context: Context, entryId: Long, atMs: Long): PendingIntent =
 			intent(context, ACTION_COMMAND, entryId, -(entryId * 16 + 1).toInt()) {
-				putExtra(EXTRA_COMMAND, EntryCommand.STOP.name)
+				putExtra(EXTRA_COMMAND, QuickAction.STOP.name)
 				putExtra(EXTRA_AT, atMs)
 			}
 
