@@ -9,6 +9,7 @@ import it.infraconsulting.activitytrack.domain.activity.LegacyEntry
 import it.infraconsulting.activitytrack.domain.activity.LegacyRef
 import it.infraconsulting.activitytrack.domain.activity.LegacySegment
 import it.infraconsulting.activitytrack.domain.activity.LegacyTodo
+import it.infraconsulting.activitytrack.domain.activity.MigrationResult
 import it.infraconsulting.activitytrack.domain.reminder.DayWindow
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import java.time.LocalDate
@@ -28,10 +29,12 @@ import java.time.ZoneId
  * 3. the result is written: existing entries updated, new activities
  *    inserted, their children found by uid;
  * 4. todo and absence are dropped;
- * 5. the sync is told to realign (6): its log and shadows are of wire 2,
+ * 5. the sync is told to realign (6): the shadows are of wire 2 and go,
  *    the server migrated its own copy with the same function, so the next
- *    sync pulls everything (the server's version wins) and pushes only what
- *    the server lacks; the triggers the rebuild dropped come back.
+ *    sync pulls everything; the server's version wins except for the
+ *    records with changes not synced yet (and what the migration derived
+ *    from them), which stay logged and are pushed; the triggers the
+ *    rebuild dropped come back.
  */
 object ActivityModelMigration {
 	/* the schema-22 table, as Room exported it (22.json) */
@@ -76,7 +79,10 @@ object ActivityModelMigration {
 	fun migrate21To22(db: SyncSchema.Sql, zone: ZoneId) {
 		db.exec("UPDATE sync_state SET applying = 1 WHERE id = 1")
 		ensureUids(db)
-		val result = ActivityMigration.migrate(read(db, zone))
+		val legacy = read(db, zone)
+		val result = ActivityMigration.migrate(legacy)
+		/* what this node changed and did not sync yet: it stays to push (no data loss on the realignment) */
+		val dirty = dirty(pending(db), legacy, result)
 
 		/*
 		 * The sync triggers go for the time of the migration: those of entry_tag
@@ -120,7 +126,7 @@ object ActivityModelMigration {
 		val broken = db.rows("PRAGMA foreign_key_check")
 		check(broken.isEmpty()) { "migration 21 -> 22: foreign keys broken: $broken" }
 
-		realign(db)
+		realign(db, dirty)
 		db.exec("UPDATE sync_state SET applying = 0 WHERE id = 1")
 		/* the triggers of the rebuilt table */
 		SyncSchema.onCreate(db)
@@ -128,15 +134,65 @@ object ActivityModelMigration {
 
 	/*
 	 * The next sync realigns with the server (6): a paired node pulls from
-	 * the start and pushes what the server lacks; what was logged before
-	 * belongs to wire 2 and goes.
+	 * the start, the server's version wins for every migrated record, except
+	 * those with changes not synced yet ([dirty]: logged again under their
+	 * 1.0 type, so the local version wins and is pushed); records the server
+	 * never had are pushed too. The wire-2 shadows go.
 	 */
-	private fun realign(db: SyncSchema.Sql) {
+	private fun realign(db: SyncSchema.Sql, dirty: List<Change>) {
 		db.exec("ALTER TABLE `sync_state` ADD COLUMN `realign` INTEGER NOT NULL DEFAULT 0")
 		db.exec("UPDATE sync_state SET realign = enabled, cursor = CASE WHEN enabled THEN 0 ELSE cursor END WHERE id = 1")
 		db.exec("DELETE FROM sync_change")
 		db.exec("DELETE FROM sync_shadow")
 		db.exec("DELETE FROM sync_error")
+		for (c in dirty)
+			db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES (?, ?, ?, ?)", c.type, c.uid, c.op, c.time)
+	}
+
+	/* a pending change of the log: the record's last op, the time of its last change */
+	data class Change(val type: String, val uid: String, val op: String, val time: Long)
+
+	private fun pending(db: SyncSchema.Sql): List<Change> = db.rows(
+		"SELECT c.type, c.uid, (SELECT op FROM sync_change l WHERE l.type = c.type AND l.uid = c.uid ORDER BY seq DESC LIMIT 1), MAX(c.changed_utc_ms) " +
+			"FROM sync_change c GROUP BY c.type, c.uid ORDER BY MIN(c.seq)",
+	).map { Change(it[0] as String, it[1] as String, it[2] as String, (it[3] as Number).toLong()) }
+
+	/*
+	 * The records that stay dirty after the migration: every pending change,
+	 * a to-do's or a legacy absence's under the activity it became (type
+	 * entry, its uid) or, absorbed, under the entries it was linked to; and
+	 * what the migration derived from a dirty record (absence segments,
+	 * references of a dirty activity or of a dirty to-do's entries).
+	 */
+	fun dirty(pending: List<Change>, d: LegacyData, r: MigrationResult): List<Change> {
+		val out = LinkedHashMap<Pair<String, String>, Change>()
+		fun add(c: Change) {
+			out[c.type to c.uid] = c
+		}
+		val activities = r.activities.map { it.uid }.toSet()
+		val dirtyActivities = HashMap<String, Change>()
+		for (c in pending) {
+			when (c.type) {
+				"todo", "absence" -> {
+					val todo = d.todos.firstOrNull { it.uid == c.uid }
+					when {
+						c.uid in activities -> dirtyActivities[c.uid] = c.copy(type = "entry")
+						c.op == "delete" -> add(c.copy(type = "entry"))
+						todo != null -> d.entries.filter { it.todoId == todo.id }.forEach { dirtyActivities[it.uid] = c.copy(type = "entry", uid = it.uid, op = "upsert") }
+					}
+				}
+				"entry" -> dirtyActivities[c.uid] = c
+				else -> add(c)
+			}
+		}
+		for ((uid, c) in dirtyActivities) {
+			add(c)
+			if (c.op == "delete")
+				continue
+			r.segments.filter { it.entryUid == uid }.forEach { add(Change("segment", it.uid, "upsert", c.time)) }
+			r.refs.filter { it.entryUid == uid }.forEach { add(Change("externalRef", it.uid, "upsert", c.time)) }
+		}
+		return out.values.toList()
 	}
 
 	/* every entry has had a uid since schema 16; one without gets one, the migration needs it */

@@ -123,7 +123,12 @@ class SyncSchemaTest {
 		exec(c, "INSERT INTO segment (id, entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 10, 'WORK', 1000, NULL, 'Europe/Rome', 'TRACKED', 's-1'), (2, 11, 'WORK', 0, 900, 'Europe/Rome', 'TRACKED', 's-2')")
 		exec(c, "INSERT INTO location_sample (entry_id, segment_id, ts_utc_ms, lat, lon) VALUES (10, 1, 1000, 46.0, 11.0)")
 		exec(c, "INSERT INTO sync_shadow (type, uid, json) VALUES ('todo', 'todo-7', '{}')")
-		assertTrue(changes(c).isNotEmpty())
+		/* synced so far; then two changes not synced: the to-do (absorbed by e-10) and the entry e-11 */
+		exec(c, "DELETE FROM sync_change")
+		exec(c, "UPDATE todo SET notes = 'local' WHERE id = 7")
+		/* the to-do's trigger of a 0.9 app (this SyncSchema no longer has it) */
+		exec(c, "INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', 'todo-7', 'upsert', 5)")
+		exec(c, "UPDATE time_entry SET notes = 'local' WHERE id = 11")
 		/* as Room runs a migration: foreign keys off, then checked */
 		exec(c, "PRAGMA foreign_keys = OFF")
 		ActivityModelMigration.migrate21To22(sql(c), java.time.ZoneId.of("Europe/Rome"))
@@ -144,9 +149,14 @@ class SyncSchemaTest {
 		assertEquals(listOf(listOf("ABSENCE", 12L)), rows(c, "SELECT kind, entry_id FROM segment WHERE id > 2"))
 		assertEquals(listOf(listOf("INC1")), rows(c, "SELECT value FROM external_ref WHERE entry_id = 10"))
 		assertEquals(1L, rows(c, "SELECT COUNT(*) FROM location_sample WHERE entry_id = 10")[0][0])
-		/* the realignment */
+		/* the realignment: the unsynced changes stay, under their 1.0 records, with what the migration derived from them */
 		assertEquals(listOf(listOf(1L, 1L, 0L, 0L)), rows(c, "SELECT enabled, realign, cursor, applying FROM sync_state"))
-		assertEquals(emptyList(), changes(c))
+		val ref = rows(c, "SELECT uid FROM external_ref WHERE entry_id = 10")[0][0] as String
+		assertEquals(
+			setOf(listOf("entry", "e-10", "upsert"), listOf("externalRef", ref, "upsert"), listOf("entry", "e-11", "upsert")),
+			changes(c).toSet(),
+		)
+		exec(c, "DELETE FROM sync_change")
 		assertEquals(0L, rows(c, "SELECT COUNT(*) FROM sync_shadow")[0][0])
 		/* the rebuilt table logs again */
 		exec(c, "UPDATE time_entry SET notes = 'x' WHERE id = 11")

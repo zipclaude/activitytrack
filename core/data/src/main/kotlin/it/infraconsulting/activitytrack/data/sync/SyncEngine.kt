@@ -81,14 +81,15 @@ class SyncEngine(
 			/*
 			 * The first sync, or the first after a migration of the data (the
 			 * realignment of ACTIVITY-MODEL.md 6: the migration reset the cursor and
-			 * dropped the log and the shadows, so the server's version wins for
-			 * every record it has; the changes made since are pushed as usual).
+			 * dropped the shadows, so the server's version wins for every record it
+			 * has, except those still logged: changes not synced before the
+			 * migration and made since, whose local version wins and is pushed).
 			 */
 			val state = db.run { it.state() }
 			if (!state.enabled || state.realign) {
 				db.run { it.enable() }
 				pull(errors) { offset = it }.also { pulled += it }
-				db.run { it.seed(); it.realigned() }
+				db.run { if (state.realign) it.restamp(); it.seed(); it.realigned() }
 			}
 			var pushed = 0
 			/* a pull may log changes of its own (adoption): they go out in the same sync */
