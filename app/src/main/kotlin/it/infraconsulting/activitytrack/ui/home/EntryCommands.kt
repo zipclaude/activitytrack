@@ -43,13 +43,12 @@ import it.infraconsulting.activitytrack.domain.activity.ActivityCommand
 import it.infraconsulting.activitytrack.domain.activity.ActivityState
 import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
-import it.infraconsulting.activitytrack.domain.activity.FutureClose
 import it.infraconsulting.activitytrack.domain.activity.ReturnChoice
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.settings.EntrySwipe
 import it.infraconsulting.activitytrack.domain.settings.Gestures
-import it.infraconsulting.activitytrack.domain.time.atMinute
+import it.infraconsulting.activitytrack.ui.entry.EntryViewModel
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.common.CommandStyle
@@ -129,15 +128,13 @@ internal fun RunAction.label(): Int = when (this) {
 }
 
 /*
- * A stop (or end time) typed as a time of day: today's, unless that lies
- * more than the 60 minutes ahead that a close may (ACTIVITY-MODEL.md 4.1),
- * then yesterday's.
+ * A stop typed as a time of day (asked only when times are editable): the
+ * day as the detail screen resolves it (EntryViewModel.endOn): yesterday,
+ * today or tomorrow, up to the 60 minutes ahead a close may
+ * (ACTIVITY-MODEL.md 4.1); null when none is.
  */
-internal fun closeAt(minuteOfDay: Int, now: Instant, zone: ZoneId): Instant {
-	val today = now.atZone(zone).toLocalDate()
-	val t = today.atMinute(minuteOfDay, zone)
-	return if (t.isAfter(now.plus(FutureClose.MAX_AHEAD))) today.minusDays(1).atMinute(minuteOfDay, zone) else t
-}
+internal fun closeAt(minuteOfDay: Int, now: Instant, zone: ZoneId): Instant? =
+	EntryViewModel.endOn(minuteOfDay, now.atZone(zone).toLocalDate(), zone, now, editableTimes = true)?.let(Instant::ofEpochMilli)
 
 /* The stop question for [entry]: the return-trip [choices] (3.2, empty = a plain stop), [short] under a minute. */
 class StopRequest(val entry: TimeEntryEntity, val short: Boolean, val choices: List<ReturnChoice>)
@@ -289,7 +286,7 @@ private fun StopSheet(r: StopRequest, editableTimes: Boolean, vm: QuickActioner,
 		val at = when {
 			end.isBlank() -> null
 			min == null || min >= 1440 -> return vm.invalidTime()
-			else -> closeAt(min, Instant.now(), ZoneId.systemDefault()).toEpochMilli()
+			else -> closeAt(min, Instant.now(), ZoneId.systemDefault())?.toEpochMilli() ?: return vm.invalidTime()
 		}
 		vm.stopWith(r.entry, choice, at, onClose)
 	}

@@ -13,6 +13,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /* The one Home list (owner, 2026-10-27; 1.0): groups, state filter, window; and the running buttons. */
 class HomeListTest {
@@ -184,9 +185,14 @@ class HomeListTest {
 		assertEquals(day.atTime(12, 30).atZone(zone).toInstant(), closeAt(h(12, 30), now, zone))
 		/* 13:00 is exactly the limit: today */
 		assertEquals(day.atTime(13, 0).atZone(zone).toInstant(), closeAt(h(13), now, zone))
-		/* 13:01 is too far: yesterday's */
-		assertEquals(day.minusDays(1).atTime(13, 1).atZone(zone).toInstant(), closeAt(h(13, 1), now, zone))
+		/* 13:01 is too far ahead, and yesterday's more than 12 hours ago: none */
+		assertNull(closeAt(h(13, 1), now, zone))
+		/* 23:00 is yesterday's at 00:30 */
+		assertEquals(day.minusDays(1).atTime(23, 0).atZone(zone).toInstant(), closeAt(h(23), day.atTime(0, 30).atZone(zone).toInstant(), zone))
 		assertEquals(day.atTime(9, 0).atZone(zone).toInstant(), closeAt(h(9), now, zone))
+		/* at 23:50 "00:20" is half an hour ahead: tomorrow's (as the detail screen) */
+		val late = day.atTime(23, 50).atZone(zone).toInstant()
+		assertEquals(day.plusDays(1).atTime(0, 20).atZone(zone).toInstant(), closeAt(h(0, 20), late, zone))
 	}
 
 	@Test
