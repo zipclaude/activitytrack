@@ -20,6 +20,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,6 +51,7 @@ import it.infraconsulting.activitytrack.domain.settings.EntrySwipe
 import it.infraconsulting.activitytrack.domain.settings.Gestures
 import it.infraconsulting.activitytrack.domain.time.atMinute
 import it.infraconsulting.activitytrack.ui.ActionViewModel
+import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.common.CommandStyle
 import it.infraconsulting.activitytrack.ui.common.Importance
 import it.infraconsulting.activitytrack.ui.common.STOP_STYLE
@@ -291,10 +293,11 @@ private fun StopSheet(r: StopRequest, editableTimes: Boolean, vm: QuickActioner,
 		}
 		vm.stopWith(r.entry, choice, at, onClose)
 	}
-	ModalBottomSheet(onDismissRequest = ::dismiss) {
+	/* fully expanded at once: the third choice was below the fold on a phone */
+	ModalBottomSheet(onDismissRequest = ::dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
 		Column(
-			Modifier.padding(start = 20.dp, end = 20.dp, bottom = 24.dp).verticalScroll(rememberScrollState()),
-			verticalArrangement = Arrangement.spacedBy(12.dp),
+			Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp).verticalScroll(rememberScrollState()),
+			verticalArrangement = Arrangement.spacedBy(if (LocalCompact.current) 6.dp else 12.dp),
 		) {
 			Text(stringResource(R.string.stop_title, title), style = MaterialTheme.typography.titleLarge)
 			if (r.short) {
