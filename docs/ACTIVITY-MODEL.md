@@ -260,7 +260,10 @@ migrated record, except for records with unsynced local changes, which are pushe
 record itself, the activity a dirty to-do or absence became or the entries that absorbed it,
 and what the migration derived from them: absence segments, references; coordinator,
 2026-11-12); changes made after the migration are pushed as usual, records the server never
-had too. The pushed changes carry the time of that sync, so they win over the fields the
+had too. Of a dirty record only the fields changed locally are pushed: the node keeps
+the record's wire-2 shadow translated to wire 3 (the mapping of steps 1 and 3) as the
+base of the merge, so a field edited elsewhere is not overwritten (a field the
+translation cannot tell counts as changed locally). The pushed changes carry the time of that sync, so they win over the fields the
 server's migration stamped. Reimporting a phone's data on the server is the fallback
 (owner, 2026-11-11).
 

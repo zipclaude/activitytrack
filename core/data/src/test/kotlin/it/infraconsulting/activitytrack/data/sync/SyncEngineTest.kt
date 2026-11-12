@@ -264,6 +264,48 @@ class SyncEngineTest {
 		assertEquals(0L, a.one("SELECT realign FROM sync_state"))
 	}
 
+	/*
+	 * The realignment pushes only the fields changed here: the dirty entry's
+	 * wire-2 shadow, translated by the migration, is the base. A field edited
+	 * elsewhere (the notes, on the server) is not overwritten by the stale
+	 * local value; the one edited here (the description) goes up.
+	 */
+	@Test
+	fun theRealignmentPushesOnlyTheFieldsChangedHere() {
+		val a = phone(version = 21)
+		val db = a.sql
+		db.exec("UPDATE sync_state SET enabled = 1")
+		val acme = SyncIds.random()
+		db.exec("INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, ?)", acme)
+		val e = SyncIds.random()
+		db.exec(
+			"INSERT INTO time_entry (id, uid, company_id, activity, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) VALUES (1, ?, 1, 'before', 'TO_COMPLETE', 'Europe/Rome', 0, 1, 2)",
+			e,
+		)
+		/* what the server had at the last sync (wire 2) */
+		db.exec(
+			"INSERT INTO sync_shadow (type, uid, json) VALUES ('entry', ?, ?)",
+			e, """{"todoUid":null,"companyUid":"$acme","activity":"before","notes":null,"status":"TO_COMPLETE"}""",
+		)
+		db.exec("DELETE FROM sync_change")
+		db.exec("UPDATE time_entry SET activity = 'local' WHERE id = 1")
+		db.exec("PRAGMA foreign_keys = OFF")
+		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		db.exec("PRAGMA foreign_keys = ON")
+		/* the server's migrated copy, its notes edited from another device since */
+		val r = a.records.read("entry", e)!!.toMutableMap()
+		r["activity"] = JsonPrimitive("before")
+		r["notes"] = JsonPrimitive("server notes")
+		server.put("entry", e, r)
+		server.put("company", acme, a.records.read("company", acme)!!)
+		sync(a)
+		assertEquals(JsonPrimitive("local"), server.records.getValue("entry" to e).fields["activity"])
+		assertEquals(JsonPrimitive("server notes"), server.records.getValue("entry" to e).fields["notes"])
+		assertEquals("local", a.one("SELECT activity FROM time_entry WHERE uid = ?", e))
+		assertEquals("server notes", a.one("SELECT notes FROM time_entry WHERE uid = ?", e))
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
+	}
+
 	@Test
 	fun upgradeRequiredIsReportedAsIncompatible() {
 		val a = phone()

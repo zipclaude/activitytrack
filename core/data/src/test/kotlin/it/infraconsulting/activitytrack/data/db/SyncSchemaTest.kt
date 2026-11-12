@@ -123,6 +123,8 @@ class SyncSchemaTest {
 		exec(c, "INSERT INTO segment (id, entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 10, 'WORK', 1000, NULL, 'Europe/Rome', 'TRACKED', 's-1'), (2, 11, 'WORK', 0, 900, 'Europe/Rome', 'TRACKED', 's-2')")
 		exec(c, "INSERT INTO location_sample (entry_id, segment_id, ts_utc_ms, lat, lon) VALUES (10, 1, 1000, 46.0, 11.0)")
 		exec(c, "INSERT INTO sync_shadow (type, uid, json) VALUES ('todo', 'todo-7', '{}')")
+		exec(c, "INSERT INTO sync_shadow (type, uid, json) VALUES ('entry', 'e-11', '{\"todoUid\":null,\"status\":\"TO_COMPLETE\",\"notes\":null}')")
+		exec(c, "INSERT INTO sync_shadow (type, uid, json) VALUES ('company', 'company-1', '{\"name\":\"Acme\"}')")
 		/* synced so far; then two changes not synced: the to-do (absorbed by e-10) and the entry e-11 */
 		exec(c, "DELETE FROM sync_change")
 		exec(c, "UPDATE todo SET notes = 'local' WHERE id = 7")
@@ -157,7 +159,11 @@ class SyncSchemaTest {
 			changes(c).toSet(),
 		)
 		exec(c, "DELETE FROM sync_change")
-		assertEquals(0L, rows(c, "SELECT COUNT(*) FROM sync_shadow")[0][0])
+		/* the shadows go but those of the dirty records, in wire 3: the base the realignment merges against */
+		assertEquals(
+			listOf(listOf("entry", "e-11", """{"notes":null,"status":"CLOSED","kind":"ACTIVITY","deletedUtcMs":null}""")),
+			rows(c, "SELECT type, uid, json FROM sync_shadow"),
+		)
 		/* the rebuilt table logs again */
 		exec(c, "UPDATE time_entry SET notes = 'x' WHERE id = 11")
 		assertEquals(listOf(listOf("entry", "e-11", "upsert")), changes(c))

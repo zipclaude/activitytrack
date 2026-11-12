@@ -83,7 +83,9 @@ class SyncEngine(
 			 * realignment of ACTIVITY-MODEL.md 6: the migration reset the cursor and
 			 * dropped the shadows, so the server's version wins for every record it
 			 * has, except those still logged: changes not synced before the
-			 * migration and made since, whose local version wins and is pushed).
+			 * migration and made since, whose local version wins and is pushed;
+			 * for those the migration kept their shadows in wire 3, so only the
+			 * fields changed here win).
 			 */
 			val state = db.run { it.state() }
 			if (!state.enabled || state.realign) {

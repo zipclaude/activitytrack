@@ -10,10 +10,20 @@ import it.infraconsulting.activitytrack.domain.activity.LegacyRef
 import it.infraconsulting.activitytrack.domain.activity.LegacySegment
 import it.infraconsulting.activitytrack.domain.activity.LegacyTodo
 import it.infraconsulting.activitytrack.domain.activity.MigrationResult
+import it.infraconsulting.activitytrack.domain.activity.Priority
 import it.infraconsulting.activitytrack.domain.reminder.DayWindow
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /*
  * DB 21 -> 22, activity model 1.0 (docs/ACTIVITY-MODEL.md 6): plain SQL
@@ -33,8 +43,9 @@ import java.time.ZoneId
  *    the server migrated its own copy with the same function, so the next
  *    sync pulls everything; the server's version wins except for the
  *    records with changes not synced yet (and what the migration derived
- *    from them), which stay logged and are pushed; the triggers the
- *    rebuild dropped come back.
+ *    from them), which stay logged and are pushed, field by field against
+ *    their shadows translated to wire 3; the triggers the rebuild dropped
+ *    come back.
  */
 object ActivityModelMigration {
 	/* the schema-22 table, as Room exported it (22.json) */
@@ -137,9 +148,15 @@ object ActivityModelMigration {
 	 * the start, the server's version wins for every migrated record, except
 	 * those with changes not synced yet ([dirty]: logged again under their
 	 * 1.0 type, so the local version wins and is pushed); records the server
-	 * never had are pushed too. The wire-2 shadows go.
+	 * never had are pushed too. The wire-2 shadows go, but those of the
+	 * dirty records, translated to wire 3 ([baseShadows]): with them the
+	 * pull keeps only the fields changed here, and the push sends only those,
+	 * so a field edited elsewhere is not overwritten by a stale local value.
 	 */
 	private fun realign(db: SyncSchema.Sql, dirty: List<Change>) {
+		val bases = baseShadows(dirty) { type, uid ->
+			db.rows("SELECT json FROM sync_shadow WHERE type = ? AND uid = ?", type, uid).firstOrNull()?.get(0) as String?
+		}
 		db.exec("ALTER TABLE `sync_state` ADD COLUMN `realign` INTEGER NOT NULL DEFAULT 0")
 		db.exec("UPDATE sync_state SET realign = enabled, cursor = CASE WHEN enabled THEN 0 ELSE cursor END WHERE id = 1")
 		db.exec("DELETE FROM sync_change")
@@ -147,6 +164,73 @@ object ActivityModelMigration {
 		db.exec("DELETE FROM sync_error")
 		for (c in dirty)
 			db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES (?, ?, ?, ?)", c.type, c.uid, c.op, c.time)
+		for ((key, json) in bases)
+			db.exec("INSERT INTO sync_shadow (type, uid, json) VALUES (?, ?, ?)", key.first, key.second, json.toString())
+	}
+
+	/*
+	 * What the server had of each dirty record before the migration, in
+	 * wire 3: the base the realignment merges against (SyncStore.pulled and
+	 * change compare each field with it). Only what is certain is kept: a
+	 * field missing from the base counts as changed here, as before (the
+	 * local value is pushed when it differs from the server's).
+	 * - an entry: its own shadow, status mapped (6, step 1), todoUid gone,
+	 *   kind ACTIVITY, not deleted;
+	 * - a TODO activity with the uid of a task to-do: the to-do's shadow,
+	 *   fields renamed as the migration maps them (6, step 3);
+	 * - a segment: its shadow, not planned; the other types as they are;
+	 * - deletions, absence to-dos and legacy absences: none.
+	 */
+	fun baseShadows(dirty: List<Change>, shadowOf: (String, String) -> String?): Map<Pair<String, String>, JsonObject> {
+		fun parse(s: String?): JsonObject? = s?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() }
+		val out = LinkedHashMap<Pair<String, String>, JsonObject>()
+		for (c in dirty) {
+			if (c.op == "delete")
+				continue
+			val base = when (c.type) {
+				"todo", "absence" -> null
+				"entry" -> parse(shadowOf("entry", c.uid))?.let(::entryBase) ?: parse(shadowOf("todo", c.uid))?.let(::todoBase)
+				"segment" -> parse(shadowOf("segment", c.uid))?.let { JsonObject(it + ("planned" to JsonPrimitive(false))) }
+				else -> parse(shadowOf(c.type, c.uid))
+			}
+			if (base != null)
+				out[c.type to c.uid] = base
+		}
+		return out
+	}
+
+	private fun entryBase(s: JsonObject): JsonObject {
+		val status = when (s["status"]?.jsonPrimitive?.contentOrNull) {
+			"ACTIVE", "SUSPENDED" -> "RUNNING"
+			null -> null
+			else -> "CLOSED"
+		}
+		return JsonObject(
+			buildMap {
+				putAll(s - "todoUid" - "status")
+				status?.let { put("status", JsonPrimitive(it)) }
+				put("kind", JsonPrimitive("ACTIVITY"))
+				put("deletedUtcMs", JsonNull)
+			},
+		)
+	}
+
+	private fun todoBase(s: JsonObject): JsonObject? {
+		if (s["kind"]?.jsonPrimitive?.contentOrNull == "ABSENCE")
+			return null
+		val done = s["done"]?.jsonPrimitive?.booleanOrNull ?: return null
+		return JsonObject(
+			buildMap {
+				for (k in listOf("companyUid", "clientUid", "externalKey", "notes", "dueDate", "dueTimeMin", "planDate", "planStartMin", "durationMin", "pluginFields", "createdUtcMs", "updatedUtcMs"))
+					s[k]?.let { put(k, it) }
+				s["title"]?.let { put("activity", it) }
+				put("priority", JsonPrimitive(Priority.fromLegacy(s["priority"]?.jsonPrimitive?.intOrNull).value))
+				put("kind", JsonPrimitive("ACTIVITY"))
+				put("status", JsonPrimitive(if (done) "CLOSED" else "TODO"))
+				put("closedUtcMs", if (done) s["doneUtcMs"]?.takeIf { it !is JsonNull } ?: s["updatedUtcMs"] ?: JsonNull else JsonNull)
+				s["ignoredUtcMs"]?.let { put("deletedUtcMs", it) }
+			},
+		)
 	}
 
 	/* a pending change of the log: the record's last op, the time of its last change */
