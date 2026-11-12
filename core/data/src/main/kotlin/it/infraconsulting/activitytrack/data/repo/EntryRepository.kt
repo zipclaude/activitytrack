@@ -680,10 +680,13 @@ class EntryRepository(
 	}
 
 	/* the command at now, rounded per 4.2 when that is on */
-	private suspend fun nowCommand(e: TimeEntryEntity, cmd: ActivityCommand, nowMs: Long): ActivityCommand {
+	private suspend fun nowCommand(e: TimeEntryEntity, cmd: ActivityCommand, clockMs: Long): ActivityCommand {
 		val rules = times()
-		val now = Instant.ofEpochMilli(nowMs)
 		val segs = dao.segments(e.id).filter { !it.planned }
+		/* a clock that went backwards must not put a boundary before the latest recorded one (overlap) */
+		val latest = segs.maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: it.startUtcMs) }
+		val nowMs = if (latest != null && latest > clockMs) latest else clockMs
+		val now = Instant.ofEpochMilli(nowMs)
 		val open = segs.lastOrNull { it.endUtcMs == null }
 		val lastEnd = segs.mapNotNull { it.endUtcMs }.maxOrNull()
 		fun ms(v: Long) = Instant.ofEpochMilli(v)

@@ -455,7 +455,8 @@ class RepositoryTest {
 		assertEquals(t0, db.entryDao().segments(id).single().startUtcMs)
 		assertEquals(Reason.FUTURE_TIME, reason { entries.start(StartRequest(SegmentKind.WORK, client, startUtcMs = clock.millis() + 60_000)) })
 		assertEquals(Reason.BEFORE_SEGMENT, reason { entries.applyAt(id, EntryCommand.STOP, t0 - 60_000) })
-		assertEquals(Reason.FUTURE_TIME, reason { entries.applyAt(id, EntryCommand.STOP, clock.millis() + 60_000) })
+		/* a stop may lie up to 60 minutes ahead (4.1), not beyond */
+		assertEquals(Reason.FUTURE_TIME, reason { entries.applyAt(id, EntryCommand.STOP, clock.millis() + 61 * 60_000) })
 		entries.applyAt(id, EntryCommand.STOP, t0 + 1_800_000)
 		assertEquals(t0 + 1_800_000, db.entryDao().segments(id).single().endUtcMs)
 	}
@@ -950,8 +951,10 @@ class RepositoryTest {
 		val bank2 = master.saveClient(ClientEntity(companyId = acme, name = "Other bank"))
 		entries.updateDetails(id, EntryDetails(acme, bank2, null, "Lavoro", null, null, null, rossi))
 		assertNull(entries.find(id)?.contactId)
-		/* deleting the entry deletes its lines */
+		/* deleting the entry sends it to the bin with its lines; purging deletes them */
 		entries.deleteEntry(id)
+		assertEquals(2, materials.lines(id).first().size)
+		entries.purge(id)
 		assertEquals(0, materials.lines(id).first().size)
 	}
 }
