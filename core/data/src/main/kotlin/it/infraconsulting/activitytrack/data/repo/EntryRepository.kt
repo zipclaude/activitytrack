@@ -12,6 +12,7 @@ import it.infraconsulting.activitytrack.data.db.RemoteDeletedEntity
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
+import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
 import it.infraconsulting.activitytrack.domain.activity.AbsencePlanner
 import it.infraconsulting.activitytrack.domain.activity.ActivityCommand
 import it.infraconsulting.activitytrack.domain.activity.ActivityKind
@@ -181,6 +182,8 @@ class EntryRepository(
 				mode = t.next.mode,
 				locality = req.locality?.trim()?.ifEmpty { null },
 				locationKind = req.locationKind,
+				notes = req.notes?.trim()?.ifEmpty { null },
+				pluginFields = req.pluginFields,
 				zoneId = zone,
 				lastConfirmedUtcMs = now,
 				plannedEndUtcMs = req.endUtcMs?.takeIf { it > now },
@@ -189,9 +192,30 @@ class EntryRepository(
 			),
 			SegmentEntity(entryId = 0, kind = req.mode, startUtcMs = start, zoneId = zone),
 		)
-		verify(id)
+		addExtras(id, req, start)
+		verifyOrOverlap(id)
 		afterStart(id, req.mode, start)
 		return id
+	}
+
+	/* what a creation dialog adds to the new activity: segments before the start, references */
+	private suspend fun addExtras(id: Long, req: StartRequest, startMs: Long) {
+		val zone = clock.zone.id
+		val now = clock.millis()
+		for (s in req.earlier) {
+			checkSegment(s, now, minOf(startMs, now))
+			if (s.kind == SegmentKind.ABSENCE)
+				throw ValidationException(Reason.INVALID_SEGMENT, "absence segment in an activity")
+			dao.insertSegment(
+				SegmentEntity(
+					entryId = id, kind = s.kind, startUtcMs = s.startUtcMs, endUtcMs = s.endUtcMs, zoneId = zone, source = SegmentSource.MANUAL,
+					kmDeclared = s.kmDeclared?.takeIf { s.kind == SegmentKind.TRAVEL },
+				),
+			)
+		}
+		val have = dao.externalRefs(listOf(id)).map { it.value }.toSet()
+		for (r in req.externalRefs.map { it.trim() }.filter { it.isNotEmpty() && it !in have })
+			dao.insertExternalRef(ExternalRefEntity(entryId = id, kind = ExternalRefClassifier.classify(r), value = r))
 	}
 
 	/* a TODO activity started from the start dialog: its details as chosen there, then start(kind, at) */
@@ -212,9 +236,16 @@ class EntryRepository(
 				locality = req.locality?.trim()?.ifEmpty { null } ?: e.locality,
 				locationKind = req.locationKind ?: e.locationKind,
 				plannedEndUtcMs = req.endUtcMs?.takeIf { it > clock.millis() },
+				notes = req.notes?.trim()?.ifEmpty { null } ?: e.notes,
+				pluginFields = req.pluginFields ?: e.pluginFields,
 			),
 		)
 		command(id, ActivityCommand.Start(req.mode, at(req.startUtcMs)), exact = req.startUtcMs != null)
+		if (req.earlier.isNotEmpty() || req.externalRefs.isNotEmpty()) {
+			val opened = dao.segments(id).firstOrNull { !it.planned && it.endUtcMs == null }?.startUtcMs ?: clock.millis()
+			addExtras(id, req, opened)
+			verifyOrOverlap(id)
+		}
 		return id
 	}
 
@@ -403,6 +434,27 @@ class EntryRepository(
 
 	/* TODO -> CLOSED: a task ticked off, the planned segments go */
 	suspend fun tick(entryId: Long) = db.withTransaction { command(entryId, ActivityCommand.Tick, exact = true) }
+
+	/* CLOSED without real segments -> TODO: a task ticked off by mistake (3, "untick") */
+	suspend fun untick(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (!canUntick(e, dao.segments(entryId)))
+			throw ValidationException(Reason.NOT_ALLOWED, "activity $entryId cannot go back to TODO")
+		dao.updateEntry(e.copy(status = ActivityStatus.TODO, mode = null, closedUtcMs = null, updatedUtcMs = clock.millis()))
+		verify(entryId)
+	}
+
+	/*
+	 * The fields of an absence edited in the detail dialog (3.1): company
+	 * (null = every company), kind and notes; its days are its segments.
+	 */
+	suspend fun updateAbsence(entryId: Long, companyId: Long?, absenceKind: AbsenceKind, notes: String?) = db.withTransaction {
+		val e = load(entryId)
+		if (e.kind != ActivityKind.ABSENCE)
+			throw ValidationException(Reason.NOT_ALLOWED, "activity $entryId is not an absence")
+		dao.updateEntry(e.copy(companyId = companyId, absenceKind = absenceKind, notes = notes?.trim()?.ifEmpty { null }, updatedUtcMs = clock.millis()))
+		verify(entryId)
+	}
 
 	/* CLOSED -> RUNNING in [kind]; the gap stays a gap (the UI asks first) */
 	suspend fun reopen(entryId: Long, kind: SegmentKind = SegmentKind.WORK, atUtcMs: Long? = null) = db.withTransaction {
@@ -1254,3 +1306,7 @@ class EntryRepository(
 			check(master.client(e.clientId)?.companyId == e.companyId) { "entry $entryId: company != client company" }
 	}
 }
+
+/* "Untick" (3): an activity, closed, not deleted, without real segments goes back to TODO. */
+fun canUntick(e: TimeEntryEntity, segments: List<SegmentEntity>): Boolean =
+	e.kind == ActivityKind.ACTIVITY && e.status == ActivityStatus.CLOSED && e.deletedUtcMs == null && segments.none { !it.planned }

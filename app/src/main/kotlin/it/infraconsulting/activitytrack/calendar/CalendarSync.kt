@@ -112,7 +112,7 @@ class CalendarSync(private val context: Context, private val container: AppConta
 	fun start(scope: CoroutineScope) {
 		val tick = MutableStateFlow(0)
 		scope.launch {
-			combine(container.reports.changes, container.settings.settings, container.todos.all, tick) { _, _, _, _ -> }.conflate().collect {
+			combine(container.reports.changes, container.settings.settings, container.entries.todos, tick) { _, _, _, _ -> }.conflate().collect {
 				/* lets bursts of changes (stop + complete) settle */
 				delay(SETTLE_MS)
 				runCatching { sync(DEFAULT_DAYS) }.onFailure { Log.w(TAG, "sync failed", it) }
@@ -154,12 +154,12 @@ class CalendarSync(private val context: Context, private val container: AppConta
 		}
 	}
 
-	/* Open planned to-dos from [from] on; done ones leave the calendar (their entries stay). */
+	/* TODO activities with a plan from [from] on; started, ticked or deleted ones leave the calendar. */
 	private suspend fun plannedTodos(zone: ZoneId, from: LocalDate): List<TodoEvent> {
 		val now = Instant.now()
 		val clients = container.masterData.clients.first().associateBy { it.id }
 		val companies = container.masterData.companies.first().associateBy { it.id }
-		return container.todos.planned().mapNotNull { t ->
+		return container.entries.plannedTodos().mapNotNull { t ->
 			val p = t.plan()?.takeIf { !t.isAbsence() } ?: return@mapNotNull null
 			if (p.day < from)
 				return@mapNotNull null

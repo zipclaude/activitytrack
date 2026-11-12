@@ -425,11 +425,11 @@ Toca el botón verde de abajo para iniciar una.</string>
   <string name="home_closed_empty">Nada hecho en este periodo</string>
   <string name="todo_ignored">ignorada</string>
   <string name="swipe_start">Iniciar</string>
-  <string name="swipe_ignore">Ignorar</string>
+  <string name="swipe_ignore">Eliminar</string>
   <string name="swipe_restore">Restaurar</string>
   <string name="swipe_postpone">Posponer</string>
   <string name="swipe_none">Ninguna</string>
-  <string name="swipe_postpone_or_ignore">Posponer o ignorar</string>
+  <string name="swipe_postpone_or_ignore">Posponer o eliminar</string>
   <string name="swipe_pause_resume">Pausa / reanudar</string>
   <string name="swipe_stop_or_suspend">Terminar o suspender</string>
   <string name="gestures_title">Gestos</string>
@@ -889,4 +889,61 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="reopen_text">La actividad vuelve a estar en curso; el tiempo intermedio queda como un hueco.</string>
   <string name="home_pulled_back">El final de «%1$s» se adelantó a las %2$s (empezó otra actividad)</string>
   <string name="home_pulled_back_many">El final de %1$d actividades se adelantó (empezó otra actividad)</string>
+  <string name="absence_kind_absence">Ausencia</string>
+  <string name="absence_kind_holiday">Vacaciones</string>
+  <string name="absence_kind_leave">Permiso</string>
+  <string name="absence_kind_sick">Enfermedad</string>
+  <!-- ui-lists -->
+  <string name="swipe_delete">Eliminar</string>
+  <string name="undo_todo_deleted">«%1$s» movida a la papelera</string>
+  <string name="bin_title">Papelera</string>
+  <string name="bin_restore">Restaurar</string>
+  <string name="bin_purge">Eliminar definitivamente</string>
+  <string name="bin_purge_confirm">¿Eliminar definitivamente «%1$s»? No se puede deshacer.</string>
+  <string name="bin_purge_failed">Tiene adjuntos: elimínalos primero.</string>
+  <string name="lists_absence_kind_absence">Ausencia</string>
+  <string name="lists_absence_kind_holiday">Vacaciones</string>
+  <string name="lists_absence_kind_leave">Permiso</string>
+  <string name="lists_absence_kind_sick">Baja por enfermedad</string>
+  <string name="set_round_stored">Guardar los valores redondeados</string>
+  <string name="set_round_stored_hint">Los botones Iniciar, Cambiar, Terminar y Reabrir guardan horas redondeadas; las horas escritas a mano quedan exactas. Requiere horarios editables libremente.</string>
+  <!-- ui-create -->
+  <string name="create_more_info">Más información</string>
+  <string name="create_external_refs">Referencias externas (una por línea)</string>
+  <string name="create_segments">Tramos</string>
+  <string name="create_segments_hint">Ningún tramo todavía: añade uno con el botón.</string>
+  <string name="create_segments_planned_hint">Los tramos previstos van punteados y nunca se cuentan.</string>
+  <string name="create_add_segment">Añadir %1$s</string>
+  <string name="create_absence_title">Nueva ausencia</string>
+  <string name="create_absence_kind_absence">Ausencia</string>
+  <string name="create_absence_kind_holiday">Vacaciones</string>
+  <string name="create_absence_kind_leave">Permiso</string>
+  <string name="create_absence_kind_sick">Enfermedad</string>
+  <string name="create_absence_from">Desde</string>
+  <string name="create_absence_to">Hasta (opcional)</string>
+  <string name="create_absence_times">Horario (opcional)</string>
+  <string name="create_absence_hint_days">Sin horario: el horario de trabajo de cada día laborable.</string>
+  <string name="create_absence_hint_times">Con horario: las mismas horas cada día del rango.</string>
+  <!-- ui-detail -->
+  <string name="detail_end_ahead">termina a las %1$s</string>
+  <string name="detail_reopen_work">Reabrir con trabajo</string>
+  <string name="detail_reopen_travel">Reabrir con viaje</string>
+  <string name="detail_reopen_text">Se abre un nuevo tramo desde ahora; el tiempo desde el cierre queda vacío.</string>
+  <string name="detail_travel_question">¿Has completado el trabajo?</string>
+  <string name="detail_travel_hint">Sí: esta actividad se cierra y empieza un nuevo viaje. No: el viaje forma parte de esta actividad.</string>
+  <string name="detail_stop_title">Terminar la actividad</string>
+  <string name="detail_stop_at">Fin (vacío = ahora)</string>
+  <string name="detail_stop_ahead_hint">Hasta 60 minutos en el futuro.</string>
+  <string name="detail_return_question">Hubo un viaje de ida: ¿y la vuelta?</string>
+  <string name="detail_stop_with_return">Terminar la actividad y añadir el viaje de vuelta</string>
+  <string name="detail_days">Días</string>
+  <string name="detail_add_day">Día</string>
+  <string name="detail_segment_new">Nuevo tramo</string>
+  <string name="detail_planned">planificado</string>
+  <string name="detail_planned_hint">Planificado: no cuenta en los totales.</string>
+  <string name="detail_delete_text">La actividad va a la papelera: desde allí se puede restaurar.</string>
+  <string name="detail_absence_absence">Ausencia</string>
+  <string name="detail_absence_holiday">Vacaciones</string>
+  <string name="detail_absence_leave">Permiso</string>
+  <string name="detail_absence_sick">Enfermedad</string>
 </resources>

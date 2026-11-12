@@ -26,6 +26,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import it.infraconsulting.activitytrack.ui.common.LocalFieldEnabled
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -204,6 +206,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var travelSample by remember { mutableStateOf(initial.travelSampleSec) }
 	var compact by remember { mutableStateOf(initial.compactDisplay) }
 	var editableTimes by remember { mutableStateOf(initial.editableTimes) }
+	var roundStoredTimes by remember { mutableStateOf(initial.roundStoredTimes) }
 	var tagsFreeText by remember { mutableStateOf(initial.tagsFreeText) }
 	var updateCheck by remember { mutableStateOf(initial.updateCheck) }
 	var updateSource by remember { mutableStateOf(initial.updateSource) }
@@ -258,6 +261,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		travelSampleSec = travelSample,
 		compactDisplay = compact,
 		editableTimes = editableTimes,
+		roundStoredTimes = roundStoredTimes,
 		tagsFreeText = tagsFreeText,
 		updateCheck = updateCheck,
 		updateSource = updateSource,
@@ -430,6 +434,13 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 					RoundingEditor(R.string.set_round_work, work, { work = it }, F.WORK_MIN, text, "Work")
 					RoundingEditor(R.string.set_round_travel, travel, { travel = it }, F.TRAVEL_MIN, text, "Travel")
 					RoundingEditor(R.string.set_round_pause, pause, { pause = it }, F.PAUSE_MIN, text, "Pause")
+					/* the buttons store rounded instants (ACTIVITY-MODEL.md 4.2); only with editable times, so off and greyed without them; locked by the policy like the others */
+					PolicySetting("roundStoredTimes") {
+						CompositionLocalProvider(LocalFieldEnabled provides (LocalFieldEnabled.current && editableTimes)) {
+							SwitchRow(stringResource(R.string.set_round_stored), roundStoredTimes && editableTimes) { roundStoredTimes = it }
+						}
+						Text(stringResource(R.string.set_round_stored_hint), style = MaterialTheme.typography.bodySmall)
+					}
 				}
 				SettingsSection.ONLINE -> {
 					PolicySetting("nominatimEnabled") { SwitchRow(stringResource(R.string.set_nominatim), nominatimOn) { nominatimOn = it } }

@@ -59,7 +59,7 @@ class CsvExporterTest {
 		/* work 4:00 -> 4,00; pause 20 -> 0,33 (FLOOR 5 = 20 min); travel 40 -> 0,67 */
 		assertEquals(
 			"2026-10-14;08:00;2026-10-14;13:00;4,00;0,33;0,67;Acme;\"Bank; Ltd\";Consultant;" +
-				"\"Patch \"\"night\"\"\";42,3;12,50;\"line1\nline2\";INC1, OPS-2;Milano;#remoto #urgente;",
+				"\"Patch \"\"night\"\"\";42,3;12,50;\"line1\nline2\";INC1, OPS-2;Milano;#remoto #urgente;;;",
 			lines[1],
 		)
 		/* the LF inside the quoted notes does not end the record; CRLF does */
@@ -91,5 +91,20 @@ class CsvExporterTest {
 		assertEquals("plain", c.quote("plain"))
 		assertEquals("\"a;b\"", c.quote("a;b"))
 		assertEquals("\"say \"\"hi\"\"\"", c.quote("say \"hi\""))
+	}
+
+	/* activity model 1.0: an absence is a row of its own, its minutes and kind apart from work, travel and pause */
+	@Test
+	fun absencesAreRowsApart() {
+		val work = EntryTimeline(1, listOf(Segment(SegmentKind.WORK, at(d, 14, 0), at(d, 15, 0))))
+		val leave = EntryTimeline(2, listOf(Segment(SegmentKind.ABSENCE, at(d, 9, 0), at(d, 13, 0))))
+		val days = DailyReport.build(listOf(work, leave), zone, now)
+		assertEquals(Duration.ofHours(4), days.single().absent)
+		assertEquals(Duration.ofHours(1), days.single().reported)
+		val rows = ExportRows.build(days, mapOf(1L to meta, 2L to meta.copy(absenceKind = "LEAVE", km = null, expensesCents = 0)), zone)
+		assertEquals(listOf("LEAVE", null), rows.map { it.absenceKind })
+		val lines = csv(rows, Locale.ITALY).removePrefix("\uFEFF").split("\r\n")
+		assertEquals(listOf("240", "LEAVE"), lines[1].split(";").takeLast(2))
+		assertEquals(listOf("", ""), lines[2].split(";").takeLast(2))
 	}
 }

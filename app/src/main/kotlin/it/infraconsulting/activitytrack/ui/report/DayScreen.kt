@@ -129,7 +129,19 @@ private fun DayContent(report: Report, tag: String?, zone: ZoneId, onOpenEntry: 
 				)
 			}
 		}
-		if (lines.isEmpty())
+		/* the absences of the day, by kind, apart from the work (activity model 1.0, 3.1) */
+		val absent = totals?.absences.orEmpty().groupBy { report.meta[it.entryId]?.absenceKind ?: "ABSENCE" }
+			.mapValues { (_, l) -> l.fold(Duration.ZERO) { a, x -> a + x.duration } }
+		if (tag == null && absent.isNotEmpty())
+			item {
+				Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+					Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+						for ((kind, d) in absent.toSortedMap())
+							Text("${stringResource(absenceLabel(kind))} ${hm(d)}", style = MaterialTheme.typography.bodyMedium)
+					}
+				}
+			}
+		if (lines.isEmpty() && absent.isEmpty())
 			item { EmptyText(stringResource(R.string.day_empty)) }
 		items(lines, key = { it.entryId }) { line ->
 			LineCard(line, report, zone) { onOpenEntry(line.entryId) }
@@ -179,6 +191,14 @@ private fun LineCard(line: EntryDayLine, report: Report, zone: ZoneId, onClick: 
 		}
 		}
 	}
+}
+
+/* the label of an absence kind (ACTIVITY-MODEL.md 1.1) */
+internal fun absenceLabel(kind: String): Int = when (kind) {
+	"HOLIDAY" -> R.string.absence_kind_holiday
+	"LEAVE" -> R.string.absence_kind_leave
+	"SICK" -> R.string.absence_kind_sick
+	else -> R.string.absence_kind_absence
 }
 
 private fun hm(d: Duration): String = "%d:%02d".format(d.toHours(), d.toMinutesPart())

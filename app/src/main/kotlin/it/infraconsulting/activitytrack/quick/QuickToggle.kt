@@ -6,8 +6,7 @@ import android.content.Context
 import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
+import it.infraconsulting.activitytrack.notify.isTicking
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.notify.EntryLinks
 import it.infraconsulting.activitytrack.ui.Screen
@@ -15,14 +14,14 @@ import kotlinx.coroutines.flow.first
 
 /*
  * One-tap toggle shared by the Quick Settings tile and the 1×1 widget
- * (DESIGN §10): PAUSE <-> WORK on the most recent ACTIVE entry (TRAVEL goes
- * to PAUSE). Without an ACTIVE entry the caller opens the start screen
+ * (DESIGN §10): PAUSE <-> WORK on the most recent running activity (one with a segment open) (TRAVEL goes
+ * to PAUSE). Without one the caller opens the start screen
  * (provisional choice 2026-10-17).
  */
 object QuickToggle {
-	/* Most recently changed ACTIVE entry (open entries are ordered by last update). */
+	/* Most recently changed running activity with a segment open (open entries are ordered by last update). */
 	suspend fun target(container: AppContainer): TimeEntryEntity? =
-		container.entries.openEntries.first().firstOrNull { it.legacy == LegacyStatus.ACTIVE }
+		container.entries.openEntries.first().firstOrNull { it.isTicking }
 
 	/* True when an entry was toggled, false when there is none to toggle. */
 	suspend fun toggle(container: AppContainer): Boolean {

@@ -1,54 +1,49 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.start
 
-import it.infraconsulting.activitytrack.ui.todo.TodoEntity
-import it.infraconsulting.activitytrack.ui.todo.TodoKind
-import it.infraconsulting.activitytrack.ui.todo.TodoRepository
-import it.infraconsulting.activitytrack.ui.todo.title
-import it.infraconsulting.activitytrack.ui.todo.done
-import it.infraconsulting.activitytrack.ui.todo.doneUtcMs
-import it.infraconsulting.activitytrack.ui.todo.ignoredUtcMs
-import it.infraconsulting.activitytrack.ui.todo.refs
-import it.infraconsulting.activitytrack.ui.todo.color
-import it.infraconsulting.activitytrack.ui.todo.planEndEpochDay
-import it.infraconsulting.activitytrack.ui.todo.todoKind
-import it.infraconsulting.activitytrack.ui.todo.todoId
-import it.infraconsulting.activitytrack.ui.todo.isOpen
-import it.infraconsulting.activitytrack.ui.todo.todoDraft
-import it.infraconsulting.activitytrack.ui.common.parseDate
-import it.infraconsulting.activitytrack.domain.time.atMinute
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.Flow
-import java.time.ZoneId
-import java.time.Instant
-import it.infraconsulting.activitytrack.ui.common.parseHhMm
-import it.infraconsulting.activitytrack.domain.time.latestAt
-import it.infraconsulting.activitytrack.data.repo.ValidationException
 import androidx.lifecycle.viewModelScope
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import it.infraconsulting.activitytrack.data.repo.EntryDetails
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
+import it.infraconsulting.activitytrack.data.repo.PastRequest
+import it.infraconsulting.activitytrack.data.repo.PluginRepository
 import it.infraconsulting.activitytrack.data.repo.StartRequest
+import it.infraconsulting.activitytrack.data.repo.TodoRequest
+import it.infraconsulting.activitytrack.data.repo.ValidationException
+import it.infraconsulting.activitytrack.data.repo.isActive
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
 import it.infraconsulting.activitytrack.domain.model.EntryCommand
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.domain.policy.EntrySource
+import it.infraconsulting.activitytrack.domain.policy.Field
+import it.infraconsulting.activitytrack.domain.policy.Policy
 import it.infraconsulting.activitytrack.domain.start.ClientChoice
 import it.infraconsulting.activitytrack.domain.start.ClientPicker
+import it.infraconsulting.activitytrack.domain.time.latestAt
 import it.infraconsulting.activitytrack.ui.ActionViewModel
+import it.infraconsulting.activitytrack.ui.common.parseDate
+import it.infraconsulting.activitytrack.ui.common.parseHhMm
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/* How a Lavoro activity begins (ACTIVITY-MODEL.md 3, creation): now, from a time already passed, or a past one recorded whole. */
+enum class StartWhen { NOW, STARTED, PAST }
+
 data class StartForm(
 	val ready: Boolean = false,
-	val mode: SegmentKind = SegmentKind.WORK,
+	val start: StartWhen = StartWhen.NOW,
 	val companyId: Long? = null,		/* client filter; null = all companies */
 	val clientId: Long? = null,
 	val roleId: Long? = null,
@@ -59,20 +54,22 @@ data class StartForm(
 	val roleTouched: Boolean = false,
 	/* a late position-based proposal must not override a picked company or client */
 	val clientTouched: Boolean = false,
-	/* chosen start "hh:mm" (M17 editable times); blank = now */
+	/* "Iniziata alle" "hh:mm" */
 	val startTime: String = "",
-	/* chosen end "hh:mm" (M22); blank = open */
-	val endTime: String = "",
-	/* the day "yyyy-mm-dd" (issue #44); blank = today, or yesterday for a time still to come */
+	/* the day of a past activity, "yyyy-mm-dd"; blank = today */
 	val date: String = "",
-	/* now, already started, or a past one to record (issue #92): which times the form asks */
-	val start: StartWhen = StartWhen.NOW,
+	/* "Tratti": before the start (Adesso, Già iniziata) or the whole activity (Passata) */
+	val segments: List<SegDraft> = emptyList(),
+	val notes: String = "",
+	/* external references, one per line */
+	val refs: String = "",
+	/* the management system's fields as JSON, kept by the screen's form */
+	val pluginFields: String? = null,
+	/* what the to-do being started already had */
+	val pluginInitial: String? = null,
 ) {
-	val canStart: Boolean get() = ready && (clientId != null || mode == SegmentKind.TRAVEL)
+	val hasClient: Boolean get() = clientId != null
 }
-
-/* How a new entry starts (issue #92): now, from a time already passed, or a past one with its end. */
-enum class StartWhen { NOW, STARTED, PAST }
 
 /* A recognised call to record (issue #28): rounded start and end, contact name. */
 data class CallPrefill(val startMs: Long, val endMs: Long, val contact: String)
@@ -80,18 +77,23 @@ data class CallPrefill(val startMs: Long, val endMs: Long, val contact: String)
 /* A running entry the user must decide about before the new one starts. */
 data class RunningEntry(val entry: TimeEntryEntity, val title: String)
 
+/*
+ * "Lavoro" (creation dialog of the work activity). Adesso and Già iniziata
+ * start the activity with an open segment of the kind of the button pressed
+ * ([requestStart]); Passata saves a closed one ([savePast]).
+ */
 class StartViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
+	private val pluginData: PluginRepository,
 	/* picked outside the app (widget, shortcut): wins over every proposal */
 	private val pickedClientId: Long?,
 	/* started from a to-do: company, client and activity come from it */
 	private val todoId: Long?,
-	private val todos: TodoRepository,
 	private val position: suspend () -> GeoPoint?,
 	editableTimes: Flow<Boolean> = flowOf(false),
 	/* the policy in force: the fields it makes required (issue #48) */
-	private val policy: () -> it.infraconsulting.activitytrack.domain.policy.Policy = { it.infraconsulting.activitytrack.domain.policy.Policy.NONE },
+	private val policy: () -> Policy = { Policy.NONE },
 ) : ActionViewModel() {
 	val editableTimes = editableTimes.state(false)
 
@@ -118,6 +120,7 @@ class StartViewModel(
 	val pending = _pending.asStateFlow()
 	private val decisions = HashMap<Long, EntryCommand>()
 	private var onStarted: () -> Unit = {}
+	private var kind = SegmentKind.WORK
 
 	/*
 	 * The proposal without position is shown at once; when a fix arrives
@@ -130,11 +133,13 @@ class StartViewModel(
 			val p = entries.startProposal(sites)
 			_form.update { it.copy(ready = true, companyId = p.companyId, clientId = p.clientId, locationKind = p.locationKind) }
 			p.clientId?.let { applyDefaults(it) }
-			todoId?.let { todos.find(it) }?.let { t ->
+			todoId?.let { entries.find(it) }?.let { t ->
+				val refs = entries.externalRefValues(t.id).joinToString("\n")
 				_form.update {
 					it.copy(
 						companyId = t.companyId, clientId = t.clientId ?: it.clientId, clientTouched = true,
-						activity = t.title, activityTouched = true,
+						activity = t.activity.orEmpty(), activityTouched = true, roleId = t.roleId, roleTouched = t.roleId != null,
+						notes = t.notes.orEmpty(), refs = refs, pluginInitial = t.pluginFields,
 					)
 				}
 				t.clientId?.let { applyDefaults(it) }
@@ -155,53 +160,43 @@ class StartViewModel(
 		}
 	}
 
-	fun setMode(mode: SegmentKind) = _form.update { it.copy(mode = mode) }
-
-	fun setStartTime(hhmm: String) = _form.update { it.copy(startTime = hhmm) }
-
-	/* the times a mode does not ask are dropped (issue #92) */
+	/* Adesso, Già iniziata, Passata: what the form asks changes, what was typed for another is dropped */
 	fun setStart(w: StartWhen) = _form.update { f ->
 		when (w) {
-			StartWhen.NOW -> f.copy(start = w, startTime = "", endTime = "", date = "")
-			StartWhen.STARTED -> f.copy(start = w, endTime = "", date = "")
-			StartWhen.PAST -> f.copy(start = w)
+			StartWhen.NOW -> f.copy(start = w, startTime = "", date = "")
+			StartWhen.STARTED -> f.copy(start = w, date = "")
+			StartWhen.PAST -> f.copy(start = w, startTime = "")
 		}
 	}
 
-	/* "Telefonata con NOME" from start to end of the call (issue #28); the client comes as picked */
+	fun setStartTime(hhmm: String) = _form.update { it.copy(startTime = hhmm) }
+	fun setDate(iso: String) = _form.update { it.copy(date = iso) }
+	fun setSegments(s: List<SegDraft>) = _form.update { it.copy(segments = s) }
+	fun setNotes(s: String) = _form.update { it.copy(notes = s) }
+	fun setRefs(s: String) = _form.update { it.copy(refs = s) }
+	fun setPluginFields(json: String?) = _form.update { if (it.pluginFields == json) it else it.copy(pluginFields = json) }
+
+	/* "Telefonata con NOME" from start to end of the call (issue #28): a past work segment; the client comes as picked */
 	fun prefillCall(c: CallPrefill) {
 		val zone = ZoneId.systemDefault()
-		fun hhmm(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).let { "%02d:%02d".format(it.hour, it.minute) }
+		val from = Instant.ofEpochMilli(c.startMs).atZone(zone)
+		val to = Instant.ofEpochMilli(c.endMs).atZone(zone)
+		val start = from.hour * 60 + from.minute
+		var end = to.hour * 60 + to.minute
+		if (end <= start)
+			end += 1440
 		callActivity = c.contact
-		_form.update { it.copy(start = StartWhen.PAST, startTime = hhmm(c.startMs), endTime = hhmm(c.endMs)) }
+		_form.update { it.copy(start = StartWhen.PAST, date = from.toLocalDate().toString(), segments = listOf(SegDraft(SegmentKind.WORK, start, end))) }
 	}
 
 	/* applied after the client's defaults, which would otherwise replace it */
 	private var callActivity: String? = null
-	fun setEndTime(hhmm: String) = _form.update { it.copy(endTime = hhmm) }
-	fun setDate(iso: String) = _form.update { it.copy(date = iso) }
-
-	/* a future day: planned as a to-do after a confirmation (issue #44) */
-	private val _askPlan = MutableStateFlow<Pair<java.time.LocalDate, Int>?>(null)
-	val askPlan = _askPlan.asStateFlow()
-
-	fun confirmPlan(yes: Boolean) {
-		val (day, min) = _askPlan.value ?: return
-		_askPlan.value = null
-		if (yes)
-			plan(min, day)
-	}
 
 	/* the description of an entry from a call (set by the screen in the app language) */
 	var callText: (String) -> String = { "Chiamata telefonica con $it" }
 
-	/* an end already passed (M22): "is the activity over?" before starting; the end in ms */
-	private val _askEnded = MutableStateFlow<Long?>(null)
-	val askEnded = _askEnded.asStateFlow()
-	private var endMs: Long? = null
-
 	/*
-	 * A Start later than now (issue #37): plan it as a to-do today, start
+	 * A start later than now (issue #37): plan it as a to-do today, start
 	 * now, or take it as yesterday's (the latest occurrence, M17).
 	 */
 	private val _askFuture = MutableStateFlow<Int?>(null)
@@ -214,16 +209,14 @@ class StartViewModel(
 		val min = _askFuture.value ?: return
 		_askFuture.value = null
 		when (choice) {
-			FutureChoice.PLAN -> plan(min, java.time.LocalDate.now())
+			FutureChoice.PLAN -> plan(min, LocalDate.now())
 			FutureChoice.NOW -> {
 				_form.update { it.copy(startTime = "") }
-				requestStart(onStarted)
+				requestStart(kind, onStarted)
 			}
 			FutureChoice.YESTERDAY -> {
-				/* "yesterday" overrides a day picked as today */
-				_form.update { it.copy(date = "") }
 				futureAnswered = true
-				requestStart(onStarted)
+				requestStart(kind, onStarted)
 			}
 		}
 	}
@@ -232,59 +225,28 @@ class StartViewModel(
 		_askFuture.value = null
 	}
 
-	/* A planned to-do today from the form: client, title = description (or client), start, end. */
-	private fun plan(startMin: Int, day: java.time.LocalDate) {
+	/* A planned to-do today from the form: client, description (or client), start. */
+	private fun plan(startMin: Int, day: LocalDate) {
 		val f = _form.value
-		val end = parseHhMm(f.endTime)?.takeIf { it > startMin }
 		run(onStarted) {
 			val client = f.clientId?.let { master.client(it) }
 			val company = client?.companyId ?: f.companyId ?: throw ValidationException(ValidationException.Reason.CLIENT_REQUIRED)
-			todos.save(
-				todoDraft(
-					companyId = company, clientId = client?.id, title = f.activity.trim().ifEmpty { client?.name.orEmpty() }, notes = null,
-					dueEpochDay = null, dueTimeMin = null, priority = null,
-					planEpochDay = day.toEpochDay(), planStartMin = startMin, durationMin = end?.let { it - startMin },
+			entries.saveTodo(
+				null,
+				TodoRequest(
+					companyId = company, clientId = client?.id, activity = f.activity.trim().ifEmpty { client?.name.orEmpty() }, roleId = f.roleId,
+					notes = f.notes, planEpochDay = day.toEpochDay(), planStartMin = startMin, pluginFields = f.pluginFields,
 				),
 			)
 		}
 	}
 
-	/*
-	 * Start and end of the form: a time without date is the latest one (today,
-	 * or yesterday if still to come); the end follows the start, across
-	 * midnight if earlier. null start = now.
-	 */
-	private fun times(f: StartForm): Pair<Long?, Long?> {
-		if (!editableTimes.value)
-			return null to null
-		val zone = ZoneId.systemDefault()
-		val now = Instant.now()
-		/* a chosen day: the start on that day (issue #44); else the latest occurrence */
-		val day = parseDate(f.date)
-		val start = parseHhMm(f.startTime)?.takeIf { it < 1440 }?.let { m -> day?.atMinute(m, zone) ?: latestAt(m, now, zone) }
-		val end = parseHhMm(f.endTime)?.let { min ->
-			val from = (start ?: now).atZone(zone)
-			var t = from.toLocalDate().atMinute(min, zone)
-			if (!t.isAfter(start ?: now))
-				t = from.toLocalDate().plusDays(1).atMinute(min, zone)
-			t
-		}
-		return start?.toEpochMilli() to end?.toEpochMilli()
-	}
-
-	/* The answer about an end already passed: yes = recorded as stopped then; no = started open. */
-	fun answerEnded(over: Boolean) {
-		val end = _askEnded.value ?: return
-		_askEnded.value = null
-		endMs = end.takeIf { over }
-		if (over)
-			doStart()	/* a past activity: the running ones are not asked about */
-		else
-			askRunning()
-	}
-
-	fun cancelEnded() {
-		_askEnded.value = null
+	/* the chosen start: a time without date is the latest one (today, or yesterday if still to come); null = now */
+	private fun startMs(f: StartForm): Long? {
+		if (!editableTimes.value || f.start != StartWhen.STARTED)
+			return null
+		val min = parseHhMm(f.startTime)?.takeIf { it < 1440 } ?: return null
+		return latestAt(min, Instant.now(), ZoneId.systemDefault()).toEpochMilli()
 	}
 
 	/* Changing the company filter drops a client of another company. */
@@ -340,73 +302,49 @@ class StartViewModel(
 		}
 	}
 
-	/* Start, asking first about every ACTIVE entry (SPEC §3.1). */
-	fun requestStart(onDone: () -> Unit) {
-		val t = _form.value.startTime
-		if (t.isNotBlank() && (parseHhMm(t) ?: 1440) >= 1440)
-			return fail(ValidationException.Reason.INVALID_TIME)
-		val e = _form.value.endTime
-		if (e.isNotBlank() && parseHhMm(e) == null)
-			return fail(ValidationException.Reason.INVALID_TIME)
-		val f = _form.value
-		/* entries only from to-dos, e.g. a management system's tickets (policy entries.source, issue #48) */
-		if (todoId == null && policy().entrySource == it.infraconsulting.activitytrack.domain.policy.EntrySource.PLANNED_ONLY)
-			return fail(ValidationException.Reason.PLANNED_ONLY)
+	/* the policy's required fields and its "planned only" source; true = may go on */
+	private fun checkPolicy(f: StartForm, travel: Boolean): Boolean {
+		/* activities only from a TODO activity, e.g. a management system's tickets (policy entries.source, issue #48) */
+		if (todoId == null && policy().entrySource == EntrySource.PLANNED_ONLY) {
+			fail(ValidationException.Reason.PLANNED_ONLY)
+			return false
+		}
 		val company = f.companyId ?: allChoices.value.firstOrNull { it.id == f.clientId }?.companyId
 		policy().missingRequired(
 			mapOf(
-				it.infraconsulting.activitytrack.domain.policy.Field.COMPANY to (company != null),
-				it.infraconsulting.activitytrack.domain.policy.Field.CLIENT to (f.clientId != null || f.mode == SegmentKind.TRAVEL),
-				it.infraconsulting.activitytrack.domain.policy.Field.ROLE to (f.roleId != null),
-				it.infraconsulting.activitytrack.domain.policy.Field.DESCRIPTION to f.activity.isNotBlank(),
+				Field.COMPANY to (company != null),
+				Field.CLIENT to (f.clientId != null || travel),
+				Field.ROLE to (f.roleId != null),
+				Field.DESCRIPTION to f.activity.isNotBlank(),
+				Field.NOTES to f.notes.isNotBlank(),
+				Field.REFS to refLines(f.refs).isNotEmpty(),
 			),
-		)?.let { return fail(ValidationException.Reason.POLICY_REQUIRED) }
+		)?.let {
+			fail(ValidationException.Reason.POLICY_REQUIRED)
+			return false
+		}
+		return true
+	}
+
+	/* "Lavoro" or "Viaggio": start with [kind] open, asking first about every activity running (SPEC §3.1). */
+	fun requestStart(kind: SegmentKind, onDone: () -> Unit) {
+		val f = _form.value
+		val t = f.startTime
+		if (editableTimes.value && f.start == StartWhen.STARTED && t.isNotBlank() && (parseHhMm(t) ?: 1440) >= 1440)
+			return fail(ValidationException.Reason.INVALID_TIME)
+		if (!checkPolicy(f, kind == SegmentKind.TRAVEL))
+			return
+		this.kind = kind
 		onStarted = onDone
 		decisions.clear()
-		val startMin = parseHhMm(t)
-		/* a chosen day other than today (issue #44) */
-		val day = parseDate(_form.value.date)
-		val today = java.time.LocalDate.now()
-		if (editableTimes.value && day != null && day != today) {
-			if (startMin == null)
-				return fail(ValidationException.Reason.START_REQUIRED)
-			if (day.isAfter(today)) {
-				_askPlan.value = day to startMin
-				return
-			}
-			/* a past day: a past activity, with its end */
-			if (parseHhMm(e) == null)
-				return fail(ValidationException.Reason.END_REQUIRED)
-			endMs = times(_form.value).second
-			doStart()
-			return
-		}
-		/* a past one (issue #92): start and end both, and no "is it over?" question */
-		if (editableTimes.value && f.start == StartWhen.PAST) {
-			if (startMin == null)
-				return fail(ValidationException.Reason.START_REQUIRED)
-			if (parseHhMm(e) == null)
-				return fail(ValidationException.Reason.END_REQUIRED)
-			val end = times(_form.value).second
-			if (end != null && end <= System.currentTimeMillis()) {
-				endMs = end
-				doStart()
-				return
-			}
-		}
-		/* a Start still to come today: ask first (issue #37) */
+		/* a start still to come today: ask first (issue #37) */
+		val startMin = parseHhMm(t)?.takeIf { editableTimes.value && f.start == StartWhen.STARTED && it < 1440 }
 		val nowMin = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
-		if (editableTimes.value && startMin != null && startMin > nowMin && !futureAnswered) {
+		if (startMin != null && startMin > nowMin && !futureAnswered) {
 			_askFuture.value = startMin
 			return
 		}
 		futureAnswered = false
-		val end = times(_form.value).second
-		endMs = end
-		if (end != null && end <= System.currentTimeMillis()) {
-			_askEnded.value = end
-			return
-		}
 		askRunning()
 	}
 
@@ -414,7 +352,7 @@ class StartViewModel(
 		viewModelScope.launch {
 			val clients = master.clients.first().associateBy { it.id }
 			val companies = master.companies.first().associateBy { it.id }
-			val all = entries.openEntries.first().filter { it.legacy == LegacyStatus.ACTIVE }
+			val all = entries.openEntries.first().filter { it.isActive() }
 			/* "is the travel completed?" not asked (policy behaviours.askTravelDone, issue #48): a running travel stops */
 			val active = if (policy().behaviours.askTravelDone) all else all.filter { e ->
 				(e.mode != SegmentKind.TRAVEL).also { asked -> if (!asked) decisions[e.id] = EntryCommand.STOP }
@@ -442,24 +380,54 @@ class StartViewModel(
 		decisions.clear()
 	}
 
+	/* the segments typed before the start, on today (the day of an activity under way) */
+	private fun earlier(f: StartForm) = if (!editableTimes.value) emptyList() else f.segments.map { it.toInput(LocalDate.now(), ZoneId.systemDefault()) }
+
 	private fun doStart() {
 		val f = _form.value
 		run(onStarted) {
 			entries.start(
 				StartRequest(
-					mode = f.mode,
+					mode = kind,
 					clientId = f.clientId,
 					companyId = if (f.clientId == null) f.companyId else null,
 					roleId = f.roleId,
 					activity = f.activity,
 					locationKind = f.locationKind,
 					todoId = todoId,
-					/* a time without date is the latest one: today, or yesterday if still to come */
-					startUtcMs = times(f).first,
-					endUtcMs = endMs,
+					startUtcMs = startMs(f),
+					notes = f.notes,
+					pluginFields = f.pluginFields,
+					earlier = earlier(f),
+					externalRefs = refLines(f.refs),
 				),
 				HashMap(decisions),
 			)
+		}
+	}
+
+	/* "Salva" of a past activity: closed, with the segments typed on the chosen day. */
+	fun savePast(onDone: () -> Unit) {
+		val f = _form.value
+		if (!checkPolicy(f, false))
+			return
+		val day = f.date.takeIf { it.isNotBlank() }?.let { parseDate(it) ?: return fail(ValidationException.Reason.INVALID_DATE) } ?: LocalDate.now()
+		if (day.isAfter(LocalDate.now()))
+			return fail(ValidationException.Reason.FUTURE_TIME)
+		val zone = ZoneId.systemDefault()
+		run(onDone) {
+			val id = entries.createPast(
+				PastRequest(
+					EntryDetails(
+						companyId = f.companyId, clientId = f.clientId, roleId = f.roleId, activity = f.activity, locality = null,
+						locationKind = f.locationKind, notes = f.notes,
+					),
+					f.segments.map { it.toInput(day, zone) },
+				),
+			)
+			f.pluginFields?.let { pluginData.setEntryFields(id, it) }
+			for (r in refLines(f.refs))
+				entries.addExternalRef(id, r)
 		}
 	}
 }

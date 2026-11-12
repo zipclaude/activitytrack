@@ -436,11 +436,11 @@ Tap the green play button below to start one.</string>
   <string name="home_closed_empty">Nothing done in this window</string>
   <string name="todo_ignored">ignored</string>
   <string name="swipe_start">Start</string>
-  <string name="swipe_ignore">Ignore</string>
+  <string name="swipe_ignore">Delete</string>
   <string name="swipe_restore">Restore</string>
   <string name="swipe_postpone">Postpone</string>
   <string name="swipe_none">None</string>
-  <string name="swipe_postpone_or_ignore">Postpone or ignore</string>
+  <string name="swipe_postpone_or_ignore">Postpone or delete</string>
   <string name="swipe_pause_resume">Pause / resume</string>
   <string name="swipe_stop_or_suspend">Stop or suspend</string>
   <string name="gestures_title">Gestures</string>
@@ -900,4 +900,61 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="reopen_text">The activity goes back to running; the time in between stays a gap.</string>
   <string name="home_pulled_back">The end of “%1$s” was moved back to %2$s (another activity started)</string>
   <string name="home_pulled_back_many">The end of %1$d activities was moved back (another activity started)</string>
+  <string name="absence_kind_absence">Absence</string>
+  <string name="absence_kind_holiday">Holiday</string>
+  <string name="absence_kind_leave">Leave</string>
+  <string name="absence_kind_sick">Sick leave</string>
+  <!-- ui-lists -->
+  <string name="swipe_delete">Delete</string>
+  <string name="undo_todo_deleted">“%1$s” moved to the bin</string>
+  <string name="bin_title">Bin</string>
+  <string name="bin_restore">Restore</string>
+  <string name="bin_purge">Delete permanently</string>
+  <string name="bin_purge_confirm">Delete “%1$s” permanently? It cannot be undone.</string>
+  <string name="bin_purge_failed">It has attachments: remove them first.</string>
+  <string name="lists_absence_kind_absence">Absence</string>
+  <string name="lists_absence_kind_holiday">Holiday</string>
+  <string name="lists_absence_kind_leave">Leave</string>
+  <string name="lists_absence_kind_sick">Sick leave</string>
+  <string name="set_round_stored">Save rounded values</string>
+  <string name="set_round_stored_hint">The Start, Switch, Stop and Reopen buttons store rounded times; times typed by hand stay exact. Needs freely editable times.</string>
+  <!-- ui-create -->
+  <string name="create_more_info">More information</string>
+  <string name="create_external_refs">External references (one per line)</string>
+  <string name="create_segments">Segments</string>
+  <string name="create_segments_hint">No segment yet: add one with the button.</string>
+  <string name="create_segments_planned_hint">Planned segments are drawn dashed and never counted.</string>
+  <string name="create_add_segment">Add %1$s</string>
+  <string name="create_absence_title">New absence</string>
+  <string name="create_absence_kind_absence">Absence</string>
+  <string name="create_absence_kind_holiday">Holiday</string>
+  <string name="create_absence_kind_leave">Leave</string>
+  <string name="create_absence_kind_sick">Sick leave</string>
+  <string name="create_absence_from">From</string>
+  <string name="create_absence_to">To (optional)</string>
+  <string name="create_absence_times">Time (optional)</string>
+  <string name="create_absence_hint_days">Without a time: the working hours of each working day.</string>
+  <string name="create_absence_hint_times">With a time: the same hours on each day of the range.</string>
+  <!-- ui-detail -->
+  <string name="detail_end_ahead">ends at %1$s</string>
+  <string name="detail_reopen_work">Reopen with work</string>
+  <string name="detail_reopen_travel">Reopen with travel</string>
+  <string name="detail_reopen_text">A new segment opens from now; the time since the activity was closed stays empty.</string>
+  <string name="detail_travel_question">Have you completed the work?</string>
+  <string name="detail_travel_hint">Yes: this activity closes and a new travel starts. No: the travel is part of this activity.</string>
+  <string name="detail_stop_title">End the activity</string>
+  <string name="detail_stop_at">End (empty = now)</string>
+  <string name="detail_stop_ahead_hint">Up to 60 minutes ahead.</string>
+  <string name="detail_return_question">There was an outbound travel: what about the way back?</string>
+  <string name="detail_stop_with_return">End the activity and add the return travel</string>
+  <string name="detail_days">Days</string>
+  <string name="detail_add_day">Day</string>
+  <string name="detail_segment_new">New segment</string>
+  <string name="detail_planned">planned</string>
+  <string name="detail_planned_hint">Planned: it does not count in the totals.</string>
+  <string name="detail_delete_text">The activity goes to the bin: it can be restored from there.</string>
+  <string name="detail_absence_absence">Absence</string>
+  <string name="detail_absence_holiday">Holiday</string>
+  <string name="detail_absence_leave">Leave</string>
+  <string name="detail_absence_sick">Sick leave</string>
 </resources>

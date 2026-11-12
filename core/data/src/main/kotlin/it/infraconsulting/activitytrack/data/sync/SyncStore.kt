@@ -44,6 +44,14 @@ class SyncStore(
 	/* the realignment is done: the full pull went through and what the server lacks is logged */
 	fun realigned() = db.exec("UPDATE sync_state SET realign = 0 WHERE id = 1")
 
+	/*
+	 * The realignment pushes the local version of every record still logged
+	 * (changed before the migration and not synced, or since): its changes
+	 * take the time of this sync, so they win over the server's migration,
+	 * which stamped every field it wrote with its own time.
+	 */
+	fun restamp() = db.exec("UPDATE sync_change SET changed_utc_ms = ?", now())
+
 	fun setCursor(cursor: Long) = db.exec("UPDATE sync_state SET cursor = ? WHERE id = 1", cursor)
 
 	fun finished(offsetMs: Long, error: String?) =

@@ -42,6 +42,8 @@ class CsvExporter(
 					r.notes, r.externalRefs.joinToString(", "), r.locality,
 					r.tags.joinToString(" ") { "#$it" },
 					if (r.materialsCents == 0L) "" else number(BigDecimal.valueOf(r.materialsCents, 2), 2),
+					if (r.absenceKind == null) "" else r.absence.toMinutes().toString(),
+					r.absenceKind.orEmpty(),
 				),
 			)
 		w.flush()
@@ -76,6 +78,8 @@ class CsvExporter(
 			"tags",
 			/* issue #41: consumables, kept apart from the expenses */
 			"materials_eur",
+			/* activity model 1.0: an ABSENCE row's minutes and kind (as ActivityTrack Web's absence_min), apart from work, travel and pause */
+			"absence_min", "absence_kind",
 		)
 		private val DATE = DateTimeFormatter.ISO_LOCAL_DATE
 		private val TIME = DateTimeFormatter.ofPattern("HH:mm")

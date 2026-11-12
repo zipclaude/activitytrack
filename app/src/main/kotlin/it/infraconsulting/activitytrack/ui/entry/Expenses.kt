@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.ui.entry
 
 import android.content.Context
+import it.infraconsulting.activitytrack.data.repo.isActive
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -46,8 +47,6 @@ import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
-import it.infraconsulting.activitytrack.ui.common.LegacyStatus
-import it.infraconsulting.activitytrack.ui.common.legacy
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ClickableRow
@@ -249,7 +248,7 @@ fun QuickExpenseScreen(onBack: () -> Unit) {
 
 private suspend fun quickTarget(entries: EntryRepository, master: MasterDataRepository): Pair<TimeEntryEntity, String>? {
 	val open = entries.openEntries.first()
-	val e = open.firstOrNull { it.legacy == LegacyStatus.ACTIVE } ?: open.firstOrNull() ?: return null
+	val e = open.firstOrNull { it.isActive() } ?: open.firstOrNull() ?: return null
 	val name = e.clientId?.let { master.client(it)?.name } ?: e.companyId?.let { master.company(it)?.name } ?: ""
 	return e to name
 }
