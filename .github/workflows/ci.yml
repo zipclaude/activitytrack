@@ -205,11 +205,18 @@ jobs:
         run: |
           V="${TAG#v}"
           PREV=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          # the section of CHANGELOG.md for the version without its suffix (1.0.0 for v1.0.0-alfa-1); git log without one
+          BASE="${V%%-*}"
+          SECTION=$(awk -v v="$BASE" '/^## /{ if (on) exit; on = ($2 == v); next } on' CHANGELOG.md 2>/dev/null || true)
           {
             case "$V" in *-*) echo "ActivityTrack $V: a beta, shown only to who subscribed to the betas (Settings → Updates)." ;; *) echo "ActivityTrack $V." ;; esac
             echo
             echo "Install \`ActivityTrack-$V.apk\` (it updates the installed app and keeps the data). The manuals are in the documentation release: https://github.com/zipclaude/activitytrack-doc/releases/tag/v$V"
-            if [ -n "$PREV" ]; then
+            if [ -n "$SECTION" ]; then
+              echo
+              echo "## Changes in $BASE"
+              echo "$SECTION"
+            elif [ -n "$PREV" ]; then
               echo
               echo "## Changes since $PREV"
               echo
