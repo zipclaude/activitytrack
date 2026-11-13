@@ -1,6 +1,6 @@
 # ActivityTrack — functional specification
 
-Status: v0.21 (2026-11-13, pre-release 1.0.0-alfa-2, before it 1.0.0-alfa-1: the to-do is a state of the activity, see docs/ACTIVITY-MODEL.md; before it release 0.9.9: security review, unsafe record uids refused, changes of the server policy listed; before it 0.9.8, the first from GitLab: travel km from the recorded positions, settings menu; before it 0.9.6: planned absences, site map on the current position). Application ID `it.infraconsulting.activitytrack`.
+Status: v0.21 (2026-11-13, pre-release 1.0.0-beta-1, before it 1.0.0-alfa-2 and 1.0.0-alfa-1: the to-do is a state of the activity, see docs/ACTIVITY-MODEL.md; before it release 0.9.9: security review, unsafe record uids refused, changes of the server policy listed; before it 0.9.8, the first from GitLab: travel km from the recorded positions, settings menu; before it 0.9.6: planned absences, site map on the current position). Application ID `it.infraconsulting.activitytrack`.
 
 Android app for freelancers who work for several companies, on their
 clients, in different roles. Goal: capture time with minimal interaction and

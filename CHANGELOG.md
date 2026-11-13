@@ -5,9 +5,9 @@ features. Bug fixes are not listed one by one (one line per release); security f
 under "Security", with their reference. The details are in `git log` and in the issues.
 Newest release first.
 
-## 1.0.0 (pre-release: 1.0.0-alfa-1, 1.0.0-alfa-2)
+## 1.0.0 (pre-release: 1.0.0-alfa-1, 1.0.0-alfa-2, 1.0.0-beta-1)
 
-Not released yet: the pre-releases alfa-1 and alfa-2 are out, and this list is cumulative
+Not released yet: the pre-releases alfa-1, alfa-2 and beta-1 are out, and this list is cumulative
 until the release (details in docs/ACTIVITY-MODEL.md).
 
 ### Compatibility
