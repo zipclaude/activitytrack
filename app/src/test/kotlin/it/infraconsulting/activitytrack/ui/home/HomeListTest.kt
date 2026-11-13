@@ -197,14 +197,13 @@ class HomeListTest {
 	}
 
 	@Test
-	fun anEndTypedAsATimeMayBeAnHourAhead() {
+	fun anEndTypedAsATimeIsTheNearestInstant() {
 		fun h(h: Int, m: Int = 0) = h * 60 + m
 		/* 12:30 is half an hour ahead: today */
 		assertEquals(day.atTime(12, 30).atZone(zone).toInstant(), closeAt(h(12, 30), now, zone))
-		/* 13:00 is exactly the limit: today */
-		assertEquals(day.atTime(13, 0).atZone(zone).toInstant(), closeAt(h(13), now, zone))
-		/* 13:01 is too far ahead, and yesterday's more than 12 hours ago: none */
-		assertNull(closeAt(h(13, 1), now, zone))
+		/* with the 24-hour limit (issue #179) 13:01 is today's, and so is 23:00, eleven hours ahead */
+		assertEquals(day.atTime(13, 1).atZone(zone).toInstant(), closeAt(h(13, 1), now, zone))
+		assertEquals(day.atTime(23, 0).atZone(zone).toInstant(), closeAt(h(23), now, zone))
 		/* 23:00 is yesterday's at 00:30 */
 		assertEquals(day.minusDays(1).atTime(23, 0).atZone(zone).toInstant(), closeAt(h(23), day.atTime(0, 30).atZone(zone).toInstant(), zone))
 		assertEquals(day.atTime(9, 0).atZone(zone).toInstant(), closeAt(h(9), now, zone))
