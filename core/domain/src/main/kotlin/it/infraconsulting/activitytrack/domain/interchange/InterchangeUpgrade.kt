@@ -19,14 +19,35 @@ import java.time.ZoneId
  * A version 1 interchange file read as version 2 (ACTIVITY-MODEL.md 6.2):
  * its entries, to-dos and absences go through the same migration function
  * as the database (ActivityMigration), with ids made up for the rows of the
- * file. A to-do becomes an activity whose uid is its key as a canonical UUID
- * and whose external key is its key (unless the key is already a UUID, an
- * app-born to-do); the link of an entry to a to-do that is not in the file
+ * file. A to-do key is unique within its company only (the 0.9 importer
+ * matched it by company and key), so a to-do becomes an activity whose uid
+ * is [todoUid] of its company key and key, and whose external key is its
+ * key; a key that is already a UUID (an app-born to-do) stays its uid and
+ * is no external key. An entry's `todoKey` is looked up with the entry's
+ * own company (or as a UUID); the link to a to-do that is not in the file
  * is dropped. Records with values the migration cannot read are left out
- * and named in [Result.skipped].
+ * and named in [Result.skipped] (issue #177).
  */
 object InterchangeUpgrade {
 	data class Result(val data: Interchange, val skipped: List<Pair<String, String>>)
+
+	/*
+	 * The uid of a version 1 to-do: a UUID key as a canonical UUID, any other
+	 * key a name-based uid of (company key, key) in a name space of its own,
+	 * so neither the same key in another company nor an entry with the same
+	 * key (whose uid is SyncIds.canonical of its key, "key:<key>") can get it.
+	 * The company key is length-prefixed so that no pair spells another.
+	 */
+	fun todoUid(companyKey: String?, key: String): String {
+		val k = key.trim()
+		if (isUuid(k))
+			return SyncIds.canonical(k)
+		val c = companyKey?.trim()
+		return SyncIds.nameBased("todo-v1:${c?.length ?: -1}:${c.orEmpty()}:$k")
+	}
+
+	private fun isUuid(key: String): Boolean =
+		SyncIds.canonical(key).replace("-", "") == key.trim().replace("-", "").lowercase()
 
 	fun toV2(
 		data: Interchange,
@@ -48,7 +69,9 @@ object InterchangeUpgrade {
 		val companyKeyOf = { id: Long? -> id?.let { i -> companyIds.entries.first { it.value == i }.key } }
 		val clientKeyOf = { id: Long? -> id?.let { i -> clientIds.entries.first { it.value == i }.key.second } }
 
-		val todoKeys = HashMap<String, Long>()
+		/* (company key, to-do key) → id, and the UUID keys → id */
+		val todoKeys = HashMap<Pair<String?, String>, Long>()
+		val todoUuids = HashMap<String, Long>()
 		val todos = data.todos.mapIndexedNotNull { i, t ->
 			val id = i + 1L
 			val absence = t.kind == "ABSENCE"
@@ -58,18 +81,22 @@ object InterchangeUpgrade {
 			fun min(s: String?, what: String): Int? = s?.let { runCatching { LocalTime.parse(it).let { lt -> lt.hour * 60 + lt.minute } }.getOrNull() ?: throw Bad("$what $it") }
 			try {
 				val companyKey = t.companyKey.takeIf { !absence }
-				val uid = SyncIds.canonical(t.key)
+				val uid = todoUid(companyKey, t.key)
 				LegacyTodo(
 					id = id, uid = uid, kind = t.kind, title = t.title.trim(),
 					companyId = company(companyKey), clientId = client(companyKey, t.clientKey.takeIf { !absence }),
-					externalKey = t.key.takeUnless { SyncIds.canonical(it) == it.trim() },
+					externalKey = t.key.takeUnless { isUuid(it) },
 					notes = t.notes?.trim()?.ifEmpty { null }, refs = t.refs.joinToString("\n"),
 					dueEpochDay = day(t.dueDate, "due date"), dueTimeMin = min(t.dueTime, "due time"), priority = t.priority,
 					done = t.done, doneUtcMs = nowMs.takeIf { t.done }, createdUtcMs = nowMs, updatedUtcMs = nowMs,
 					planEpochDay = day(t.plannedDate, "planned date"), planStartMin = min(t.plannedTime, "planned time"),
 					durationMin = t.durationMin, ignoredUtcMs = nowMs.takeIf { t.ignored },
 					planEndEpochDay = day(t.plannedEndDate, "planned end date"),
-				).also { todoKeys[t.key] = id }
+				).also {
+					todoKeys[companyKey?.trim() to t.key.trim()] = id
+					if (isUuid(t.key))
+						todoUuids[uid] = id
+				}
 			} catch (e: Bad) {
 				skipped += t.key to e.message!!
 				null
@@ -88,7 +115,7 @@ object InterchangeUpgrade {
 			}
 			val first = segs.minOfOrNull { it.startUtcMs } ?: nowMs
 			entries += LegacyEntry(
-				id = id, uid = SyncIds.canonical(e.key), todoId = e.todoKey?.let { todoKeys[it] }, status = e.status,
+				id = id, uid = SyncIds.canonical(e.key), todoId = e.todoKey?.let { k -> todoKeys[e.companyKey?.trim() to k.trim()] ?: todoUuids[SyncIds.canonical(k)] }, status = e.status,
 				companyId = company(e.companyKey), clientId = client(e.companyKey, e.clientKey), activity = e.activity, notes = e.notes,
 				zoneId = e.zone, createdUtcMs = first, updatedUtcMs = segs.mapNotNull { it.endUtcMs }.maxOrNull() ?: first,
 			)

@@ -9,8 +9,16 @@ entry with status `TODO` and the planned fields, an absence an entry of kind
 `ABSENCE`; the sections `todos` and `absences` and the entry's `todoKey`
 are gone. A **version 1** file is still read: its to-dos, entries and
 absences go through the same migration function as the database
-(`InterchangeUpgrade`, `ActivityMigration`) and arrive as activities (a
-to-do's key becomes its external key, its uid the key as a canonical UUID).
+(`InterchangeUpgrade`, `ActivityMigration`) and arrive as activities. A
+version 1 to-do key is unique within its company only, as the 0.9 importer
+read it: the to-do's key becomes its external key and its uid is a
+name-based UUID of (company key, key) (`InterchangeUpgrade.todoUid`), so the
+same key in two companies gives two activities and an entry with the same key
+as a to-do stays another record; a key that already is a UUID (a to-do born
+in the app) stays its uid and is no external key. An entry's `todoKey` is
+resolved with the entry's own `companyKey` (or as a UUID). These uids differ
+from those 1.0.0-alfa-1/-2 gave (the key alone, issue #177): importing again
+a version 1 file that one of those imported does not find its to-dos.
 
 ## Rules
 
