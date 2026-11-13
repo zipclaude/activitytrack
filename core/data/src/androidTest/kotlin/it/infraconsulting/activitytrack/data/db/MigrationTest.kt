@@ -272,7 +272,11 @@ class MigrationTest {
 			/* Friday 2026-11-13, the whole day */
 			db.execSQL("INSERT INTO absence (date_epoch_day, kind, uid) VALUES (20770, 'FULL_DAY', 'a1')")
 		}
-		helper.runMigrationsAndValidate(DB, 22, true, ActivityTrackDatabase.MIGRATION_21_22).use { db ->
+		/*
+		 * no check for unexpected tables: sync_realign and sync_realign_dirty are
+		 * plain SQL, outside Room's schema (the dropped ones are counted below)
+		 */
+		helper.runMigrationsAndValidate(DB, 22, false, ActivityTrackDatabase.MIGRATION_21_22).use { db ->
 			db.query("SELECT uid, status, mode, kind, external_key, priority FROM time_entry ORDER BY id").use { c ->
 				c.moveToFirst()
 				assertEquals(listOf("e5", "RUNNING", "WORK", "ACTIVITY", null, 4L), listOf(c.getString(0), c.getString(1), c.getString(2), c.getString(3), c.getString(4), c.getLong(5)))

@@ -28,7 +28,8 @@ class SyncMigrationTest {
 			)
 			db.execSQL("INSERT INTO day_off (date_epoch_day) VALUES (20000)")
 		}
-		helper.runMigrationsAndValidate("sync-migration", 16, true, ActivityTrackDatabase.MIGRATION_15_16).use { db ->
+		/* no check for unexpected tables: the sync tables in plain SQL (sync_realign…) are outside Room's schema */
+		helper.runMigrationsAndValidate("sync-migration", 16, false, ActivityTrackDatabase.MIGRATION_15_16).use { db ->
 			db.query("SELECT uid FROM time_entry").use { c ->
 				c.moveToFirst()
 				assertEquals("01234567-89ab-cdef-0123-456789abcdef", c.getString(0))

@@ -242,10 +242,16 @@ class RepositoryTest {
 	fun backwardsClockNeverOverlaps() = runBlocking<Unit> {
 		val id = entries.start(StartRequest(SegmentKind.WORK, client))
 		clock.advance(-10)
+		val start = db.entryDao().segments(id).single().startUtcMs
 		entries.quick(id, QuickAction.PAUSE)
-		val segs = db.entryDao().segments(id)
-		assertEquals(segs[0].startUtcMs, segs[0].endUtcMs)
-		assertEquals(segs[0].endUtcMs, segs[1].startUtcMs)
+		/*
+		 * with the clock back the work segment has not begun: it goes instead of
+		 * staying at zero length (4.2, issue #179), and the pause starts where it did
+		 */
+		val seg = db.entryDao().segments(id).single()
+		assertEquals(SegmentKind.PAUSE, seg.kind)
+		assertEquals(start, seg.startUtcMs)
+		assertEquals(null, seg.endUtcMs)
 	}
 
 	@Test
@@ -455,8 +461,8 @@ class RepositoryTest {
 		assertEquals(t0, db.entryDao().segments(id).single().startUtcMs)
 		assertEquals(Reason.FUTURE_TIME, reason { entries.start(StartRequest(SegmentKind.WORK, client, startUtcMs = clock.millis() + 60_000)) })
 		assertEquals(Reason.BEFORE_SEGMENT, reason { entries.stop(id, t0 - 60_000) })
-		/* a stop may lie up to 60 minutes ahead (4.1), not beyond */
-		assertEquals(Reason.FUTURE_TIME, reason { entries.stop(id, clock.millis() + 61 * 60_000) })
+		/* a stop may lie up to 24 hours ahead (4.1), not beyond */
+		assertEquals(Reason.FUTURE_TIME, reason { entries.stop(id, clock.millis() + (24 * 60 + 1) * 60_000) })
 		entries.stop(id, t0 + 1_800_000)
 		assertEquals(t0 + 1_800_000, db.entryDao().segments(id).single().endUtcMs)
 	}
