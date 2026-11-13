@@ -204,3 +204,12 @@ sessions (owner, 2026-10-23) use instead:
 ```
 Co-Authored-By: GLM-5.3 <spam@zipman.it>
 ```
+
+## 8. GitHub backup
+
+GitLab is the primary; github.com/zipclaude/activitytrack is a backup that can test, package and
+release on its own if GitLab is unavailable. `.github/workflows/ci.yml` mirrors `.gitlab-ci.yml`:
+**keep them in step**. Nothing runs on its own there either: "Run workflow" on a branch or tag, or
+a push to `ghtest/*` to try a change. A tag run needs the input `version_code` (GitLab's is
+10000 + the pipeline number, a GitHub run number does not order with it). The jobs `manifest`
+(commits to GitLab's `main`) and `testvm` (the owner's VM) stay GitLab-only.

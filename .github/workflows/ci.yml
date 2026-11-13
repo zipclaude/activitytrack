@@ -1,0 +1,227 @@
+# CI of ActivityTrack on GitHub: the backup of the GitLab project. It mirrors .gitlab-ci.yml
+# (the reference: keep the two in step, see CLAUDE.md "GitHub backup"), so that the backup can
+# test, package and release on its own if GitLab is unavailable.
+#
+# Nothing runs on its own, as on GitLab: no pull_request, no push on other branches, no push
+# on tags. Start a run by hand ("Run workflow" on a branch or on a tag, or `gh workflow run`),
+# or push a branch named ghtest/<anything>: the equivalent of GitLab's testvm/*, it lets a
+# workflow be tried before it is on the default branch (a dispatch needs the file there).
+# A run on a version tag (v0.2.0) also publishes the signed release: jobs apk and release.
+# A tag with a suffix (v1.1.0-beta-1) is a beta: a GitHub pre-release.
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: >-
+          Android versionCode of the release APK (a tag run only; see job apk). On GitLab it is
+          10000 plus the pipeline number: give the number the next GitLab pipeline would have.
+        required: false
+        type: string
+  push:
+    branches: ["ghtest/**"]
+
+permissions:
+  contents: read
+
+# a newer run of a branch replaces the older one (GitLab: interruptible); a release is never cancelled
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # the runner's SDK (ANDROID_HOME) has no platform 37: each job installs it, as GitLab's jobs do
+  ANDROID_BUILD_TOOLS: "36.0.0"
+
+jobs:
+  # Not on a tag: its commit was tried by the branch run and the default branch; the signed
+  # APK and the release follow. (GitLab: job build, on the local/testvm runners.)
+  build:
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 50  # as GitLab's GIT_DEPTH
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # compileSdk 37: the platform and the build tools are installed on top of the runner's SDK
+      - name: Android SDK
+        run: |
+          mkdir -p "$ANDROID_HOME/licenses"
+          printf '\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n' > "$ANDROID_HOME/licenses/android-sdk-license"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;$ANDROID_BUILD_TOOLS" > /dev/null
+
+      # Also validates the checksum of gradle-wrapper.jar; caches the Gradle home
+      # (GitLab caches .gradle-home and .android-sdk by hand).
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Unit tests
+        run: ./gradlew :core:domain:test :core:data:testDebugUnitTest :app:testDebugUnitTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+
+      # instrumented tests need a device; CI only keeps them compiling
+      - name: Compile instrumented tests
+        run: ./gradlew :core:data:assembleDebugAndroidTest 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug 2>&1 | tee -a build.log; exit "${PIPESTATUS[0]}"
+
+      # compiler and Gradle errors, short, in the job log's end
+      - name: Report build errors
+        if: failure()
+        run: |
+          { grep -E '^e: |error:|FAILED$' build.log | grep -v '^> Task' || true
+            grep -A 25 '^\* What went wrong' build.log | grep -vE '^\* Try:|^> Run with|^> Get more help|^$' || true; } | head -n 80
+
+      # GitLab: artifacts:reports:junit
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-results
+          path: "**/build/test-results/**/TEST-*.xml"
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+  # The signed APK of a version tag, with the release key from the repository secrets
+  # (RELEASE_KEYSTORE_BASE64, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD).
+  #
+  # versionCode: GitLab sets it to 10000 + the pipeline number (IID), and Android never updates to
+  # a lower one. A GitHub run number is a different, much smaller sequence, so it must NOT be used
+  # (an APK built here would not order with the GitLab ones), and no number derived from it can be
+  # guaranteed to stay above the GitLab ones, nor below them if GitLab is back later. So this job
+  # takes it from the input version_code of the run and refuses to build without it: the person
+  # who starts a release here, as the fallback of GitLab, says the number (the number the next
+  # GitLab pipeline would have, 10000 + its IID, or any higher one that GitLab's numbers will not
+  # reach). The APK is signed with the same key, so it updates the installed app when its
+  # versionCode is higher. GitLab's way of computing it is unchanged.
+  apk:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # GitLab matches the tag /^v[0-9]/ (a plain v* here: the regex is not available in `if`)
+      - name: Check the tag and the versionCode
+        env:
+          TAG: ${{ github.ref_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9] ]] || { echo "::error::$TAG is not a version tag (vX.Y.Z)"; exit 1; }
+          if ! [[ "$VERSION_CODE" =~ ^[0-9]+$ ]] || [ "${#VERSION_CODE}" -gt 10 ] || [ "$VERSION_CODE" -lt 10000 ] || [ "$VERSION_CODE" -gt 2100000000 ]; then
+            echo "::error::input version_code is required on a tag run: a number from 10000 (GitLab's 10000 + pipeline number) to 2100000000, got '$VERSION_CODE'"
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 50
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # compileSdk 37: the platform and the build tools are installed on top of the runner's SDK
+      - name: Android SDK
+        run: |
+          mkdir -p "$ANDROID_HOME/licenses"
+          printf '\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n' > "$ANDROID_HOME/licenses/android-sdk-license"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;$ANDROID_BUILD_TOOLS" > /dev/null
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Signed release APK
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          TAG: ${{ github.ref_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          export RELEASE_STORE_FILE="$RUNNER_TEMP/release.jks"
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$RELEASE_STORE_FILE"
+          ./gradlew :app:assembleRelease \
+            -Pactivitytrack.versionName="${TAG#v}" \
+            -Pactivitytrack.versionCode="$VERSION_CODE"
+          rm -f "$RELEASE_STORE_FILE"
+          mkdir dist && cp app/build/outputs/apk/release/app-release.apk "dist/ActivityTrack-${TAG#v}.apk"
+
+      # signed: the key of the releases, not the debug one
+      - name: Verify the signature
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          "$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS/apksigner" verify --print-certs "dist/ActivityTrack-${TAG#v}.apk" | head -3
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/*.apk
+          retention-days: 30
+
+  # The APK goes to the GitHub Release of the tag (GitLab: its Generic Packages, linked from the
+  # release); a tag with a suffix is a pre-release (GitLab has no pre-releases: it only says so
+  # in the notes). The release notes are the same as GitLab's, with GitHub's links.
+  release:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write  # the only job that writes: it creates the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0  # the history: the notes list the changes since the previous tag
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: artifacts
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          V="${TAG#v}"
+          PREV=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          {
+            case "$V" in *-*) echo "ActivityTrack $V: a beta, shown only to who subscribed to the betas (Settings → Updates)." ;; *) echo "ActivityTrack $V." ;; esac
+            echo
+            echo "Install \`ActivityTrack-$V.apk\` (it updates the installed app and keeps the data). The manuals are in the documentation release: https://github.com/zipclaude/activitytrack-doc/releases/tag/v$V"
+            if [ -n "$PREV" ]; then
+              echo
+              echo "## Changes since $PREV"
+              echo
+              git log --no-merges -n 60 --format='- %s' "$PREV..$TAG"
+            fi
+          } > notes.md
+          case "$V" in *-*) pre=--prerelease ;; *) pre= ;; esac
+          gh release create "$TAG" artifacts/*.apk --verify-tag --title "ActivityTrack $V" --notes-file notes.md $pre
+
+  # ---- GitLab only ----
+  # testvm: runs on the owner's test VM with images built by hand there (activitytrack/android:37):
+  #   meaningless on GitHub, whose build job covers the same tests.
+  # manifest: signs update-manifest.json and commits it to GitLab's main, where the installed
+  #   apps read it (docs/UPDATES.md). A commit on GitHub's main would make the backup diverge
+  #   from GitLab, and the apps do not read it from GitHub: not ported.
