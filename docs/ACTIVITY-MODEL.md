@@ -296,8 +296,9 @@ New uids are deterministic, so the phone and the server produce the same records
 
 Sync: the server rejects wire schema < 3 with the error `upgrade_required`, which the
 app and the PC interfaces show as "Aggiorna l'app per sincronizzare". After its own
-migration a node's first sync is a full realignment: the server's version wins for every
-migrated record, except for records with unsynced local changes, which are pushed (the
+migration a node's first sync is a full realignment: for a record both sides migrated the
+same way the server's copy is taken (who wins where they migrated it differently is the
+rule of the next paragraph), except for records with unsynced local changes, which are pushed (the
 record itself, the activity a dirty to-do or absence became or the entries that absorbed it,
 and what the migration derived from them: absence segments, references; coordinator,
 2026-11-12); changes made after the migration are pushed as usual, records the server never
