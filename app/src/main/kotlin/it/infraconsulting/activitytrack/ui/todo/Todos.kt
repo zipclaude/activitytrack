@@ -14,6 +14,7 @@ import it.infraconsulting.activitytrack.domain.policy.Field
 import it.infraconsulting.activitytrack.ui.common.DateTimeField
 import it.infraconsulting.activitytrack.ui.common.RangeField
 import it.infraconsulting.activitytrack.ui.common.companyColor
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -613,7 +615,8 @@ fun TodosScreen(onBack: (() -> Unit)?, editId: Long? = null, onOpen: ((Long) -> 
 		) {
 			item {
 				Column(Modifier.padding(horizontal = 16.dp)) {
-					Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+					/* scrolls sideways when the chips do not fit: the bin chip wrapped its label on two lines */
+					Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
 						if (!showBin) {
 							WindowFilter(window, vm::setWindow)
 							FilterChip(
