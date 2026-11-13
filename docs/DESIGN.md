@@ -154,7 +154,7 @@ the sync's time and pushed), then push what the server lacks. A restored older b
 is the one writer of activities: creation (TODO, RUNNING, past CLOSED,
 anonymous travel, ABSENCE via `AbsencePlanner`), the commands of
 `ActivityStateMachine`, travel from work, the return trip, delete to the bin
-and purge, rounded stored times and closing up to 60 minutes ahead (only
+and purge, rounded stored times and closing up to 24 hours ahead (only
 with editable times). Without `concurrentEntries` a start suspends every
 other running activity, a paused one too. Wire schema 3, interchange version 2.
 `ActivityTrackDatabase.VERSION` is the single source.

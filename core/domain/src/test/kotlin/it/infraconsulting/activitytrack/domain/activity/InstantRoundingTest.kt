@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class InstantRoundingTest {
@@ -39,13 +40,17 @@ class InstantRoundingTest {
 	}
 
 	@Test
-	fun stopRoundsUpCappedAnHourAhead() {
+	fun stopRoundsUpCappedADayAhead() {
 		assertEquals(t("2026-11-11T09:15:00Z"), InstantRounding.stop(t("2026-11-11T09:00:00.001Z"), q15, rome))
 		assertEquals(t("2026-11-11T09:15:00Z"), InstantRounding.stop(t("2026-11-11T09:15:00Z"), q15, rome))
 		assertEquals(t("2026-11-11T10:00:00Z"), InstantRounding.stop(t("2026-11-11T09:01:00Z"), q60, rome, now = t("2026-11-11T09:01:00Z")))
-		/* an end already near the limit: capped, never before the asked instant */
-		assertEquals(t("2026-11-11T09:58:00Z"), InstantRounding.stop(t("2026-11-11T09:50:00Z"), q15, rome, now = t("2026-11-11T08:58:00Z")))
-		assertEquals(t("2026-11-11T09:59:00Z"), InstantRounding.stop(t("2026-11-11T09:59:00Z"), q15, rome, now = t("2026-11-11T08:58:00Z")))
+		/* an end near the 24-hour limit: min(max(rounded, at), now + 24 h) */
+		val now = t("2026-11-11T08:58:00Z")
+		assertEquals(t("2026-11-12T08:58:00Z"), InstantRounding.stop(t("2026-11-12T08:50:00Z"), q15, rome, now = now))
+		assertEquals(t("2026-11-12T08:45:00Z"), InstantRounding.stop(t("2026-11-12T08:31:00Z"), q15, rome, now = now))
+		/* an asked instant beyond the limit is capped here and refused by the callers (FutureClose.accepts) */
+		assertEquals(t("2026-11-12T08:58:00Z"), InstantRounding.stop(t("2026-11-12T08:59:00Z"), q15, rome, now = now))
+		assertFalse(FutureClose.accepts(t("2026-11-12T08:59:00Z"), now, editableTimes = true))
 	}
 
 	@Test
@@ -54,8 +59,26 @@ class InstantRoundingTest {
 		assertEquals(t("2026-11-11T09:05:00Z"), InstantRounding.switch(t("2026-11-11T09:07:29Z"), q15, q5, rome, start))
 		assertEquals(t("2026-11-11T09:10:00Z"), InstantRounding.switch(t("2026-11-11T09:07:30Z"), q5, q15, rome, start))
 		assertEquals(t("2026-11-11T09:15:00Z"), InstantRounding.switch(t("2026-11-11T09:07:30Z"), q15, q60, rome, start))
-		/* never before the start of the segment being closed */
-		assertEquals(t("2026-11-11T09:06:00Z"), InstantRounding.switch(t("2026-11-11T09:07:00Z"), q15, q5, rome, t("2026-11-11T09:06:00Z")))
+		/* never before the start of the segment being closed: the exact instant when the rounded one is not after it (R3) */
+		assertEquals(t("2026-11-11T09:07:00Z"), InstantRounding.switch(t("2026-11-11T09:07:00Z"), q15, q5, rome, t("2026-11-11T09:06:00Z")))
+		assertEquals(t("2026-11-11T09:07:00Z"), InstantRounding.switch(t("2026-11-11T09:07:00Z"), q15, q5, rome, t("2026-11-11T09:05:00Z")))
+		/* R1: ahead of the clock by at most half the smaller quantum */
+		assertEquals(t("2026-11-11T09:10:00Z"), InstantRounding.switch(t("2026-11-11T09:07:30Z"), q15, q5, rome, start))
+	}
+
+	/* the owner's example (issue #179): WORK->PAUSE at 10:07:30 stored 10:10, then PAUSE->TRAVEL at 10:08 */
+	@Test
+	fun switchOutOfASegmentAheadDropsIt() {
+		val pauseStart = InstantRounding.switch(t("2026-11-11T09:07:30Z"), q15, q5, rome, t("2026-11-11T08:00:00Z"))
+		assertEquals(t("2026-11-11T09:10:00Z"), pauseStart)
+		val now = t("2026-11-11T09:08:00Z")
+		/* 10:08 rounds to 10:10 = the pause's start: the exact 10:08, raised to that start */
+		val at = InstantRounding.switch(now, q5, q5, rome, pauseStart)
+		assertEquals(pauseStart, at)
+		assertTrue(InstantRounding.dropsClosing(pauseStart, at, now))
+		/* a segment that began, or ends after its start, is closed as usual */
+		assertFalse(InstantRounding.dropsClosing(t("2026-11-11T09:05:00Z"), t("2026-11-11T09:05:00Z"), now))
+		assertFalse(InstantRounding.dropsClosing(pauseStart, t("2026-11-11T09:15:00Z"), now))
 	}
 
 	@Test
@@ -87,19 +110,40 @@ class InstantRoundingTest {
 	@Test
 	fun futureCloseLimit() {
 		val now = t("2026-11-11T09:00:00Z")
-		assertEquals(t("2026-11-11T10:00:00Z"), FutureClose.limit(now, editableTimes = true))
+		assertEquals(Duration.ofHours(24), FutureClose.MAX_AHEAD)
+		assertEquals(t("2026-11-12T09:00:00Z"), FutureClose.limit(now, editableTimes = true))
 		assertEquals(now, FutureClose.limit(now, editableTimes = false))
-		assertTrue(FutureClose.accepts(t("2026-11-11T10:00:00Z"), now, editableTimes = true))
-		assertFalse(FutureClose.accepts(t("2026-11-11T10:00:00.001Z"), now, editableTimes = true))
+		assertTrue(FutureClose.accepts(t("2026-11-12T09:00:00Z"), now, editableTimes = true))
+		assertFalse(FutureClose.accepts(t("2026-11-12T09:00:00.001Z"), now, editableTimes = true))
 		assertFalse(FutureClose.accepts(t("2026-11-11T09:00:01Z"), now, editableTimes = false))
 		assertTrue(FutureClose.accepts(now, now, editableTimes = false))
 	}
 
 	@Test
 	fun anEndAheadMovesBackToANewStart() {
+		val now = t("2026-11-11T09:00:00Z")
 		val segStart = t("2026-11-11T08:00:00Z")
-		assertEquals(t("2026-11-11T09:10:00Z"), FutureClose.pulledBack(t("2026-11-11T09:30:00Z"), segStart, t("2026-11-11T09:10:00Z")))
-		assertEquals(null, FutureClose.pulledBack(t("2026-11-11T09:30:00Z"), segStart, t("2026-11-11T09:30:00Z")))
-		assertEquals(segStart, FutureClose.pulledBack(t("2026-11-11T09:30:00Z"), segStart, t("2026-11-11T07:00:00Z")))
+		val end = t("2026-11-11T09:30:00Z")
+		assertEquals(FutureClose.Effect.EndAt(now), FutureClose.pulledBack(segStart, end, now, now))
+		assertEquals(FutureClose.Effect.EndAt(t("2026-11-11T08:40:00Z")), FutureClose.pulledBack(segStart, end, t("2026-11-11T08:40:00Z"), now))
+		/* nothing to move: the new start at or after the end, or an end in the past */
+		assertNull(FutureClose.pulledBack(segStart, end, end, now))
+		assertNull(FutureClose.pulledBack(segStart, t("2026-11-11T08:50:00Z"), t("2026-11-11T08:40:00Z"), now))
+		/* a segment begun in the past after the new start keeps its end */
+		assertNull(FutureClose.pulledBack(segStart, end, t("2026-11-11T07:00:00Z"), now))
 	}
+
+	/* R4 (issue #179): a segment wholly ahead (the declared return trip) goes instead of ending where it starts */
+	@Test
+	fun aSegmentWhollyAheadIsRemoved() {
+		val now = t("2026-11-11T09:00:00Z")
+		val ret = t("2026-11-11T09:20:00Z")
+		val retEnd = t("2026-11-11T10:05:00Z")
+		assertEquals(FutureClose.Effect.Removed, FutureClose.pulledBack(ret, retEnd, now, now))
+		assertEquals(FutureClose.Effect.Removed, FutureClose.pulledBack(ret, retEnd, ret, now))
+		/* at the start of a segment begun in the past: cut there it would be nothing */
+		assertEquals(FutureClose.Effect.Removed, FutureClose.pulledBack(segStartPast, retEnd, segStartPast, now))
+	}
+
+	private val segStartPast = t("2026-11-11T08:30:00Z")
 }

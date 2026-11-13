@@ -900,7 +900,7 @@ class RepositoryTest {
 		assertEquals("TODO", state(untouched))
 	}
 
-	/* 4.1, 4.2: rounded stored times and closing up to 60 minutes ahead, only with editable times */
+	/* 4.1, 4.2: rounded stored times and closing up to 24 hours ahead, only with editable times */
 	@Test
 	fun roundedTimesAndFutureClose() = runBlocking<Unit> {
 		var rules = TimeRules(editableTimes = true, roundStoredTimes = true)
@@ -913,9 +913,9 @@ class RepositoryTest {
 		repo.stop(id)
 		/* a stop rounds up */
 		assertEquals(Instant.parse("2026-10-14T09:45:00Z").toEpochMilli(), db.entryDao().segments(id).single().endUtcMs)
-		/* a typed end up to 60 minutes ahead */
+		/* a typed end up to 24 hours ahead (issue #179) */
 		val b = repo.start(StartRequest(SegmentKind.WORK, client, activity = "y", startUtcMs = clock.millis()))
-		assertEquals(Reason.FUTURE_TIME, reason { repo.stop(b, clock.millis() + 61 * 60_000) })
+		assertEquals(Reason.FUTURE_TIME, reason { repo.stop(b, clock.millis() + 24 * 60 * 60_000 + 60_000) })
 		repo.stop(b, clock.millis() + 30 * 60_000)
 		/* another start before that end pulls it back to the new start */
 		clock.advance(10)
@@ -924,6 +924,67 @@ class RepositoryTest {
 		/* without editable times neither rounding nor future ends */
 		rules = TimeRules(editableTimes = false, roundStoredTimes = true)
 		assertEquals(Reason.FUTURE_TIME, reason { repo.stop(c, clock.millis() + 60_000) })
+	}
+
+	/*
+	 * issue #179, R1 and R3: a switch rounded ahead is kept; out of a segment
+	 * that has not begun, rounded or not, that segment goes (the owner's
+	 * example: WORK->PAUSE at 10:07:30 stored 10:10, PAUSE->TRAVEL at 10:08:
+	 * WORK ends 10:10, TRAVEL from 10:10, no pause)
+	 */
+	@Test
+	fun switchOutOfASegmentAhead() = runBlocking<Unit> {
+		val repo = EntryRepository(db, clock, times = { TimeRules(editableTimes = true, roundStoredTimes = true) })
+		clock.now = Instant.parse("2026-10-14T09:00:00Z")
+		val id = repo.start(StartRequest(SegmentKind.WORK, client, activity = "x"))
+		clock.now = Instant.parse("2026-10-14T10:07:30Z")
+		repo.switchTo(id, SegmentKind.PAUSE)
+		val ten10 = Instant.parse("2026-10-14T10:10:00Z").toEpochMilli()
+		assertEquals(ten10, db.entryDao().segments(id).last().startUtcMs)
+		clock.now = Instant.parse("2026-10-14T10:08:00Z")
+		repo.switchTo(id, SegmentKind.TRAVEL)
+		val segs = db.entryDao().segments(id)
+		assertEquals(listOf(SegmentKind.WORK, SegmentKind.TRAVEL), segs.map { it.kind })
+		assertEquals(ten10, segs[0].endUtcMs)
+		assertEquals(ten10, segs[1].startUtcMs)
+		/* a switch whose rounded instant is not after the segment's start stores the exact instant */
+		clock.now = Instant.parse("2026-10-14T10:11:00Z")
+		repo.switchTo(id, SegmentKind.WORK)
+		assertEquals(clock.millis(), db.entryDao().segments(id).last().startUtcMs)
+	}
+
+	/* issue #179, R2: a reopen before the end ahead of the last segment pulls it back; the start is not put ahead */
+	@Test
+	fun reopenBeforeAnEndAhead() = runBlocking<Unit> {
+		val repo = EntryRepository(db, clock, times = { TimeRules(editableTimes = true) })
+		val id = repo.start(StartRequest(SegmentKind.WORK, client, activity = "x"))
+		clock.advance(30)
+		repo.stop(id, clock.millis() + 2 * 60 * 60_000)
+		clock.advance(10)
+		repo.reopen(id, SegmentKind.WORK)
+		val segs = db.entryDao().segments(id)
+		assertEquals(clock.millis(), segs[0].endUtcMs)
+		assertEquals(clock.millis(), segs[1].startUtcMs)
+		assertNull(segs[1].endUtcMs)
+	}
+
+	/* issue #179, R4: a start before a return trip that lies wholly ahead removes it */
+	@Test
+	fun startBeforeAReturnTripAheadRemovesIt() = runBlocking<Unit> {
+		val repo = EntryRepository(db, clock, times = { TimeRules(editableTimes = true) })
+		val id = repo.start(StartRequest(SegmentKind.TRAVEL, client))
+		clock.advance(40)
+		repo.switchTo(id, SegmentKind.WORK)
+		clock.advance(60)
+		repo.stopWithReturn(id, clock.millis() + 20 * 60_000)
+		assertEquals(3, db.entryDao().segments(id).size)
+		clock.advance(5)
+		val notices = async(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) { repo.pulledBack.first() }
+		repo.start(StartRequest(SegmentKind.WORK, client, activity = "next"))
+		assertEquals(listOf(SegmentKind.TRAVEL, SegmentKind.WORK), db.entryDao().segments(id).map { it.kind })
+		/* the work's end ahead moves back to the new start, the return goes */
+		assertEquals(clock.millis(), db.entryDao().segments(id).last().endUtcMs)
+		assertEquals(setOf(null, SegmentKind.TRAVEL), notices.await().map { it.removed }.toSet())
 	}
 
 	/* travel from work, "yes", with rounded times: the rounded switch may lie ahead of now; both activities share it */

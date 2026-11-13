@@ -164,7 +164,7 @@ class EntryViewModel(
 		_travelAsk.value = false
 	}
 
-	/* Stop: the end (now, or a chosen time up to 60 minutes ahead with editable times, 4.1) and the return trip's choices (3.2). */
+	/* Stop: the end (now, or a chosen time ahead with editable times, 4.1: see [endOn]) and the return trip's choices (3.2). */
 	data class StopPrompt(val choices: List<ReturnChoice>)
 
 	private val _stopPrompt = MutableStateFlow<StopPrompt?>(null)
@@ -188,8 +188,8 @@ class EntryViewModel(
 
 	/*
 	 * [hhmm] the end typed ("" = now, rounded when saving rounded times):
-	 * the latest instant at that time of day, today or tomorrow, within the
-	 * 60 minutes ahead allowed (4.1).
+	 * the instant at that time of day nearest to now ([endOn]), refused
+	 * beyond the limit of 4.1.
 	 */
 	fun stop(choice: ReturnChoice, hhmm: String, zone: ZoneId) {
 		val at = if (hhmm.isBlank()) null else chosenEnd(hhmm, zone, choice == ReturnChoice.TRAVEL_BACK) ?: return
@@ -336,16 +336,20 @@ class EntryViewModel(
 
 	companion object {
 		/*
-		 * An end typed as a time of day: the latest instant at [min] of
-		 * yesterday, today or tomorrow within the last 12 hours and not after
-		 * the 4.1 limit (at 23:50 "00:20" is tomorrow, at 00:10 "23:50" is
-		 * yesterday, at 10:00 "09:00" is today); null when none is.
+		 * An end typed as a time of day, without a date: the instant at [min]
+		 * of yesterday, today or tomorrow nearest to now, a tie going to the
+		 * earlier (at 23:50 "00:20" is tomorrow, at 00:10 "23:50" is
+		 * yesterday, at 10:00 "09:00" is an hour ago, not 23 hours ahead);
+		 * null when that one lies beyond the 4.1 limit. With the limit at 24
+		 * hours (issue #179) a time alone reaches 12 hours ahead at most; a
+		 * later end is typed with its date, editing the last segment.
 		 */
 		fun endOn(min: Int, today: LocalDate, zone: ZoneId, now: Instant, editableTimes: Boolean): Long? =
 			listOf(today.minusDays(1), today, today.plusDays(1))
 				.map { it.atMinute(min, zone) }
-				.filter { FutureClose.accepts(it, now, editableTimes) && it.isAfter(now.minusSeconds(12 * 3600)) }
-				.maxOrNull()?.toEpochMilli()
+				.minWithOrNull(compareBy<Instant> { java.time.Duration.between(now, it).abs() }.thenBy { it })
+				?.takeIf { FutureClose.accepts(it, now, editableTimes) }
+				?.toEpochMilli()
 
 		/* "Hai completato l'attività lavorativa?" applies to a switch to TRAVEL from WORK (3) */
 		fun asksTravelQuestion(e: TimeEntryEntity): Boolean =

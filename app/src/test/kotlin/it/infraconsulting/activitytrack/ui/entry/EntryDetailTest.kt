@@ -24,13 +24,18 @@ class EntryDetailTest {
 
 	@Test
 	fun stopEndTypedAsTimeOfDay() {
-		/* 10:00 local (09:00Z): 09:30 is today, 10:45 too with editable times, 11:30 is beyond the hour */
+		/* 10:00 local (09:00Z): the nearest instant at the time typed; 09:30 and 10:45 are today */
 		val now = at("2026-11-12T09:00:00Z")
 		val today = LocalDate.of(2026, 11, 12)
 		assertEquals(ms("2026-11-12T08:30:00Z"), EntryViewModel.endOn(9 * 60 + 30, today, zone, now, editableTimes = true))
 		assertEquals(ms("2026-11-12T09:45:00Z"), EntryViewModel.endOn(10 * 60 + 45, today, zone, now, editableTimes = true))
-		assertNull(EntryViewModel.endOn(11 * 60 + 30, today, zone, now, editableTimes = true))
-		/* without editable times nothing ahead; yesterday 10:45 is more than 12 hours ago */
+		/* with the 24-hour limit (issue #179) 11:30 is accepted; "09:00" is an hour ago, not 23 hours ahead */
+		assertEquals(ms("2026-11-12T10:30:00Z"), EntryViewModel.endOn(11 * 60 + 30, today, zone, now, editableTimes = true))
+		assertEquals(ms("2026-11-12T08:00:00Z"), EntryViewModel.endOn(9 * 60, today, zone, now, editableTimes = true))
+		/* 21:00 is 11 hours ahead, nearer than yesterday's 13 hours ago; 22:00 equally far: the earlier */
+		assertEquals(ms("2026-11-12T20:00:00Z"), EntryViewModel.endOn(21 * 60, today, zone, now, editableTimes = true))
+		assertEquals(ms("2026-11-11T21:00:00Z"), EntryViewModel.endOn(22 * 60, today, zone, now, editableTimes = true))
+		/* without editable times nothing ahead: the nearest is not exchanged for yesterday's */
 		assertNull(EntryViewModel.endOn(10 * 60 + 45, today, zone, now, editableTimes = false))
 	}
 

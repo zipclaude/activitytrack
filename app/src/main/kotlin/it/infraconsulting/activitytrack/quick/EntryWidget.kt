@@ -122,7 +122,8 @@ private fun entryState(
 		mode = e.mode,
 		commands = ongoingActions(e),
 		sinceMs = shown.since?.toEpochMilli(),
-		runningMs = open?.let { now - it.startUtcMs },
+		/* zero, not a negative time, while a start rounded ahead has not come (issue #179) */
+		runningMs = open?.let { maxOf(0L, now - it.startUtcMs) },
 		workMs = total(SegmentKind.WORK),
 		travelMs = total(SegmentKind.TRAVEL),
 	)

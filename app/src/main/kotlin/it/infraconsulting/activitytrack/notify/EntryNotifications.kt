@@ -88,6 +88,13 @@ object EntryNotifications {
 	fun ongoing(context: Context, info: EntryInfo): Notification {
 		val e = info.entry
 		val state = displayedState(e, info.segments).state
+		val nowMs = System.currentTimeMillis()
+		/*
+		 * a segment opened a little ahead (a switch rounded to the nearest,
+		 * issue #179): its start shown as a time, not a chronometer counting
+		 * a negative time, until it comes
+		 */
+		val ahead = info.openSince?.let { it > nowMs } == true
 		val b = Notification.Builder(context, NotificationChannels.ONGOING)
 			.setSmallIcon(R.drawable.ic_stat_timer)
 			.setContentTitle(info.title)
@@ -96,8 +103,8 @@ object EntryNotifications {
 			.setOngoing(true)
 			.setOnlyAlertOnce(true)
 			.setShowWhen(true)
-			.setUsesChronometer(true)
-			.setWhen(info.openSince ?: System.currentTimeMillis())
+			.setUsesChronometer(!ahead)
+			.setWhen(info.openSince ?: nowMs)
 			.setCategory(Notification.CATEGORY_STOPWATCH)
 			.setContentIntent(openAppIntent(context))
 		e.activity?.let { b.setSubText(it) }

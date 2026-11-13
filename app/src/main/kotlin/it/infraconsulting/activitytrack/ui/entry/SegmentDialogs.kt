@@ -99,7 +99,7 @@ internal fun kindLabel(k: SegmentKind) = stringResource(
 /*
  * Edit or delete a closed segment (backlog 11): date, start, end, km of a
  * travel; the new values replace the recorded ones, exactly as typed. The
- * end of the last one may lie up to 60 minutes ahead with editable times
+ * end of the last one may lie up to 24 hours ahead with editable times
  * (4.1, checked by the repository). The running segment (issue #57) moves
  * its start only and cannot be deleted; a planned one takes any time.
  */

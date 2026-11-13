@@ -793,12 +793,14 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="detail_reopen_text">Ab jetzt beginnt ein neuer Abschnitt; die Zeit seit dem Abschluss bleibt leer.</string>
   <string name="detail_travel_hint">Ja: diese Tätigkeit wird abgeschlossen und eine neue Fahrt beginnt. Nein: die Fahrt gehört zu dieser Tätigkeit.</string>
   <string name="detail_stop_at">Ende (leer = jetzt)</string>
-  <string name="detail_stop_ahead_hint">Bis zu 60 Minuten in der Zukunft.</string>
+  <string name="detail_stop_ahead_hint">Die nächstgelegene Uhrzeit, bis zu 12 Stunden voraus; ein späteres Ende (bis zu 24 Stunden) über den letzten Abschnitt.</string>
   <string name="detail_return_question">Es gab eine Hinfahrt: und die Rückfahrt?</string>
   <string name="detail_end_ahead">endet um %1$s</string>
   <!-- pulled-back notice (ACTIVITY-MODEL.md 4.1) -->
   <string name="home_pulled_back">Das Ende von „%1$s“ wurde auf %2$s vorverlegt (eine andere Tätigkeit hat begonnen)</string>
   <string name="home_pulled_back_many">Das Ende von %1$d Tätigkeiten wurde vorverlegt (eine andere Tätigkeit hat begonnen)</string>
+  <string name="home_return_removed">Die geplante Rückfahrt wurde entfernt.</string>
+  <string name="home_segment_removed">Ein geplanter Abschnitt wurde entfernt.</string>
   <!-- absence kinds and the absence dialog -->
   <string name="absence_kind_absence">Abwesenheit</string>
   <string name="absence_kind_holiday">Urlaub</string>

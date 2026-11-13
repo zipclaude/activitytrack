@@ -805,12 +805,14 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="detail_reopen_text">A new segment opens from now; the time since the activity was closed stays empty.</string>
   <string name="detail_travel_hint">Yes: this activity closes and a new travel starts. No: the travel is part of this activity.</string>
   <string name="detail_stop_at">End (empty = now)</string>
-  <string name="detail_stop_ahead_hint">Up to 60 minutes ahead.</string>
+  <string name="detail_stop_ahead_hint">Nearest time to now, up to 12 hours ahead; a later end (up to 24 hours) by editing the last segment.</string>
   <string name="detail_return_question">There was an outbound travel: what about the way back?</string>
   <string name="detail_end_ahead">ends at %1$s</string>
   <!-- pulled-back notice (ACTIVITY-MODEL.md 4.1) -->
   <string name="home_pulled_back">The end of “%1$s” was moved back to %2$s (another activity started)</string>
   <string name="home_pulled_back_many">The end of %1$d activities was moved back (another activity started)</string>
+  <string name="home_return_removed">The planned return trip was removed.</string>
+  <string name="home_segment_removed">A planned stretch was removed.</string>
   <!-- absence kinds and the absence dialog -->
   <string name="absence_kind_absence">Absence</string>
   <string name="absence_kind_holiday">Holiday</string>

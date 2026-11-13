@@ -186,23 +186,41 @@ segment, and no TRAVEL segment after its last WORK segment, the app offers three
    the outbound has no samples); then close the activity with `closed_utc_ms = now`.
 
 The return's end may lie in the future: it is a declared estimate, allowed beyond the
-60 minutes of 4.1, so choice 3 is offered only when times are editable (decided by the
-assistant). With saving rounded times on, `at` is rounded as a stop and the return keeps the
-outbound's exact duration. The same three choices replace today's "return travel" option
-of the stop sheet.
+24 hours of 4.1 (the stop `at` itself is held to them), so choice 3 is offered only when
+times are editable (decided by the assistant). With saving rounded times on, `at` is rounded
+as a stop and the return keeps the outbound's exact duration. When an activity starts (or this
+one is reopened or resumed) at or before the start of the return, which then lies wholly
+ahead, the return is deleted with the notice "Il viaggio di ritorno previsto è stato
+rimosso." (4.1). The same three choices replace today's "return travel" option of the stop
+sheet.
 
 ## 4. Times
 
 ### 4.1 Closing in the future
 
-`stop(at)` and editing the end of the **last** segment accept `at` up to **60 minutes**
-after now (decided by the assistant), and only when times are editable
-(`AppSettings.editableTimes`, policy `editableTimes`). Every other "no future time" check
-stays. A closed activity whose end is in the future shows `DONE`/`INCOMPLETE` at once,
-with the end time highlighted.
+`stop(at)` and editing the end of the **last** segment accept `at` up to **24 hours**
+after now (owner, issue #179; was 60 minutes), and only when times are editable
+(`AppSettings.editableTimes`, policy `editableTimes`). The limit is one constant; an `at`
+beyond it is refused, in one place. Every other "no future time" check stays, with two
+exceptions: the one instant of a rounded `switch` (4.2), which may lie ahead by at most half
+a quantum, and an instant left as it was when a segment is edited. Wherever an elapsed time
+or a duration is shown (Home card, detail header, notification, widgets) an instant ahead
+counts as now: zero, never a negative duration, until it comes. A closed activity whose end
+is in the future shows `DONE`/`INCOMPLETE` at once, with the end time highlighted.
 
-When another activity starts before that end, the end of the earlier one moves back to the
-new start, with a notice (decided by the assistant, owner left it to us).
+A time typed without a date (the stop dialog and sheet) is read as the instant at that time
+of day nearest to now (yesterday, today or tomorrow; a tie goes to the earlier), and refused
+when that lies beyond the limit: at 10:00 "09:00" is an hour ago, not 23 hours ahead. An end
+further ahead is typed with its date (editing the last segment).
+
+When another activity starts, or this one is reopened or resumed, before that end, the end
+moves back to the new start, with a notice (decided by the assistant, owner left it to us);
+the new segment starts at that instant: a start is never put ahead to follow an end in the
+future. A segment that lies wholly ahead and that the new start comes at or before (its start
+is after now, e.g. the declared return trip of 3.2), or that the new start meets exactly at
+its start, is deleted instead of becoming zero-length, with a notice of its own: "Il viaggio
+di ritorno previsto è stato rimosso." for a TRAVEL segment, "Un tratto previsto è stato
+rimosso." otherwise. A segment that began in the past after the new start keeps its end.
 
 ### 4.2 Saving rounded times
 
@@ -212,12 +230,20 @@ store rounded instants; manual entry always stores what the user types.
 
 - Quantum of a segment = the quantum of its kind's `ReportRounding` rule (work 15,
   travel 5, pause 5 by default); the mode of the rule is not used for instants.
-- A start (`start`, `resume`, `reopen`) rounds **down**, never before the end of the
-  activity's previous segment.
-- A stop rounds **up** (the result may be in the future: 4.1 applies, capped at 60 min).
+- A start (`start`, `resume`, `reopen`) rounds **down**, never before the latest start or
+  end of the activity's segments that is not in the future (an end ahead moves back, 4.1).
+- A stop rounds **up**: `min(max(rounded, at), now + 24 h)` (4.1).
 - A `switch` uses **one** instant for both segments: rounded to the **nearest** multiple
-  of the smaller of the two quanta, never before the start of the segment being closed
-  (decided by the assistant: down or up alone would favour one of the two kinds).
+  of the smaller of the two quanta (decided by the assistant: down or up alone would favour
+  one of the two kinds). The result may lie ahead of now by at most half that quantum, and
+  that is allowed: nothing refuses it for being ahead (owner, issue #179).
+- When that rounded instant is not after the start of the segment being closed, the exact
+  instant `at` is stored instead (no zero-length segment). The lower bound of a switch (and
+  of any close) is the open segment's start, even when that lies ahead; if even so the open
+  segment would end where it starts and its start lies ahead, it is deleted rather than kept
+  at zero length (unless it is the activity's only segment). Example: WORK→PAUSE at 10:07:30
+  stores 10:10; PAUSE→TRAVEL at 10:08 then gives WORK until 10:10, TRAVEL from 10:10, no
+  pause.
 
 ## 5. Priority
 

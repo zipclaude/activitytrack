@@ -258,7 +258,7 @@ class EntryRepository(
 
 	/*
 	 * "Lavoro · Passata": a CLOSED activity with the segments typed (stored
-	 * as typed, never rounded); the last end may lie up to 60 minutes ahead
+	 * as typed, never rounded); the last end may lie up to 24 hours ahead
 	 * when times are editable (4.1), the starts are in the past.
 	 */
 	suspend fun createPast(req: PastRequest): Long = db.withTransaction {
@@ -431,7 +431,7 @@ class EntryRepository(
 
 	/*
 	 * RUNNING -> CLOSED, the open segment closed now (rounded up when saving
-	 * rounded times) or at [atUtcMs]: up to 60 minutes ahead when times are
+	 * rounded times) or at [atUtcMs]: up to 24 hours ahead when times are
 	 * editable (4.1), never before the running segment started.
 	 */
 	suspend fun stop(entryId: Long, atUtcMs: Long? = null) = db.withTransaction {
@@ -645,10 +645,9 @@ class EntryRepository(
 	private suspend fun checkChosen(entryId: Long, atUtcMs: Long?, future: Boolean) {
 		atUtcMs ?: return
 		val now = Instant.ofEpochMilli(clock.millis())
-		val limit = if (future) FutureClose.limit(now, times().editableTimes) else now
-		if (atUtcMs > limit.toEpochMilli())
+		if (!FutureClose.accepts(Instant.ofEpochMilli(atUtcMs), now, times().editableTimes && future))
 			throw ValidationException(Reason.FUTURE_TIME)
-		val latest = dao.segments(entryId).filter { !it.planned }.maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: it.startUtcMs) }
+		val latest = latestBoundary(entryId, now.toEpochMilli())
 		if (latest != null && atUtcMs < latest)
 			throw ValidationException(Reason.BEFORE_SEGMENT)
 	}
@@ -679,21 +678,26 @@ class EntryRepository(
 	private suspend fun nowCommand(e: TimeEntryEntity, cmd: ActivityCommand, clockMs: Long): ActivityCommand {
 		val rules = times()
 		val segs = dao.segments(e.id).filter { !it.planned }
-		/* a clock that went backwards must not put a boundary before the latest recorded one (overlap) */
-		val latest = segs.maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: it.startUtcMs) }
-		val nowMs = if (latest != null && latest > clockMs) latest else clockMs
+		/*
+		 * A start never follows a boundary ahead of now (an end in the future,
+		 * 4.1: it moves back to the start instead, R2 of issue #179); what
+		 * closes the open segment is never before its start, even when that
+		 * lies ahead (a switch rounded to the nearest, R3).
+		 */
+		val floor = segs.flatMap { listOfNotNull(it.startUtcMs, it.endUtcMs) }.filter { it <= clockMs }.maxOrNull()
+		val nowMs = maxOf(clockMs, floor ?: Long.MIN_VALUE)
 		val now = Instant.ofEpochMilli(nowMs)
 		val open = segs.lastOrNull { it.endUtcMs == null }
-		val lastEnd = segs.mapNotNull { it.endUtcMs }.maxOrNull()
+		val closeNow = Instant.ofEpochMilli(maxOf(nowMs, open?.startUtcMs ?: Long.MIN_VALUE))
 		fun ms(v: Long) = Instant.ofEpochMilli(v)
 		val r = rules.rounds
 		return when (cmd) {
-			is ActivityCommand.Start -> cmd.copy(at = if (r) ms(roundStart(cmd.kind, nowMs, lastEnd, rules)) else now)
-			is ActivityCommand.Resume -> cmd.copy(at = if (r) ms(roundStart(cmd.kind, nowMs, lastEnd, rules)) else now)
-			is ActivityCommand.Reopen -> cmd.copy(at = if (r) ms(roundStart(cmd.kind, nowMs, lastEnd, rules)) else now)
-			is ActivityCommand.Switch -> cmd.copy(at = if (r && open != null) ms(roundSwitch(open, cmd.kind, nowMs, rules)) else now)
-			is ActivityCommand.Stop -> cmd.copy(at = if (r && open != null) ms(roundStop(open, nowMs, rules)) else now)
-			is ActivityCommand.Suspend -> cmd.copy(at = now)
+			is ActivityCommand.Start -> cmd.copy(at = if (r) ms(roundStart(cmd.kind, nowMs, floor, rules)) else now)
+			is ActivityCommand.Resume -> cmd.copy(at = if (r) ms(roundStart(cmd.kind, nowMs, floor, rules)) else now)
+			is ActivityCommand.Reopen -> cmd.copy(at = if (r) ms(roundStart(cmd.kind, nowMs, floor, rules)) else now)
+			is ActivityCommand.Switch -> cmd.copy(at = if (r && open != null) ms(roundSwitch(open, cmd.kind, nowMs, rules)) else closeNow)
+			is ActivityCommand.Stop -> cmd.copy(at = if (r && open != null) ms(roundStop(open, nowMs, rules)) else closeNow)
+			is ActivityCommand.Suspend -> cmd.copy(at = closeNow)
 			else -> cmd
 		}
 	}
@@ -717,9 +721,25 @@ class EntryRepository(
 		val nowMs = clock.millis()
 		if (t.deletePlanned)
 			dao.deletePlannedSegments(e.id)
-		t.closeAt?.let { check(dao.closeOpenSegment(e.id, it.toEpochMilli()) == 1) { "entry ${e.id}: no open segment to close" } }
 		val opened = t.open
+		t.closeAt?.let { closeAt ->
+			val real = dao.segments(e.id).filter { !it.planned }
+			val open = real.lastOrNull { it.endUtcMs == null }
+			/*
+			 * R3 (issue #179): an open segment that has not begun (a switch rounded
+			 * ahead) and would end where it starts goes instead, unless it is all
+			 * the activity has
+			 */
+			if (open != null && InstantRounding.dropsClosing(Instant.ofEpochMilli(open.startUtcMs), closeAt, Instant.ofEpochMilli(nowMs)) &&
+				(opened != null || real.size > 1)
+			)
+				dao.deleteSegment(open.id)
+			else
+				check(dao.closeOpenSegment(e.id, closeAt.toEpochMilli()) == 1) { "entry ${e.id}: no open segment to close" }
+		}
 		if (opened != null) {
+			/* R2: an end of this activity ahead of the new start (a reopen, a resume) moves back to it first */
+			pullBack(e.id, opened.at.toEpochMilli(), own = true)
 			val segId = dao.insertSegment(SegmentEntity(entryId = e.id, kind = opened.kind, startUtcMs = opened.at.toEpochMilli(), zoneId = clock.zone.id))
 			/* e.g. "travel from 10:05" tapped at 10:20: the fixes since 10:05 are part of the travel */
 			if (retagFrom != null)
@@ -751,24 +771,34 @@ class EntryRepository(
 	}
 
 	/*
-	 * 4.1: an earlier activity closed with its end after now and after the
-	 * new start: that end moves back to the new start (not before its
-	 * segment's start), with a notice.
+	 * 4.1: an activity closed with its end after now and after the new start
+	 * of [entryId] (another one, or with [own] this one's last segment, R2 of
+	 * issue #179): that end moves back to the new start, with a notice. A
+	 * segment that lies wholly ahead and that the start comes at or before (a
+	 * declared return trip, 3.2) goes instead, with a notice of its own (R4).
 	 */
-	private suspend fun pullBack(entryId: Long, startMs: Long) {
+	private suspend fun pullBack(entryId: Long, startMs: Long, own: Boolean = false) {
 		val nowMs = clock.millis()
 		val moved = ArrayList<PulledBack>()
 		for (s in dao.segmentsBetween(startMs, Long.MAX_VALUE)) {
 			val end = s.endUtcMs ?: continue
-			if (s.entryId == entryId || s.planned || end <= nowMs || end <= startMs)
+			if ((s.entryId == entryId) != own || s.planned)
 				continue
 			val other = dao.entry(s.entryId) ?: continue
 			if (other.deletedUtcMs != null || other.kind != ActivityKind.ACTIVITY)
 				continue
-			val newEnd = FutureClose.pulledBack(Instant.ofEpochMilli(end), Instant.ofEpochMilli(s.startUtcMs), Instant.ofEpochMilli(startMs))?.toEpochMilli() ?: continue
-			dao.updateSegment(s.copy(endUtcMs = newEnd))
-			dao.updateEntry(other.copy(updatedUtcMs = nowMs))
-			moved += PulledBack(other.id, end, newEnd)
+			when (val fx = FutureClose.pulledBack(Instant.ofEpochMilli(s.startUtcMs), Instant.ofEpochMilli(end), Instant.ofEpochMilli(startMs), Instant.ofEpochMilli(nowMs))) {
+				null -> continue
+				FutureClose.Effect.Removed -> {
+					dao.deleteSegment(s.id)
+					moved += PulledBack(other.id, end, startMs, removed = s.kind)
+				}
+				is FutureClose.Effect.EndAt -> {
+					dao.updateSegment(s.copy(endUtcMs = fx.end.toEpochMilli()))
+					moved += PulledBack(other.id, end, fx.end.toEpochMilli())
+				}
+			}
+			dao.updateEntry(dao.entry(s.entryId)!!.copy(updatedUtcMs = nowMs))
 		}
 		if (moved.isNotEmpty())
 			pulled.tryEmit(moved)
@@ -1109,9 +1139,11 @@ class EntryRepository(
 	}
 
 	/*
-	 * A closed segment edited. Its end may lie up to 60 minutes ahead (4.1)
+	 * A closed segment edited. Its end may lie up to 24 hours ahead (4.1)
 	 * when it is the activity's last segment and times are editable; every
-	 * other end stays in the past. Planned and absence segments take any time.
+	 * other end stays in the past. An instant left as it was is not refused
+	 * for lying ahead (a switch rounded to the nearest stores one, issue
+	 * #179). Planned and absence segments take any time.
 	 */
 	suspend fun updateSegment(segmentId: Long, startUtcMs: Long, endUtcMs: Long, kmDeclared: Double? = null, resolve: Boolean = false) = db.withTransaction {
 		val s = dao.segment(segmentId) ?: throw ValidationException(Reason.NOT_FOUND)
@@ -1125,7 +1157,9 @@ class EntryRepository(
 			last -> FutureClose.limit(Instant.ofEpochMilli(now), times().editableTimes).toEpochMilli()
 			else -> now
 		}
-		checkSegment(SegmentInput(s.kind, startUtcMs, endUtcMs, kmDeclared), if (ahead) Long.MAX_VALUE else now, limit)
+		val startLimit = if (ahead) Long.MAX_VALUE else if (startUtcMs == s.startUtcMs) maxOf(now, startUtcMs) else now
+		val endLimit = if (endUtcMs == s.endUtcMs) maxOf(limit, endUtcMs) else limit
+		checkSegment(SegmentInput(s.kind, startUtcMs, endUtcMs, kmDeclared), startLimit, endLimit)
 		val e = load(s.entryId)
 		if (resolve)
 			makeRoom(s.entryId, s.id, startUtcMs, endUtcMs)
@@ -1284,9 +1318,21 @@ class EntryRepository(
 	 * clock change nor a backdated command can create overlaps.
 	 */
 	private suspend fun writeInstant(entryId: Long, requested: Long): Long {
-		val latest = dao.segments(entryId).filter { !it.planned }.maxOfOrNull { maxOf(it.startUtcMs, it.endUtcMs ?: it.startUtcMs) }
 		val now = clock.millis()
-		return maxOf(minOf(requested, now), latest ?: Long.MIN_VALUE)
+		return maxOf(minOf(requested, now), latestBoundary(entryId, now) ?: Long.MIN_VALUE)
+	}
+
+	/*
+	 * The latest boundary a command's instant may not precede: the latest
+	 * start or end of the real segments that is not ahead of [nowMs] (an end
+	 * ahead moves back to a new start instead, 4.1, R2 of issue #179), and
+	 * the start of the open segment even when that lies ahead (R3).
+	 */
+	private suspend fun latestBoundary(entryId: Long, nowMs: Long): Long? {
+		val real = dao.segments(entryId).filter { !it.planned }
+		val past = real.flatMap { listOfNotNull(it.startUtcMs, it.endUtcMs) }.filter { it <= nowMs }.maxOrNull()
+		val open = real.lastOrNull { it.endUtcMs == null }?.startUtcMs
+		return listOfNotNull(past, open).maxOrNull()
 	}
 
 	private suspend fun verifyOrOverlap(entryId: Long) {

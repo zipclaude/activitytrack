@@ -36,23 +36,37 @@ object InstantRounding {
 
 	/*
 	 * stop: up. The result may lie in the future; with [now] it is capped at
-	 * the limit of 4.1 (60 minutes, times being editable since rounding is).
+	 * the limit of 4.1 ([FutureClose.MAX_AHEAD], times being editable since
+	 * rounding is): min(max(rounded, at), now + limit). An [at] beyond the
+	 * limit is the caller's to refuse (FutureClose.accepts).
 	 */
 	fun stop(at: Instant, quantum: Duration, zone: ZoneId, now: Instant? = null): Instant {
-		val r = round(at, quantum, zone, Mode.UP)
+		val r = maxOf(round(at, quantum, zone, Mode.UP), at)
 		val cap = now?.let { FutureClose.limit(it, editableTimes = true) }
-		return if (cap != null && r.isAfter(cap)) maxOf(cap, at) else r
+		return if (cap != null) minOf(r, cap) else r
 	}
 
 	/*
 	 * switch: one instant for both segments, the nearest multiple of the
-	 * smaller quantum (half way rounds up), never before [closingStart] (the
-	 * start of the segment being closed).
+	 * smaller quantum (half way rounds up), which may lie ahead of [at] by
+	 * half of it (issue #179, R1). When that is not after [closingStart] (the
+	 * start of the segment being closed) the exact [at] instead: no segment
+	 * of zero length (R3). Never before [closingStart], even when that lies
+	 * ahead: the caller then drops the segment it would close where it
+	 * starts ([dropsClosing]).
 	 */
 	fun switch(at: Instant, closing: Duration, opening: Duration, zone: ZoneId, closingStart: Instant): Instant {
 		val r = round(at, minOf(closing, opening), zone, Mode.NEAREST)
-		return maxOf(r, closingStart)
+		return maxOf(if (r.isAfter(closingStart)) r else at, closingStart)
 	}
+
+	/*
+	 * A segment closed at [closeAt] that starts at [start], ahead of [now],
+	 * and would end where it starts has not begun: it is deleted instead of
+	 * kept with zero length (R3: WORK->PAUSE at 10:05 stored 10:10, then
+	 * PAUSE->TRAVEL at 10:06: no pause, TRAVEL from 10:10).
+	 */
+	fun dropsClosing(start: Instant, closeAt: Instant, now: Instant): Boolean = !closeAt.isAfter(start) && start.isAfter(now)
 
 	private enum class Mode { DOWN, UP, NEAREST }
 
@@ -76,12 +90,13 @@ object InstantRounding {
 }
 
 /*
- * Closing in the future (4.1): stop and the end of the last segment accept
- * an instant up to [MAX_AHEAD] after now, only when times are editable;
- * every other "no future time" check stays.
+ * Closing in the future (4.1): stop, the end of the last segment and the
+ * return trip of 3.2 accept an instant up to [MAX_AHEAD] after now, only
+ * when times are editable; every other "no future time" check stays.
  */
 object FutureClose {
-	val MAX_AHEAD: Duration = Duration.ofMinutes(60)
+	/* owner, issue #179: 24 hours (was 60 minutes) */
+	val MAX_AHEAD: Duration = Duration.ofHours(24)
 
 	/* The latest end accepted now. */
 	fun limit(now: Instant, editableTimes: Boolean): Instant = if (editableTimes) now + MAX_AHEAD else now
@@ -89,10 +104,24 @@ object FutureClose {
 	fun accepts(end: Instant, now: Instant, editableTimes: Boolean): Boolean = !end.isAfter(limit(now, editableTimes))
 
 	/*
-	 * Another activity starts at [newStart] before the [end] of an earlier
-	 * one (4.1): that end moves back to the new start, not before the start
-	 * of its segment ([segmentStart]); null when nothing moves.
+	 * An activity starts, resumes or reopens at [newStart] before the [end],
+	 * ahead of [now], of a segment (of another activity or of its own last
+	 * one, 4.1): what happens to that segment; null when nothing does.
 	 */
-	fun pulledBack(end: Instant, segmentStart: Instant, newStart: Instant): Instant? =
-		if (end.isAfter(newStart)) maxOf(newStart, segmentStart) else null
+	fun pulledBack(segmentStart: Instant, end: Instant, newStart: Instant, now: Instant): Effect? = when {
+		!end.isAfter(now) || !end.isAfter(newStart) -> null
+		/* at its start, or before it when it has not begun: cut there it would be nothing (R4) */
+		newStart == segmentStart || (newStart.isBefore(segmentStart) && segmentStart.isAfter(now)) -> Effect.Removed
+		/* a real overlap: the end moves back to the new start */
+		!segmentStart.isAfter(newStart) -> Effect.EndAt(newStart)
+		/* a segment that began (in the past) after the new start keeps its end */
+		else -> null
+	}
+
+	sealed interface Effect {
+		data class EndAt(val end: Instant) : Effect
+
+		/* the segment lay wholly ahead (a declared return trip, 3.2): it goes, with a notice of its own */
+		data object Removed : Effect
+	}
 }

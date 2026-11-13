@@ -794,12 +794,14 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="detail_reopen_text">Se abre un nuevo tramo desde ahora; el tiempo desde el cierre queda vacío.</string>
   <string name="detail_travel_hint">Sí: esta actividad se cierra y empieza un nuevo viaje. No: el viaje forma parte de esta actividad.</string>
   <string name="detail_stop_at">Fin (vacío = ahora)</string>
-  <string name="detail_stop_ahead_hint">Hasta 60 minutos en el futuro.</string>
+  <string name="detail_stop_ahead_hint">La hora más cercana a ahora, hasta 12 horas en el futuro; un final más lejano (hasta 24 horas) editando el último tramo.</string>
   <string name="detail_return_question">Hubo un viaje de ida: ¿y la vuelta?</string>
   <string name="detail_end_ahead">termina a las %1$s</string>
   <!-- pulled-back notice (ACTIVITY-MODEL.md 4.1) -->
   <string name="home_pulled_back">El final de «%1$s» se adelantó a las %2$s (empezó otra actividad)</string>
   <string name="home_pulled_back_many">El final de %1$d actividades se adelantó (empezó otra actividad)</string>
+  <string name="home_return_removed">Se ha eliminado el viaje de vuelta previsto.</string>
+  <string name="home_segment_removed">Se ha eliminado un tramo previsto.</string>
   <!-- absence kinds and the absence dialog -->
   <string name="absence_kind_absence">Ausencia</string>
   <string name="absence_kind_holiday">Vacaciones</string>

@@ -129,9 +129,9 @@ internal fun RunAction.label(): Int = when (this) {
 
 /*
  * A stop typed as a time of day (asked only when times are editable): the
- * day as the detail screen resolves it (EntryViewModel.endOn): yesterday,
- * today or tomorrow, up to the 60 minutes ahead a close may
- * (ACTIVITY-MODEL.md 4.1); null when none is.
+ * day as the detail screen resolves it (EntryViewModel.endOn): the instant
+ * at that time nearest to now, yesterday, today or tomorrow, within the
+ * limit a close may lie ahead (ACTIVITY-MODEL.md 4.1); null when it is not.
  */
 internal fun closeAt(minuteOfDay: Int, now: Instant, zone: ZoneId): Instant? =
 	EntryViewModel.endOn(minuteOfDay, now.atZone(zone).toLocalDate(), zone, now, editableTimes = true)?.let(Instant::ofEpochMilli)
@@ -269,8 +269,8 @@ fun rememberReopen(vm: QuickActioner, titleOf: (Long) -> String): (TimeEntryEnti
 
 /*
  * The stop question (3.2): the return-trip choices when they apply, else a
- * single Stop; with editable times an end time (empty = now, up to 60
- * minutes ahead for a stop); under a minute "Scarta".
+ * single Stop; with editable times an end time (empty = now; a time alone
+ * is the nearest instant at it, closeAt); under a minute "Scarta".
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.repo.EntryRepository
 import it.infraconsulting.activitytrack.data.repo.MasterDataRepository
+import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.flow.Flow
@@ -32,17 +33,28 @@ object Undo {
 }
 
 /*
- * An earlier activity's end moved back to where another one started
- * (ACTIVITY-MODEL.md 4.1): the notice's text. Shown by the app-wide snackbar
- * host, wherever the start happened (Home, a widget, the Start screen).
+ * An earlier activity's end moved back to where another one started (or
+ * this one reopened or resumed, ACTIVITY-MODEL.md 4.1), or a segment that
+ * lay wholly ahead went (a declared return trip, issue #179): the notice's
+ * text. Shown by the app-wide snackbar host, wherever the start happened
+ * (Home, a widget, the Start screen).
  */
 fun pulledBackNotices(context: Context, entries: EntryRepository, master: MasterDataRepository): Flow<String> =
-	entries.pulledBack.map { list ->
-		val first = list.first()
-		val e = entries.find(first.entryId)
-		val zone = e?.zoneId?.let(ZoneId::of) ?: ZoneId.systemDefault()
-		val at = Instant.ofEpochMilli(first.newEndUtcMs).atZone(zone).toLocalTime()
-		val title = e?.clientId?.let { id -> master.clients.first().firstOrNull { it.id == id }?.name } ?: e?.activity
-		if (list.size > 1) context.getString(R.string.home_pulled_back_many, list.size)
-		else context.getString(R.string.home_pulled_back, title ?: context.getString(R.string.entry_no_client), formatMin(at.hour * 60 + at.minute))
+	entries.pulledBack.map { all ->
+		val list = all.filter { it.removed == null }
+		val removed = all.mapNotNull { it.removed }
+		val gone = when {
+			removed.isEmpty() -> null
+			SegmentKind.TRAVEL in removed -> context.getString(R.string.home_return_removed)
+			else -> context.getString(R.string.home_segment_removed)
+		}
+		val moved = list.firstOrNull()?.let { first ->
+			val e = entries.find(first.entryId)
+			val zone = e?.zoneId?.let(ZoneId::of) ?: ZoneId.systemDefault()
+			val at = Instant.ofEpochMilli(first.newEndUtcMs).atZone(zone).toLocalTime()
+			val title = e?.clientId?.let { id -> master.clients.first().firstOrNull { it.id == id }?.name } ?: e?.activity
+			if (list.size > 1) context.getString(R.string.home_pulled_back_many, list.size)
+			else context.getString(R.string.home_pulled_back, title ?: context.getString(R.string.entry_no_client), formatMin(at.hour * 60 + at.minute))
+		}
+		listOfNotNull(moved, gone).joinToString(" ")
 	}

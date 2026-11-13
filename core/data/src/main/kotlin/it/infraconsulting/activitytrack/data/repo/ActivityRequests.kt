@@ -123,8 +123,14 @@ data class TimeRules(
 	val rounds: Boolean get() = it.infraconsulting.activitytrack.domain.activity.InstantRounding.effective(roundStoredTimes, editableTimes)
 }
 
-/* An earlier activity whose end lay after another one's start was pulled back to it (4.1): the UI tells. */
-data class PulledBack(val entryId: Long, val oldEndUtcMs: Long, val newEndUtcMs: Long)
+/*
+ * A segment whose end lay ahead of another start (of another activity, or of
+ * the same one reopened or resumed) was pulled back to it (4.1): the UI
+ * tells. [removed]: the kind of a segment that lay wholly ahead and went
+ * instead (a TRAVEL one: the declared return trip of 3.2; issue #179);
+ * null when its end moved to [newEndUtcMs].
+ */
+data class PulledBack(val entryId: Long, val oldEndUtcMs: Long, val newEndUtcMs: Long, val removed: SegmentKind? = null)
 
 /* The plan of a TODO activity (null without one). */
 fun TimeEntryEntity.plan(): TodoPlan? = TodoPlan.of(planEpochDay, planStartMin, durationMin)

@@ -74,7 +74,10 @@ class LocationService : Service() {
 		return if (update()) START_STICKY else START_NOT_STICKY
 	}
 
+	private val refresh = Runnable { if (instance === this) update() }
+
 	override fun onDestroy() {
+		main.removeCallbacks(refresh)
 		instance = null
 		settingsJob?.cancel()
 		tracker.stop()
@@ -107,6 +110,9 @@ class LocationService : Service() {
 		/* the previous entry left ACTIVE: its notification lost the service and must go */
 		fgsEntry?.let { old -> if (old != chosen.id) cancelOngoing(old) }
 		fgsEntry = chosen.id
+		/* a segment opened a little ahead (issue #179): the chronometer starts when its start comes */
+		main.removeCallbacks(refresh)
+		chosen.openSince?.let { since -> (since - System.currentTimeMillis()).takeIf { it > 0 }?.let { main.postDelayed(refresh, it + 1000) } }
 		/* travelling: any ACTIVE entry whose open segment is a travel (issue #155) */
 		val travelling = active.any { it.entry.mode == SegmentKind.TRAVEL }
 		tracker.start(SamplingPlan.of(settings, travelling))
