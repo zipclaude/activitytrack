@@ -88,6 +88,19 @@ class SyncEngineTest {
 								val uid = c["uid"]!!.jsonPrimitive.content
 								if (uid in refuse)
 									return@map JsonObject(mapOf("uid" to JsonPrimitive(uid), "status" to JsonPrimitive("error"), "error" to JsonPrimitive("forbidden")))
+								/* as ActivityTrack Web: a new entry needs its required fields, and the external key is unique with the company */
+								if (type == "entry" && c["op"]!!.jsonPrimitive.content != "delete") {
+									val before = records[type to uid]?.takeIf { !it.deleted }
+									val merged = (before?.fields ?: emptyMap()) + c["fields"]!!.jsonObject
+									fun invalid(detail: String) = JsonObject(
+										mapOf("uid" to JsonPrimitive(uid), "status" to JsonPrimitive("error"), "error" to JsonPrimitive("invalid"), "detail" to JsonPrimitive(detail)),
+									)
+									if (before == null && listOf("status", "zoneId", "createdUtcMs").any { merged[it] == null || merged[it] is JsonNull })
+										return@map invalid("partial new entry")
+									val key = merged["externalKey"]?.takeIf { it !is JsonNull }
+									if (key != null && records.any { (k, r) -> k.first == "entry" && k.second != uid && !r.deleted && r.fields["externalKey"] == key && r.fields["companyUid"] == merged["companyUid"] })
+										return@map invalid("duplicate")
+								}
 								val r = records.getOrPut(type to uid) { Record(mutableMapOf(), false, false, 0) }
 								if (c["op"]!!.jsonPrimitive.content == "delete") r.deleted = true
 								else c["fields"]!!.jsonObject.forEach { (k, v) -> r.fields[k] = v }
@@ -148,7 +161,8 @@ class SyncEngineTest {
 	@AfterTest
 	fun close() = phones.forEach { it.c.close() }
 
-	private fun sync(p: Phone, downloads: Boolean = false) = runBlocking { SyncEngine(p.db, server, files = p.files, downloads = downloads).sync() }
+	private fun sync(p: Phone, downloads: Boolean = false, authority: SyncAuthority = SyncAuthority.PHONE) =
+		runBlocking { SyncEngine(p.db, server, files = p.files, downloads = downloads, authority = authority).sync() }
 
 	private fun company(p: Phone, name: String): String {
 		val uid = SyncIds.random()
@@ -356,6 +370,252 @@ class SyncEngineTest {
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_realign"))
 		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_error"))
+	}
+
+	/*
+	 * Issue #176: the two nodes migrated the same to-do differently. A phone
+	 * of schema 21 with the to-do T (key K-1), synced, and an entry E started
+	 * from it offline: its migration lets E absorb T. The server never saw E:
+	 * T stayed its own activity there, [serverT] as it is (TODO, or ticked).
+	 */
+	private class Absorbed(val a: Phone, val acme: String, val todo: String, val e: String, val seg: String)
+
+	private fun phoneAbsorbs(serverStatus: String = "TODO"): Absorbed {
+		val a = phone(version = 21)
+		val db = a.sql
+		db.exec("UPDATE sync_state SET enabled = 1")
+		val acme = SyncIds.random()
+		val todo = SyncIds.random()
+		val e = SyncIds.random()
+		val seg = SyncIds.random()
+		db.exec("INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, ?)", acme)
+		db.exec("INSERT INTO todo (id, uid, company_id, title, external_key, refs, done, created_utc_ms, updated_utc_ms, kind) VALUES (1, ?, 1, 'Patch', 'K-1', '', 0, 1, 2, 'TASK')", todo)
+		/* synced; then E started from T, offline */
+		db.exec("DELETE FROM sync_change")
+		db.exec(
+			"INSERT INTO time_entry (id, uid, todo_id, company_id, activity, status, mode, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) " +
+				"VALUES (1, ?, 1, 1, 'work', 'ACTIVE', 'WORK', 'Europe/Rome', 0, 10, 10)",
+			e,
+		)
+		db.exec("INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 'WORK', 10, NULL, 'Europe/Rome', 'AUTO', ?)", seg)
+		db.exec("PRAGMA foreign_keys = OFF")
+		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		db.exec("PRAGMA foreign_keys = ON")
+		assertEquals("K-1", a.one("SELECT external_key FROM time_entry WHERE uid = ?", e))
+		assertNull(a.one("SELECT id FROM time_entry WHERE uid = ?", todo))
+		/* the server's migration: T its own activity, with the key */
+		val t = a.records.read("entry", e)!!.toMutableMap()
+		t["activity"] = JsonPrimitive("Patch")
+		t["status"] = JsonPrimitive(serverStatus)
+		t["mode"] = JsonNull
+		t["closedUtcMs"] = if (serverStatus == "CLOSED") JsonPrimitive(5) else JsonNull
+		t["createdUtcMs"] = JsonPrimitive(1)
+		server.put("company", acme, a.records.read("company", acme)!!)
+		server.put("entry", todo, t)
+		return Absorbed(a, acme, todo, e, seg)
+	}
+
+	@Test
+	fun phoneAbsorbedTheTodoThePhoneIsTrusted() {
+		val x = phoneAbsorbs()
+		val r = sync(x.a)
+		assertEquals(emptyList(), r.errors)
+		/* the server's empty shell is deleted there; E goes up whole, with the key */
+		assertTrue(server.records.getValue("entry" to x.todo).deleted)
+		val e = server.records.getValue("entry" to x.e).fields
+		assertEquals(JsonPrimitive("K-1"), e["externalKey"])
+		assertEquals(JsonPrimitive("RUNNING"), e["status"])
+		assertEquals(JsonPrimitive("Europe/Rome"), e["zoneId"])
+		assertTrue(server.records.containsKey("segment" to x.seg))
+		assertNull(x.a.one("SELECT id FROM time_entry WHERE uid = ?", x.todo))
+		assertEquals("K-1", x.a.one("SELECT external_key FROM time_entry WHERE uid = ?", x.e))
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_error"))
+		assertEquals(0L, x.a.one("SELECT realign FROM sync_state"))
+	}
+
+	@Test
+	fun phoneAbsorbedTheTodoTheServerIsTrusted() {
+		val x = phoneAbsorbs()
+		val r = sync(x.a, authority = SyncAuthority.SERVER)
+		assertEquals(emptyList(), r.errors)
+		/* T as the server has it; E without the key, pointing at T, pushed as an ordinary activity */
+		assertEquals("K-1", x.a.one("SELECT external_key FROM time_entry WHERE uid = ?", x.todo))
+		assertEquals("TODO", x.a.one("SELECT status FROM time_entry WHERE uid = ?", x.todo))
+		assertNull(x.a.one("SELECT external_key FROM time_entry WHERE uid = ?", x.e))
+		assertEquals(x.todo, x.a.one("SELECT r.value FROM external_ref r JOIN time_entry t ON t.id = r.entry_id WHERE t.uid = ? AND r.kind = 'UUID'", x.e))
+		assertEquals(JsonPrimitive("K-1"), server.records.getValue("entry" to x.todo).fields["externalKey"])
+		val e = server.records.getValue("entry" to x.e).fields
+		assertTrue(e["externalKey"] == null || e["externalKey"] is JsonNull)
+		assertEquals(JsonPrimitive("RUNNING"), e["status"])
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_error"))
+	}
+
+	/* T ticked off on another device while E was started here offline: kept, without the key, pointing at E */
+	@Test
+	fun aTodoTickedElsewhereKeepsItsRecordWithoutTheKey() {
+		val x = phoneAbsorbs(serverStatus = "CLOSED")
+		val r = sync(x.a)
+		assertEquals(emptyList(), r.errors)
+		assertEquals("CLOSED", x.a.one("SELECT status FROM time_entry WHERE uid = ?", x.todo))
+		assertNull(x.a.one("SELECT external_key FROM time_entry WHERE uid = ?", x.todo))
+		assertEquals(x.e, x.a.one("SELECT r.value FROM external_ref r JOIN time_entry t ON t.id = r.entry_id WHERE t.uid = ? AND r.kind = 'UUID'", x.todo))
+		val t = server.records.getValue("entry" to x.todo)
+		assertTrue(!t.deleted && t.fields["externalKey"] is JsonNull)
+		assertEquals(JsonPrimitive("K-1"), server.records.getValue("entry" to x.e).fields["externalKey"])
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_change"))
+	}
+
+	/* a to-do ticked here offline, nothing absorbed it anywhere: the same record, its status goes up */
+	@Test
+	fun aTodoTickedOfflineGoesUp() {
+		val a = phone(version = 21)
+		val db = a.sql
+		db.exec("UPDATE sync_state SET enabled = 1")
+		val acme = SyncIds.random()
+		val todo = SyncIds.random()
+		db.exec("INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, ?)", acme)
+		db.exec("INSERT INTO todo (id, uid, company_id, title, external_key, refs, done, created_utc_ms, updated_utc_ms, kind) VALUES (1, ?, 1, 'Patch', 'K-1', '', 0, 1, 2, 'TASK')", todo)
+		db.exec(
+			"INSERT INTO sync_shadow (type, uid, json) VALUES ('todo', ?, ?)",
+			todo, """{"companyUid":"$acme","title":"Patch","externalKey":"K-1","done":false,"doneUtcMs":null,"kind":"TASK","createdUtcMs":1,"updatedUtcMs":2}""",
+		)
+		db.exec("DELETE FROM sync_change")
+		db.exec("UPDATE todo SET done = 1, done_utc_ms = 7 WHERE id = 1")
+		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 7)", todo)
+		db.exec("PRAGMA foreign_keys = OFF")
+		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		db.exec("PRAGMA foreign_keys = ON")
+		val t = a.records.read("entry", todo)!!.toMutableMap()
+		t["status"] = JsonPrimitive("TODO")
+		t["closedUtcMs"] = JsonNull
+		server.put("company", acme, a.records.read("company", acme)!!)
+		server.put("entry", todo, t)
+		assertEquals(emptyList(), sync(a).errors)
+		assertEquals(JsonPrimitive("CLOSED"), server.records.getValue("entry" to todo).fields["status"])
+		assertEquals("CLOSED", a.one("SELECT status FROM time_entry WHERE uid = ?", todo))
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_change"))
+	}
+
+	/*
+	 * Issue #176, the other way: here the open to-do T, changed and not
+	 * synced, stayed its own activity and its closed entry E2 points at it;
+	 * the server's migration let E2 absorb T (the key), with E2's work.
+	 */
+	private class ServerAbsorbed(val a: Phone, val todo: String, val e2: String)
+
+	private fun serverAbsorbs(): ServerAbsorbed {
+		val a = phone(version = 21)
+		val db = a.sql
+		db.exec("UPDATE sync_state SET enabled = 1")
+		val acme = SyncIds.random()
+		val todo = SyncIds.random()
+		val e2 = SyncIds.random()
+		db.exec("INSERT INTO company (id, name, archived, uid) VALUES (1, 'Acme', 0, ?)", acme)
+		db.exec("INSERT INTO todo (id, uid, company_id, title, external_key, refs, done, created_utc_ms, updated_utc_ms, kind) VALUES (1, ?, 1, 'Patch', 'K-1', '', 0, 1, 2, 'TASK')", todo)
+		db.exec(
+			"INSERT INTO time_entry (id, uid, todo_id, company_id, activity, status, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms) VALUES (1, ?, 1, 1, 'work', 'CLOSED', 'Europe/Rome', 0, 3, 4)",
+			e2,
+		)
+		db.exec("INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 'WORK', 3, 4, 'Europe/Rome', 'AUTO', ?)", SyncIds.random())
+		db.exec(
+			"INSERT INTO sync_shadow (type, uid, json) VALUES ('todo', ?, ?)",
+			todo, """{"companyUid":"$acme","title":"Patch","externalKey":"K-1","done":false,"doneUtcMs":null,"kind":"TASK","createdUtcMs":1,"updatedUtcMs":2}""",
+		)
+		/* synced; then T's title changed here */
+		db.exec("DELETE FROM sync_change")
+		db.exec("UPDATE todo SET title = 'Patch the router' WHERE id = 1")
+		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 5)", todo)
+		db.exec("PRAGMA foreign_keys = OFF")
+		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		db.exec("PRAGMA foreign_keys = ON")
+		assertEquals("K-1", a.one("SELECT external_key FROM time_entry WHERE uid = ?", todo))
+		server.put("company", acme, a.records.read("company", acme)!!)
+		val r = a.records.read("entry", e2)!!.toMutableMap()
+		r["externalKey"] = JsonPrimitive("K-1")
+		server.put("entry", e2, r)
+		val segUid = a.one("SELECT uid FROM segment WHERE entry_id = (SELECT id FROM time_entry WHERE uid = ?)", e2) as String
+		server.put("segment", segUid, a.records.read("segment", segUid)!!)
+		return ServerAbsorbed(a, todo, e2)
+	}
+
+	@Test
+	fun serverAbsorbedTheTodoThePhoneIsTrusted() {
+		val x = serverAbsorbs()
+		val r = sync(x.a)
+		assertEquals(emptyList(), r.errors)
+		/* T keeps the key and goes up whole; E2 loses it and points at T */
+		assertEquals("K-1", x.a.one("SELECT external_key FROM time_entry WHERE uid = ?", x.todo))
+		assertNull(x.a.one("SELECT external_key FROM time_entry WHERE uid = ?", x.e2))
+		assertEquals(x.todo, x.a.one("SELECT r.value FROM external_ref r JOIN time_entry t ON t.id = r.entry_id WHERE t.uid = ? AND r.kind = 'UUID'", x.e2))
+		assertTrue(server.records.getValue("entry" to x.e2).fields["externalKey"] is JsonNull)
+		val t = server.records.getValue("entry" to x.todo).fields
+		assertEquals(JsonPrimitive("K-1"), t["externalKey"])
+		assertEquals(JsonPrimitive("Patch the router"), t["activity"])
+		assertEquals(JsonPrimitive("TODO"), t["status"])
+		assertEquals(JsonPrimitive("Europe/Rome"), t["zoneId"])
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_error"))
+		assertEquals(emptyList(), r.dropped)
+	}
+
+	@Test
+	fun serverAbsorbedTheTodoTheServerIsTrusted() {
+		val x = serverAbsorbs()
+		val r = sync(x.a, authority = SyncAuthority.SERVER)
+		assertEquals(emptyList(), r.errors)
+		/* T is a ghost: it goes with its change, and the user is told */
+		assertNull(x.a.one("SELECT id FROM time_entry WHERE uid = ?", x.todo))
+		assertEquals(listOf("Patch the router"), r.dropped)
+		assertEquals("K-1", x.a.one("SELECT external_key FROM time_entry WHERE uid = ?", x.e2))
+		assertNull(server.records["entry" to x.todo])
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_change"))
+		assertEquals(0L, x.a.one("SELECT COUNT(*) FROM sync_error"))
+	}
+
+	/* "Scarta" never deletes work (issue #176): an activity the server never had, with a real segment, stays */
+	@Test
+	fun discardIsRefusedOnAnUnsyncedActivityWithWork() {
+		val a = phone()
+		val acme = company(a, "Acme")
+		val e = entry(a, acme, "Patching")
+		a.sql.exec("INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 'WORK', 0, 60000, 'Europe/Rome', 'MANUAL', ?)", SyncIds.random())
+		server.refuse += e
+		sync(a)
+		assertEquals(1L, a.one("SELECT COUNT(*) FROM sync_error WHERE uid = ?", e))
+		assertEquals(false, runBlocking { a.db.run { it.discard("entry", e) } })
+		assertEquals(e, a.one("SELECT uid FROM time_entry WHERE uid = ?", e))
+		assertEquals(1L, a.one("SELECT COUNT(*) FROM sync_error WHERE uid = ?", e))
+		/* without work it goes, as before */
+		val empty = entry(a, acme, "nothing")
+		server.refuse += empty
+		sync(a)
+		assertEquals(true, runBlocking { a.db.run { it.discard("entry", empty) } })
+		assertNull(a.one("SELECT id FROM time_entry WHERE uid = ?", empty))
+	}
+
+	/* issue #176, C: a pulled record that cannot be applied keeps the cursor before it; the realignment is tried again */
+	@Test
+	fun theRealignmentDoesNotMovePastARecordNotApplied() {
+		val a = phone()
+		val acme = company(a, "Acme")
+		sync(a)
+		/* a segment of an entry the server does not send (another user's, say): never applicable */
+		val orphan = SyncIds.random()
+		server.put("segment", orphan, mapOf("entryUid" to JsonPrimitive(SyncIds.random()), "kind" to JsonPrimitive("WORK"), "startUtcMs" to JsonPrimitive(0), "zoneId" to JsonPrimitive("Europe/Rome"), "source" to JsonPrimitive("MANUAL")))
+		val rev = server.rev
+		server.put("company", SyncIds.random(), mapOf("name" to JsonPrimitive("Beta"), "archived" to JsonPrimitive(false)))
+		a.sql.exec("UPDATE sync_state SET realign = 1, cursor = 0")
+		assertFailsWith<SyncFailed> { sync(a) }
+		assertEquals(rev - 1, a.one("SELECT cursor FROM sync_state") as Long)
+		assertEquals(1L, a.one("SELECT realign FROM sync_state"))
+		/* the record comes right: the realignment goes through */
+		server.records.remove("segment" to orphan)
+		sync(a)
+		assertEquals(0L, a.one("SELECT realign FROM sync_state"))
+		assertEquals(1L, a.one("SELECT COUNT(*) FROM company WHERE name = 'Beta'"))
+		assertEquals(acme, a.one("SELECT uid FROM company WHERE name = 'Acme'"))
 	}
 
 	@Test

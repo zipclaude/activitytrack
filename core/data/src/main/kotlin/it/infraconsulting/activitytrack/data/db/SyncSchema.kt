@@ -83,6 +83,15 @@ object SyncSchema {
 	 */
 	const val REALIGN_TABLE = "CREATE TABLE IF NOT EXISTS `sync_realign` (`type` TEXT NOT NULL, `uid` TEXT NOT NULL, PRIMARY KEY(`type`, `uid`))"
 
+	/*
+	 * The records with changes not synced when the realignment's pull from 0
+	 * began (issue #176): each one the pull receives is struck off; those
+	 * left are dirty records the server did not send, whose wire-2 base
+	 * shadow goes so that the whole record is pushed (SyncStore.unsentBases).
+	 * Plain SQL as sync_realign.
+	 */
+	const val REALIGN_DIRTY_TABLE = "CREATE TABLE IF NOT EXISTS `sync_realign_dirty` (`type` TEXT NOT NULL, `uid` TEXT NOT NULL, PRIMARY KEY(`type`, `uid`))"
+
 	private const val STATE_ROW = "INSERT OR IGNORE INTO sync_state (id, enabled, applying, cursor, clock_offset_ms) VALUES (1, 0, 0, 0, 0)"
 
 	fun triggers(present: Set<String>? = null): List<String> = buildList {
@@ -133,6 +142,7 @@ object SyncSchema {
 	fun onCreate(db: Sql) {
 		db.exec(STATE_ROW)
 		db.exec(REALIGN_TABLE)
+		db.exec(REALIGN_DIRTY_TABLE)
 		/* a migration from an older schema runs before the newer tables exist: opening adds their triggers */
 		val present = db.rows("SELECT name FROM sqlite_master WHERE type = 'table'").map { it[0] as String }.toSet()
 		triggers(present).forEach { db.exec(it) }

@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.data.sync
 
 import it.infraconsulting.activitytrack.data.db.SyncSchema
+import it.infraconsulting.activitytrack.domain.activity.ActivityMigration
 import it.infraconsulting.activitytrack.domain.sync.SyncIds
 import it.infraconsulting.activitytrack.domain.sync.SyncMapping
 import it.infraconsulting.activitytrack.domain.sync.WireException
@@ -14,6 +15,14 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+
+/*
+ * Who is the source of trust when the phone and the server migrated the same
+ * to-do differently (issue #176, owner): the phone, or the server when a
+ * policy signed by it is in force on this phone. Decided when the sync of
+ * the realignment starts; a PC interface is never one (it drops its ghosts).
+ */
+enum class SyncAuthority { PHONE, SERVER }
 
 /*
  * The phone's side of the sync (issue #114, server SYNC.md §2–§7), on the
@@ -72,11 +81,13 @@ class SyncStore(
 		}
 	}
 
-	fun pending(limit: Int): List<Pending> = db.rows(
+	/* the changes to push, in the log's order; [only]: just those of these records (the realignment's first push, issue #176) */
+	fun pending(limit: Int, only: Set<Pair<String, String>>? = null): List<Pending> = db.rows(
 		"SELECT c.type, c.uid, (SELECT op FROM sync_change l WHERE l.type = c.type AND l.uid = c.uid ORDER BY seq DESC LIMIT 1), " +
-			"MAX(c.changed_utc_ms), MAX(c.seq) FROM sync_change c GROUP BY c.type, c.uid ORDER BY MIN(c.seq) LIMIT ?",
-		limit,
+			"MAX(c.changed_utc_ms), MAX(c.seq) FROM sync_change c GROUP BY c.type, c.uid ORDER BY MIN(c.seq)" + (if (only == null) " LIMIT ?" else ""),
+		*(if (only == null) arrayOf<Any?>(limit) else emptyArray()),
 	).map { Pending(it[0] as String, it[1] as String, it[2] as String, it[3] as Long, it[4] as Long) }
+		.let { all -> if (only == null) all else all.filter { (it.type to it.uid) in only }.take(limit) }
 
 	fun shadow(type: String, uid: String): JsonObject? =
 		db.rows("SELECT json FROM sync_shadow WHERE type = ? AND uid = ?", type, uid).firstOrNull()?.let { Json.parseToJsonElement(it[0] as String).jsonObject }
@@ -140,9 +151,13 @@ class SyncStore(
 	/*
 	 * Drops this phone's unsent changes of a record the server refuses: it
 	 * goes back to what the server has (or away, if the server never had it).
+	 * Never work (issue #176): an activity the server never had that has
+	 * real segments, or such a segment, is not discarded; false then.
 	 */
-	fun discard(type: String, uid: String) {
+	fun discard(type: String, uid: String): Boolean {
 		val shadow = shadow(type, uid)
+		if (shadow == null && holdsWork(type, uid))
+			return false
 		applying {
 			try {
 				if (shadow != null) records.write(type, uid, shadow) else records.delete(type, uid)
@@ -154,6 +169,14 @@ class SyncStore(
 		db.exec("DELETE FROM sync_error WHERE type = ? AND uid = ?", type, uid)
 		/* the last problem shown in Settings was this one */
 		db.exec("UPDATE sync_state SET last_error = NULL WHERE id = 1 AND NOT EXISTS (SELECT 1 FROM sync_error)")
+		return true
+	}
+
+	/* an activity with real segments, or a real segment: what discarding without a server version would lose */
+	fun holdsWork(type: String, uid: String): Boolean = when (type) {
+		"entry" -> db.rows("SELECT 1 FROM segment s JOIN time_entry t ON t.id = s.entry_id WHERE t.uid = ? AND s.planned = 0 LIMIT 1", uid).isNotEmpty()
+		"segment" -> db.rows("SELECT 1 FROM segment WHERE uid = ? AND planned = 0", uid).isNotEmpty()
+		else -> false
 	}
 
 	/*
@@ -284,7 +307,10 @@ class SyncStore(
 		}
 	}
 
-	private fun strike(type: String, uid: String) = db.exec("DELETE FROM sync_realign WHERE type = ? AND uid = ?", type, uid)
+	private fun strike(type: String, uid: String) {
+		db.exec("DELETE FROM sync_realign WHERE type = ? AND uid = ?", type, uid)
+		db.exec("DELETE FROM sync_realign_dirty WHERE type = ? AND uid = ?", type, uid)
+	}
 
 	/*
 	 * The realignment's pull from 0 is over: the records the 21 -> 22
@@ -292,23 +318,204 @@ class SyncStore(
 	 * migration made something else of the same data, e.g. a to-do absorbed
 	 * by an entry on another phone). They go, without echo, unless a local
 	 * change still holds them (that one is pushed); an activity also stays
-	 * while something hangs from it. Then seed() pushes only what the
-	 * server never had. Returns how many went.
+	 * while something hangs from it. With the server as the source of trust
+	 * ([authority], issue #176) a ghost goes even when a local change holds
+	 * it: with that change, those of what hangs from it and what hangs from
+	 * it; an activity whose change goes is named in [Ghosts.dropped] edits,
+	 * for the notice. Then seed() pushes only what the server never had.
 	 */
-	fun dropGhosts(): Int {
+	fun dropGhosts(authority: SyncAuthority = SyncAuthority.PHONE): Ghosts {
 		var dropped = 0
+		val edits = ArrayList<String>()
 		val order = listOf("segment", "externalRef", "entry")
 		val left = db.rows("SELECT type, uid FROM sync_realign").map { it[0] as String to it[1] as String }
 			.sortedBy { (type, _) -> order.indexOf(type).let { if (it < 0) order.size else it } }
+		if (authority == SyncAuthority.SERVER) {
+			val ghostEntries = left.filter { it.first == "entry" }.map { it.second }.toSet()
+			for (uid in ghostEntries) {
+				val children = childrenOf(uid)
+				val changed = hasChanges("entry", uid) || children.any { (t, u) -> hasChanges(t, u) }
+				if (!changed)
+					continue
+				edits += titleOf(uid)
+				for ((t, u) in children) {
+					dropChanges(t, u)
+					dropShadow(t, u)
+					db.exec("DELETE FROM sync_error WHERE type = ? AND uid = ?", t, u)
+				}
+				dropChanges("entry", uid)
+				db.exec("DELETE FROM sync_error WHERE type = 'entry' AND uid = ?", uid)
+				/* the children go with it (foreign keys) */
+				applying { records.delete("entry", uid) }
+				dropShadow("entry", uid)
+				dropped++
+			}
+			for ((type, uid) in left)
+				if (type != "entry" && type in SyncMapping.byType && hasChanges(type, uid) && records.read(type, uid) != null) {
+					dropChanges(type, uid)
+					applying { records.delete(type, uid) }
+					dropShadow(type, uid)
+					dropped++
+				}
+		}
 		for ((type, uid) in left) {
 			if (type !in SyncMapping.byType || hasChanges(type, uid) || (type == "entry" && hasChildren(uid)))
+				continue
+			if (records.read(type, uid) == null)
 				continue
 			applying { records.delete(type, uid) }
 			dropShadow(type, uid)
 			dropped++
 		}
 		db.exec("DELETE FROM sync_realign")
-		return dropped
+		return Ghosts(dropped, edits)
+	}
+
+	/* what dropGhosts did: how many records went, the names of the activities whose local change went with them */
+	class Ghosts(val dropped: Int, val edits: List<String>)
+
+	/* the records hanging from the activity [entryUid], as (type, uid) */
+	private fun childrenOf(entryUid: String): List<Pair<String, String>> =
+		SyncMapping.TYPES.filter { it.parent == "entryUid" }.flatMap { t ->
+			db.rows("SELECT c.uid FROM `${t.table}` c JOIN time_entry e ON e.id = c.entry_id WHERE e.uid = ? AND c.uid IS NOT NULL", entryUid)
+				.map { t.type to it[0] as String }
+		}
+
+	/* an activity as the user knows it: its description, else its key, else the start of its uid */
+	private fun titleOf(entryUid: String): String {
+		val r = db.rows("SELECT activity, external_key FROM time_entry WHERE uid = ?", entryUid).firstOrNull()
+		return (r?.get(0) as String?)?.trim()?.ifEmpty { null } ?: (r?.get(1) as String?)?.trim()?.ifEmpty { null } ?: entryUid.take(8)
+	}
+
+	/*
+	 * The realignment's pull from 0 begins (issue #176): the records with
+	 * changes not synced are noted; those the pull does not bring are pushed
+	 * whole (unsentBases). A pull resumed from a later cursor keeps the list.
+	 */
+	fun realignBegin() {
+		db.exec(SyncSchema.REALIGN_DIRTY_TABLE)
+		if (state().cursor != 0L)
+			return
+		db.exec("DELETE FROM sync_realign_dirty")
+		db.exec("INSERT OR IGNORE INTO sync_realign_dirty (type, uid) SELECT DISTINCT type, uid FROM sync_change")
+	}
+
+	/*
+	 * The realignment's pull is complete: a dirty record the server did not
+	 * send has no version there to merge with (the server's migration made
+	 * something else of it): its wire-2 base shadow goes, so the whole
+	 * record is pushed, not a partial new one (issue #176, D). Returns how
+	 * many went.
+	 */
+	fun unsentBases(): Int {
+		var n = 0
+		for (r in db.rows("SELECT type, uid FROM sync_realign_dirty")) {
+			val (type, uid) = r[0] as String to r[1] as String
+			if (shadow(type, uid) != null && hasChanges(type, uid)) {
+				dropShadow(type, uid)
+				n++
+			}
+		}
+		db.exec("DELETE FROM sync_realign_dirty")
+		return n
+	}
+
+	/*
+	 * The local activity that holds the external key a pulled entry carries,
+	 * when it is another one: the two nodes migrated the same to-do
+	 * differently (issue #176). Null otherwise.
+	 */
+	fun clash(record: JsonObject): String? {
+		if (record["type"]?.jsonPrimitive?.contentOrNull != "entry" || record["deleted"]?.jsonPrimitive?.booleanOrNull == true)
+			return null
+		val uid = record["uid"]?.jsonPrimitive?.contentOrNull ?: return null
+		val f = record["fields"]?.jsonObject ?: return null
+		val key = f["externalKey"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.contentOrNull ?: return null
+		val company = f["companyUid"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.contentOrNull ?: return null
+		return db.rows(
+			"SELECT t.uid FROM time_entry t JOIN company c ON c.id = t.company_id WHERE c.uid = ? AND t.external_key = ? AND t.uid != ?",
+			company, key, uid,
+		).firstOrNull()?.get(0) as String?
+	}
+
+	/*
+	 * Resolves a pulled entry [record] (S) that clashes on (company, external
+	 * key) with the local activity [local] (L), with the realignment pull
+	 * complete ([children]: the pulled records hanging from S, held with it).
+	 * Issue #176, B:
+	 * - PHONE: L keeps the key. S an empty shell (TODO, no real segment) is
+	 *   not stored and its delete is pushed; S with work, or ticked (CLOSED),
+	 *   is stored without the key, with a UUID reference to L, and the key's
+	 *   removal is pushed.
+	 * - SERVER: S is stored as it is; L loses the key, gets a UUID reference
+	 *   to S, and is pushed as an ordinary activity.
+	 * Returns the changes to push before the others (a delete, a key's
+	 * removal), so the server's unique key never refuses the rest; and
+	 * whether [children] are to be applied after it (false: S is not stored).
+	 */
+	fun resolveClash(record: JsonObject, local: String, children: List<JsonObject>, authority: SyncAuthority): Resolution {
+		val uid = record["uid"]!!.jsonPrimitive.content
+		val fields = record["fields"]!!.jsonObject
+		strike("entry", uid)
+		if (authority == SyncAuthority.SERVER) {
+			applying { db.exec("UPDATE time_entry SET external_key = NULL WHERE uid = ?", local) }
+			log("entry", local, "upsert")
+			val err = pulled(record)
+			if (err != null)
+				return Resolution(emptySet(), true, err)
+			link(local, uid)
+			return Resolution(emptySet(), true, null)
+		}
+		val work = children.any { c ->
+			c["type"]?.jsonPrimitive?.contentOrNull == "segment" && c["deleted"]?.jsonPrimitive?.booleanOrNull != true &&
+				c["fields"]?.jsonObject?.get("planned")?.jsonPrimitive?.booleanOrNull != true
+		}
+		val ticked = fields["status"]?.jsonPrimitive?.contentOrNull == "CLOSED"
+		if (!work && !ticked && fields["status"]?.jsonPrimitive?.contentOrNull == "TODO") {
+			/* an empty shell: what the to-do became where nothing absorbed it; its delete goes first (its children go with it there) */
+			putShadow("entry", uid, fields)
+			log("entry", uid, "delete")
+			return Resolution(setOf("entry" to uid), false, null)
+		}
+		/* stored as pulled (a local change of it kept), without the key */
+		val err = pulled(JsonObject(record + ("fields" to JsonObject(fields + ("externalKey" to JsonNull)))))
+		if (err != null)
+			return Resolution(emptySet(), true, err)
+		/* the server's version as the base: the key's removal is the change to push */
+		putShadow("entry", uid, fields)
+		log("entry", uid, "upsert")
+		link(uid, local)
+		return Resolution(setOf("entry" to uid), true, null)
+	}
+
+	class Resolution(val first: Set<Pair<String, String>>, val applyChildren: Boolean, val error: String?)
+
+	/*
+	 * A UUID reference from the activity [from] to [to], in the form the
+	 * migration gives the other entries of an absorbed to-do (ACTIVITY-MODEL.md
+	 * 6, step 3): a name-based uid, the same on every node; logged to push.
+	 */
+	private fun link(from: String, to: String) {
+		val refUid = ActivityMigration.uid(to, "link/$from")
+		if (db.rows("SELECT 1 FROM external_ref WHERE uid = ?", refUid).isNotEmpty())
+			return
+		val id = db.rows("SELECT id FROM time_entry WHERE uid = ?", from).firstOrNull()?.get(0) ?: return
+		applying { db.exec("INSERT INTO external_ref (entry_id, kind, value, uid) VALUES (?, 'UUID', ?, ?)", id, to, refUid) }
+		log("externalRef", refUid, "upsert")
+	}
+
+	/* a pulled record held aside counts as sent by the server: not a ghost, not a dirty record it lacks */
+	fun sent(record: JsonObject) {
+		val type = record["type"]?.jsonPrimitive?.contentOrNull ?: return
+		val uid = record["uid"]?.jsonPrimitive?.contentOrNull ?: return
+		strike(type, uid)
+	}
+
+	/* a pulled record that failed may succeed later in the pull (its parent came); not a record refused for good */
+	fun retryable(record: JsonObject): Boolean {
+		val type = record["type"]?.jsonPrimitive?.contentOrNull ?: return false
+		val uid = record["uid"]?.jsonPrimitive?.contentOrNull ?: return false
+		return type in SyncMapping.byType && SyncIds.isSafe(uid)
 	}
 
 	private fun hasChildren(entryUid: String): Boolean = db.rows(

@@ -23,6 +23,7 @@ import it.infraconsulting.activitytrack.notify.NotificationChannels
 import it.infraconsulting.activitytrack.data.sync.SyncEngine
 import it.infraconsulting.activitytrack.data.sync.SyncFailed
 import it.infraconsulting.activitytrack.data.sync.SyncRevoked
+import it.infraconsulting.activitytrack.data.sync.SyncAuthority
 import it.infraconsulting.activitytrack.data.sync.SyncTransport
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -77,7 +78,11 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		val connectivity = applicationContext.getSystemService(android.net.ConnectivityManager::class.java)
 		val downloads = inputData.getBoolean(FILES, false) || !connectivity.isActiveNetworkMetered
 		return try {
-			val r = SyncEngine(app.container.sync, transport, files = AttachmentFiles(app), downloads = downloads).sync()
+			/* the source of trust of a realignment (issue #176): the server when a policy it signed is in force here */
+			val authority = if (account.serverPolicyInForce() && app.container.policies.inForceSigner() != null) SyncAuthority.SERVER else SyncAuthority.PHONE
+			val r = SyncEngine(app.container.sync, transport, files = AttachmentFiles(app), downloads = downloads, authority = authority).sync()
+			if (r.dropped.isNotEmpty())
+				dropped(app, r.dropped)
 			Log.i(TAG, "sync: ${r.pushed} pushed, ${r.pulled} pulled, ${r.errors.size} errors")
 			r.errors.take(5).forEach { Log.w(TAG, it) }
 			concurrent(app)
@@ -111,6 +116,19 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		val text = (o["policy"] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content ?: return
 		val sig = (o["signature"] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content
 		it.infraconsulting.activitytrack.policy.PolicyLoader.fromServer(app, text.toByteArray(Charsets.UTF_8), sig?.toByteArray(Charsets.UTF_8))
+	}
+
+	/* a local change the realignment could not apply (a ghost of the migration, issue #176): the user is told which */
+	private fun dropped(app: ActivityTrackApp, titles: List<String>) {
+		val text = titles.joinToString("\n") { app.getString(R.string.sync_edit_dropped, it) }
+		val n = android.app.Notification.Builder(app, NotificationChannels.SYNC)
+			.setSmallIcon(R.drawable.ic_stat_timer)
+			.setContentTitle(app.getString(R.string.ch_sync))
+			.setContentText(text)
+			.setStyle(android.app.Notification.BigTextStyle().bigText(text))
+			.setAutoCancel(true)
+			.build()
+		app.getSystemService(android.app.NotificationManager::class.java).notify(DROPPED_NOTICE, n)
 	}
 
 	/* the sync stops until the app or the server is updated: once per change */
@@ -164,6 +182,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 		private const val TAG = "SyncWorker"
 		private const val CONCURRENT_NOTICE = 7301
 		private const val INCOMPATIBLE_NOTICE = 7302
+		private const val DROPPED_NOTICE = 7303
 		private const val NOW = "sync-now"
 		private const val PERIODIC = "sync-periodic"
 		private const val FILES = "files"

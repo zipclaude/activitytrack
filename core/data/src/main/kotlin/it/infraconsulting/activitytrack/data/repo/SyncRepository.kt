@@ -23,8 +23,8 @@ class SyncRepository(private val db: ActivityTrackDatabase) : SyncDb {
 
 	fun observeErrors(): Flow<List<it.infraconsulting.activitytrack.data.db.SyncErrorEntity>> = dao.observeErrors()
 
-	/* drops the unsent changes of a record the server refused (issue #119) */
-	suspend fun discard(type: String, uid: String) = run { it.discard(type, uid) }
+	/* drops the unsent changes of a record the server refused (issue #119); false: refused, it would lose work (issue #176) */
+	suspend fun discard(type: String, uid: String): Boolean = run { it.discard(type, uid) }
 
 	suspend fun state(): SyncStateEntity? = dao.state()
 

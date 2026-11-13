@@ -304,13 +304,50 @@ and what the migration derived from them: absence segments, references; coordina
 had too. Of a dirty record only the fields changed locally are pushed: the node keeps
 the record's wire-2 shadow translated to wire 3 (the mapping of steps 1 and 3) as the
 base of the merge, so a field edited elsewhere is not overwritten (a field the
-translation cannot tell counts as changed locally). A paired node remembers the records
-its migration made from scratch (activities of to-dos, absence segments, references); those
-the realignment's pull does not bring are what the server's migration made otherwise (a
-to-do absorbed by an entry on another device): they are dropped, unless a local change still
-holds them, instead of being pushed back as new (as the library does). The pushed changes carry the time of that sync, so they win over the fields the
-server's migration stamped. Reimporting a phone's data on the server is the fallback
-(owner, 2026-11-11).
+translation cannot tell counts as changed locally). The pushed changes carry the time of
+that sync, so they win over the fields the server's migration stamped. Reimporting a
+phone's data on the server is the fallback (owner, 2026-11-11).
+
+The phone and the server may have migrated the same to-do differently, each over the data
+it had (issue #176). Owner's rule: **the phone is the source of trust; the server is, only
+when a policy signed by the server is in force on the phone** (the app: a policy received
+from the paired server, applied, with a signer). That authority, `PHONE` or `SERVER`, is
+decided when the realignment's sync starts and holds for the whole realignment.
+
+- **Clashes on the key.** A pulled activity S whose `(company_id, external_key)` a local
+  activity L holds is resolved, never skipped, once the whole realignment pull has arrived
+  (whether S holds work is known only when its segments have come: the clashing records
+  wait aside until then). `PHONE`: L keeps the key; S an empty shell (`TODO` without real
+  segments, what a to-do becomes where nothing absorbed it) is not stored and its delete is
+  pushed; S with real segments or ticked (`CLOSED`) is stored without the key, with an
+  `external_ref` of kind UUID pointing at L (uid `uuid5(NS, "<L uid>/link/<S uid>")`, the
+  form of step 3), and the key's removal is pushed. `SERVER`: S is stored as it is; L loses
+  the key, gets the UUID reference to S (`uuid5(NS, "<S uid>/link/<L uid>")`) and is pushed
+  as an ordinary activity. The deletes and key removals are pushed first, then the rest,
+  so the server's unique key never refuses them.
+- **Nothing passed over.** During the realignment the cursor never passes a pulled record
+  that was not applied: it is retried after the rest of the pull; if it still fails, what
+  the end of the pull did is rolled back, the cursor stays before that record and the sync
+  stops with the error, to be tried again at the next one. A record refused for good by
+  design (an unknown type, an unsafe uid) is skipped as outside a realignment. Outside a
+  realignment the pull is unchanged (a failing record is reported and passed).
+- **Ghosts.** A paired node remembers the records its migration made from scratch
+  (activities of to-dos, absence segments, references); those the realignment's pull does
+  not bring are what the server's migration made otherwise (a to-do absorbed by an entry
+  on another device). They are dropped, not pushed back as new. With `PHONE` a ghost a
+  local change still holds is kept and pushed; with `SERVER` it is dropped too, with its
+  pending changes and what hangs from it, and the user is told which edit was not applied:
+  "La modifica a «%s» non è stata applicata: il da fare è stato chiuso o avviato su un
+  altro dispositivo."
+- **Whole records.** After the realignment pull, the wire-2 base shadow of every dirty
+  record the server did not send is dropped, so the whole record is pushed and never a
+  partial new one.
+- **Discard.** "Scarta" on a sync error never deletes work: discarding the pending change
+  of an activity that has no server version and has real segments (or of such a segment)
+  is refused, with a message saying why.
+- **PCs.** A PC interface (the library's CLI, TUI, desktop) is never the source of trust: it
+  drops its ghosts after the realignment pull, the dirty ones too, with the notice above
+  (as the library does).
 
 ### 6.1 Restoring an older backup
 

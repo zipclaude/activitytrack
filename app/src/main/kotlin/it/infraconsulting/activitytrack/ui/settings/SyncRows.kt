@@ -209,7 +209,13 @@ fun SyncRows() {
 			confirmButton = {
 				TextButton(onClick = {
 					discarding = null
-					scope.launch { app.container.sync.discard(pr.type, pr.uid) }
+					scope.launch {
+						/* never work: an activity the server never had, with real segments (issue #176) */
+						if (!app.container.sync.discard(pr.type, pr.uid)) {
+							message = context.getString(R.string.sync_discard_refused)
+							failed = true
+						}
+					}
 				}) { Text(stringResource(R.string.sync_discard)) }
 			},
 			dismissButton = { TextButton(onClick = { discarding = null }) { Text(stringResource(R.string.action_cancel)) } },

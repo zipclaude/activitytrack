@@ -678,6 +678,8 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="sync_problems">Not synced</string>
   <string name="sync_discard">Discard the change</string>
   <string name="sync_discard_confirm">This phone\'s unsent change is dropped and the server\'s version comes back; a record created here that never reached the server is deleted.</string>
+  <string name="sync_discard_refused">This activity has never reached the server and holds work: it is not discarded. Fix it, or delete it by hand.</string>
+  <string name="sync_edit_dropped">The change to «%1$s» was not applied: the to-do was closed or started on another device.</string>
   <string name="sync_rec_entry">Activity</string>
   <string name="sync_rec_todo">To-do</string>
   <string name="sync_rec_other">Record</string>

@@ -41,6 +41,9 @@ class PolicyRepository(private val db: ActivityTrackDatabase, private val clock:
 	/* The text of the policy in force, null = none ever applied. */
 	suspend fun inForceText(): String? = dao.inForce()?.text
 
+	/* The CN of the signer of the policy in force, null when it is unsigned or there is none. */
+	suspend fun inForceSigner(): String? = dao.inForce()?.signerCn
+
 	suspend fun recordApplied(policy: Policy, text: String, fingerprint: String, signerCn: String?) {
 		dao.insert(
 			PolicyRecordEntity(

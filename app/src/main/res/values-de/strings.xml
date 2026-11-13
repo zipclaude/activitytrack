@@ -666,6 +666,8 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_problems">Nicht synchronisiert</string>
   <string name="sync_discard">Änderung verwerfen</string>
   <string name="sync_discard_confirm">Die nicht gesendete Änderung dieses Telefons wird verworfen und die Version des Servers kehrt zurück; ein hier erstellter Eintrag, der den Server nie erreicht hat, wird gelöscht.</string>
+  <string name="sync_discard_refused">Diese Tätigkeit hat den Server nie erreicht und enthält Arbeit: Sie wird nicht verworfen. Korrigiere sie oder lösche sie von Hand.</string>
+  <string name="sync_edit_dropped">Die Änderung an «%1$s» wurde nicht übernommen: Die Aufgabe wurde auf einem anderen Gerät abgeschlossen oder begonnen.</string>
   <string name="sync_rec_entry">Tätigkeit</string>
   <string name="sync_rec_todo">Aufgabe</string>
   <string name="sync_rec_other">Eintrag</string>

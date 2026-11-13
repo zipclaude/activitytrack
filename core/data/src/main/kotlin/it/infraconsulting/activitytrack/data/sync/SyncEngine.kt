@@ -67,8 +67,11 @@ class SyncEngine(
 	private val files: SyncFiles? = null,
 	/* files are downloaded now (unmetered network, or asked for) */
 	private val downloads: Boolean = false,
+	/* the source of trust of a realignment (issue #176): the server when a policy it signed is in force here */
+	private val authority: SyncAuthority = SyncAuthority.PHONE,
 ) {
-	class Result(val pushed: Int, val pulled: Int, val errors: List<String>)
+	/* [dropped]: the activities whose local change the realignment could not apply (a ghost, issue #176), for a notice */
+	class Result(val pushed: Int, val pulled: Int, val errors: List<String>, val dropped: List<String> = emptyList())
 
 	private val json = Json { ignoreUnknownKeys = true }
 
@@ -88,20 +91,23 @@ class SyncEngine(
 			 * fields changed here win).
 			 */
 			val state = db.run { it.state() }
-			if (!state.enabled || state.realign) {
+			var dropped = emptyList<String>()
+			var first = emptySet<Pair<String, String>>()
+			if (state.realign) {
+				db.run { it.enable() }
+				val r = realign(errors) { offset = it }
+				pulled += r.pulled
+				dropped = r.dropped
+				first = r.first
+			} else if (!state.enabled) {
 				db.run { it.enable() }
 				pull(errors) { offset = it }.also { pulled += it }
-				/* before seeding: a ghost of the migration must not go up as new */
-				val ghosts = if (state.realign) db.run { it.restamp(); it.dropGhosts() } else 0
-				if (ghosts > 0) {
-					/* a ghost held what a pulled record needed (its external key): pull once more from 0 */
-					errors.clear()
-					db.run { it.clearErrors(); it.setCursor(0) }
-					pull(errors) { offset = it }
-				}
 				db.run { it.seed(); it.realigned() }
 			}
 			var pushed = 0
+			/* the deletes and key removals of the realignment first: the server's unique key never refuses what follows */
+			if (first.isNotEmpty())
+				pushed += push(errors, first) { offset = it }
 			/* a pull may log changes of its own (adoption): they go out in the same sync */
 			for (round in 1..3) {
 				val out = push(errors) { offset = it }
@@ -115,7 +121,7 @@ class SyncEngine(
 			}
 			files?.let { transferFiles(it, errors) }
 			db.run { it.finished(offset, errors.firstOrNull()) }
-			return Result(pushed, pulled, errors)
+			return Result(pushed, pulled, errors, dropped)
 		} catch (e: SyncRevoked) {
 			db.run { it.failed("revoked") }
 			throw e
@@ -138,12 +144,12 @@ class SyncEngine(
 
 	private fun offsetOf(answer: JsonObject): Long? = answer["serverTime"]?.jsonPrimitive?.longOrNull?.let { it - now() }
 
-	/* pushes every pending change, 500 at a time; returns how many the server took */
-	private suspend fun push(errors: MutableList<String>, offset: (Long) -> Unit): Int {
+	/* pushes every pending change ([only]: of those records), 500 at a time; returns how many the server took */
+	private suspend fun push(errors: MutableList<String>, only: Set<Pair<String, String>>? = null, offset: (Long) -> Unit): Int {
 		var taken = 0
 		repeat(MAX_ROUNDS) {
 			val batch = db.run { store ->
-				store.pending(BATCH).mapNotNull { p ->
+				store.pending(BATCH, only).mapNotNull { p ->
 					val change = store.change(p)
 					if (change == null) store.skip(p)
 					change?.let { p to it }
@@ -199,6 +205,129 @@ class SyncEngine(
 		}
 		return count
 	}
+
+	private class Realigned(val pulled: Int, val dropped: List<String>, val first: Set<Pair<String, String>>)
+
+	/* the realignment's pull could not apply every record: it is rolled back to its last safe cursor */
+	private class Unapplied(val errors: List<String>) : Exception(errors.firstOrNull())
+
+	/*
+	 * The realignment after a migration of the data (ACTIVITY-MODEL.md 6,
+	 * issue #176): the pull from the cursor (0 at first) to the end, then in
+	 * one transaction:
+	 * 1. the ghosts of the migration go (dropGhosts; with the server as the
+	 *    source of trust the dirty ones too, named for a notice);
+	 * 2. the records held aside are retried: those that pointed at a record
+	 *    later in the pull, those whose external key a ghost held;
+	 * 3. the clashes left on (company, external key) are resolved by
+	 *    [authority] (SyncStore.resolveClash), and what hangs from them retried;
+	 * 4. a dirty record the server did not send loses its wire-2 base, so it
+	 *    goes up whole (unsentBases); what the server lacks is logged (seed).
+	 * The cursor never passes a record not applied: while one is held the
+	 * cursor stored stays before it, and if it still fails at the end the
+	 * transaction is rolled back and the sync stops with the error, to be
+	 * tried again at the next one.
+	 */
+	private suspend fun realign(errors: MutableList<String>, offset: (Long) -> Unit): Realigned {
+		var cursor = db.run { it.realignBegin(); it.state().cursor }
+		val held = ArrayList<JsonObject>()
+		var count = 0
+		for (page in 1..MAX_ROUNDS * 20) {
+			val answer = call("GET", "sync/pull?cursor=$cursor&limit=$BATCH")
+			offsetOf(answer)?.let(offset)
+			val records = answer["records"]?.jsonArray?.map { it.jsonObject } ?: emptyList()
+			val gone = answer["gone"]?.jsonArray?.map { it.jsonObject } ?: emptyList()
+			val next = answer["cursor"]?.jsonPrimitive?.longOrNull ?: throw SyncFailed("pull answer without cursor")
+			db.run { store ->
+				var left = records
+				while (left.isNotEmpty()) {
+					val failedNow = ArrayList<JsonObject>()
+					for (r in left) {
+						/* a clash waits for the whole pull: whether the server's record holds work is known only then */
+						if (store.clash(r) != null) {
+							store.sent(r)
+							failedNow += r
+							continue
+						}
+						val e = store.pulled(r) ?: continue
+						/* a record refused for good (an unsafe uid) is skipped, as outside a realignment */
+						if (store.retryable(r)) failedNow += r else errors += e
+					}
+					if (failedNow.size == left.size) {
+						held += failedNow
+						break
+					}
+					left = failedNow
+				}
+				for (g in gone) {
+					val type = g["type"]?.jsonPrimitive?.contentOrNull ?: continue
+					val uid = g["uid"]?.jsonPrimitive?.contentOrNull ?: continue
+					store.gone(type, uid)
+				}
+				/* never past a record held aside */
+				store.setCursor(if (held.isEmpty()) next else safeCursor(held))
+			}
+			count += records.size
+			cursor = next
+			if (answer["more"]?.jsonPrimitive?.booleanOrNull != true)
+				break
+		}
+		val top = cursor
+		val first = HashSet<Pair<String, String>>()
+		val ghosts = try {
+			db.run { store ->
+				store.restamp()
+				val ghosts = store.dropGhosts(authority)
+				var left = retry(store, held)
+				val failures = ArrayList<String>()
+				for (r in left.filter { store.clash(it) != null }) {
+					val local = store.clash(r) ?: continue
+					val uid = r["uid"]!!.jsonPrimitive.content
+					val children = left.filter { it.field("entryUid") == uid }
+					val res = store.resolveClash(r, local, children, authority)
+					res.error?.let { failures += it }
+					first += res.first
+					left = left - r
+					if (!res.applyChildren)
+						left = left - children.toSet()
+				}
+				left = retry(store, left)
+				failures += left.map { r -> store.pulled(r) ?: "${r["type"]} ${r["uid"]}: not applied" }
+				if (failures.isNotEmpty())
+					throw Unapplied(failures)
+				store.unsentBases()
+				store.setCursor(top)
+				store.seed()
+				store.realigned()
+				ghosts
+			}
+		} catch (e: Unapplied) {
+			/* tried again at the next sync, from before the first record not applied; nothing of the above stays */
+			db.run { it.setCursor(minOf(top, safeCursor(held))) }
+			errors += e.errors
+			throw SyncFailed(e.errors.first())
+		}
+		return Realigned(count, ghosts.edits, first)
+	}
+
+	/* applies [records] again while that helps; returns those that still fail (a clash is not tried) */
+	private fun retry(store: SyncStore, records: List<JsonObject>): List<JsonObject> {
+		var left = records
+		while (left.isNotEmpty()) {
+			val failedNow = left.filter { r -> store.clash(r) != null || store.pulled(r) != null }
+			if (failedNow.size == left.size)
+				return failedNow
+			left = failedNow
+		}
+		return left
+	}
+
+	/* the cursor just before the earliest of [held] (records carry their revision) */
+	private fun safeCursor(held: List<JsonObject>): Long =
+		(held.mapNotNull { it["rev"]?.jsonPrimitive?.longOrNull }.minOrNull() ?: 1L) - 1
+
+	private fun JsonObject.field(name: String): String? =
+		(this["fields"] as? JsonObject)?.get(name)?.let { it as? JsonPrimitive }?.contentOrNull
 
 	/* uploads the files the server lacks, then (when allowed) downloads the ones this phone lacks */
 	private suspend fun transferFiles(files: SyncFiles, errors: MutableList<String>) {
