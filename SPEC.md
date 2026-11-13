@@ -400,3 +400,22 @@ Owner priorities (2026-10-17): M4 → M7 in this order.
 
 - OCR of receipts (tesseract4android) to pre-fill expenses.
 - Offline speech-to-text with free software (Vosk / whisper.cpp).
+
+## 11. Changes in 1.0 that break compatibility with 0.9
+
+The release notes of a tag list its commits; the breaks an administrator, a
+plugin author or an integrator must know are listed here (details in
+docs/ACTIVITY-MODEL.md, docs/INTERCHANGE.md, docs/PLUGINS.md, docs/POLICY.md).
+
+- Database: Room schema 22, migrated once from 21 (or older) on the first start; there is no way back to 0.9 but the backup made before the upgrade (a 1.0 backup cannot be restored by 0.9).
+- Sync: wire schema 3 with the window reset; the server refuses an app or a PC interface of 0.9 with `upgrade_required` ("Aggiorna l'app per sincronizzare"): app, server and interfaces must all be 1.0; after its migration each node's first sync is a full realignment.
+- Wire records: the types `todo` and `absence` are gone; `entry` drops `todoUid` and gains `kind`, `deletedUtcMs`, `closedUtcMs`, `externalKey`, the plan, due and priority fields and `absenceKind`, with the new `status` values (TODO, RUNNING, CLOSED); `segment` gains `planned`.
+- Data model: the `todo` table (and `todo_id`) and the `absence` table are gone: a to-do is an activity with status `TODO`, an absence an activity of kind `ABSENCE`; entry statuses ACTIVE/SUSPENDED/TO_COMPLETE/CLOSED become RUNNING/CLOSED.
+- Interchange: format version 2 (no `todos`, `absences`, `todoKey`), which 0.9 cannot read; version 1 files are still imported through the migration.
+- Interchange version 1: a to-do's uid is now derived from its company key and key (issue #177), so importing again after 1.0 an old file that a 1.0 pre-release (alfa-1, alfa-2) had imported does not find the to-dos it created, and makes them again.
+- Priority: the scale is reversed, 0 none, 1 low … 5 emergency; the old P1…P5 (1 the highest) are converted once (P1→5 … P5→1) in the database, in version 1 files and by the server; a plugin feeding the old scale must map it (`map` transform).
+- Plugin descriptors: `@todo` becomes `@activity` and the export hook `todoDone` becomes `activityClosed`; the old names are still read as aliases (`PluginParser`, `Expr`); `@activity.activities` lists the activity's description and those of the activities pointing at it with a UUID reference.
+- Plugin import: an imported to-do is a `TODO` activity matched by (company, external key); its `fields` become the activity's plugin fields.
+- Policy: `entries.source = "todosOnly"` becomes `"plannedOnly"` (the old value is still read as an alias); the features `todos`, `ignoreTodos`, `deleteTodos` keep their keys and now apply to `TODO` activities (`ignoreTodos` maps to delete/restore).
+- Calendar: a `TODO` activity's plan is a tentative event keyed `plan:<uid>` instead of `todo:<uid>`; the old events are removed on the first calendar sync.
+- CSV export: absences are rows of their own, with the new last columns `absence_min` and `absence_kind` (the earlier columns keep their positions).
