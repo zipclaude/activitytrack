@@ -810,6 +810,30 @@ class SyncEngineTest {
 		assertEquals(1L, a.one("SELECT COUNT(*) FROM company WHERE name = 'Beta'"))
 	}
 
+	/*
+	 * A phone of 1.0.0-alfa-1 or alfa-2 (schema 22 already, so no migration
+	 * runs at the update) never had sync_realign_dirty, which every pulled or
+	 * gone record now strikes off: opening the database (SyncSchema.onOpen,
+	 * Room's callback at every open) creates it before the first sync.
+	 */
+	@Test
+	fun aDatabaseOfAnAlfaWithoutTheDirtyTableSyncsOnceOpened() {
+		val a = phone()
+		company(a, "Acme")
+		sync(a)
+		a.sql.exec("DROP TABLE sync_realign_dirty")
+		server.put("company", SyncIds.random(), mapOf("name" to JsonPrimitive("Beta"), "archived" to JsonPrimitive(false)))
+		/* without the open the pull would fail on the missing table */
+		assertFailsWith<Exception> { sync(a) }
+		SyncSchema.onOpen(a.sql)
+		server.gone += "company" to SyncIds.random()
+		sync(a)
+		assertEquals(null, a.one("SELECT last_error FROM sync_state"))
+		assertEquals(server.rev, a.one("SELECT cursor FROM sync_state") as Long)
+		assertEquals(1L, a.one("SELECT COUNT(*) FROM company WHERE name = 'Beta'"))
+		assertEquals(0L, a.one("SELECT COUNT(*) FROM sync_realign_dirty"))
+	}
+
 	@Test
 	fun revokedStopsTheSync() {
 		val a = phone()
