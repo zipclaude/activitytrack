@@ -43,6 +43,8 @@ class ActivityTrackApp : Application() {
 
 	/* integration plugins of the data folder and their OAuth logins (issue #48) */
 	val plugins by lazy { it.infraconsulting.activitytrack.connect.plugin.PluginRegistry(this) }
+	/* the required entry fields of the plugins, for the displayed state of the activities (issue #178) */
+	val requiredFields by lazy { it.infraconsulting.activitytrack.connect.plugin.RequiredFields(this) }
 	val oauth by lazy { it.infraconsulting.activitytrack.connect.plugin.OAuthPkce(this, secrets) }
 
 	/* unsigned policy.json and plugins waiting for the user's confirmation */

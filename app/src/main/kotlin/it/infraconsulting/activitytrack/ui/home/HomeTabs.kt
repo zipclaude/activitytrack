@@ -33,6 +33,8 @@ data class EntryCard(
 	val tags: Set<String> = emptySet(),
 	/* the last segment end: the sort key of the closed ones (issue #59) */
 	val endUtcMs: Long? = null,
+	/* a field its company's plugin requires is empty (ACTIVITY-MODEL.md 2.4, issue #178): a closed one is incomplete */
+	val missingRequired: Boolean = false,
 ) {
 	val title: String? get() = client ?: company
 
@@ -41,7 +43,7 @@ data class EntryCard(
 
 	/* the state shown (2.2) and since when */
 	fun displayed(now: Instant, zone: ZoneId = ZoneId.of(entry.zoneId)): Displayed =
-		ActivityDisplay.display(entry.snapshot(segments), now, zone)
+		ActivityDisplay.display(entry.snapshot(segments, missingRequired), now, zone)
 }
 
 /* When a TODO activity next asks for attention: its plan, else its due time, else its first planned segment. */

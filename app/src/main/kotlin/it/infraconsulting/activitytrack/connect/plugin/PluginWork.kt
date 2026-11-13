@@ -193,8 +193,9 @@ class PluginWatcher(private val app: ActivityTrackApp) {
 	private suspend fun closed(entryId: Long) {
 		val c = app.container
 		val e = c.entries.entry(entryId).first() ?: return
-		/* only a closed, complete activity goes out (ACTIVITY-MODEL.md 2.4) */
-		val shown = ActivityDisplay.display(e.snapshot(c.entries.segments(entryId).first()), Instant.now(), ZoneId.of(e.zoneId))
+		/* only a closed, complete activity goes out (ACTIVITY-MODEL.md 2.4): its plugin's required fields filled too (issue #178) */
+		val missingRequired = app.requiredFields.current().missing(e)
+		val shown = ActivityDisplay.display(e.snapshot(c.entries.segments(entryId).first(), missingRequired), Instant.now(), ZoneId.of(e.zoneId))
 		if (shown.state != DisplayState.DONE)
 			return
 		val company = c.masterData.company(e.companyId ?: return) ?: return

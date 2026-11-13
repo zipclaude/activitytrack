@@ -57,6 +57,7 @@ import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.domain.activity.DisplayState
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.policy.EntrySource
+import it.infraconsulting.activitytrack.connect.plugin.RequiredFields
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.ui.LocalCompact
@@ -97,6 +98,8 @@ class HomeViewModel(
 	private val entries: EntryRepository,
 	private val master: MasterDataRepository,
 	private val settingsRepo: SettingsRepository,
+	/* whether a closed activity misses a field its plugin requires: one check per list (RequiredFields) */
+	private val required: Flow<RequiredFields.Check>,
 ) : QuickActioner(entries) {
 	/* the four lists below start at null = not loaded yet: the Home shows nothing rather than "nothing to show" */
 	/* the running activities: a segment open, or suspended */
@@ -158,18 +161,20 @@ class HomeViewModel(
 			entries.closedTagsSince(closedFrom, CLOSED_LIMIT), ::Triple,
 		),
 		combine(entries.tickedSince(closedFrom, CLOSED_LIMIT), entries.tickedTagsSince(closedFrom, CLOSED_LIMIT), ::Pair),
-		master.clients, master.companies,
-	) { (list, segs, tags), (ticked, tickedTags), clients, companies ->
+		master.clients, master.companies, required,
+	) { (list, segs, tags), (ticked, tickedTags), clients, companies, check ->
 		val cl = clients.associateBy { it.id }
 		val co = companies.associateBy { it.id }
 		val bySeg = segs.groupBy { it.entryId }
 		val byTag = (tags + tickedTags).groupBy { it.entryId }
+		val perList = check.fresh()
 		(list + ticked).map { e ->
 			EntryCard(
 				e, e.clientId?.let { cl[it]?.name }, e.companyId?.let { co[it]?.name }, bySeg[e.id].orEmpty(),
 				companyColor(e.companyId, e.companyId?.let { co[it]?.color }),
 				tags = byTag[e.id].orEmpty().map { it.tag }.toSet(),
 				endUtcMs = bySeg[e.id].orEmpty().maxOfOrNull { it.endUtcMs ?: 0L }?.takeIf { it > 0 },
+				missingRequired = perList.missing(e),
 			)
 		}
 	}.state(null)
@@ -246,7 +251,8 @@ fun HomeScreen(
 	onOpenTodos: (() -> Unit)? = null,
 	onOpenImport: (() -> Unit)? = null,
 ) {
-	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings) }
+	val app = LocalContext.current.applicationContext as it.infraconsulting.activitytrack.ActivityTrackApp
+	val vm = appViewModel { HomeViewModel(it.entries, it.masterData, it.settings, app.requiredFields.checks) }
 	val loadedCards by vm.cards.collectAsState()
 	val allCards = loadedCards.orEmpty()
 	val selected by vm.selected.collectAsState()

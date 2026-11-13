@@ -28,6 +28,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.LocalContext
+import it.infraconsulting.activitytrack.ActivityTrackApp
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -97,7 +99,10 @@ internal fun DetailHeader(
 	val real = segments.filter { !it.planned }
 	fun len(s: SegmentEntity) = maxOf(0L, (s.endUtcMs ?: now) - s.startUtcMs)
 	fun sum(k: SegmentKind) = real.filter { it.kind == k }.sumOf(::len)
-	val shown = ActivityDisplay.display(e.snapshot(segments), Instant.ofEpochMilli(now), zone)
+	/* a field the company's plugin requires is empty: a closed activity is incomplete (2.4, issue #178) */
+	val app = LocalContext.current.applicationContext as ActivityTrackApp
+	val missingRequired by produceState(false, e) { value = app.requiredFields.current().missing(e) }
+	val shown = ActivityDisplay.display(e.snapshot(segments, missingRequired), Instant.ofEpochMilli(now), zone)
 	Card(Modifier.fillMaxWidth()) {
 		Column(Modifier.padding(if (compact) 8.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)) {
 			/* two nodes' changes left overlapping segments (issue #119): fixed below, or on the web by a manager when times are locked */

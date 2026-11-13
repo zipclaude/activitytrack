@@ -244,6 +244,10 @@ scale maps its values with a `map` transform, as above.
 Shown in the entry screen under the integration's name; values are
 stored with the entry (one JSON column, replacing PR #29's three columns).
 An entry missing a required field is not sent: the sync report says which.
+The same evaluation (`EntryFieldScope`: the stored value, else the field's
+`default`; blank text counts as empty) marks the field in the entry form and
+makes a closed activity *incomplete* (docs/ACTIVITY-MODEL.md 2.4): it shows
+in the Home's incomplete section and is not offered for sending on closing.
 
 ## 9. Export
 

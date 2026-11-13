@@ -30,17 +30,16 @@ import kotlinx.serialization.json.JsonPrimitive
 import it.infraconsulting.activitytrack.data.db.EntryMaterialEntity
 import it.infraconsulting.activitytrack.data.db.RemoteRecordEntity
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
+import it.infraconsulting.activitytrack.domain.plugin.EntryFieldScope
 import it.infraconsulting.activitytrack.domain.plugin.ExportAction
 import it.infraconsulting.activitytrack.domain.plugin.ExportSegment
 import it.infraconsulting.activitytrack.domain.plugin.PluginDataException
 import it.infraconsulting.activitytrack.domain.plugin.PluginEnv
 import it.infraconsulting.activitytrack.domain.plugin.PluginExport
-import it.infraconsulting.activitytrack.domain.plugin.RemoteItem
 import it.infraconsulting.activitytrack.domain.plugin.PluginHttpException
 import it.infraconsulting.activitytrack.domain.plugin.SentRecord
 import it.infraconsulting.activitytrack.domain.plugin.eval
 import it.infraconsulting.activitytrack.domain.plugin.text
-import it.infraconsulting.activitytrack.domain.plugin.truthy
 import it.infraconsulting.activitytrack.domain.report.DayAttributionPolicy
 import java.time.Duration
 import java.time.Instant
@@ -201,7 +200,7 @@ class PluginSync(private val app: ActivityTrackApp) {
 		val base = app.plugins.env(company, plugin).withHooks(rounding = rounding)
 		val client = app.plugins.client(company, plugin, base)
 		PluginSession.prepare(plugin, client, base)
-		val items = dao.items(companyId, plugin.id)
+		val remoteItems = dao.items(companyId, plugin.id).map(PluginRoots::item)
 		val policy = DayAttributionPolicy(LocalTime.of(s.carryOverMin / 60, s.carryOverMin % 60))
 		var report = start
 		/* records of entries deleted in the app: deleted on the remote side too */
@@ -219,58 +218,29 @@ class PluginSync(private val app: ActivityTrackApp) {
 		}
 		for (e in dao.entriesToSend(companyId, plugin.id).filter { only == null || it.id == only }) {
 			val zone = runCatching { ZoneId.of(e.zoneId) }.getOrDefault(ZoneId.systemDefault())
-			/*
-			 * @activity: the planned fields of the same record, when the plugin imported it (activity model 1.0),
-			 * else of the imported activity a UUID reference points at (an entry of the to-do before 1.0)
-			 */
-			val todo = e.takeIf { it.externalKey != null } ?: dao.linkedActivity(e.id, companyId)
 			val clientRow = e.clientId?.let { dao.client(it) }
 			val title = clientRow?.name ?: company.name
 			val lines = dao.materialsOf(e.id)
-			/* entry fields: one object since 1.0, the imported values overridden by the user's */
-			val fields = HashMap<String, JsonElement>()
-			obj(e.pluginFields)?.let { fields.putAll(it) }
-			val entryJson = JsonObject(
-				buildMap {
-					put("id", JsonPrimitive(e.id))
-					e.uid?.let { put("uid", JsonPrimitive(it)) }
-					put("activity", JsonPrimitive(e.activity.orEmpty()))
-					put("notes", JsonPrimitive(e.notes.orEmpty()))
-					put("locality", JsonPrimitive(e.locality.orEmpty()))
-					put("company", JsonObject(mapOf("id" to JsonPrimitive(company.id), "name" to JsonPrimitive(company.name))))
-					clientRow?.let { put("client", JsonObject(mapOf("id" to JsonPrimitive(it.id), "name" to JsonPrimitive(it.name), "code" to (it.externalCode?.let(::JsonPrimitive) ?: JsonNull)))) }
-				},
-			)
-			/* @activity.fields: what the import kept of the remote record (e.g. Antares' customer premises) */
-			val todoJson: JsonElement = todo?.let { activityJson(it, null) } ?: JsonNull
 			var blockJson: JsonElement = JsonNull
 			var remoteJson: JsonElement = JsonNull
-			lateinit var eenv: PluginEnv
-			fun selected(listName: String): JsonElement {
-				val f = plugin.entryFields.firstOrNull { it.list == listName } ?: return JsonNull
-				val id = fields[f.key]?.let(::text) ?: return JsonNull
-				val parent = f.parent?.let { text(it.eval(null, eenv)) }.orEmpty()
-				return items.firstOrNull { it.list == listName && it.id == id && (f.parent == null || it.parentId == parent) }?.let { itemJson(it) } ?: JsonNull
-			}
-			/* dates in the entry's own time zone, as recorded */
-			eenv = base.withHooks(materials = { mode -> materials(lines, mode) }, zone = zone).with { r ->
-				when (r.root) {
-					"entry" -> PluginEnv.dig(entryJson, r.path)
-					"activity" -> if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)
-					"field" -> r.path.firstOrNull()?.let { fields[it] }?.let { PluginEnv.dig(it, r.path.drop(1)) } ?: JsonNull
-					"list" -> if (r.path.getOrNull(1) == "selected") PluginEnv.dig(selected(r.path[0]), r.path.drop(2)) else JsonNull
+			/*
+			 * the entry fields (one object since 1.0, the imported values overridden by the user's, then the defaults)
+			 * as the form and the displayed state see them (RequiredFields); @activity per PluginRoots.activityOf;
+			 * dates in the entry's own time zone, as recorded
+			 */
+			val outside = PluginRoots.roots(PluginRoots.entryJson(e, company, clientRow), PluginRoots.activityOf(c, e, companyId))
+			val scope = EntryFieldScope(
+				plugin, PluginRoots.obj(e.pluginFields).orEmpty(), remoteItems,
+				base.withHooks(materials = { mode -> materials(lines, mode) }, zone = zone),
+			) { r ->
+				outside(r) ?: when (r.root) {
 					"block" -> PluginEnv.dig(blockJson, r.path)
 					"remote" -> PluginEnv.dig(remoteJson, r.path)
 					else -> null
 				}
 			}
-			/* defaults of the fields not set, then the required ones */
-			for (f in plugin.entryFields)
-				if (f.key !in fields)
-					f.default?.eval(null, eenv)?.takeIf { it !is JsonNull }?.let { fields[f.key] = it }
-			val missing = plugin.entryFields.firstOrNull { f ->
-				truthy(f.required.eval(null, eenv)) && fields[f.key].let { it == null || it is JsonNull || text(it).isNullOrEmpty() }
-			}
+			val eenv = scope.env
+			val missing = scope.missingRequired()
 			if (missing != null) {
 				val label = missing.label[java.util.Locale.getDefault().language] ?: missing.label["en"] ?: missing.key
 				report = report.copy(skipped = report.skipped + (title to label))
@@ -333,7 +303,7 @@ class PluginSync(private val app: ActivityTrackApp) {
 				val fields = obj(t.pluginFields) ?: JsonObject(emptyMap())
 				if (fields[CLOSED] == JsonPrimitive(true))
 					continue
-				val todoJson = activityJson(t, dao.activitiesOf(t.id, t.uid.orEmpty()).joinToString("\n\n"))
+				val todoJson = PluginRoots.activityJson(c, t, dao.activitiesOf(t.id, t.uid.orEmpty()).joinToString("\n\n"))
 				val env = base.with { r -> if (r.root == "activity") (if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)) else null }
 				client.call(done.method, done.path, env, PluginExport.body(done.body, env))
 				dao.updateActivity(t.copy(pluginFields = JsonObject(fields + (CLOSED to JsonPrimitive(true))).toString()))
@@ -341,18 +311,6 @@ class PluginSync(private val app: ActivityTrackApp) {
 		}
 		return report
 	}
-
-	/* @activity: id, external key, title (the description), references, the plugin fields, [activities] what was done */
-	private suspend fun activityJson(e: TimeEntryEntity, activities: String?): JsonObject = JsonObject(
-		buildMap {
-			put("id", JsonPrimitive(e.id))
-			put("externalKey", JsonPrimitive(e.externalKey.orEmpty()))
-			put("title", JsonPrimitive(e.activity.orEmpty()))
-			put("refs", JsonPrimitive(c.entries.externalRefValues(e.id).joinToString("\n")))
-			put("fields", obj(e.pluginFields) ?: JsonObject(emptyMap()))
-			activities?.let { put("activities", JsonPrimitive(it)) }
-		},
-	)
 
 	private fun obj(json: String?): JsonObject? = json?.let { runCatching { Json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
 
@@ -369,10 +327,6 @@ class PluginSync(private val app: ActivityTrackApp) {
 		val fields = (if (overwrite) mine + remote else remote + mine) + if (closed) mapOf(CLOSED to JsonPrimitive(true)) else emptyMap()
 		return fields.takeIf { it.isNotEmpty() }?.let { JsonObject(it).toString() } ?: old
 	}
-
-	private fun itemJson(i: RemoteItemEntity): JsonObject = RemoteItem(
-		i.list, i.id, i.parentId, i.name, i.clientCode, i.kind, i.active, i.order, obj(i.extra) ?: JsonObject(emptyMap()),
-	).asJson()
 
 	/* an entry's materials: lines, or one text line each ("2 m Cable") */
 	private fun materials(lines: List<EntryMaterialEntity>, mode: String): JsonElement = when (mode) {

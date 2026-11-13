@@ -29,7 +29,12 @@ fun TimeEntryEntity.activityState() = ActivityState(
 	kind, status, mode, closedUtcMs?.let(Instant::ofEpochMilli), deletedUtcMs?.let(Instant::ofEpochMilli),
 )
 
-/* "In <state> dalle <since>" of a stored activity and its segments. */
+/*
+ * "In <state> dalle <since>" of a stored activity and its segments. Its
+ * callers (notification, widgets, tile) show running activities only, whose
+ * state no plugin field changes: missingRequired (issue #178) matters for a
+ * closed one alone, and goes through RequiredFields where one can be shown.
+ */
 fun displayedState(e: TimeEntryEntity, segments: List<SegmentEntity>, now: Instant = Instant.now()): Displayed =
 	ActivityDisplay.display(e.snapshot(segments), now, ZoneId.systemDefault())
 

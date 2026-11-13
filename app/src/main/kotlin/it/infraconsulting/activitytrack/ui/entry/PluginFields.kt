@@ -19,12 +19,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.ActivityTrackApp
 import it.infraconsulting.activitytrack.R
-import it.infraconsulting.activitytrack.data.db.RemoteItemEntity
+import it.infraconsulting.activitytrack.connect.plugin.PluginRoots
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
 import it.infraconsulting.activitytrack.domain.plugin.EntryField
+import it.infraconsulting.activitytrack.domain.plugin.EntryFieldScope
+import it.infraconsulting.activitytrack.domain.plugin.Expr
 import it.infraconsulting.activitytrack.domain.plugin.FieldType
-import it.infraconsulting.activitytrack.domain.plugin.PluginEnv
-import it.infraconsulting.activitytrack.domain.plugin.RemoteItem
 import it.infraconsulting.activitytrack.domain.plugin.eval
 import it.infraconsulting.activitytrack.domain.plugin.text
 import it.infraconsulting.activitytrack.domain.plugin.truthy
@@ -36,7 +36,6 @@ import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.SwitchRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -70,42 +69,26 @@ fun PluginFieldsSection(e: TimeEntryEntity, co: it.infraconsulting.activitytrack
 	val c = app.container
 	val itemsFlow = remember(co.id, plugin.id) { c.pluginData.observeAllItems(co.id, plugin.id) }
 	val items by itemsFlow.collectAsState(initial = emptyList())
-	/* @activity: the planned fields of the same record, for an activity imported from the plugin (activity model 1.0) */
-	val todo = e.takeIf { it.externalKey != null }
-	val clientCode by produceState<String?>(null, e.clientId) { value = e.clientId?.let { c.masterData.client(it)?.externalCode } }
+	/* @entry and @activity as the send and the displayed state see them (PluginRoots), so the required fields agree */
+	val roots by produceState<((Expr.Ref) -> JsonElement?)?>(null, e, co.id) {
+		val client = e.clientId?.let { c.masterData.client(it) }
+		value = PluginRoots.roots(PluginRoots.entryJson(e, co, client), PluginRoots.activityOf(c, e, co.id))
+	}
 	val language = LocalConfiguration.current.locales[0].language
 	val scope = rememberCoroutineScope()
 	var editing by remember { mutableStateOf<EntryField?>(null) }
 
-	fun obj(s: String?) = s?.let { runCatching { Json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
-	val own = obj(e.pluginFields) ?: JsonObject(emptyMap())
-	val fields = HashMap<String, JsonElement>().apply { putAll(own) }
-	val todoJson: JsonElement = todo?.takeIf { it.externalKey != null }?.let {
-		JsonObject(mapOf("id" to JsonPrimitive(it.id), "externalKey" to JsonPrimitive(it.externalKey!!), "title" to JsonPrimitive(it.activity.orEmpty())))
-	} ?: JsonNull
-	val entryJson = JsonObject(mapOf("client" to JsonObject(mapOf("code" to (clientCode?.let(::JsonPrimitive) ?: JsonNull)))))
-	fun itemJson(i: RemoteItemEntity) =
-		RemoteItem(i.list, i.id, i.parentId, i.name, i.clientCode, i.kind, i.active, i.order, obj(i.extra) ?: JsonObject(emptyMap())).asJson()
-	lateinit var env: PluginEnv
-	fun parentOf(f: EntryField): String? = f.parent?.let { text(it.eval(null, env)) }
-	fun selected(list: String): JsonElement {
-		val f = plugin.entryFields.firstOrNull { it.list == list } ?: return JsonNull
-		val id = fields[f.key]?.let(::text) ?: return JsonNull
-		val parent = parentOf(f)
-		return items.firstOrNull { it.list == list && it.id == id && (f.parent == null || it.parentId == parent) }?.let(::itemJson) ?: JsonNull
+	val own = PluginRoots.obj(e.pluginFields) ?: JsonObject(emptyMap())
+	val remoteItems = remember(items) { items.map(PluginRoots::item) }
+	/* until they are read: the record itself as @activity when the plugin imported it */
+	val early = remember(e) {
+		PluginRoots.roots(
+			JsonNull,
+			e.externalKey?.let { k -> JsonObject(mapOf("id" to JsonPrimitive(e.id), "externalKey" to JsonPrimitive(k), "title" to JsonPrimitive(e.activity.orEmpty()))) } ?: JsonNull,
+		)
 	}
-	env = app.plugins.env(co, plugin).with { r ->
-		when (r.root) {
-			"entry" -> PluginEnv.dig(entryJson, r.path)
-			"activity" -> if (r.path.isEmpty()) todoJson else PluginEnv.dig(todoJson, r.path)
-			"field" -> r.path.firstOrNull()?.let { fields[it] }?.let { PluginEnv.dig(it, r.path.drop(1)) } ?: JsonNull
-			"list" -> if (r.path.getOrNull(1) == "selected") PluginEnv.dig(selected(r.path[0]), r.path.drop(2)) else JsonNull
-			else -> null
-		}
-	}
-	for (f in plugin.entryFields)
-		if (f.key !in fields)
-			f.default?.eval(null, env)?.takeIf { it !is JsonNull }?.let { fields[f.key] = it }
+	val fieldScope = EntryFieldScope(plugin, own, remoteItems, app.plugins.env(co, plugin), roots ?: early)
+	val fields = fieldScope.fields
 
 	fun save(key: String, value: JsonElement?) {
 		val updated = HashMap(own)
@@ -120,15 +103,15 @@ fun PluginFieldsSection(e: TimeEntryEntity, co: it.infraconsulting.activitytrack
 		val padded = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
 		run {
 			for (f in plugin.entryFields) {
-				if (truthy(f.hidden.eval(null, env)))
+				if (fieldScope.hidden(f))
 					continue
 				val label = f.label[language] ?: f.label["en"] ?: f.key
-				val importance = if (truthy(f.required.eval(null, env))) Importance.REQUIRED else Importance.OPTIONAL
+				val importance = if (fieldScope.required(f)) Importance.REQUIRED else Importance.OPTIONAL
 				val value = fields[f.key]
 				when (f.type) {
 					FieldType.LIST -> {
-						val parent = parentOf(f)
-						val filters = f.filter.mapValues { (_, x) -> text(x.eval(null, env))?.ifEmpty { null } }
+						val parent = fieldScope.parentOf(f)
+						val filters = f.filter.mapValues { (_, x) -> text(x.eval(null, fieldScope.env))?.ifEmpty { null } }
 						val current = value?.let(::text)
 						val options = items.filter { i ->
 							i.list == f.list && (f.parent == null || i.parentId == parent) && (i.active || i.id == current) &&

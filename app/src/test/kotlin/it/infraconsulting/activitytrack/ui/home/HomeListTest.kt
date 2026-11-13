@@ -54,6 +54,24 @@ class HomeListTest {
 		show: Set<HomeShow> = HomeShow.entries.toSet(), tag: String? = null, window: Int = 168,
 	) = homeSections(todos, closed, absences, show, null, tag, window, 6 * 60, now, zone)
 
+	/* issue #178: a closed activity with a client and work but an empty required plugin field is incomplete, not done */
+	@Test
+	fun aMissingRequiredFieldMakesItIncomplete() {
+		val end = at(day, 9)
+		val all = sections(
+			closed = listOf(
+				closed(30, end, complete = true).copy(missingRequired = true),
+				closed(31, end - 60_000, complete = true),
+			),
+		)
+		assertEquals(listOf("entry-30"), keys(all)[HomeSection.INCOMPLETE])
+		assertEquals(listOf("entry-31"), keys(all)[HomeSection.TODAY])
+		assertEquals(DisplayState.INCOMPLETE, closed(30, end, complete = true).copy(missingRequired = true).displayed(now, zone).state)
+		/* a ticked-off task (no real segment) is done whatever its fields */
+		val ticked = EntryCard(row(32, ActivityStatus.CLOSED, clientId = 1L), null, null, emptyList(), missingRequired = true)
+		assertEquals(DisplayState.DONE, ticked.displayed(now, zone).state)
+	}
+
 	@Test
 	fun groupsInOrder() {
 		val all = sections(

@@ -212,7 +212,10 @@ internal fun TimeEntryEntity.title(): String = activity.orEmpty()
 internal fun moment(t: TimeEntryEntity, zone: ZoneId): Instant? =
 	todoMoment(t.plan(), t.dueEpochDay?.let(LocalDate::ofEpochDay), t.dueTimeMin, zone)
 
-/* The state shown for an activity (ACTIVITY-MODEL.md 2.2); [planned] its planned segments when known. */
+/*
+ * The state shown for an activity (ACTIVITY-MODEL.md 2.2); [planned] its planned segments when known.
+ * Used for TODO activities (lists, agenda, widget): no missingRequired, which only a closed activity's state reads (issue #178).
+ */
 internal fun displayOf(t: TimeEntryEntity, now: Instant = Instant.now(), planned: List<SegmentEntity> = emptyList()): DisplayState =
 	ActivityDisplay.display(t.snapshot(planned), now, ZoneId.systemDefault()).state
 
