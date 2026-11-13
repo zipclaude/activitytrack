@@ -77,6 +77,10 @@ The whole workflow is in
   (versionCode = pipeline number); a tag with a suffix
   (`v0.9.10-beta-1`) is a beta (see §0). The manuals, the brochure and their checks are in
   the `activitytrack-doc` repository (same version, released after this one).
+- Every release and beta updates `CHANGELOG.md` (section `## X.Y.Z`, also for its pre-releases;
+  the job `release` publishes that section as the release notes, `git log` when it is missing).
+  Owner's rules: it lists the changes in behaviour, compatibility and features, with one line
+  "Various bug fixes." per release; only security fixes are listed, under "Security", each with its reference.
 - Update manifest (`docs/UPDATES.md`, issue #1): after the release job, the job `manifest` assembles the
   packages of the tag from the six repositories' releases, signs `update-manifest.json` with the same
   key and commits it to `main` (`[skip ci]`). Needs the variable `MANIFEST_PUSH_TOKEN` (project access
@@ -174,6 +178,7 @@ The whole workflow is in
 
 ```
 SPEC.md                         functional specification
+CHANGELOG.md                    behaviour, compatibility and features per release (release notes)
 docs/INSTRUCTIONS.md            requirements + architectural decisions A1–A16
 docs/DESIGN.md                  technical design, toolchain, risks
 docs/INTERCHANGE.md             import/export format
