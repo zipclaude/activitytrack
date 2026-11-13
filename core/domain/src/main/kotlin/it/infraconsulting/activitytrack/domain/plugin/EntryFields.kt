@@ -68,5 +68,15 @@ class EntryFieldScope(
 	companion object {
 		/* no value, null, or blank text */
 		fun isEmpty(v: JsonElement?): Boolean = v == null || v is JsonNull || text(v).isNullOrBlank()
+
+		/*
+		 * Whether [missingRequired] of [plugin] can read the root @[root]: it
+		 * evaluates the defaults, the required conditions and, through
+		 * @list.<list>.selected, the parents; not hidden nor filter. A caller
+		 * may skip loading a root nothing there reads (RequiredFields).
+		 */
+		fun requiredReads(plugin: Plugin, root: String): Boolean = plugin.entryFields.any { f ->
+			listOfNotNull(f.required, f.default, f.parent).any { e -> e.refs().any { it.root == root } }
+		}
 	}
 }

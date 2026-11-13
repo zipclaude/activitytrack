@@ -61,6 +61,20 @@ class EntryFieldScopeTest {
 		assertEquals(JsonPrimitive("standard"), scope(p).fields["kind"])
 	}
 
+	/* the Home checks a long list: @activity is loaded only where the check can read it */
+	@Test
+	fun whetherTheRequiredCheckReadsARoot() {
+		/* as ServiceDesk Plus: @activity only in hidden, which the check does not evaluate */
+		val sdp = plugin("""[ { "key": "worklogType", "type": "string", "required": true, "hidden": { "eq": ["@activity", null] } } ]""")
+		assertEquals(false, EntryFieldScope.requiredReads(sdp, "activity"))
+		assertEquals(scope(sdp).missingRequired(), scope(sdp, activity = JsonObject(mapOf("externalKey" to JsonPrimitive("T-1")))).missingRequired())
+		assertEquals(true, EntryFieldScope.requiredReads(plugin("""[ { "key": "p", "type": "string", "required": { "eq": ["@activity", null] } } ]"""), "activity"))
+		assertEquals(true, EntryFieldScope.requiredReads(plugin("""[ { "key": "p", "type": "string", "default": "@activity.externalKey" } ]"""), "activity"))
+		/* the legacy alias @todo is @activity */
+		assertEquals(true, EntryFieldScope.requiredReads(plugin("""[ { "key": "p", "type": "string", "default": "${'$'}{todo.title}" } ]"""), "activity"))
+		assertEquals(false, EntryFieldScope.requiredReads(plugin("""[ { "key": "p", "type": "string", "required": true } ]"""), "activity"))
+	}
+
 	@Test
 	fun nothingRequiredNothingMissing() {
 		assertNull(scope(plugin("""[ { "key": "note", "type": "string" } ]""")).missingRequired())

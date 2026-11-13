@@ -104,6 +104,8 @@ class RequiredFields(private val app: ActivityTrackApp) {
 		private val envs = HashMap<Long, PluginEnv>()
 		private val items = HashMap<Long, List<RemoteItem>>()
 		private val clients = HashMap<Long, ClientEntity?>()
+		/* per plugin: whether the check reads @activity, whose lookup costs one or two queries per activity */
+		private val readsActivity = HashMap<String, Boolean>()
 
 		/* the same descriptors and companies, nothing loaded yet: one per list, so a list sees the plugin lists of now */
 		fun fresh(): Check = Check(plugins, companies)
@@ -111,13 +113,18 @@ class RequiredFields(private val app: ActivityTrackApp) {
 		/* the company of [e] has a plugin with entry fields */
 		fun applies(e: TimeEntryEntity): Boolean = e.companyId?.let { it in withFields } == true
 
-		/* the entry fields of [e], or null when its company has no plugin with entry fields */
-		suspend fun scope(e: TimeEntryEntity): EntryFieldScope? {
+		/*
+		 * The entry fields of [e] for the required check, or null when its
+		 * company has no plugin with entry fields; @activity is null where the
+		 * check does not read it (so not for hidden, nor the form).
+		 */
+		private suspend fun scope(e: TimeEntryEntity): EntryFieldScope? {
 			val (co, plugin) = e.companyId?.let { withFields[it] } ?: return null
 			val env = envs.getOrPut(co.id) { app.plugins.env(co, plugin) }
 			val lists = items.getOrPut(co.id) { c.pluginData.items(co.id, plugin.id).map(PluginRoots::item) }
 			val client = e.clientId?.let { id -> clients.getOrPut(id) { c.masterData.client(id) } }
-			val roots = PluginRoots.roots(PluginRoots.entryJson(e, co, client), PluginRoots.activityOf(c, e, co.id))
+			val activity = if (readsActivity.getOrPut(plugin.id) { EntryFieldScope.requiredReads(plugin, "activity") }) PluginRoots.activityOf(c, e, co.id) else JsonNull
+			val roots = PluginRoots.roots(PluginRoots.entryJson(e, co, client), activity)
 			return EntryFieldScope(plugin, PluginRoots.obj(e.pluginFields).orEmpty(), lists, env, roots)
 		}
 
