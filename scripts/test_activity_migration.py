@@ -10,7 +10,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from activity_migration import classify_ref, map_priority, migrate, normalize  # noqa: E402
+from activity_migration import _WS, absence_kind, classify_ref, map_priority, migrate, normalize  # noqa: E402
 
 CASES = os.path.join(HERE, "..", "docs", "samples", "activity-migration.json")
 
@@ -64,6 +64,12 @@ class Helpers(unittest.TestCase):
 		self.assertEqual(classify_ref("{123e4567-e89b-12d3-a456-426614174000}"), "UUID")
 		self.assertEqual(classify_ref("INC0012345"), "TICKET")
 		self.assertEqual(classify_ref("hello world"), "OTHER")
+
+	def test_trim_is_kotlins(self):
+		"""Kotlin's trim(): Python's whitespace but U+0085, which Kotlin's isWhitespace() leaves out."""
+		self.assertEqual(set(_WS), {c for c in map(chr, range(0x110000)) if c.isspace()} - {"\x85"})
+		self.assertEqual(absence_kind("\u00a0Ferie\u3000"), "HOLIDAY")
+		self.assertEqual(absence_kind("Ferie\x85"), "ABSENCE")
 
 
 if __name__ == "__main__":

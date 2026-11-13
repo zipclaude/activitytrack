@@ -162,7 +162,12 @@ An absence is an activity of kind `ABSENCE` with one `ABSENCE` segment per day:
 - with times: one segment per day with those times (a "permesso");
 - without times: one segment per **working day** in the range, covering that weekday's
   `work_schedule` (two segments when a `lunch_break` splits it); days without schedule and
-  `day_off` days are skipped (decided by the assistant; owner agreed 2026-11-11);
+  `day_off` days are skipped (decided by the assistant; owner agreed 2026-11-11). Schedule
+  and lunch windows whose end is not after their start are ignored, and the remaining ones
+  are merged where they overlap or touch, before the lunch breaks are cut out of the
+  working hours. A window that is empty or inverted on the real clock (inside the
+  spring-forward gap, e.g. Europe/Rome 2026-03-29 02:00-03:00 or 02:30-03:00) gives no
+  segment;
 - reports count absence segments apart from work, travel and pause.
 
 ### 3.2 Return trip on stop (owner, 2026-11-11)
@@ -230,15 +235,20 @@ New uids are deterministic, so the phone and the server produce the same records
 `uuid5(NS, "<todo uid>/<suffix>")` with `NS = 6f1c2a52-6b1e-5a8e-9d7e-0a5c1e7d1000`.
 
 1. Entries: ACTIVE, SUSPENDED → `RUNNING`; TO_COMPLETE, CLOSED → `CLOSED`
-   (`closed_utc_ms` = last segment end, else `updated_utc_ms`); `kind = ACTIVITY`.
+   (`closed_utc_ms` = last segment end, else `updated_utc_ms`); `kind = ACTIVITY`; `mode` =
+   the kind of the open segment with the latest start, a tie going to the greater id (on
+   the server, whose rows have no id, the greater uid).
 2. To-dos of kind ABSENCE → an activity with **the to-do's uid**, `kind = ABSENCE`,
    `absence_kind` from the title when it is one of the four labels in any language, else
-   `ABSENCE`; segments per 3.1 (uid suffix `abs/<yyyy-mm-dd>/<n>`). Then the to-do goes.
+   `ABSENCE` (the title trimmed as Kotlin's `trim()` does, no-break spaces included but not
+   U+0085, and compared in lower case, not case-folded); segments per 3.1 (uid suffix
+   `abs/<yyyy-mm-dd>/<n>`, `n` counting from 0 the segments kept that day). Then the to-do goes.
    An ignored absence to-do goes to the bin (`deleted_utc_ms = ignored_utc_ms`), as an
    ignored task does.
 3. To-dos of kind TASK, by the entries linked to them:
    - **none** → an activity with the to-do's uid: `TODO`, or `CLOSED` when done
-     (`closed_utc_ms = done_utc_ms`); ignored → `deleted_utc_ms = ignored_utc_ms`;
+     (`closed_utc_ms = done_utc_ms`, `updated_utc_ms` only when it is null: 0 is a time);
+     ignored → `deleted_utc_ms = ignored_utc_ms`;
    - **some, and the to-do is done or one of them is running** → the earliest entry
      (first segment start, then `created_utc_ms`, then uid) absorbs the to-do: due, plan,
      priority, external key, refs as `external_ref`, plugin fields merged (the entry
@@ -247,6 +257,11 @@ New uids are deterministic, so the phone and the server produce the same records
    - **some, the to-do still open and all of them closed** → the to-do stays its own
      `TODO` activity (with its uid) and each entry gets an `external_ref` of kind UUID
      with that uid (the work is not finished: the plan must not vanish).
+
+   A title that is blank once trimmed gives no description (null), for a task as for an absence.
+   The `refs` text gives one reference per line, lines ending at LF, CRLF or CR only
+   (Kotlin's `lines()`: other separators such as U+2028 or U+0085 stay inside the value),
+   each trimmed, blank ones and repeats dropped; `i` in `ref/<i>` counts the values kept.
 4. Priority per 5. `legacy absence` rows (none should be left since DB 21) follow 2.
    `external_key` is unique with the company: when several resulting activities would share
    `(company_id, external_key)`, the earliest created (then the lower uid) keeps it, the

@@ -157,7 +157,11 @@ object ActivityMigration {
 	private fun parseObject(text: String?): Map<String, JsonElement> =
 		if (text.isNullOrBlank()) emptyMap() else (runCatching { Json.parseToJsonElement(text) }.getOrNull() as? JsonObject) ?: emptyMap()
 
-	/* The to-do's references: one per non-blank line, trimmed, the first of duplicates. */
+	/*
+	 * The to-do's references: one per non-blank line, trimmed, the first of
+	 * duplicates. lines() ends a line at LF, CRLF or CR only, and trim() keeps
+	 * U+0085: the Python implementations follow these two (python3-activitytrack#22).
+	 */
 	fun refValues(refs: String): List<String> = refs.lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
 
 	private class Run(val d: LegacyData) {
@@ -233,7 +237,7 @@ object ActivityMigration {
 						id = null, uid = t.uid, kind = ActivityKind.ACTIVITY,
 						status = if (t.done) ActivityStatus.CLOSED else ActivityStatus.TODO,
 						closedUtcMs = if (t.done) t.doneUtcMs ?: t.updatedUtcMs else null, deletedUtcMs = t.ignoredUtcMs,
-						companyId = t.companyId, clientId = t.clientId, activity = t.title, notes = t.notes,
+						companyId = t.companyId, clientId = t.clientId, activity = t.description(), notes = t.notes,
 						pluginFields = mergePluginFields(t.pluginFields, null),
 						zoneId = zoneName, createdUtcMs = t.createdUtcMs, updatedUtcMs = t.updatedUtcMs,
 					),
@@ -249,7 +253,7 @@ object ActivityMigration {
 				val h = rows.getValue(head.id)
 				rows[head.id] = withTodoFields(h, t).copy(
 					pluginFields = mergePluginFields(t.pluginFields, h.pluginFields),
-					activity = h.activity.takeUnless { it.isNullOrBlank() } ?: t.title,
+					activity = h.activity.takeUnless { it.isNullOrBlank() } ?: t.description(),
 					notes = h.notes.takeUnless { it.isNullOrBlank() } ?: t.notes,
 					companyId = h.companyId ?: t.companyId,
 					clientId = h.clientId ?: t.clientId,
@@ -259,6 +263,9 @@ object ActivityMigration {
 					addRef(e.id, e.uid, t.uid, "link/${e.uid}", head.uid, ExternalRefKind.UUID)
 			}
 		}
+
+		/* the to-do's title as a description: none when blank */
+		fun LegacyTodo.description(): String? = title.takeUnless { it.isBlank() }
 
 		fun withTodoFields(r: ActivityRow, t: LegacyTodo) = r.copy(
 			externalKey = t.externalKey, dueEpochDay = t.dueEpochDay, dueTimeMin = t.dueTimeMin,
@@ -276,7 +283,7 @@ object ActivityMigration {
 			created += ActivityRow(
 				id = null, uid = t.uid, kind = ActivityKind.ABSENCE, status = ActivityStatus.CLOSED,
 				closedUtcMs = segs.maxOfOrNull { it.endUtcMs } ?: t.updatedUtcMs,
-				companyId = t.companyId, clientId = t.clientId, activity = t.title.takeUnless { it.isBlank() }, notes = t.notes,
+				companyId = t.companyId, clientId = t.clientId, activity = t.description(), notes = t.notes,
 				absenceKind = AbsenceKind.fromTitle(t.title), zoneId = zoneName, createdUtcMs = t.createdUtcMs, updatedUtcMs = t.updatedUtcMs,
 				/* an ignored absence goes to the bin, as an ignored task does (the server's rule) */
 				deletedUtcMs = t.ignoredUtcMs,

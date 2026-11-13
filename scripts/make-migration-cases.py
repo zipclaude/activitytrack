@@ -265,6 +265,40 @@ add(Case("a blank external_key is no key: blank ones never clash, a real one sta
 		todo(3, "c37-t3", "Assorbita, vuota", external_key="\t", company_id=1, done=1, done_utc_ms=T0 + 9000, created_utc_ms=T0 + 30),
 		todo(4, "c37-t4", "Chiave vera", external_key="K-9", company_id=1, created_utc_ms=T0 + 40)]))
 
+# ---- the review of python3-activitytrack#22: inputs on which the implementations differed --------
+def window(d, a, b):
+	return {"day_of_week": d, "start_min": a, "end_min": b}
+
+
+add(Case("windows whose end is not after their start are ignored and lunch breaks merged before the day's working hours are computed",
+	todo=[todo(1, "c38-t1", "Assenza", kind="ABSENCE", plan_epoch_day=ed("2026-11-16"), plan_end_epoch_day=ed("2026-11-17"))],
+	work_schedule=[window(1, 480, 1020), window(1, 900, 600), window(1, 300, 300), window(2, 480, 1020)],
+	lunch_break=[window(1, 780, 720), window(2, 720, 780), window(2, 760, 840), window(2, 840, 870), window(2, 600, 600)]))
+dst_gap = [window(7, 60, 300)]
+add(Case("a working window inside the spring-forward gap (Europe/Rome 2026-03-29 02:00-03:00) gives no segment; n counts the kept ones",
+	todo=[todo(1, "c39-t1", "Assenza", kind="ABSENCE", plan_epoch_day=ed("2026-03-22"), plan_end_epoch_day=ed("2026-03-29"))],
+	work_schedule=dst_gap, lunch_break=[window(7, 90, 120), window(7, 180, 240)]))
+add(Case("a working window ending at the end of the spring-forward gap (02:30-03:00) is inverted on the real clock: no segment",
+	todo=[todo(1, "c40-t1", "Assenza", kind="ABSENCE", plan_epoch_day=ed("2026-03-29"))],
+	work_schedule=dst_gap, lunch_break=[window(7, 90, 150), window(7, 180, 240)]))
+add(Case("a task's blank title gives no description, alone or absorbed",
+	time_entry=[entry(1, "c41-e1", "CLOSED", todo=2, activity=None), entry(2, "c41-e2", "CLOSED", todo=3, activity="  ")],
+	segment=[seg(1, 1, L("2026-11-04", "09:00"), L("2026-11-04", "10:00")), seg(2, 2, L("2026-11-04", "09:00"), L("2026-11-04", "10:00"))],
+	todo=[todo(1, "c41-t1", "   "), todo(2, "c41-t2", "\t", done=1, done_utc_ms=T0), todo(3, "c41-t3", "\u00a0", done=1, done_utc_ms=T0)]))
+add(Case("refs are split on LF, CRLF and CR only; other line and paragraph separators stay inside the value, U+0085 is not trimmed",
+	todo=[todo(1, "c42-t1", "Separatori",
+		refs="A-1\vA-2\fA-3\x1cA-4\x1dA-5\x1eA-6\x85A-7\u2028A-8\u2029A-9\r\nB-1\rB-2\nB-3\r\n\r\n C-1\u00a0\nC-2\x85\n\x85")]))
+add(Case("absence kind from the title: whitespace with the no-break space trimmed, case compared by lower case (not case folding)",
+	todo=[todo(i + 1, f"c43-t{i + 1}", t, kind="ABSENCE", plan_epoch_day=ed("2026-11-18")) for i, t in enumerate(
+		["\u00a0Ferie\u00a0", "\u2007Urlaub\u202f", "\tMalattia\n", "\u212arankheit", "MALATTIA", "Vacacione\u017f", "\u017fick leave",
+			"Ferie\x85", "Permesso\u200b", "\x85", "\u00a0", "\u1680\u2028Holiday\u205f\u3000", "\x1cLeave\x1f", "\u2029Permiso\u2000\u200a"])],
+	work_schedule=sched(), lunch_break=lunch()))
+add(Case("mode: of two open segments with the same start the one with the higher id (then uid) wins",
+	time_entry=[entry(1, "c44-e1", "ACTIVE", mode="WORK")],
+	segment=[seg(2, 1, L("2026-11-04", "09:00"), None, "TRAVEL", uid="c44-s2"), seg(1, 1, L("2026-11-04", "09:00"), None, "WORK", uid="c44-s1")]))
+add(Case("a done to-do with done_utc_ms = 0 closes at 0: only a missing time falls back to the last update",
+	todo=[todo(1, "c45-t1", "Chiusa a zero", done=1, done_utc_ms=0), todo(2, "c45-t2", "Chiusa senza ora", done=1)]))
+
 
 def build():
 	doc = {"about": ABOUT, "zone": "Europe/Rome", "cases": []}
@@ -272,6 +306,10 @@ def build():
 		after = normalize(migrate(c.before, c.zone))
 		doc["cases"].append({"name": c.name, "zone": c.zone, "before": c.before, "after": after})
 	return doc
+
+
+# written as escapes: invisible, or a line break to some editors and tools
+ESCAPED = {c: "\\u%04x" % ord(c) for c in "\x85\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u202f\u205f\u3000"}
 
 
 def dump(doc):
@@ -287,7 +325,7 @@ def dump(doc):
 			",\n\t\t\t\"before\": " + tables(c["before"], "\t\t\t") + ",\n\t\t\t\"after\": " + tables(c["after"], "\t\t\t") + "\n\t\t}")
 	out.append(",\n".join(items))
 	out += ["\t]", "}", ""]
-	return "\n".join(out)
+	return "".join(ESCAPED.get(c, c) for c in "\n".join(out))
 
 
 if __name__ == "__main__":
