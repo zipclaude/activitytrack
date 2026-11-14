@@ -842,4 +842,6 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="agenda_whole_day">Ganztägig</string>
   <!-- time grid: scrolling the hours (issue #181) -->
   <string name="grid_hint_scroll">Zieh die Stunden links, um zu blättern.</string>
+  <!-- bin: swipe to delete for good (issue #190) -->
+  <string name="swipe_purge">Endgültig löschen</string>
 </resources>

@@ -312,7 +312,7 @@ private fun rowSwipes(item: HomeItem, start: Boolean, g: GestureSettings, canDel
 						TodoAction.IGNORE -> SwipeAction(stringResource(R.string.action_delete), R.drawable.ic_ignore, grey, Color.White) { a.delete(e) }
 						TodoAction.DONE -> SwipeAction(stringResource(R.string.todo_mark_done), R.drawable.ic_done, GREEN, Color.White) { a.tick(e) }
 						TodoAction.REPLAN -> SwipeAction(stringResource(R.string.action_replan), R.drawable.ic_calendar, BLUE, Color.White) { a.open(e.id) }
-						TodoAction.RESTORE, TodoAction.REOPEN -> null
+						TodoAction.RESTORE, TodoAction.PURGE, TodoAction.REOPEN -> null
 					}
 				}
 		DisplayState.INCOMPLETE, DisplayState.DONE -> {

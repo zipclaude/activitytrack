@@ -31,7 +31,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - Absences are activities of kind Assenza, Ferie, Permesso or Malattia, with one segment per working day (following the work schedule, lunch breaks and days off) or with the times given; reports count them apart, by kind.
 - Four creation buttons on the Home: Da fare, Viaggio, Lavoro (now, already started, or past with its segments), Assenza.
 - Displayed states with one icon and colour each (to-do, planned, late, work, travel, pause, suspended, done, incomplete, absence, deleted), the same on the Home, the detail, the agenda, widgets, the tile and notifications; "In <stato> dalle" tells since when.
-- The bin: a deleted activity can be restored, or deleted for good from there.
+- The bin: a deleted activity can be restored, or deleted for good from there; a swipe restores one way (toward the start) and deletes for good, after the confirmation, the other (#190). Deleting for good follows the policy: `deleteTodos` for a to-do, `deleteEntries` for any other activity.
 - A ticked task can be unticked; "Annulla" after a tick or a done.
 - Return trip on stop: an activity with an outbound trip offers to start the return trip, to stop, or to stop adding a return trip as long as the outbound one (with its km and its two ends swapped).
 - Closing ahead: with editable times a stop, or the end of the last segment, may lie up to 24 hours ahead.
