@@ -67,6 +67,8 @@ import it.infraconsulting.activitytrack.domain.model.SegmentSource
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.domain.policy.Field
 import it.infraconsulting.activitytrack.domain.tag.Tags
+import it.infraconsulting.activitytrack.domain.start.ClientChoice
+import it.infraconsulting.activitytrack.domain.start.ClientPicker
 import it.infraconsulting.activitytrack.location.CurrentPosition
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.appViewModel
@@ -636,10 +638,7 @@ private fun ActivityFields(
  */
 internal fun clientAfterCompany(companyId: Long?, clientId: Long?, clients: List<it.infraconsulting.activitytrack.data.db.ClientEntity>): Long? =
 	/* the same rule as the start screen and the to-do dialog */
-	it.infraconsulting.activitytrack.domain.start.ClientPicker.afterCompany(
-		companyId, clientId,
-		clients.map { it.infraconsulting.activitytrack.domain.start.ClientChoice(it.id, it.companyId, it.name, it.archived, null) },
-	)
+	ClientPicker.afterCompany(companyId, clientId, clients.map { ClientChoice(it.id, it.companyId, it.name, it.archived, null) })
 
 /*
  * "+ Lavoro · Viaggio · Pausa" as one split button (8): each part opens the
