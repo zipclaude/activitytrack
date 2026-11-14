@@ -71,13 +71,17 @@ class EntryViewModel(
 	val masterTags = master.tags.state(emptyList())
 	val tagsFreeText = tagsFreeText.state(true)
 	private val masterRepo = master
+
+	/* the site labels the "Luogo" list offers (issue #184) */
+	fun clientSites(clientId: Long) = masterRepo.clientSites(clientId)
+	fun companySites(companyId: Long) = masterRepo.companySites(companyId)
 	val clients = master.clients.state(emptyList())
 	val companies = master.companies.state(emptyList())
 	val roles = master.roles.state(emptyList())
 	val presets = master.presets.state(emptyList())
 
 	/* the locality proposed once (site name, else municipality); the form takes it while its field is empty */
-	private val _proposedLocality = MutableStateFlow<String?>(null)
+	private val _proposedLocality = MutableStateFlow<PlaceProposal?>(null)
 	val proposedLocality = _proposedLocality.asStateFlow()
 
 	init {

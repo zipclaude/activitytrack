@@ -434,6 +434,11 @@ an older one gets `upgrade_required` or `server_too_old`.
   Viaggio · Pausa), expenses and attachments, place (pre-filled from a site of the
   client/company/user, else the municipality, when geo services are on), notes, tags;
   Annulla, Salva.
+- The place is one field "Luogo" (issue #184): free text or a pick from the site labels
+  of the client, then of the company, then "Casa"; the text is `locality`, and
+  `location_kind` follows from it (a client site CLIENT, a company site COMPANY, "Casa"
+  or the user's home place HOME, other text OTHER, empty none). The route of the
+  activity is a button beside it (issue #191).
 - Creation dialogs as in the table of section 3; the fields of the management systems
   (required among the visible ones, optional under "Altre informazioni").
 - Every state's icon and colour come from one table in the UI layer (2.2).

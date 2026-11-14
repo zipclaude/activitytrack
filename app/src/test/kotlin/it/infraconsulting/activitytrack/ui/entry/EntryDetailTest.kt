@@ -7,6 +7,7 @@ import it.infraconsulting.activitytrack.data.repo.canUntick
 import it.infraconsulting.activitytrack.domain.activity.ActivityKind
 import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
+import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import java.time.Instant
 import java.time.LocalDate
@@ -151,5 +152,37 @@ class EntryDetailTest {
 		/* "none" as company keeps the client */
 		assertEquals(2L, clientAfterCompany(null, 2, clients))
 		assertNull(clientAfterCompany(40, null, clients))
+	}
+
+	@Test
+	fun placeListAndKind() {
+		/* issue #184: client sites, company sites, "Casa" last; blanks and repeats left out */
+		val options = placeOptions(listOf("Stabilimento Nord", " ", "Sede"), listOf("Sede", "Ufficio Milano"), "Casa")
+		assertEquals(
+			listOf(
+				PlaceOption("Stabilimento Nord", LocationKind.CLIENT), PlaceOption("Sede", LocationKind.CLIENT),
+				PlaceOption("Ufficio Milano", LocationKind.COMPANY), PlaceOption("Casa", LocationKind.HOME),
+			),
+			options,
+		)
+		/* the kind follows the text: a label of the list (case and accents ignored), else OTHER, empty none */
+		assertEquals(LocationKind.CLIENT, placeKindOf("stabilimento nord", options))
+		assertEquals(LocationKind.COMPANY, placeKindOf(" Ufficio Milano ", options))
+		assertEquals(LocationKind.HOME, placeKindOf("casa", options))
+		assertEquals(LocationKind.OTHER, placeKindOf("Brescia", options))
+		assertNull(placeKindOf("  ", options))
+		/* the drop-down: everything while empty or on a label, else the matches */
+		assertEquals(options, placeMatches("", options))
+		assertEquals(options, placeMatches("Sede", options))
+		assertEquals(listOf(PlaceOption("Ufficio Milano", LocationKind.COMPANY)), placeMatches("mil", options))
+	}
+
+	@Test
+	fun proposedSiteCarriesItsKind() {
+		val p = GeoPoint(45.0, 9.0)
+		val client = NamedSite("Cantiere", GeoPoint(45.0005, 9.0), 100, LocationKind.CLIENT)
+		val home = NamedSite("Casa", GeoPoint(45.0, 9.0), 100, LocationKind.HOME)
+		assertEquals(client, SiteNames.containingSite(p, listOf(listOf(client), listOf(home))))
+		assertEquals(LocationKind.HOME, SiteNames.containingSite(p, listOf(listOf(client.copy(radiusM = 10)), listOf(home)))?.kind)
 	}
 }

@@ -797,6 +797,7 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="detail_uncomplete">Nicht fertig</string>
   <string name="detail_uncomplete_full">Abschluss aufheben</string>
   <string name="detail_short_done">Erledigt</string>
+  <string name="field_place">Ort</string>
   <string name="detail_travel_hint">Ja: diese Tätigkeit wird abgeschlossen und eine neue Fahrt beginnt. Nein: die Fahrt gehört zu dieser Tätigkeit.</string>
   <string name="detail_stop_at">Ende (leer = jetzt)</string>
   <string name="detail_stop_ahead_hint">Die nächstgelegene Uhrzeit, bis zu 12 Stunden voraus; ein späteres Ende (bis zu 24 Stunden) über den letzten Abschnitt.</string>

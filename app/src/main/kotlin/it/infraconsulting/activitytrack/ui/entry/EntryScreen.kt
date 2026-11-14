@@ -119,6 +119,7 @@ import it.infraconsulting.activitytrack.ui.common.tagColor
 import it.infraconsulting.activitytrack.ui.masterdata.ContactsViewModel
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -222,12 +223,26 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	var deletingSegment by remember { mutableStateOf<SegmentEntity?>(null) }
 	var newRef by remember { mutableStateOf("") }
 
-	/* the place proposed (site, else municipality) while the field is still empty */
+	/* the place proposed (site, else municipality) while the field is still empty, with its kind (issue #184) */
 	LaunchedEffect(proposed) {
-		proposed?.let { if (locality.isBlank()) locality = it }
+		proposed?.let {
+			if (locality.isBlank()) {
+				locality = it.label
+				locationKind = it.kind
+			}
+		}
 	}
 
 	val clientCompany = clients.firstOrNull { it.id == clientId }?.companyId
+	/* "Luogo": the site labels of the client, of the company, then "Casa" (issue #184) */
+	val placeCompany = clientCompany ?: companyId
+	val clientSiteLabels by remember(clientId) {
+		clientId?.let { id -> vm.clientSites(id).map { l -> l.map { it.label } } } ?: flowOf(emptyList())
+	}.collectAsState(emptyList())
+	val companySiteLabels by remember(placeCompany) {
+		placeCompany?.let { id -> vm.companySites(id).map { l -> l.map { it.label } } } ?: flowOf(emptyList())
+	}.collectAsState(emptyList())
+	val placeList = placeOptions(clientSiteLabels, companySiteLabels, stringResource(R.string.loc_home))
 	fun details() = EntryDetails(clientCompany ?: companyId, clientId, roleId, activity, locality, locationKind, notes, contactId)
 	fun save() {
 		vm.clearError()
@@ -352,19 +367,25 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				if (policy.enabled(Feature.ATTACHMENTS) || policy.enabled(Feature.VOICE_NOTES))
 					item(key = "attachments") { AttachmentsSection(initial.id, zone) }
 
-				/* place: the locality (pre-filled from a site or the municipality) and where */
+				/*
+				 * "Luogo" (issue #184): one field for the locality and its kind,
+				 * pre-filled from a site or the municipality; the policy's
+				 * locality field rules it, its place field when locality is hidden
+				 */
 				item(key = "place") {
-					Column(Modifier.padding(horizontal = pad, vertical = gap), verticalArrangement = Arrangement.spacedBy(gap)) {
-						PolicyField(Field.LOCALITY) {
-							TextInput(fieldLabel(Field.LOCALITY, R.string.field_locality), locality, { locality = it }, importance = fieldImportance(Field.LOCALITY, Importance.OPTIONAL))
-						}
-						PolicyField(Field.PLACE) {
-							ChoiceField(
-								fieldLabel(Field.PLACE, R.string.field_location_kind),
-								listOf<Pair<LocationKind?, String>>(null to none) + LocationKind.entries.map { it to locationLabel(it) },
-								locationKind,
-								importance = fieldImportance(Field.PLACE, Importance.OPTIONAL),
-							) { locationKind = it }
+					val placeField = if (policy.field(Field.LOCALITY).visible) Field.LOCALITY else Field.PLACE
+					val required = policy.field(Field.LOCALITY).required == true || policy.field(Field.PLACE).required == true
+					Column(Modifier.padding(horizontal = pad, vertical = gap)) {
+						PolicyField(placeField) {
+							PlaceField(
+								fieldLabel(placeField, R.string.field_place),
+								locality,
+								placeList,
+								if (required) Importance.REQUIRED else Importance.OPTIONAL,
+								onText = { locality = it; locationKind = placeKindOf(it, placeList) },
+								onPick = { locality = it.label; locationKind = it.kind },
+								kindLabel = { locationLabel(it) },
+							)
 						}
 					}
 				}

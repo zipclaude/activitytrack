@@ -798,6 +798,7 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="detail_uncomplete">Annulla compl.</string>
   <string name="detail_uncomplete_full">Annulla completamento</string>
   <string name="detail_short_done">Fatta</string>
+  <string name="field_place">Luogo</string>
   <string name="detail_travel_hint">Sì: questa attività si chiude e parte un nuovo viaggio. No: il viaggio fa parte di questa attività.</string>
   <string name="detail_stop_at">Fine (vuoto = adesso)</string>
   <string name="detail_stop_ahead_hint">L\'ora più vicina ad adesso, fino a 12 ore avanti; una fine più lontana (fino a 24 ore) modificando l\'ultimo tratto.</string>

@@ -168,6 +168,11 @@ the border while required and empty / once filled).
 Essential fields cannot be hidden, disabled or made optional; a hidden or
 disabled field cannot be required.
 
+In the activity's detail `locality` and `place` are one field, "Luogo" (issue #184): its
+text is the locality and the place kind follows from it (a site of the client or company,
+"Casa", else elsewhere). `locality` rules that field, `place` only while `locality` is
+hidden; required by either, "Luogo" is required.
+
 ## 6. Settings
 
 ```json

@@ -798,6 +798,7 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="detail_uncomplete">Anular compl.</string>
   <string name="detail_uncomplete_full">Anular finalización</string>
   <string name="detail_short_done">Hecha</string>
+  <string name="field_place">Lugar</string>
   <string name="detail_travel_hint">Sí: esta actividad se cierra y empieza un nuevo viaje. No: el viaje forma parte de esta actividad.</string>
   <string name="detail_stop_at">Fin (vacío = ahora)</string>
   <string name="detail_stop_ahead_hint">La hora más cercana a ahora, hasta 12 horas en el futuro; un final más lejano (hasta 24 horas) editando el último tramo.</string>
