@@ -33,7 +33,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - Displayed states with one icon and colour each (to-do, planned, late, work, travel, pause, suspended, done, incomplete, absence, deleted), the same on the Home, the detail, the agenda, widgets, the tile and notifications; "In <stato> dalle" tells since when.
 - The bin: a deleted activity can be restored, or deleted for good from there.
 - A ticked task can be unticked; "Annulla" after a tick or a done.
-- An activity made of travel only can be declared complete ("Completa", and "Annulla completamento"); it is then done unless a field the management system requires is empty (issue #189).
+- An activity made of travel only can be declared complete ("Completa" among the actions of its detail, undone by "Annulla completamento"); it is then done unless a field the management system requires is empty (issue #189).
 - Photos, voice notes and files have a description, synced with the attachment (issue #185).
 - Return trip on stop: an activity with an outbound trip offers to start the return trip, to stop, or to stop adding a return trip as long as the outbound one (with its km and its two ends swapped).
 - Closing ahead: with editable times a stop, or the end of the last segment, may lie up to 24 hours ahead.

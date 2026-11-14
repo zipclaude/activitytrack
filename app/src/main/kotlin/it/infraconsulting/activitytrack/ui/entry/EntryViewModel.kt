@@ -222,6 +222,11 @@ class EntryViewModel(
 
 	fun untick() = run { entries.untick(entryId) }
 
+	/* "Completa" / "Annulla completamento": the declared completion of an activity of travel only (2.4, issue #189) */
+	fun complete() = run { entries.complete(entryId) }
+
+	fun uncomplete() = run { entries.uncomplete(entryId) }
+
 	/* Reopening asks first (3): a new open segment, the gap stays a gap. */
 	private val _reopenAsk = MutableStateFlow<SegmentKind?>(null)
 	val reopenAsk = _reopenAsk.asStateFlow()

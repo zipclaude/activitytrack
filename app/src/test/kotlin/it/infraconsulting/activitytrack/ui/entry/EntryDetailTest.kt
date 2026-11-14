@@ -72,4 +72,28 @@ class EntryDetailTest {
 		assertFalse(canUntick(closed.copy(deletedUtcMs = 1), emptyList()))
 		assertFalse(canUntick(closed.copy(kind = ActivityKind.ABSENCE), emptyList()))
 	}
+
+	private val closed = TimeEntryEntity(uid = "u", companyId = null, clientId = null, status = ActivityStatus.CLOSED, zoneId = "UTC", createdUtcMs = 0, updatedUtcMs = 0, closedUtcMs = 3_600_000)
+	private val travel = SegmentEntity(entryId = 0, kind = SegmentKind.TRAVEL, startUtcMs = 0, endUtcMs = 3_600_000, zoneId = "UTC")
+
+	@Test
+	fun completeOfferedForTravelOnly() {
+		/* a closed activity of travel only: reopen in work or travel, Completa, then Elimina (issue #189) */
+		val cmds = detailCommands(closed, listOf(travel), travel = true, canDelete = true)
+		assertEquals(
+			listOf(DetailCommand.Reopen(SegmentKind.WORK), DetailCommand.Reopen(SegmentKind.TRAVEL), DetailCommand.Complete, DetailCommand.Delete),
+			cmds,
+		)
+		/* declared complete: "Annulla completamento" instead */
+		val done = detailCommands(closed.copy(completedUtcMs = 3_700_000), listOf(travel), travel = true, canDelete = false)
+		assertTrue(DetailCommand.Uncomplete in done)
+		assertFalse(DetailCommand.Complete in done)
+		/* with work there is nothing to declare: a client completes it */
+		val work = travel.copy(kind = SegmentKind.WORK)
+		assertFalse(DetailCommand.Complete in detailCommands(closed, listOf(travel, work), travel = true, canDelete = true))
+		/* a deleted one offers Ripristina only */
+		assertEquals(listOf(DetailCommand.Restore), detailCommands(closed.copy(deletedUtcMs = 1), listOf(travel), travel = true, canDelete = true))
+		/* without the travel feature no "reopen with travel" */
+		assertFalse(DetailCommand.Reopen(SegmentKind.TRAVEL) in detailCommands(closed, listOf(travel), travel = false, canDelete = true))
+	}
 }

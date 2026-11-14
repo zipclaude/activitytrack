@@ -794,6 +794,8 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="detail_reopen_work">Reabrir con trabajo</string>
   <string name="detail_reopen_travel">Reabrir con viaje</string>
   <string name="detail_reopen_text">Se abre un nuevo tramo desde ahora; el tiempo desde el cierre queda vacío.</string>
+  <string name="detail_complete">Completar</string>
+  <string name="detail_uncomplete">Anular finalización</string>
   <string name="detail_travel_hint">Sí: esta actividad se cierra y empieza un nuevo viaje. No: el viaje forma parte de esta actividad.</string>
   <string name="detail_stop_at">Fin (vacío = ahora)</string>
   <string name="detail_stop_ahead_hint">La hora más cercana a ahora, hasta 12 horas en el futuro; un final más lejano (hasta 24 horas) editando el último tramo.</string>

@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
 import it.infraconsulting.activitytrack.data.db.TimeEntryEntity
+import it.infraconsulting.activitytrack.data.repo.canComplete
+import it.infraconsulting.activitytrack.data.repo.canUncomplete
 import it.infraconsulting.activitytrack.data.repo.canUntick
 import it.infraconsulting.activitytrack.domain.activity.ActivityCommand
 import it.infraconsulting.activitytrack.domain.activity.ActivityDisplay
@@ -184,20 +186,38 @@ private fun Timeline(segments: List<SegmentEntity>, now: Long, planned: Boolean,
 /* A command of the detail dialog: label, the Home's round button style, what it does. */
 internal data class DetailAction(@StringRes val label: Int, val style: CommandStyle, val onClick: () -> Unit)
 
+/* What the detail header offers, before labels and styles (pure, unit-tested in EntryDetailTest). */
+internal sealed interface DetailCommand {
+	data class Start(val kind: SegmentKind) : DetailCommand
+	/* [resume]: the kind the pause interrupted, labelled "Riprendi" (3) */
+	data class Switch(val kind: SegmentKind, val resume: Boolean) : DetailCommand
+	data class Resume(val kind: SegmentKind) : DetailCommand
+	data object Stop : DetailCommand
+	data object Tick : DetailCommand
+	data class Reopen(val kind: SegmentKind) : DetailCommand
+	data object Untick : DetailCommand
+	/* the declared completion of an activity of travel only (2.4, issue #189) */
+	data object Complete : DetailCommand
+	data object Uncomplete : DetailCommand
+	data object Delete : DetailCommand
+	data object Restore : DetailCommand
+}
+
 /*
- * The commands the activity's state allows (ActivityStateMachine.allowed),
- * as buttons: start in work or travel (TODO), switch, pause, resume and
- * stop (RUNNING), reopen in work or travel (CLOSED, asked first), tick
- * (TODO), untick (CLOSED without real segments), delete or restore. No
- * "suspend" (8). Travel and deletion follow the policy.
+ * The commands the activity's state allows (ActivityStateMachine.allowed):
+ * start in work or travel (TODO), switch, pause, resume and stop (RUNNING),
+ * reopen in work or travel (CLOSED, asked first), tick (TODO), untick
+ * (CLOSED without real segments), complete and uncomplete (CLOSED, issue
+ * #189), then delete or restore. No "suspend" (8). Travel and deletion
+ * follow the policy ([travel], [canDelete]).
  */
-@Composable
-internal fun detailActions(e: TimeEntryEntity, segments: List<SegmentEntity>, vm: EntryViewModel): List<DetailAction> {
-	val travel = enabled(Feature.TRAVEL)
-	val canDelete = enabled(Feature.DELETE_ENTRIES)
-	val state = ActivityState(e.kind, e.status, e.mode, e.closedUtcMs?.let(Instant::ofEpochMilli), e.deletedUtcMs?.let(Instant::ofEpochMilli))
-	val main = ArrayList<DetailAction>()
-	val last = ArrayList<DetailAction>()
+internal fun detailCommands(e: TimeEntryEntity, segments: List<SegmentEntity>, travel: Boolean, canDelete: Boolean): List<DetailCommand> {
+	val state = ActivityState(
+		e.kind, e.status, e.mode, e.closedUtcMs?.let(Instant::ofEpochMilli), e.deletedUtcMs?.let(Instant::ofEpochMilli),
+		e.completedUtcMs?.let(Instant::ofEpochMilli),
+	)
+	val main = ArrayList<DetailCommand>()
+	val last = ArrayList<DetailCommand>()
 	fun ok(kind: SegmentKind) = kind != SegmentKind.TRAVEL || travel
 	/* from a pause "Riprendi" is the kind open before it (3) */
 	val resumeKind = if (e.mode == SegmentKind.PAUSE) {
@@ -209,23 +229,43 @@ internal fun detailActions(e: TimeEntryEntity, segments: List<SegmentEntity>, vm
 	} else null
 	for (cmd in ActivityStateMachine.allowed(state))
 		when (cmd) {
-			is ActivityCommand.Start -> if (ok(cmd.kind)) main += DetailAction(kindName(cmd.kind), segmentStyle(cmd.kind)) { vm.startTodo(cmd.kind) }
-			is ActivityCommand.Switch -> if (ok(cmd.kind))
-				main += DetailAction(if (cmd.kind == resumeKind) R.string.cmd_resume else kindName(cmd.kind), segmentStyle(cmd.kind)) { vm.switchTo(cmd.kind) }
-			is ActivityCommand.Resume -> if (ok(cmd.kind))
-				main += DetailAction(if (cmd.kind == SegmentKind.WORK) R.string.cmd_resume else kindName(cmd.kind), segmentStyle(cmd.kind)) { vm.resume(cmd.kind) }
+			is ActivityCommand.Start -> if (ok(cmd.kind)) main += DetailCommand.Start(cmd.kind)
+			is ActivityCommand.Switch -> if (ok(cmd.kind)) main += DetailCommand.Switch(cmd.kind, cmd.kind == resumeKind)
+			is ActivityCommand.Resume -> if (ok(cmd.kind)) main += DetailCommand.Resume(cmd.kind)
 			is ActivityCommand.Suspend -> {}
-			is ActivityCommand.Stop -> main += DetailAction(R.string.cmd_stop, STOP_STYLE) { vm.askStop() }
-			ActivityCommand.Tick -> main += DetailAction(R.string.todo_mark_done, displayStyle(DisplayState.DONE)) { vm.tick() }
-			is ActivityCommand.Reopen -> if (ok(cmd.kind))
-				main += DetailAction(if (cmd.kind == SegmentKind.TRAVEL) R.string.detail_reopen_travel else R.string.detail_reopen_work, segmentStyle(cmd.kind)) { vm.askReopen(cmd.kind) }
-			ActivityCommand.Delete -> if (canDelete) last += DetailAction(R.string.action_delete, displayStyle(DisplayState.DELETED)) { vm.askDelete() }
-			ActivityCommand.Restore -> last += DetailAction(R.string.swipe_restore, CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.WORK).container, androidx.compose.ui.graphics.Color.White)) { vm.restore() }
+			is ActivityCommand.Stop -> main += DetailCommand.Stop
+			ActivityCommand.Tick -> main += DetailCommand.Tick
+			is ActivityCommand.Reopen -> if (ok(cmd.kind)) main += DetailCommand.Reopen(cmd.kind)
+			ActivityCommand.Delete -> if (canDelete) last += DetailCommand.Delete
+			ActivityCommand.Restore -> last += DetailCommand.Restore
 		}
 	if (canUntick(e, segments))
-		main += DetailAction(R.string.state_todo, displayStyle(DisplayState.TODO)) { vm.untick() }
+		main += DetailCommand.Untick
+	if (canComplete(e, segments))
+		main += DetailCommand.Complete
+	if (canUncomplete(e))
+		main += DetailCommand.Uncomplete
 	return main + last
 }
+
+/* The commands as buttons, wired to the view model. */
+@Composable
+internal fun detailActions(e: TimeEntryEntity, segments: List<SegmentEntity>, vm: EntryViewModel): List<DetailAction> =
+	detailCommands(e, segments, enabled(Feature.TRAVEL), enabled(Feature.DELETE_ENTRIES)).map { c ->
+		when (c) {
+			is DetailCommand.Start -> DetailAction(kindName(c.kind), segmentStyle(c.kind)) { vm.startTodo(c.kind) }
+			is DetailCommand.Switch -> DetailAction(if (c.resume) R.string.cmd_resume else kindName(c.kind), segmentStyle(c.kind)) { vm.switchTo(c.kind) }
+			is DetailCommand.Resume -> DetailAction(if (c.kind == SegmentKind.WORK) R.string.cmd_resume else kindName(c.kind), segmentStyle(c.kind)) { vm.resume(c.kind) }
+			DetailCommand.Stop -> DetailAction(R.string.cmd_stop, STOP_STYLE) { vm.askStop() }
+			DetailCommand.Tick -> DetailAction(R.string.todo_mark_done, displayStyle(DisplayState.DONE)) { vm.tick() }
+			is DetailCommand.Reopen -> DetailAction(if (c.kind == SegmentKind.TRAVEL) R.string.detail_reopen_travel else R.string.detail_reopen_work, segmentStyle(c.kind)) { vm.askReopen(c.kind) }
+			DetailCommand.Untick -> DetailAction(R.string.state_todo, displayStyle(DisplayState.TODO)) { vm.untick() }
+			DetailCommand.Complete -> DetailAction(R.string.detail_complete, displayStyle(DisplayState.DONE)) { vm.complete() }
+			DetailCommand.Uncomplete -> DetailAction(R.string.detail_uncomplete, CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.INCOMPLETE).container, displayStyle(DisplayState.INCOMPLETE).content)) { vm.uncomplete() }
+			DetailCommand.Delete -> DetailAction(R.string.action_delete, displayStyle(DisplayState.DELETED)) { vm.askDelete() }
+			DetailCommand.Restore -> DetailAction(R.string.swipe_restore, CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.WORK).container, androidx.compose.ui.graphics.Color.White)) { vm.restore() }
+		}
+	}
 
 @StringRes
 private fun kindName(k: SegmentKind): Int = when (k) {
