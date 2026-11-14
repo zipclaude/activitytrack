@@ -185,4 +185,15 @@ class EntryDetailTest {
 		assertEquals(client, SiteNames.containingSite(p, listOf(listOf(client), listOf(home))))
 		assertEquals(LocationKind.HOME, SiteNames.containingSite(p, listOf(listOf(client.copy(radiusM = 10)), listOf(home)))?.kind)
 	}
+
+	@Test
+	fun routeBesideThePlace() {
+		/* issue #191: an activity with samples, the location feature, its map or (track export and export) */
+		assertTrue(routeShown(ActivityKind.ACTIVITY, hasSamples = true, location = true, map = true, trackExport = false, export = false))
+		assertTrue(routeShown(ActivityKind.ACTIVITY, hasSamples = true, location = true, map = false, trackExport = true, export = true))
+		assertFalse(routeShown(ActivityKind.ACTIVITY, hasSamples = true, location = true, map = false, trackExport = true, export = false))
+		assertFalse(routeShown(ActivityKind.ACTIVITY, hasSamples = false, location = true, map = true, trackExport = true, export = true))
+		assertFalse(routeShown(ActivityKind.ACTIVITY, hasSamples = true, location = false, map = true, trackExport = true, export = true))
+		assertFalse(routeShown(ActivityKind.ABSENCE, hasSamples = true, location = true, map = true, trackExport = true, export = true))
+	}
 }

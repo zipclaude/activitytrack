@@ -26,8 +26,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -48,8 +47,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
@@ -143,39 +140,23 @@ fun EntryScreen(entryId: Long, onBack: () -> Unit, onOpenTrack: (Long) -> Unit =
 		else null
 		EntryViewModel(
 			entryId, c.entries, c.masterData, c.settings.settings.map { s -> s.editableTimes }, c.settings.settings.map { s -> s.tagsFreeText },
-			{ c.policies.current.value }, prefill,
+			{ c.policies.current.value }, prefill, { id -> c.locations.localityPoint(id) != null },
 		)
 	}
 	val entry by vm.entry.collectAsState()
-	ScreenScaffold(
-		title = stringResource(R.string.entry_title),
-		onBack = onBack,
-		actions = {
-			/* the route of this activity (issue #155): its map or export, as the policy allows */
-			val policy = LocalPolicy.current
-			val route = entry?.kind == ActivityKind.ACTIVITY && policy.enabled(Feature.LOCATION) &&
-				(policy.enabled(Feature.TRACK_MAP) || (policy.enabled(Feature.TRACK_EXPORT) && policy.enabled(Feature.EXPORT)))
-			if (route) {
-				var menu by remember { mutableStateOf(false) }
-				val menuLabel = stringResource(R.string.nav_more)
-				Box {
-					IconButton(onClick = { menu = true }) {
-						Text("⋮", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { contentDescription = menuLabel })
-					}
-					DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-						DropdownMenuItem(text = { Text(stringResource(R.string.track_entry)) }, onClick = { menu = false; onOpenTrack(entryId) })
-					}
-				}
-			}
-		},
-	) { padding ->
+	/* no top-bar menu: its only item, the route, is a button beside "Luogo" (issue #191) */
+	ScreenScaffold(title = stringResource(R.string.entry_title), onBack = onBack) { padding ->
 		/* the form starts from the first loaded state; later emissions refresh state, commands and lists */
-		entry?.let { EntryForm(it, vm, onBack, Modifier.padding(padding).consumeWindowInsets(padding).imePadding()) }
+		entry?.let { EntryForm(it, vm, onBack, { onOpenTrack(entryId) }, Modifier.padding(padding).consumeWindowInsets(padding).imePadding()) }
 	}
 }
 
+/* The route of an activity can be shown (issue #155): an activity, with samples, its map or export allowed by the policy. */
+internal fun routeShown(kind: ActivityKind, hasSamples: Boolean, location: Boolean, map: Boolean, trackExport: Boolean, export: Boolean): Boolean =
+	kind == ActivityKind.ACTIVITY && hasSamples && location && (map || (trackExport && export))
+
 @Composable
-private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -> Unit, modifier: Modifier) {
+private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -> Unit, onOpenTrack: () -> Unit, modifier: Modifier) {
 	val e = vm.entry.collectAsState().value ?: initial
 	val segments by vm.segments.collectAsState()
 	/* collected here: a WhileSubscribed flow nobody collects stays at its initial value */
@@ -243,6 +224,8 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 		placeCompany?.let { id -> vm.companySites(id).map { l -> l.map { it.label } } } ?: flowOf(emptyList())
 	}.collectAsState(emptyList())
 	val placeList = placeOptions(clientSiteLabels, companySiteLabels, stringResource(R.string.loc_home))
+	/* the route (issue #191): checked again as segments come, a running activity gains samples */
+	val hasSamples by produceState(false, segments.size, e.updatedUtcMs) { value = vm.hasSamples() }
 	fun details() = EntryDetails(clientCompany ?: companyId, clientId, roleId, activity, locality, locationKind, notes, contactId)
 	fun save() {
 		vm.clearError()
@@ -373,9 +356,20 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				 * locality field rules it, its place field when locality is hidden
 				 */
 				item(key = "place") {
+					val showRoute = routeShown(
+						initial.kind, hasSamples, policy.enabled(Feature.LOCATION), policy.enabled(Feature.TRACK_MAP),
+						policy.enabled(Feature.TRACK_EXPORT), policy.enabled(Feature.EXPORT),
+					)
 					val placeField = if (policy.field(Field.LOCALITY).visible) Field.LOCALITY else Field.PLACE
 					val required = policy.field(Field.LOCALITY).required == true || policy.field(Field.PLACE).required == true
 					Column(Modifier.padding(horizontal = pad, vertical = gap)) {
+						/* the policy hides the place: the route keeps a button of its own */
+						if (showRoute && !policy.field(Field.LOCALITY).visible && !policy.field(Field.PLACE).visible)
+							OutlinedButton(onClick = onOpenTrack) {
+								Icon(painterResource(R.drawable.ic_route), contentDescription = null, modifier = Modifier.size(18.dp))
+								Spacer(Modifier.width(6.dp))
+								Text(stringResource(R.string.track_entry))
+							}
 						PolicyField(placeField) {
 							PlaceField(
 								fieldLabel(placeField, R.string.field_place),
@@ -385,6 +379,9 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 								onText = { locality = it; locationKind = placeKindOf(it, placeList) },
 								onPick = { locality = it.label; locationKind = it.kind },
 								kindLabel = { locationLabel(it) },
+								extra = if (showRoute) ({
+									IconButton(onClick = onOpenTrack) { Icon(painterResource(R.drawable.ic_route), contentDescription = stringResource(R.string.track_entry)) }
+								}) else null,
 							)
 						}
 					}

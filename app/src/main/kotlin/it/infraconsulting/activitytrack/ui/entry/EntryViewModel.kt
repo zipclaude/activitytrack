@@ -58,6 +58,8 @@ class EntryViewModel(
 	private val policy: () -> Policy = { Policy.NONE },
 	/* the locality proposed for an activity without one; null: geo services off */
 	private val prefill: LocalityPrefill? = null,
+	/* the activity has location samples, so a route to show (issue #191) */
+	private val samples: suspend (Long) -> Boolean = { false },
 ) : ActionViewModel() {
 	/* segments editable and deletable only with the option on (M17) */
 	val editableTimes = editableTimes.state(false)
@@ -92,6 +94,8 @@ class EntryViewModel(
 					_proposedLocality.value = prefill.propose(e)
 			}
 	}
+
+	suspend fun hasSamples(): Boolean = samples(entryId)
 
 	/* ------------------------------------------------------------ Salva */
 

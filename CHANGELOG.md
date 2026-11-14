@@ -58,6 +58,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - `entries.source = "plannedOnly"`: activities start only from a planned or assigned to-do.
 - In the activity's detail, picking a company that has only one client (not archived) fills the client field when it is empty (issue #182).
 - The detail's "Località" and "Dove" become one field "Luogo": free text or a pick from the sites of the client, of the company and "Casa", with ✕ to clear it; the kind of place stored with the activity (and synced and exported as `locationKind`) follows from it: a client or company site, home, elsewhere (issue #184).
+- The route of an activity opens from the button beside "Luogo" in its detail, shown when the activity has location samples; the detail has no top-bar menu any more (issue #191).
 
 Various bug fixes.
 
