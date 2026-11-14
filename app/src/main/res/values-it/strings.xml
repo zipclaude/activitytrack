@@ -847,4 +847,8 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="swipe_purge">Elimina per sempre</string>
   <!-- to-do: the place (issue #192) -->
   <string name="field_place_single">Luogo</string>
+  <!-- navigator on the start of a planned travel (issue #193) -->
+  <string name="set_propose_navigation">Proponi il navigatore all\'avvio di un viaggio</string>
+  <string name="set_propose_navigation_hint">Quando un\'attività pianificata parte in viaggio e il suo luogo è una sede del cliente, dell\'azienda o casa, a più di 20 km.</string>
+  <string name="nav_ask">Avviare il navigatore verso «%1$s»?</string>
 </resources>

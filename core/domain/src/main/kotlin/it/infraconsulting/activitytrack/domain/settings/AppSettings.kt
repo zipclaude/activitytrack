@@ -144,6 +144,8 @@ data class AppSettings(
 	 * while travelling (seconds): the finer one draws the route taken.
 	 */
 	val trackMapEnabled: Boolean = true,
+	/* issue #193: starting a planned travel to a known site over 20 km away offers the navigator */
+	val proposeNavigation: Boolean = true,
 	val workSampleMin: Int = 5,
 	val travelSampleSec: Int = 60,
 ) {

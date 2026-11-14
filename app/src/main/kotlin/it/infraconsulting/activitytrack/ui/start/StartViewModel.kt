@@ -13,7 +13,10 @@ import it.infraconsulting.activitytrack.data.repo.SegmentInput
 import it.infraconsulting.activitytrack.data.repo.TodoRequest
 import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.isActive
+import it.infraconsulting.activitytrack.data.db.PlaceKind
 import it.infraconsulting.activitytrack.domain.geo.GeoPoint
+import it.infraconsulting.activitytrack.domain.geo.NavTarget
+import it.infraconsulting.activitytrack.domain.geo.NavigationProposal
 import it.infraconsulting.activitytrack.data.repo.OnRunning
 import it.infraconsulting.activitytrack.domain.model.LocationKind
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
@@ -38,7 +41,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /* How a Lavoro activity begins (ACTIVITY-MODEL.md 3, creation): now, from a time already passed, or a past one recorded whole. */
 enum class StartWhen { NOW, STARTED, PAST }
@@ -96,7 +102,16 @@ class StartViewModel(
 	editableTimes: Flow<Boolean> = flowOf(false),
 	/* the policy in force: the fields it makes required (issue #48) */
 	private val policy: () -> Policy = { Policy.NONE },
+	/* the navigator may be offered (issue #193): the setting on and the location allowed by the policy */
+	private val navigationAllowed: suspend () -> Boolean = { false },
 ) : ActionViewModel() {
+	/* the place of the to-do being started, and a position fetched early for the navigator question */
+	private var todoLocality: String? = null
+	private var fix: Deferred<GeoPoint?>? = null
+
+	/* asked once the travel has started: Sì opens the navigator; either answer closes the screen */
+	private val _navigation = MutableStateFlow<NavTarget?>(null)
+	val navigation = _navigation.asStateFlow()
 	val editableTimes = editableTimes.state(false)
 
 	private val _form = MutableStateFlow(StartForm())
@@ -138,6 +153,10 @@ class StartViewModel(
 			_form.update { it.copy(ready = true, companyId = p.companyId, clientId = p.clientId, locationKind = p.locationKind) }
 			p.clientId?.let { applyDefaults(it) }
 			todoId?.let { entries.find(it) }?.let { t ->
+				todoLocality = t.locality
+				/* the fix takes seconds: started now, so the question after a travel's start need not wait for it */
+				if (!t.locality.isNullOrBlank() && navigationAllowed())
+					fix = viewModelScope.async { runCatching { position() }.getOrNull() }
 				val refs = entries.externalRefValues(t.id).joinToString("\n")
 				_form.update {
 					it.copy(
@@ -398,7 +417,7 @@ class StartViewModel(
 
 	private fun doStart() {
 		val f = _form.value
-		saveOnce(onStarted) {
+		saveOnce({ if (_navigation.value == null) onStarted() }) {
 			entries.start(
 				StartRequest(
 					mode = kind,
@@ -416,7 +435,32 @@ class StartViewModel(
 				),
 				HashMap(decisions),
 			)
+			_navigation.value = navigationTarget(f)
 		}
+	}
+
+	/*
+	 * Issue #193: a to-do started as a travel towards a site of its client,
+	 * of its company or home, known by its place, over 20 km away. Never in
+	 * the way of the start: any failure means no question.
+	 */
+	private suspend fun navigationTarget(f: StartForm): NavTarget? = runCatching {
+		if (kind != SegmentKind.TRAVEL || todoId == null || todoLocality.isNullOrBlank() || !navigationAllowed())
+			return@runCatching null
+		val companyId = f.clientId?.let { master.client(it)?.companyId } ?: f.companyId
+		val groups = listOf(
+			f.clientId?.let { id -> master.clientSites(id).first().map { NavTarget(it.label, GeoPoint(it.lat, it.lon)) } }.orEmpty(),
+			companyId?.let { id -> master.companySites(id).first().map { NavTarget(it.label, GeoPoint(it.lat, it.lon)) } }.orEmpty(),
+			master.places.first().filter { it.kind == PlaceKind.HOME }.map { NavTarget(it.label, GeoPoint(it.lat, it.lon)) },
+		)
+		val here = withTimeoutOrNull(NAV_FIX_WAIT_MS) { fix?.await() ?: position() }
+		NavigationProposal.target(todoLocality, groups, here)
+	}.getOrNull()
+
+	/* the navigator question answered (or dismissed): the screen closes as after any start */
+	fun navigationAnswered() {
+		_navigation.value = null
+		onStarted()
 	}
 
 	/* "Salva" of a past activity: closed, with the segments typed on the chosen day. */
@@ -459,3 +503,6 @@ class StartViewModel(
 		}
 	}
 }
+
+/* how long the start waits for a position before the navigator question is skipped */
+private const val NAV_FIX_WAIT_MS = 5_000L

@@ -858,4 +858,8 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="swipe_purge">Delete forever</string>
   <!-- to-do: the place (issue #192) -->
   <string name="field_place_single">Place</string>
+  <!-- navigator on the start of a planned travel (issue #193) -->
+  <string name="set_propose_navigation">Offer the navigator when a travel starts</string>
+  <string name="set_propose_navigation_hint">When a planned activity starts as a travel and its place is a site of its client, of its company or home, more than 20 km away.</string>
+  <string name="nav_ask">Start the navigator to «%1$s»?</string>
 </resources>

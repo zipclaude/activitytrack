@@ -846,4 +846,8 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="swipe_purge">Endgültig löschen</string>
   <!-- to-do: the place (issue #192) -->
   <string name="field_place_single">Ort</string>
+  <!-- navigator on the start of a planned travel (issue #193) -->
+  <string name="set_propose_navigation">Beim Start einer Reise die Navigation anbieten</string>
+  <string name="set_propose_navigation_hint">Wenn eine geplante Tätigkeit als Reise beginnt und ihr Ort ein Standort des Kunden, der Firma oder das Zuhause ist, mehr als 20 km entfernt.</string>
+  <string name="nav_ask">Navigation nach «%1$s» starten?</string>
 </resources>

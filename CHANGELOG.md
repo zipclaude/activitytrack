@@ -53,6 +53,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - After the upgrade the first sync realigns with the server: the server's version wins for each record, except the changes not synced, which are pushed. When the phone and the server made different activities of the same to-do, the phone is the source of trust, unless a policy signed by the server is in force on the phone; a PC interface never is.
 - "Scarta" on a sync error never deletes an activity that holds work and never reached the server.
 - `entries.source = "plannedOnly"`: activities start only from a planned or assigned to-do.
+- Starting a planned activity as a travel whose place is a site of its client, of its company or home, with coordinates and more than 20 km away in a straight line, asks "Avviare il navigatore verso «…»?" and opens any navigation app on yes; Settings → Posizione → "Proponi il navigatore all'avvio di un viaggio" (on by default) turns the question off (#193).
 - The to-do dialog has the place ("Luogo") under "Altre informazioni"; it is the activity's locality (#192).
 - Choosing a company with a single client (not archived) on the start screen or in the to-do dialog fills the empty client field with it (#182).
 - The time grid (to-do plan, absence, segments) scrolls through the 24 hours by dragging the hour labels, besides the Prima/Dopo arrows (#181).
