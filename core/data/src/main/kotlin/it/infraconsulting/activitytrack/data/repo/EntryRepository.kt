@@ -332,6 +332,7 @@ class EntryRepository(
 		val row = base.copy(
 			companyId = companyId, clientId = req.clientId, roleId = req.roleId ?: base.roleId, activity = activity,
 			notes = req.notes?.trim()?.ifEmpty { null }, dueEpochDay = req.dueEpochDay, dueTimeMin = req.dueTimeMin,
+			locality = todoLocality(base.locality, req.locality),
 			planEpochDay = req.planEpochDay, planStartMin = req.planStartMin, durationMin = req.durationMin,
 			planRemindedUtcMs = if (planMoved) null else base.planRemindedUtcMs,
 			priority = Priority.of(req.priority).value, externalKey = req.externalKey ?: base.externalKey,
@@ -353,7 +354,8 @@ class EntryRepository(
 	/*
 	 * "Assenza" (3.1): an ABSENCE activity, CLOSED, with one ABSENCE segment
 	 * per day from AbsencePlanner over the working hours, lunch breaks and
-	 * days off (or with the times given); nothing to record = an error.
+	 * days off (or with the times given); without any working hours every day
+	 * is a whole day (issue #188); nothing to record = NO_WORKING_DAY.
 	 */
 	suspend fun createAbsence(req: AbsenceRequest): Long = db.withTransaction {
 		if (req.toEpochDay < req.fromEpochDay || req.toEpochDay - req.fromEpochDay >= MAX_ABSENCE_DAYS)
@@ -364,9 +366,9 @@ class EntryRepository(
 		val from = LocalDate.ofEpochDay(req.fromEpochDay)
 		val to = LocalDate.ofEpochDay(req.toEpochDay)
 		val daysOff = master.daysOffBetween(req.fromEpochDay, req.toEpochDay).toSet()
-		val intervals = AbsencePlanner.plan(from, to, req.startMin, req.endMin, schedule(), lunchBreaks(), { it.toEpochDay() in daysOff }, zone)
+		val intervals = AbsencePlanner.planOrWholeDays(from, to, req.startMin, req.endMin, schedule(), lunchBreaks(), { it.toEpochDay() in daysOff }, zone)
 		if (intervals.isEmpty())
-			throw ValidationException(Reason.INVALID_DATE, "no working day in the range")
+			throw ValidationException(Reason.NO_WORKING_DAY, "no working day in the range")
 		val now = clock.millis()
 		val id = dao.insertEntry(
 			TimeEntryEntity(

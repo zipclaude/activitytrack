@@ -38,5 +38,6 @@ class ValidationException(val reason: Reason, detail: String? = null) :
 		BEFORE_SEGMENT,			/* a chosen end time before the running segment started (M17) */
 		NOT_ALLOWED,			/* a command the activity's state does not allow (ACTIVITY-MODEL.md 3) */
 		NOT_DELETED,			/* only an activity in the bin is deleted for good */
+		NO_WORKING_DAY,			/* an absence over a range without a working day and without times (issue #188) */
 	}
 }

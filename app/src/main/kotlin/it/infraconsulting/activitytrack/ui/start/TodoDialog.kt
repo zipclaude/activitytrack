@@ -30,6 +30,8 @@ import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.activity.Priority
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.domain.policy.Field
+import it.infraconsulting.activitytrack.domain.start.ClientChoice
+import it.infraconsulting.activitytrack.domain.start.ClientPicker
 import it.infraconsulting.activitytrack.domain.todo.TodoPlan
 import it.infraconsulting.activitytrack.domain.todo.alignedDue
 import it.infraconsulting.activitytrack.domain.todo.startsAfterDue
@@ -73,7 +75,7 @@ private inline fun <T> optional(text: String, parse: (String) -> T?): Result<T?>
  * "Da fare": creates (or edits) a TODO activity (ACTIVITY-MODEL.md 3). Fields
  * in the owner's order: Azienda, Cliente, Descrizione, Data, Orario (start
  * and optional end), Scadenza, Priorità; under "Altre informazioni": Note,
- * Riferimenti esterni, Tratti (planned segments, drawn dashed); the
+ * Luogo (issue #192), Riferimenti esterni, Tratti (planned segments, drawn dashed); the
  * management system's fields (required ones with the visible fields).
  *
  * [initial] null = a new empty one; an entity without id = a new one with
@@ -125,6 +127,7 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 	var dueTime by remember { mutableStateOf(initial?.dueTimeMin?.let(::formatMin).orEmpty()) }
 	var priority by remember { mutableStateOf(Priority.of(initial?.priority ?: 0)) }
 	var notes by remember { mutableStateOf(initial?.notes.orEmpty()) }
+	var locality by remember { mutableStateOf(initial?.locality.orEmpty()) }
 	var refs by remember { mutableStateOf("") }
 	var segments by remember { mutableStateOf<List<SegDraft>>(emptyList()) }
 	/* planned segments are minutes from the day of the plan, or from today without one */
@@ -147,7 +150,7 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 		refs = existingRefs.joinToString("\n") { it.value }
 		loaded = true
 	}
-	var more by remember { mutableStateOf(notes.isNotBlank()) }
+	var more by remember { mutableStateOf(notes.isNotBlank() || locality.isNotBlank()) }
 	/* the plan is after the due date: offer to align it before saving (issue #71) */
 	var alignDue by remember { mutableStateOf<TodoRequest?>(null) }
 	/* a plan needs a day: the time without it is flagged on its field after Save (M13) */
@@ -258,6 +261,7 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 				dueEpochDay = dd.getOrNull(), dueTimeMin = dt.getOrNull(),
 				planEpochDay = pd.getOrNull(), planStartMin = pt.getOrNull(), durationMin = dur.getOrNull(),
 				priority = priority.value, planned = segments.map { it.toInput(day, zone) }, pluginFields = form?.json,
+				locality = locality,
 			)
 			error = null
 			/* the plan starts past the due date (also later the same day): ask before saving (issue #71) */
@@ -274,9 +278,8 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 				importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 			) { co ->
 				picked = co
-				/* a client of another company goes */
-				if (clients.firstOrNull { it.id == clientId }?.companyId != co)
-					clientId = null
+				/* a client of another company goes; the company's only client fills an empty field (issue #182) */
+				clientId = ClientPicker.afterCompany(co, clientId, clients.map { ClientChoice(it.id, it.companyId, it.name, it.archived, null) })
 			}
 		} }
 		if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {
@@ -328,6 +331,13 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 		MoreInfoToggle(more) { more = !more }
 		if (more) {
 			NotesInput(notes) { notes = it }
+			PolicyField(Field.LOCALITY) {
+				it.infraconsulting.activitytrack.ui.common.TextInput(
+					fieldLabel(Field.LOCALITY, R.string.field_place_single), locality, { locality = it },
+					/* a plan may not know the place yet: optional here even where the policy requires it on activities */
+					importance = Importance.OPTIONAL,
+				)
+			}
 			RefsInput(refs) { refs = it }
 			if (planning)
 				SegmentsEditor(

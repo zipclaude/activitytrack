@@ -12,6 +12,7 @@ import it.infraconsulting.activitytrack.domain.sync.PairError
 import it.infraconsulting.activitytrack.domain.sync.PairException
 import it.infraconsulting.activitytrack.domain.sync.PairLink
 import it.infraconsulting.activitytrack.domain.sync.PairRequest
+import it.infraconsulting.activitytrack.domain.sync.ServerVersion
 import it.infraconsulting.activitytrack.domain.sync.SyncAccountInfo
 import java.io.IOException
 import java.security.GeneralSecurityException
@@ -76,6 +77,16 @@ class SyncAccount(
 		return true
 	}
 
+	/* the server's version and schemas from its last head answer, kept across restarts (issue #194) */
+	private val _serverVersion = MutableStateFlow(ServerVersion.decode(secrets.getApp(SERVER_VERSION)))
+	val serverVersion: StateFlow<ServerVersion?> = _serverVersion.asStateFlow()
+
+	private fun keepServerVersion(v: ServerVersion?) {
+		if (v == _serverVersion.value) return
+		secrets.putApp(SERVER_VERSION, v?.encode())
+		_serverVersion.value = v
+	}
+
 	/* sends to the management systems: not paired, or the phone the server names (issue #118) */
 	fun sendsToPlugins(): Boolean = _info.value?.pluginHolder ?: true
 
@@ -94,10 +105,15 @@ class SyncAccount(
 		}
 		if (r.status == 426) {
 			markIncompatible(it.infraconsulting.activitytrack.data.sync.SyncIncompatible.of(r.body).code)
+			/* a refusal may still say which versions the server speaks */
+			runCatching { PairApi.json.parseToJsonElement(r.body).jsonObject }.getOrNull()
+				?.let(ServerVersion::of)?.let(::keepServerVersion)
 			return null
 		}
 		if (r.status == 200) markIncompatible(null)
 		val o = runCatching { PairApi.json.parseToJsonElement(r.body).jsonObject }.getOrNull() ?: return null
+		/* what the server says of itself; an older server says nothing and keeps the last values */
+		ServerVersion.of(o)?.let(::keepServerVersion)
 		o["pluginHolder"]?.jsonPrimitive?.booleanOrNull?.let { holder ->
 			val info = _info.value
 			if (info != null && info.pluginHolder != holder) {
@@ -168,6 +184,8 @@ class SyncAccount(
 			signerKey = link.signerKey,
 		)
 		dao.forgetServer()
+		/* another server: what the old one said no longer applies */
+		keepServerVersion(null)
 		secrets.putApp(TOKEN, answer.token)
 		secrets.putApp(PIN, link.pin)
 		secrets.putApp(INFO, PairApi.json.encodeToString(SyncAccountInfo.serializer(), info))
@@ -189,6 +207,7 @@ class SyncAccount(
 		/* the policy.json of the data folder applies again */
 		secrets.putApp(SERVER_POLICY, null)
 		secrets.putApp(IGNORED_FILE, null)
+		keepServerVersion(null)
 		dao.forgetServer()
 		_revoked.value = false
 		_info.value = null
@@ -205,5 +224,6 @@ class SyncAccount(
 		private const val INCOMPATIBLE = "sync.incompatible"
 		private const val SERVER_POLICY = "sync.policy"
 		private const val IGNORED_FILE = "sync.policyFileIgnored"
+		private const val SERVER_VERSION = "sync.serverVersion"
 	}
 }

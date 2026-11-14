@@ -634,12 +634,12 @@ private fun ActivityFields(
  * ha un solo cliente, quando la seleziono compila anche il campo cliente se
  * vuoto"). Pure, unit-tested.
  */
-internal fun clientAfterCompany(companyId: Long?, clientId: Long?, clients: List<it.infraconsulting.activitytrack.data.db.ClientEntity>): Long? {
-	if (companyId == null)
-		return clientId
-	val kept = clientId?.takeIf { id -> clients.firstOrNull { it.id == id }?.companyId == companyId }
-	return kept ?: clients.filter { it.companyId == companyId && !it.archived }.singleOrNull()?.id
-}
+internal fun clientAfterCompany(companyId: Long?, clientId: Long?, clients: List<it.infraconsulting.activitytrack.data.db.ClientEntity>): Long? =
+	/* the same rule as the start screen and the to-do dialog */
+	it.infraconsulting.activitytrack.domain.start.ClientPicker.afterCompany(
+		companyId, clientId,
+		clients.map { it.infraconsulting.activitytrack.domain.start.ClientChoice(it.id, it.companyId, it.name, it.archived, null) },
+	)
 
 /*
  * "+ Lavoro · Viaggio · Pausa" as one split button (8): each part opens the

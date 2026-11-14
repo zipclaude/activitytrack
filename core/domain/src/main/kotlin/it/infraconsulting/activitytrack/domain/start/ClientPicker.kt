@@ -27,4 +27,17 @@ object ClientPicker {
 				.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name },
 		)
 	}
+
+	/*
+	 * The client once [companyId] is chosen with [current] in the client
+	 * field: a client of another company goes; an empty field takes the
+	 * company's client when it has exactly one not archived (issue #182);
+	 * otherwise it stays empty. No company (all of them) fills nothing.
+	 */
+	fun afterCompany(companyId: Long?, current: Long?, clients: List<ClientChoice>): Long? {
+		val kept = current?.takeIf { id -> clients.any { it.id == id && (companyId == null || it.companyId == companyId) } }
+		if (kept != null || companyId == null)
+			return kept
+		return clients.filter { it.companyId == companyId && !it.archived }.singleOrNull()?.id
+	}
 }

@@ -842,4 +842,24 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <!-- settings: stored times -->
   <string name="set_round_stored">Guardar los valores redondeados</string>
   <string name="set_round_stored_hint">Los botones Iniciar, Cambiar, Terminar y Reabrir guardan horas redondeadas; las horas escritas a mano quedan exactas. Requiere horarios editables libremente.</string>
+  <!-- absence without working hours (issue #188) -->
+  <string name="err_no_working_day">Ningún día laborable en el rango: indica un horario.</string>
+  <string name="create_absence_hint_whole_days">Sin horario y sin horario de trabajo configurado: cada día del rango, entero.</string>
+  <string name="agenda_whole_day">Todo el día</string>
+  <!-- time grid: scrolling the hours (issue #181) -->
+  <string name="grid_hint_scroll">Arrastra las horas de la izquierda para desplazarte.</string>
+  <!-- bin: swipe to delete for good (issue #190) -->
+  <string name="swipe_purge">Eliminar para siempre</string>
+  <!-- to-do: the place (issue #192) -->
+  <string name="field_place_single">Lugar</string>
+  <!-- navigator on the start of a planned travel (issue #193) -->
+  <string name="set_propose_navigation">Proponer el navegador al iniciar un viaje</string>
+  <string name="set_propose_navigation_hint">Cuando una actividad planificada empieza como viaje y su lugar es una sede del cliente, de la empresa o casa, a más de 20 km.</string>
+  <string name="nav_ask">¿Iniciar el navegador hacia «%1$s»?</string>
+  <!-- sync screen: versions (issue #194) -->
+  <string name="sync_app_version">App</string>
+  <string name="sync_server_version">Servidor</string>
+  <string name="sync_schema">protocolo %1$d</string>
+  <string name="sync_schema_min">mínimo</string>
+  <string name="sync_server_version_unknown">aún desconocida: aparece tras una sincronización</string>
 </resources>

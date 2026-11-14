@@ -318,8 +318,9 @@ fun HomeScreen(
 	}
 	val buttons = listOfNotNull(
 		CreateButton(DisplayState.TODO, R.string.state_todo) { openCreate(CreateMode.TODO) }.takeIf { showPlanned },
-		CreateButton(DisplayState.WORK, R.string.cmd_work) { openCreate(CreateMode.WORK) }.takeIf { canStart },
+		/* Lavoro right of Viaggio: the thumb of the right hand reaches it best (issue #180) */
 		CreateButton(DisplayState.TRAVEL, R.string.cmd_travel, travel).takeIf { canStart && canTravel },
+		CreateButton(DisplayState.WORK, R.string.cmd_work) { openCreate(CreateMode.WORK) }.takeIf { canStart },
 		CreateButton(DisplayState.ABSENCE, R.string.state_absence) { openCreate(CreateMode.ABSENCE) },
 	)
 	val snooze = settings?.planSnoozeMin ?: 30
@@ -469,7 +470,7 @@ private fun CreateBar(buttons: List<CreateButton>) {
 
 /*
  * The big card when nothing runs: the message and the four creation buttons
- * (Da fare, Lavoro, Viaggio, Assenza) in the size of the old Lavoro and
+ * (Da fare, Viaggio, Lavoro, Assenza) in the size of the old Lavoro and
  * Viaggio ones; a swipe to the left starts like Lavoro, to the right like Viaggio.
  */
 @Composable

@@ -41,6 +41,14 @@ object TimeGrid {
 	fun shift(first: Int, hours: Int): Int = (first + hours).coerceIn(0, 24 - WINDOW_HOURS)
 
 	/*
+	 * The window while the hours are dragged (issue #181): [from] the first
+	 * hour when the drag began, [dragPx] how far the finger moved down (the
+	 * hours follow it: down shows earlier ones), [rowPx] the height of a row.
+	 */
+	fun dragged(from: Int, dragPx: Float, rowPx: Float): Int =
+		if (rowPx <= 0f) from else shift(from, -kotlin.math.round(dragPx / rowPx).toInt())
+
+	/*
 	 * Minutes of [day] covered by the given intervals ([end] null = running
 	 * until [now]), clipped to the day and merged: the cells shown as busy.
 	 */

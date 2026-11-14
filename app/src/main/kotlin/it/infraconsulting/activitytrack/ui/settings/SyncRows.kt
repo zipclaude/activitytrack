@@ -58,6 +58,7 @@ fun SyncRows() {
 	val state by app.container.sync.observeState().collectAsState(initial = null)
 	val revoked by account.revoked.collectAsState()
 	val incompatible by account.incompatible.collectAsState()
+	val serverVersion by account.serverVersion.collectAsState()
 	val problems by app.container.sync.observeErrors().collectAsState(initial = emptyList())
 	var discarding by remember { mutableStateOf<it.infraconsulting.activitytrack.data.db.SyncErrorEntity?>(null) }
 	val scope = rememberCoroutineScope()
@@ -118,6 +119,10 @@ fun SyncRows() {
 		Info(stringResource(R.string.sync_paired_since), format(paired.pairedUtcMs))
 		Info(stringResource(R.string.sync_last), state?.lastSyncUtcMs?.let(::format) ?: stringResource(R.string.sync_never))
 		Info(stringResource(R.string.sync_pending), pending.toString())
+		/* the versions on both sides (issue #194): the server's as its last answer gave them */
+		Info(stringResource(R.string.sync_app_version), app.container.appVersion + " · " + stringResource(R.string.sync_schema, WireVersion.SCHEMA))
+		val serverSchema = serverVersion?.schema?.let { stringResource(R.string.sync_schema, it) }.orEmpty()
+		Info(stringResource(R.string.sync_server_version), serverVersion?.text({ serverSchema }, stringResource(R.string.sync_schema_min))?.ifBlank { null } ?: stringResource(R.string.sync_server_version_unknown))
 		if (!paired.pluginHolder) Text(stringResource(R.string.plugin_not_holder), style = MaterialTheme.typography.bodySmall)
 		incompatible?.let { code ->
 			Text(

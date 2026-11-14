@@ -853,4 +853,24 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <!-- settings: stored times -->
   <string name="set_round_stored">Save rounded values</string>
   <string name="set_round_stored_hint">The Start, Switch, Stop and Reopen buttons store rounded times; times typed by hand stay exact. Needs freely editable times.</string>
+  <!-- absence without working hours (issue #188) -->
+  <string name="err_no_working_day">No working day in the range: give a time.</string>
+  <string name="create_absence_hint_whole_days">Without a time and with no working hours set: each day of the range, whole.</string>
+  <string name="agenda_whole_day">All day</string>
+  <!-- time grid: scrolling the hours (issue #181) -->
+  <string name="grid_hint_scroll">Drag the hours on the left to scroll.</string>
+  <!-- bin: swipe to delete for good (issue #190) -->
+  <string name="swipe_purge">Delete forever</string>
+  <!-- to-do: the place (issue #192) -->
+  <string name="field_place_single">Place</string>
+  <!-- navigator on the start of a planned travel (issue #193) -->
+  <string name="set_propose_navigation">Offer the navigator when a travel starts</string>
+  <string name="set_propose_navigation_hint">When a planned activity starts as a travel and its place is a site of its client, of its company or home, more than 20 km away.</string>
+  <string name="nav_ask">Start the navigator to «%1$s»?</string>
+  <!-- sync screen: versions (issue #194) -->
+  <string name="sync_app_version">App</string>
+  <string name="sync_server_version">Server</string>
+  <string name="sync_schema">protocol %1$d</string>
+  <string name="sync_schema_min">oldest</string>
+  <string name="sync_server_version_unknown">not known yet: shown after a sync</string>
 </resources>

@@ -102,6 +102,7 @@ import it.infraconsulting.activitytrack.ui.common.DateField
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
 import it.infraconsulting.activitytrack.ui.common.GREEN
+import it.infraconsulting.activitytrack.ui.common.RED
 import it.infraconsulting.activitytrack.ui.common.ORANGE
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
@@ -350,16 +351,22 @@ internal fun todoSwipeActions(
 	snooze: Int,
 	onStart: (Long) -> Unit,
 	onReplan: (TimeEntryEntity) -> Unit,
+	/* asks before deleting [t] for good (the bin, issue #190); null = not offered */
+	onPurge: ((TimeEntryEntity) -> Unit)? = null,
 ): List<SwipeAction> {
 	val grey = MaterialTheme.colorScheme.outline
-	val canIgnore = LocalPolicy.current.enabled(Feature.IGNORE_TODOS)
+	val policy = LocalPolicy.current
+	val canIgnore = policy.enabled(Feature.IGNORE_TODOS)
+	val canPurge = policy.enabled(purgeFeature(t))
 	return Gestures.todoActions(swipe, ignored = t.deletedUtcMs != null, planned = t.plan() != null, done = t.status == ActivityStatus.CLOSED)
-		.filter { canIgnore || (it != TodoAction.IGNORE && it != TodoAction.RESTORE) }.mapNotNull { a ->
+		.filter { canIgnore || (it != TodoAction.IGNORE && it != TodoAction.RESTORE) }
+		.filter { it != TodoAction.PURGE || canPurge }.mapNotNull { a ->
 		when (a) {
 			TodoAction.START -> SwipeAction(stringResource(R.string.swipe_start), R.drawable.ic_cmd_play, GREEN, Color.White) { onStart(t.id) }
 			TodoAction.POSTPONE -> SwipeAction(stringResource(R.string.action_postpone, snooze), R.drawable.ic_clock, BLUE, Color.White) { vm.postpone(t, snooze) }
 			TodoAction.IGNORE -> SwipeAction(stringResource(R.string.action_delete), R.drawable.ic_ignore, grey, Color.White) { vm.delete(t) }
 			TodoAction.RESTORE -> SwipeAction(stringResource(R.string.swipe_restore), R.drawable.ic_restore, BLUE, Color.White) { vm.restore(t) }
+			TodoAction.PURGE -> onPurge?.let { ask -> SwipeAction(stringResource(R.string.swipe_purge), R.drawable.ic_state_deleted, RED, Color.White) { ask(t) } }
 			TodoAction.DONE -> SwipeAction(stringResource(R.string.todo_mark_done), R.drawable.ic_done, GREEN, Color.White) { vm.tick(t) }
 			TodoAction.REPLAN -> SwipeAction(stringResource(R.string.action_replan), R.drawable.ic_calendar, BLUE, Color.White) { onReplan(t) }
 			/* a ticked to-do leaves this list: nothing to reopen here */
@@ -383,13 +390,26 @@ fun TodoSwipeCard(
 	val settings by vm.settings.collectAsState()
 	val g = settings?.gestures ?: GestureSettings()
 	val snooze = settings?.planSnoozeMin ?: 30
+	/* deleting for good from the bin asks first, as the bin's button does */
+	var purging by remember { mutableStateOf(false) }
+	val purge: (TimeEntryEntity) -> Unit = { vm.clearError(); purging = true }
 	SwipeCard(
-		toStart = todoSwipeActions(t, g.todoToStart, vm, snooze, onStart, onReplan),
-		toEnd = todoSwipeActions(t, g.todoToEnd, vm, snooze, onStart, onReplan),
+		toStart = todoSwipeActions(t, g.todoToStart, vm, snooze, onStart, onReplan, purge),
+		toEnd = todoSwipeActions(t, g.todoToEnd, vm, snooze, onStart, onReplan, purge),
 		fullSwipe = g.fullSwipe,
 		shape = CardDefaults.shape,
 	) { TodoCard(t, clientName, band, planned, onClick) }
+	if (purging)
+		PurgeConfirm(t, vm, onClose = { purging = false })
 }
+
+/*
+ * Deleting for good (from the bin) follows the policy feature that governs
+ * deleting that kind of activity: a to-do deleteTodos, any other
+ * deleteEntries (issue #190).
+ */
+internal fun purgeFeature(t: TimeEntryEntity): Feature =
+	if (t.status == ActivityStatus.TODO) Feature.DELETE_TODOS else Feature.DELETE_ENTRIES
 
 /* To-dos screen window: 24 h, 7 days, 30 days or all (owner, 2026-10-19); overdue always shown. */
 @Composable
@@ -525,27 +545,34 @@ internal fun TodoActions(t: TimeEntryEntity, vm: TodosViewModel, onStart: () -> 
 	)
 }
 
-/* A deleted activity: "Ripristina", or "Elimina definitivamente" after a confirmation. */
+/* "Eliminare definitivamente «…»? Non si può annullare.": [onDone] after the deletion, [onClose] on cancel. */
+@Composable
+internal fun PurgeConfirm(t: TimeEntryEntity, vm: TodosViewModel, onClose: () -> Unit, onDone: () -> Unit = onClose) {
+	val error by vm.error.collectAsState()
+	AlertDialog(
+		onDismissRequest = { onClose(); vm.clearError() },
+		text = {
+			Column {
+				Text(stringResource(R.string.bin_purge_confirm, t.title().ifBlank { stringResource(R.string.state_absence) }))
+				error?.let { Text(stringResource(R.string.bin_purge_failed), color = MaterialTheme.colorScheme.error) }
+			}
+		},
+		confirmButton = {
+			TextButton(onClick = { vm.purge(t) { onDone() } }) {
+				Text(stringResource(R.string.bin_purge), color = MaterialTheme.colorScheme.error)
+			}
+		},
+		dismissButton = { TextButton(onClick = { onClose(); vm.clearError() }) { Text(stringResource(R.string.action_cancel)) } },
+	)
+}
+
+/* A deleted activity: "Ripristina", or "Elimina definitivamente" after a confirmation (where the policy allows it). */
 @Composable
 internal fun BinActions(t: TimeEntryEntity, vm: TodosViewModel, onDismiss: () -> Unit) {
-	val error by vm.error.collectAsState()
 	var purging by remember { mutableStateOf(false) }
+	val canPurge = LocalPolicy.current.enabled(purgeFeature(t))
 	if (purging) {
-		AlertDialog(
-			onDismissRequest = { purging = false; vm.clearError() },
-			text = {
-				Column {
-					Text(stringResource(R.string.bin_purge_confirm, t.title().ifBlank { stringResource(R.string.state_absence) }))
-					error?.let { Text(stringResource(R.string.bin_purge_failed), color = MaterialTheme.colorScheme.error) }
-				}
-			},
-			confirmButton = {
-				TextButton(onClick = { vm.purge(t) { onDismiss() } }) {
-					Text(stringResource(R.string.bin_purge), color = MaterialTheme.colorScheme.error)
-				}
-			},
-			dismissButton = { TextButton(onClick = { purging = false; vm.clearError() }) { Text(stringResource(R.string.action_cancel)) } },
-		)
+		PurgeConfirm(t, vm, onClose = { purging = false }, onDone = onDismiss)
 		return
 	}
 	AlertDialog(
@@ -554,7 +581,8 @@ internal fun BinActions(t: TimeEntryEntity, vm: TodosViewModel, onDismiss: () ->
 		text = {
 			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 				TextButton(onClick = { vm.restore(t); onDismiss() }) { Text(stringResource(R.string.swipe_restore)) }
-				TextButton(onClick = { vm.clearError(); purging = true }) { Text(stringResource(R.string.bin_purge), color = MaterialTheme.colorScheme.error) }
+				if (canPurge)
+					TextButton(onClick = { vm.clearError(); purging = true }) { Text(stringResource(R.string.bin_purge), color = MaterialTheme.colorScheme.error) }
 			}
 		},
 		confirmButton = {},

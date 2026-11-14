@@ -28,7 +28,7 @@ enum class EntrySwipe {
 enum class PastSwipe { COMPLETE, REOPEN, NONE }
 
 /* One revealed button of a to-do swipe. */
-enum class TodoAction { START, POSTPONE, IGNORE, RESTORE, DONE, REPLAN, REOPEN }
+enum class TodoAction { START, POSTPONE, IGNORE, RESTORE, PURGE, DONE, REPLAN, REOPEN }
 
 /*
  * Swipe gestures per card type and direction. Directions are layout
@@ -54,8 +54,9 @@ data class GestureSettings(
 object Gestures {
 	/*
 	 * The buttons a to-do swipe reveals, first = the long-swipe action; an
-	 * ignored to-do only offers Restore, a done one Reopen on the "put off"
-	 * side (postpone or ignore), nothing on the other.
+	 * ignored to-do (in the bin) offers Delete for good on the "put off" side
+	 * (postpone or ignore) and Restore on the other (issue #190), a done one
+	 * Reopen on the "put off" side, nothing on the other.
 	 */
 	fun todoActions(swipe: TodoSwipe, ignored: Boolean, planned: Boolean, done: Boolean): List<TodoAction> {
 		if (swipe == TodoSwipe.NONE)
@@ -63,7 +64,7 @@ object Gestures {
 		if (done)
 			return if (swipe in BACK) listOf(TodoAction.REOPEN) else emptyList()
 		if (ignored)
-			return listOf(TodoAction.RESTORE)
+			return listOf(if (swipe in BACK) TodoAction.PURGE else TodoAction.RESTORE)
 		return when (swipe) {
 			TodoSwipe.START -> listOf(TodoAction.START)
 			TodoSwipe.START_OR_DONE -> listOf(TodoAction.START, TodoAction.DONE)

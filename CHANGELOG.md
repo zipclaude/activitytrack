@@ -29,9 +29,9 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 
 - The to-do is a state of the activity: "Da fare" (planned, late), "In corso", "Chiusa", "Assenza", "Eliminata"; a to-do may carry planned segments, drawn dashed, which never count in totals and give way to the real ones when it starts.
 - Absences are activities of kind Assenza, Ferie, Permesso or Malattia, with one segment per working day (following the work schedule, lunch breaks and days off) or with the times given; reports count them apart, by kind.
-- Four creation buttons on the Home: Da fare, Lavoro (now, already started, or past with its segments), Viaggio, Assenza.
+- Four creation buttons on the Home: Da fare, Viaggio, Lavoro (now, already started, or past with its segments), Assenza.
 - Displayed states with one icon and colour each (to-do, planned, late, work, travel, pause, suspended, done, incomplete, absence, deleted), the same on the Home, the detail, the agenda, widgets, the tile and notifications; "In <stato> dalle" tells since when.
-- The bin: a deleted activity can be restored, or deleted for good from there.
+- The bin: a deleted activity can be restored, or deleted for good from there; a swipe restores one way (toward the start) and deletes for good, after the confirmation, the other (#190). Deleting for good follows the policy: `deleteTodos` for a to-do, `deleteEntries` for any other activity.
 - A ticked task can be unticked; "Annulla" after a tick or a done.
 - An activity made of travel only can be declared complete ("Completa" among the actions of its detail, undone by "Annulla completamento"); it is then done unless a field the management system requires is empty (issue #189).
 - Photos, voice notes and files have a description, typed in the dialog that opens when the attachment is tapped and shown under it in the list; synced with the attachment (issue #185).
@@ -56,9 +56,14 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - After the upgrade the first sync realigns with the server: the server's version wins for each record, except the changes not synced, which are pushed. When the phone and the server made different activities of the same to-do, the phone is the source of trust, unless a policy signed by the server is in force on the phone; a PC interface never is.
 - "Scarta" on a sync error never deletes an activity that holds work and never reached the server.
 - `entries.source = "plannedOnly"`: activities start only from a planned or assigned to-do.
-- In the activity's detail, picking a company that has only one client (not archived) fills the client field when it is empty (issue #182).
 - The detail's "Località" and "Dove" become one field "Luogo": free text or a pick from the sites of the client, of the company and "Casa", with ✕ to clear it; the kind of place stored with the activity (and synced and exported as `locationKind`) follows from it: a client or company site, home, elsewhere (issue #184).
 - The route of an activity opens from the button beside "Luogo" in its detail, shown when the activity has location samples; the detail has no top-bar menu any more (issue #191).
+- Settings → Sincronizzazione shows the app's version and the protocol (wire schema) it speaks, and the server's version and protocols as its last answer gave them (#194).
+- Starting a planned activity as a travel whose place is a site of its client, of its company or home, with coordinates and more than 20 km away in a straight line, asks "Avviare il navigatore verso «…»?" and opens any navigation app on yes; Settings → Posizione → "Proponi il navigatore all'avvio di un viaggio" (on by default) turns the question off (#193).
+- The to-do dialog has the place ("Luogo") under "Altre informazioni"; it is the activity's locality (#192).
+- Choosing a company with a single client (not archived) on the start screen, in the to-do dialog or in the activity's detail fills the empty client field with it (#182).
+- The time grid (to-do plan, absence, segments) scrolls through the 24 hours by dragging the hour labels, besides the Prima/Dopo arrows (#181).
+- Lavoro is right of Viaggio wherever the two show side by side (Home, start screen, the running activity's buttons, notification, widget, the reopen question): the button used most under the right thumb (#180).
 
 Various bug fixes.
 

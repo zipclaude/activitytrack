@@ -113,6 +113,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val callProposeEntry = booleanPreferencesKey("call_propose_entry")
 		val callsAlways = booleanPreferencesKey("calls_always")
 		val trackMapEnabled = booleanPreferencesKey("track_map_enabled")
+		val proposeNavigation = booleanPreferencesKey("propose_navigation")
 		val offlineMapsEnabled = booleanPreferencesKey("offline_maps_enabled")
 		val workSampleMin = intPreferencesKey("work_sample_min")
 		val travelSampleSec = intPreferencesKey("travel_sample_sec")
@@ -198,6 +199,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 			callProposeEntry = p[K.callProposeEntry] ?: d.callProposeEntry,
 			callsAlways = p[K.callsAlways] ?: d.callsAlways,
 			trackMapEnabled = p[K.trackMapEnabled] ?: d.trackMapEnabled,
+			proposeNavigation = p[K.proposeNavigation] ?: d.proposeNavigation,
 			workSampleMin = p[K.workSampleMin] ?: d.workSampleMin,
 			travelSampleSec = p[K.travelSampleSec] ?: d.travelSampleSec,
 			nominatim = readService(p, "nominatim", d.nominatim),
@@ -270,6 +272,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		p[K.callProposeEntry] = s.callProposeEntry
 		p[K.callsAlways] = s.callsAlways
 		p[K.trackMapEnabled] = s.trackMapEnabled
+		p[K.proposeNavigation] = s.proposeNavigation
 		p[K.workSampleMin] = s.workSampleMin
 		p[K.travelSampleSec] = s.travelSampleSec
 		writeService(p, "nominatim", s.nominatim)

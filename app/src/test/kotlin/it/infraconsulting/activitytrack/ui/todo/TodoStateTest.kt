@@ -29,4 +29,11 @@ class TodoStateTest {
 		assertEquals(DisplayState.TODO, displayOf(todo(), now))
 		assertEquals(DisplayState.DELETED, displayOf(todo(LocalDate.of(2026, 10, 21), 9 * 60, ignoredMs = 1), now))
 	}
+
+	@Test
+	fun purgingFollowsTheDeletionFeatureOfTheKind() {
+		/* issue #190: a to-do in the bin by deleteTodos, any other activity by deleteEntries */
+		assertEquals(it.infraconsulting.activitytrack.domain.policy.Feature.DELETE_TODOS, purgeFeature(todo(ignoredMs = 1)))
+		assertEquals(it.infraconsulting.activitytrack.domain.policy.Feature.DELETE_ENTRIES, purgeFeature(todo(done = true, ignoredMs = 1)))
+	}
 }

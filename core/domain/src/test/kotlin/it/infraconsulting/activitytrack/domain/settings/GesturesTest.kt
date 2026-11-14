@@ -28,6 +28,12 @@ class GesturesTest {
 		assertEquals(listOf(TodoAction.IGNORE), Gestures.todoActions(TodoSwipe.POSTPONE_OR_IGNORE, false, planned = false, done = false))
 		/* an ignored to-do only offers Restore, whatever the swipe */
 		assertEquals(listOf(TodoAction.RESTORE), Gestures.todoActions(TodoSwipe.START, ignored = true, planned = true, done = false))
+		/* in the bin the "put off" side deletes for good (issue #190): with the defaults, left restores, right deletes */
+		val g = GestureSettings()
+		assertEquals(listOf(TodoAction.RESTORE), Gestures.todoActions(g.todoToStart, ignored = true, planned = false, done = false))
+		assertEquals(listOf(TodoAction.PURGE), Gestures.todoActions(g.todoToEnd, ignored = true, planned = false, done = false))
+		assertEquals(listOf(TodoAction.PURGE), Gestures.todoActions(TodoSwipe.POSTPONE, ignored = true, planned = false, done = false))
+		assertEquals(listOf(TodoAction.RESTORE), Gestures.todoActions(TodoSwipe.REPLAN, ignored = true, planned = false, done = false))
 		assertEquals(emptyList(), Gestures.todoActions(TodoSwipe.NONE, ignored = true, planned = true, done = false))
 		assertEquals(emptyList(), Gestures.todoActions(TodoSwipe.START, ignored = false, planned = false, done = true))
 		assertEquals(listOf(TodoAction.START, TodoAction.DONE), Gestures.todoActions(TodoSwipe.START_OR_DONE, false, planned = true, done = false))

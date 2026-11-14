@@ -105,6 +105,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.material3.Icon
 import androidx.compose.ui.res.painterResource
 import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
+import it.infraconsulting.activitytrack.domain.activity.AbsencePlanner
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
@@ -273,12 +274,7 @@ class AgendaViewModel(
 		/* one block per absence segment (3.1), solid in the ABSENCE style */
 		val absenceBlocks = entries.segmentsTouching(from.atStartOfDay(zone).toInstant().toEpochMilli(), to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli())
 			.filter { it.kind == SegmentKind.ABSENCE && it.endUtcMs != null }
-			.mapNotNull { sg ->
-				val t = absences[sg.entryId] ?: return@mapNotNull null
-				val start = Instant.ofEpochMilli(sg.startUtcMs)
-				val day = start.atZone(zone).toLocalDate()
-				AgendaTodo(t, day, start.atZone(zone).let { it.hour * 60 + it.minute }, start, Instant.ofEpochMilli(sg.endUtcMs!!), state = DisplayState.ABSENCE)
-			}
+			.mapNotNull { sg -> absences[sg.entryId]?.let { absenceBlock(it, sg.startUtcMs, sg.endUtcMs!!, zone) } }
 		/* a TODO activity: its planned segments (dashed blocks), else its plan, else its due day */
 		val todos = open.filter { it.status == ActivityStatus.TODO }.flatMap { t ->
 			val segments = entries.segments(t.id).first().filter { it.planned && it.endUtcMs != null }
@@ -301,6 +297,19 @@ class AgendaViewModel(
 	}
 
 	companion object {
+		/*
+		 * One absence segment: a block over its times, or, from 00:00 to 23:59
+		 * (issue #188), a whole day in the all-day strip.
+		 */
+		internal fun absenceBlock(t: TimeEntryEntity, startMs: Long, endMs: Long, zone: ZoneId): AgendaTodo {
+			val start = Instant.ofEpochMilli(startMs)
+			val end = Instant.ofEpochMilli(endMs)
+			val local = start.atZone(zone)
+			if (AbsencePlanner.isWholeDay(local.toLocalDate(), start, end, zone))
+				return AgendaTodo(t, local.toLocalDate(), null, allDay = true, state = DisplayState.ABSENCE)
+			return AgendaTodo(t, local.toLocalDate(), local.hour * 60 + local.minute, start, end, state = DisplayState.ABSENCE)
+		}
+
 		/* LIST: the month; MONTH: whole weeks around it; WEEK: Monday..Sunday; DAY: the day. */
 		fun range(m: AgendaMode, a: LocalDate): Pair<LocalDate, LocalDate> = when (m) {
 			AgendaMode.DAY -> a to a
@@ -534,7 +543,8 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 					}
 					}
 				}
-				items(todos.filter { it.day == day }.sortedBy { it.timeMin ?: 1440 }, key = { "t${it.id}" }) { t ->
+				/* an absence has one row per segment and day: the key names them */
+				items(todos.filter { it.day == day }.sortedBy { it.timeMin ?: if (it.allDay) -1 else 1440 }, key = { "t${it.id}/${it.day}/${it.start?.toEpochMilli()}" }) { t ->
 					val g = swipes.gestures
 					val snooze = swipes.todos.settings.collectAsState().value?.planSnoozeMin ?: 30
 					SwipeCard(
@@ -552,6 +562,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 						Text(
 							listOfNotNull(
 								t.timeMin?.let { "%02d:%02d".format(it / 60, it % 60) + (t.end?.takeIf { e -> e != t.start }?.let { e -> "–${clock(e, zone)}" } ?: "") },
+								stringResource(R.string.agenda_whole_day).takeIf { t.absence && t.allDay },
 								t.label(),
 							).joinToString(" "),
 							maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -633,7 +644,11 @@ private fun Timeline(
 			) {
 				StateDot(t.state, 14.dp)
 				Spacer(Modifier.width(8.dp))
-				Text("${t.day.dayOfMonth} · " + t.label(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+				Text(
+					listOfNotNull("${t.day.dayOfMonth}", t.label(), stringResource(R.string.agenda_whole_day).takeIf { t.absence && t.allDay }).joinToString(" · "),
+					style = MaterialTheme.typography.bodySmall,
+					color = if (t.absence) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
+				)
 			}
 		BoxWithConstraints(Modifier.fillMaxSize()) {
 			val minuteHeight = maxHeight / (to - from) * zoom

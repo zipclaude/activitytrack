@@ -202,6 +202,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var offlineMapsOn by remember { mutableStateOf(initial.offlineMapsEnabled) }
 	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
 	var trackMap by remember { mutableStateOf(initial.trackMapEnabled) }
+	var proposeNavigation by remember { mutableStateOf(initial.proposeNavigation) }
 	var workSample by remember { mutableStateOf(initial.workSampleMin) }
 	var travelSample by remember { mutableStateOf(initial.travelSampleSec) }
 	var compact by remember { mutableStateOf(initial.compactDisplay) }
@@ -257,6 +258,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		offlineMapsEnabled = offlineMapsOn,
 		dictationLanguage = dictation,
 		trackMapEnabled = trackMap,
+		proposeNavigation = proposeNavigation,
 		workSampleMin = workSample,
 		travelSampleSec = travelSample,
 		compactDisplay = compact,
@@ -373,6 +375,11 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 						) { travelSample = it }
 					}
 					Text(stringResource(R.string.set_sample_hint), style = MaterialTheme.typography.bodySmall)
+					/* issue #193: the question when a planned travel starts towards a known site far away */
+					PolicySetting("proposeNavigation") {
+						SwitchRow(stringResource(R.string.set_propose_navigation), proposeNavigation) { proposeNavigation = it }
+						Text(stringResource(R.string.set_propose_navigation_hint), style = MaterialTheme.typography.bodySmall)
+					}
 					/* the map needs the tile service of Settings → Online services */
 					if (LocalPolicy.current.enabled(Feature.TRACK_MAP))
 						PolicySetting("trackMapEnabled") {

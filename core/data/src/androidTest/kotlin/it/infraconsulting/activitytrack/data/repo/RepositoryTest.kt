@@ -570,7 +570,32 @@ class RepositoryTest {
 		entries.start(StartRequest(SegmentKind.WORK, client))
 		assertEquals(setOf(today, tomorrow), entries.handledDays(today, tomorrow, zone))
 		/* a day without working hours: nothing to record */
-		assertEquals(Reason.INVALID_DATE, reason { entries.createAbsence(AbsenceRequest(fromEpochDay = today.plusDays(2).toEpochDay())) })
+		assertEquals(Reason.NO_WORKING_DAY, reason { entries.createAbsence(AbsenceRequest(fromEpochDay = today.plusDays(2).toEpochDay())) })
+	}
+
+	@Test
+	fun todoKeepsItsPlace() = runBlocking<Unit> {
+		/* issue #192: the dialog saves the place; a request without it keeps the stored one */
+		val id = entries.saveTodo(null, TodoRequest(acme, activity = "Visit", locality = " Sede Milano "))
+		assertEquals("Sede Milano", db.entryDao().entry(id)?.locality)
+		entries.saveTodo(id, TodoRequest(acme, activity = "Visit, again"))
+		assertEquals("Sede Milano", db.entryDao().entry(id)?.locality)
+		entries.saveTodo(id, TodoRequest(acme, activity = "Visit", locality = ""))
+		assertEquals(null, db.entryDao().entry(id)?.locality)
+	}
+
+	@Test
+	fun absenceWithoutAnyWorkingHoursTakesWholeDays() = runBlocking<Unit> {
+		/* issue #188: a fresh install has no working hours; a holiday over two days is two whole days */
+		val day = java.time.LocalDate.now(clock).plusDays(3)
+		val id = entries.createAbsence(
+			AbsenceRequest(absenceKind = it.infraconsulting.activitytrack.domain.activity.AbsenceKind.HOLIDAY, fromEpochDay = day.toEpochDay(), toEpochDay = day.plusDays(1).toEpochDay()),
+		)
+		val zone = clock.zone
+		assertEquals(
+			listOf(day, day.plusDays(1)).map { d -> d.atStartOfDay(zone).toInstant().toEpochMilli() to d.atTime(23, 59).atZone(zone).toInstant().toEpochMilli() },
+			db.entryDao().segments(id).map { it.startUtcMs to it.endUtcMs },
+		)
 	}
 
 	@Test

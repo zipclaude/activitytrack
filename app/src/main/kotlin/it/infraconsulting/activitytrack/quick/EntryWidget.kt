@@ -207,12 +207,12 @@ class EntryWidget : GlanceAppWidget() {
 			Spacer(GlanceModifier.height(8.dp))
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				if (s.entryId == null) {
-					/* the empty card of the Home: start (start screen) and travel (at once) */
-					CommandCircle(QuickAction.WORK, 40, context.getString(R.string.start_action), widgetOpenScreen(context, Screen.Start))
+					/* the empty card of the Home: travel (at once) and, right of it, start (start screen) (issue #180) */
 					if (canTravel) {
-						Spacer(GlanceModifier.width(8.dp))
 						CommandCircle(QuickAction.TRAVEL, 40, context.getString(R.string.start_travel), actionRunCallback<WidgetTravelAction>())
+						Spacer(GlanceModifier.width(8.dp))
 					}
+					CommandCircle(QuickAction.WORK, 40, context.getString(R.string.start_action), widgetOpenScreen(context, Screen.Start))
 				} else {
 					for ((i, cmd) in s.commands.withIndex()) {
 						if (i > 0) Spacer(GlanceModifier.width(8.dp))

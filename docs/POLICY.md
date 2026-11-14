@@ -108,8 +108,8 @@ cannot be switched off.
 | `todos` | the to-dos (Home section, More → To-dos) |
 | `planning` | planning to-dos (planned slot, agenda free-slot taps) |
 | `ignoreTodos` | ignoring to-dos (swipe, button) |
-| `deleteTodos` | deleting to-dos made by hand |
-| `deleteEntries` | deleting activities |
+| `deleteTodos` | deleting to-dos made by hand; deleting a to-do for good from the bin |
+| `deleteEntries` | deleting activities; deleting any other activity for good from the bin |
 | `concurrentEntries` | leaving an activity running when another starts or resumes (off: the others are suspended, a paused one stopped; issue #132) |
 | `travel` | travels (start buttons, "+ Travel") |
 | `expenses` | expenses |

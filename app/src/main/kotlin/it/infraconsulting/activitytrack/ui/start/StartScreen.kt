@@ -93,6 +93,9 @@ fun StartScreen(
 		StartViewModel(
 			it.entries, it.masterData, it.pluginData, clientId, todoId, { CurrentPosition.get(context) },
 			it.settings.settings.map { s -> s.editableTimes }, { it.policies.current.value },
+			navigationAllowed = {
+				it.settings.current().proposeNavigation && it.policies.current.value.enabled(Feature.LOCATION)
+			},
 		).also { vm ->
 			vm.callText = { n -> context.getString(R.string.call_entry_activity, n) }
 			call?.let(vm::prefillCall)
@@ -250,13 +253,14 @@ fun StartScreen(
 				) { Text(stringResource(R.string.action_save), style = MaterialTheme.typography.titleMedium) }
 			else
 				Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-					StartButton(R.string.cmd_work, DisplayState.WORK, f.ready && f.hasClient && pending.isEmpty(), Modifier.weight(1f)) {
-						vm.requestStart(SegmentKind.WORK, onBack)
-					}
+					/* Lavoro right of Viaggio (issue #180) */
 					if (enabled(Feature.TRAVEL))
 						StartButton(R.string.cmd_travel, DisplayState.TRAVEL, f.ready && pending.isEmpty(), Modifier.weight(1f)) {
 							vm.requestStart(SegmentKind.TRAVEL, onBack)
 						}
+					StartButton(R.string.cmd_work, DisplayState.WORK, f.ready && f.hasClient && pending.isEmpty(), Modifier.weight(1f)) {
+						vm.requestStart(SegmentKind.WORK, onBack)
+					}
 				}
 		}
 	}
@@ -278,6 +282,20 @@ fun StartScreen(
 			},
 			confirmButton = {},
 			dismissButton = { TextButton(onClick = vm::cancelFuture) { Text(stringResource(R.string.action_cancel)) } },
+		)
+	}
+	/* issue #193: the travel started towards a known site far away */
+	val navigation by vm.navigation.collectAsState()
+	navigation?.let { t ->
+		AlertDialog(
+			onDismissRequest = vm::navigationAnswered,
+			text = { Text(stringResource(R.string.nav_ask, t.label)) },
+			confirmButton = {
+				TextButton(onClick = { it.infraconsulting.activitytrack.location.Navigator.start(context, t); vm.navigationAnswered() }) {
+					Text(stringResource(R.string.action_yes))
+				}
+			},
+			dismissButton = { TextButton(onClick = vm::navigationAnswered) { Text(stringResource(R.string.action_no)) } },
 		)
 	}
 	if (addCompany)

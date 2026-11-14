@@ -35,6 +35,15 @@
     <intent>
       <action android:name="android.speech.RecognitionService" />
     </intent>
+    <!-- the navigator offered at the start of a planned travel (issue #193) -->
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="google.navigation" />
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="geo" />
+    </intent>
   </queries>
 
   <application

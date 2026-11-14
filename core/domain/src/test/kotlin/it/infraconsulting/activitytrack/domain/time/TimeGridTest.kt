@@ -31,6 +31,18 @@ class TimeGridTest {
 	}
 
 	@Test
+	fun draggingTheHoursScrollsTheWindow() {
+		/* issue #181: rows of 100 px; up by two and a half rows shows hours later by three (rounded), down earlier */
+		assertEquals(10, TimeGrid.dragged(7, -260f, 100f))
+		assertEquals(5, TimeGrid.dragged(7, 240f, 100f))
+		assertEquals(7, TimeGrid.dragged(7, 40f, 100f))
+		/* the window stays inside the day: all 24 hours are reachable, no further */
+		assertEquals(12, TimeGrid.dragged(7, -5000f, 100f))
+		assertEquals(0, TimeGrid.dragged(7, 5000f, 100f))
+		assertEquals(7, TimeGrid.dragged(7, 300f, 0f))
+	}
+
+	@Test
 	fun busyIsClippedAndMerged() {
 		val now = at(18 * 60)
 		val busy = TimeGrid.busyMinutes(
