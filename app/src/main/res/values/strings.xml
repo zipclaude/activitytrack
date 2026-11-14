@@ -806,7 +806,9 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="detail_reopen_travel">Reopen with travel</string>
   <string name="detail_reopen_text">A new segment opens from now; the time since the activity was closed stays empty.</string>
   <string name="detail_complete">Complete</string>
-  <string name="detail_uncomplete">Undo completion</string>
+  <string name="detail_uncomplete">Uncomplete</string>
+  <string name="detail_uncomplete_full">Undo completion</string>
+  <string name="detail_short_done">Done</string>
   <string name="detail_travel_hint">Yes: this activity closes and a new travel starts. No: the travel is part of this activity.</string>
   <string name="detail_stop_at">End (empty = now)</string>
   <string name="detail_stop_ahead_hint">Nearest time to now, up to 12 hours ahead; a later end (up to 24 hours) by editing the last segment.</string>

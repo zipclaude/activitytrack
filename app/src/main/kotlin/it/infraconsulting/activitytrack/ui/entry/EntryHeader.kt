@@ -6,8 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +37,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.data.db.SegmentEntity
@@ -134,22 +139,54 @@ internal fun DetailHeader(
 					style = MaterialTheme.typography.bodySmall,
 				)
 			if (actions.isNotEmpty())
-				FlowRow(
-					horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
-					verticalArrangement = Arrangement.spacedBy(8.dp),
-					itemVerticalAlignment = Alignment.Top,
-				) {
-					for (a in actions) {
-						val label = stringResource(a.label)
-						Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-							CommandIconButton(a.style, label, a.onClick, if (compact) Modifier.size(44.dp) else Modifier)
-							Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+				ActionSlots(actions, compact)
+		}
+	}
+}
+
+/*
+ * The commands in equal slots (issue #187): icon above a short label,
+ * centred, two lines at most; as many to a row as fit at [MIN_SLOT] each
+ * (up to five, every state's set on a phone), further ones on a second row
+ * with the same slot width, centred.
+ */
+@Composable
+private fun ActionSlots(actions: List<DetailAction>, compact: Boolean) {
+	BoxWithConstraints(Modifier.fillMaxWidth()) {
+		val perRow = actionsPerRow(maxWidth.value, MIN_SLOT.value)
+		val slot = maxWidth / minOf(actions.size, perRow)
+		Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			for (row in actionRows(actions.size, perRow))
+				Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Top) {
+					for (i in row) {
+						val a = actions[i]
+						Column(
+							Modifier.width(slot).padding(horizontal = 2.dp),
+							horizontalAlignment = Alignment.CenterHorizontally,
+							verticalArrangement = Arrangement.spacedBy(2.dp),
+						) {
+							CommandIconButton(a.style, stringResource(a.description), a.onClick, if (compact) Modifier.size(44.dp) else Modifier.size(52.dp))
+							Text(
+								stringResource(a.label),
+								style = MaterialTheme.typography.labelMedium.copy(hyphens = Hyphens.Auto, lineBreak = LineBreak.Paragraph),
+								textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis,
+							)
 						}
 					}
 				}
 		}
 	}
 }
+
+/* the narrowest slot of a command: a 52 dp button and a short label */
+private val MIN_SLOT = 64.dp
+
+/* How many slots a row of [widthDp] holds: at least three, at most five (pure, unit-tested). */
+internal fun actionsPerRow(widthDp: Float, minSlotDp: Float): Int = (widthDp / minSlotDp).toInt().coerceIn(3, 5)
+
+/* The indices of [count] commands in rows of [perRow], the last row holding what is left. */
+internal fun actionRows(count: Int, perRow: Int): List<IntRange> =
+	(0 until count).chunked(perRow).map { it.first()..it.last() }
 
 /* "9:12", or the day too when it is not today ("lun 26/10 9:12"). */
 @Composable
@@ -184,8 +221,12 @@ private fun Timeline(segments: List<SegmentEntity>, now: Long, planned: Boolean,
 	}
 }
 
-/* A command of the detail dialog: label, the Home's round button style, what it does. */
-internal data class DetailAction(@StringRes val label: Int, val style: CommandStyle, val onClick: () -> Unit)
+/*
+ * A command of the detail dialog: its short label (issue #187), the Home's
+ * round button style, what it does; [description] the full name read by
+ * accessibility services.
+ */
+internal data class DetailAction(@StringRes val label: Int, val style: CommandStyle, @StringRes val description: Int = label, val onClick: () -> Unit)
 
 /* What the detail header offers, before labels and styles (pure, unit-tested in EntryDetailTest). */
 internal sealed interface DetailCommand {
@@ -258,11 +299,18 @@ internal fun detailActions(e: TimeEntryEntity, segments: List<SegmentEntity>, vm
 			is DetailCommand.Switch -> DetailAction(if (c.resume) R.string.cmd_resume else kindName(c.kind), segmentStyle(c.kind)) { vm.switchTo(c.kind) }
 			is DetailCommand.Resume -> DetailAction(if (c.kind == SegmentKind.WORK) R.string.cmd_resume else kindName(c.kind), segmentStyle(c.kind)) { vm.resume(c.kind) }
 			DetailCommand.Stop -> DetailAction(R.string.cmd_stop, STOP_STYLE) { vm.askStop() }
-			DetailCommand.Tick -> DetailAction(R.string.todo_mark_done, displayStyle(DisplayState.DONE)) { vm.tick() }
-			is DetailCommand.Reopen -> DetailAction(if (c.kind == SegmentKind.TRAVEL) R.string.detail_reopen_travel else R.string.detail_reopen_work, segmentStyle(c.kind)) { vm.askReopen(c.kind) }
+			DetailCommand.Tick -> DetailAction(R.string.detail_short_done, displayStyle(DisplayState.DONE), R.string.todo_mark_done) { vm.tick() }
+			/* "Riapri" and "Viaggio" (owner): the icon tells the kind, the full name goes to accessibility */
+			is DetailCommand.Reopen ->
+				if (c.kind == SegmentKind.TRAVEL) DetailAction(R.string.cmd_travel, segmentStyle(c.kind), R.string.detail_reopen_travel) { vm.askReopen(c.kind) }
+				else DetailAction(R.string.cmd_reopen, segmentStyle(c.kind), R.string.detail_reopen_work) { vm.askReopen(c.kind) }
 			DetailCommand.Untick -> DetailAction(R.string.state_todo, displayStyle(DisplayState.TODO)) { vm.untick() }
 			DetailCommand.Complete -> DetailAction(R.string.detail_complete, displayStyle(DisplayState.DONE)) { vm.complete() }
-			DetailCommand.Uncomplete -> DetailAction(R.string.detail_uncomplete, CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.INCOMPLETE).container, displayStyle(DisplayState.INCOMPLETE).content)) { vm.uncomplete() }
+			DetailCommand.Uncomplete -> DetailAction(
+				R.string.detail_uncomplete,
+				CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.INCOMPLETE).container, displayStyle(DisplayState.INCOMPLETE).content),
+				R.string.detail_uncomplete_full,
+			) { vm.uncomplete() }
 			DetailCommand.Delete -> DetailAction(R.string.action_delete, displayStyle(DisplayState.DELETED)) { vm.askDelete() }
 			DetailCommand.Restore -> DetailAction(R.string.swipe_restore, CommandStyle(R.drawable.ic_restore, displayStyle(DisplayState.WORK).container, androidx.compose.ui.graphics.Color.White)) { vm.restore() }
 		}

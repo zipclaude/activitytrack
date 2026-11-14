@@ -104,4 +104,17 @@ class EntryDetailTest {
 		assertEquals("10:30 · 2026-11-14", attachmentSubtitle("  ", "10:30 · 2026-11-14"))
 		assertEquals("10:30 · 2026-11-14", attachmentSubtitle(null, "10:30 · 2026-11-14"))
 	}
+
+	@Test
+	fun actionSlotsEqualAndWrapped() {
+		/* issue #187: a 360 dp phone's card (~320 dp) holds five 64 dp slots, a narrow one four; never fewer than three */
+		assertEquals(5, actionsPerRow(320f, 64f))
+		assertEquals(4, actionsPerRow(300f, 64f))
+		assertEquals(3, actionsPerRow(150f, 64f))
+		assertEquals(5, actionsPerRow(800f, 64f))
+		assertEquals(listOf(0..3), actionRows(4, 5))
+		/* more than a row holds: a second row, same slot width, what is left */
+		assertEquals(listOf(0..3, 4..4), actionRows(5, 4))
+		assertEquals(emptyList(), actionRows(0, 4))
+	}
 }
