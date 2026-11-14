@@ -574,6 +574,17 @@ class RepositoryTest {
 	}
 
 	@Test
+	fun todoKeepsItsPlace() = runBlocking<Unit> {
+		/* issue #192: the dialog saves the place; a request without it keeps the stored one */
+		val id = entries.saveTodo(null, TodoRequest(acme, activity = "Visit", locality = " Sede Milano "))
+		assertEquals("Sede Milano", db.entryDao().entry(id)?.locality)
+		entries.saveTodo(id, TodoRequest(acme, activity = "Visit, again"))
+		assertEquals("Sede Milano", db.entryDao().entry(id)?.locality)
+		entries.saveTodo(id, TodoRequest(acme, activity = "Visit", locality = ""))
+		assertEquals(null, db.entryDao().entry(id)?.locality)
+	}
+
+	@Test
 	fun absenceWithoutAnyWorkingHoursTakesWholeDays() = runBlocking<Unit> {
 		/* issue #188: a fresh install has no working hours; a holiday over two days is two whole days */
 		val day = java.time.LocalDate.now(clock).plusDays(3)

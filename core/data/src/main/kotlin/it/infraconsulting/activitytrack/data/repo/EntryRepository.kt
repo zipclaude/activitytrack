@@ -330,6 +330,7 @@ class EntryRepository(
 		val row = base.copy(
 			companyId = companyId, clientId = req.clientId, roleId = req.roleId ?: base.roleId, activity = activity,
 			notes = req.notes?.trim()?.ifEmpty { null }, dueEpochDay = req.dueEpochDay, dueTimeMin = req.dueTimeMin,
+			locality = todoLocality(base.locality, req.locality),
 			planEpochDay = req.planEpochDay, planStartMin = req.planStartMin, durationMin = req.durationMin,
 			planRemindedUtcMs = if (planMoved) null else base.planRemindedUtcMs,
 			priority = Priority.of(req.priority).value, externalKey = req.externalKey ?: base.externalKey,

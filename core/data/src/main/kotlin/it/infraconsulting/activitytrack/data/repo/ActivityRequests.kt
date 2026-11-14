@@ -78,6 +78,8 @@ data class TodoRequest(
 	/* key in the management system (imports) */
 	val externalKey: String? = null,
 	val pluginFields: String? = null,
+	/* the place (issue #192): null keeps the stored one, blank clears it */
+	val locality: String? = null,
 )
 
 /*
@@ -145,3 +147,7 @@ fun TimeEntryEntity.isActive(): Boolean = status == it.infraconsulting.activityt
 
 /* running without a segment open (the 0.9 "SUSPENDED") */
 fun TimeEntryEntity.isSuspended(): Boolean = status == it.infraconsulting.activitytrack.domain.activity.ActivityStatus.RUNNING && mode == null
+
+/* A to-do's place once saved (issue #192): [requested] null keeps [stored], blank clears it, else trimmed. */
+internal fun todoLocality(stored: String?, requested: String?): String? =
+	if (requested == null) stored else requested.trim().ifEmpty { null }

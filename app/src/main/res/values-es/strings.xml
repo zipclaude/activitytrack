@@ -845,4 +845,6 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="grid_hint_scroll">Arrastra las horas de la izquierda para desplazarte.</string>
   <!-- bin: swipe to delete for good (issue #190) -->
   <string name="swipe_purge">Eliminar para siempre</string>
+  <!-- to-do: the place (issue #192) -->
+  <string name="field_place_single">Lugar</string>
 </resources>

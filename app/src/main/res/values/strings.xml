@@ -856,4 +856,6 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="grid_hint_scroll">Drag the hours on the left to scroll.</string>
   <!-- bin: swipe to delete for good (issue #190) -->
   <string name="swipe_purge">Delete forever</string>
+  <!-- to-do: the place (issue #192) -->
+  <string name="field_place_single">Place</string>
 </resources>

@@ -844,4 +844,6 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="grid_hint_scroll">Zieh die Stunden links, um zu blättern.</string>
   <!-- bin: swipe to delete for good (issue #190) -->
   <string name="swipe_purge">Endgültig löschen</string>
+  <!-- to-do: the place (issue #192) -->
+  <string name="field_place_single">Ort</string>
 </resources>
