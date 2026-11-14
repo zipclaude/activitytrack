@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "schema": 3,
+  "schema": 4,
   "types": [
     {
       "type": "company",
@@ -472,6 +472,11 @@
           "name": "absenceKind",
           "kind": "text",
           "null": true
+        },
+        {
+          "name": "completedUtcMs",
+          "kind": "instant",
+          "null": true
         }
       ]
     },
@@ -579,6 +584,11 @@
           "kind": "bool",
           "null": false,
           "readOnly": true
+        },
+        {
+          "name": "description",
+          "kind": "text",
+          "null": true
         }
       ]
     },

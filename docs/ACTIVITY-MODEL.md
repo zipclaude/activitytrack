@@ -10,7 +10,8 @@ the first thing to check when reviewing.
 
 ## 1. Entities
 
-Only the to-do changes. Every other table keeps its shape.
+Only the to-do changes. Every other table keeps its shape, but for one column added after
+1.0.0-beta-1 (DB 23, wire 4): `attachment.description` (issue #185, 1.3).
 
 | Today (DB 21, wire 2) | 1.0 (DB 22, wire 3) |
 |---|---|
@@ -43,6 +44,7 @@ New or changed columns of `time_entry`:
 | `plan_reminded_utc_ms` | | the plan's reminder was shown |
 | `priority` | int 0–5, not null, default 0 | 0 none, 1 low, 2 medium, 3 high, 4 urgent, 5 emergency |
 | `absence_kind` | `ABSENCE` \| `HOLIDAY` \| `LEAVE` \| `SICK` or null | "Assenza", "Ferie", "Permesso", "Malattia"; set iff `kind = ABSENCE` |
+| `completed_utc_ms` | instant or null | declared complete ("Completa", 2.4, issue #189; DB 23, wire 4); set only while `CLOSED` |
 
 Removed: `todo_id`. Not carried over from the to-do: `color` (the colour comes from the
 client, else the company; tags keep theirs), `plan_end_epoch_day` (a multi-day absence is
@@ -61,6 +63,14 @@ one segment per day), `ignored_utc_ms` (becomes `deleted_utc_ms`), `done` (becom
   segment replaces the plan").
 - `ABSENCE` segments belong to `ABSENCE` activities only, never planned, never open.
 
+### 1.3 Attachment description (issue #185, decided by the assistant)
+
+Photos, voice notes and files (`attachment`, kinds PHOTO, AUDIO, RECEIPT, FILE) get a
+nullable text `description` (DB 23), typed when the attachment is tapped; trimmed, blank
+means none. It travels with the `attachment` record (wire 4 `description`) and the server
+keeps and shows it; the interchange format carries no attachments, so neither does it carry
+the description. Setting it does not change the activity (`updated_utc_ms` stays).
+
 ## 2. States
 
 ### 2.1 Real states (stored)
@@ -78,7 +88,7 @@ The five states the user sees are `kind`, `status` and `deleted_utc_ms` together
 ### 2.2 Displayed states (computed)
 
 One pure function `display(activity, segments, now, zone, missingRequired) → (state, since)`
-in the domain library of each codebase. Rules in this order; the first that matches wins.
+in the domain library of each codebase (the activity includes `completed_utc_ms`, 2.4). Rules in this order; the first that matches wins.
 
 | # | Condition | State | Icon | Colour |
 |---|---|---|---|---|
@@ -112,7 +122,19 @@ This replaces the two rules that differ today (app and web home vs the web's wor
 
 A `CLOSED` activity is complete when it has no real segment at all (a task ticked off), or
 when it has a client, at least one WORK segment and every field its company's plugin
-declares required is filled (`missingRequired = false`).
+declares required is filled (`missingRequired = false`), or (issue #189) when it was
+**declared complete** (`completed_utc_ms` set) and every required field is filled: whatever
+its client and segments, but the required fields still count, since they go to the
+management system.
+
+**Declared completion (decided by the assistant, issue #189; owner to review).** An activity
+may be made of travel only (owner: "un caso limite, ma va contemplato"): it stays
+`INCOMPLETE` by the rule above, which is normally right, and the user may complete it
+explicitly with the command `complete()` of 3. The field is the instant it was declared
+(`completed_utc_ms`, wire `completedUtcMs`, interchange `completedUtc`). Only the commands of
+3 write it: `complete()` sets it, `uncomplete()` clears it, and every command that leaves
+`CLOSED` (`reopen`, `untick`) clears it, so a reopened activity is judged again when it
+stops. Anything else (editing, adding a segment, delete, restore) leaves it as it is.
 
 ## 3. Commands and transitions
 
@@ -124,8 +146,10 @@ declares required is filled (`missingRequired = false`).
 | `suspend(at)` (internal, no button) | `RUNNING` | `RUNNING` | close the open one at `at` |
 | `stop(at)` | `RUNNING` | `CLOSED` | close the open one at `at`; `closed_utc_ms = now` |
 | `tick()` | `TODO` | `CLOSED` | planned segments deleted |
-| `untick()` | `CLOSED` without real segments | `TODO` | none; `closed_utc_ms = null` (a task ticked off by mistake) |
-| `reopen(kind, at)` kind ∈ WORK, TRAVEL | `CLOSED` | `RUNNING` | open `kind` at `at`; the gap stays a gap |
+| `untick()` | `CLOSED` without real segments | `TODO` | none; `closed_utc_ms = null`, `completed_utc_ms = null` (a task ticked off by mistake) |
+| `reopen(kind, at)` kind ∈ WORK, TRAVEL | `CLOSED` | `RUNNING` | open `kind` at `at`; the gap stays a gap; `completed_utc_ms = null` |
+| `complete()` | `CLOSED`, kind `ACTIVITY`, not deleted, shown `INCOMPLETE`, no real WORK segment, `completed_utc_ms` null | same | none; `completed_utc_ms = now` (2.4, issue #189) |
+| `uncomplete()` | kind `ACTIVITY`, not deleted, `completed_utc_ms` set | same | none; `completed_utc_ms = null` |
 | `delete()` | any | same, `deleted_utc_ms = now` | none |
 | `restore()` | deleted | same, `deleted_utc_ms = null` | none |
 
@@ -140,6 +164,15 @@ Rules:
   not allow concurrent ones (as today). Without that policy several activities may be
   running, each with at most one open segment.
 - `start`/`resume`/`reopen` with a running activity elsewhere follow today's rules.
+- `complete()` ("Completa") is for an activity of travel only: one with work but no client is
+  fixed by giving it a client, not by this; a task ticked off is complete already. A required
+  plugin field left empty keeps a completed activity `INCOMPLETE` (2.4); `complete()` is
+  still allowed then, and the activity is `DONE` once the field is filled. `uncomplete()`
+  ("Annulla completamento") is offered while `completed_utc_ms` is set (decided by the
+  assistant, issue #189).
+- The server refuses a change that sets `completed_utc_ms` on an activity that is not a
+  `CLOSED` `ACTIVITY`, or leaves `CLOSED` keeping it (`invalid` / `completed_not_closed`,
+  server docs/SYNC.md §1.1): the commands that leave `CLOSED` clear it in the same change.
 
 Creation:
 
@@ -370,6 +403,15 @@ Types `todo` and `absence` disappear.
 Interchange format: `VERSION = 2`, same changes; version 1 files are imported through the
 migration function.
 
+Wire 4 (after 1.0.0-beta-1, issues #189 and #185): `entry` adds `completedUtcMs` (2.4), `attachment`
+adds `description` (1.3); interchange version 2 adds the optional `completedUtc` to an
+entry (an older reader ignores it). A schema 3 node would not lose the fields itself (the
+server and the app ignore a field they do not know, the library keeps it), but it would not
+store them either (a beta-1 server drops what a newer app sends) and would not clear the
+completion on reopen, which the server refuses: so the schema was raised and the window
+reset again (`WINDOW = 0`, decided by the assistant): app, server and library speak 4 only,
+an older one gets `upgrade_required` or `server_too_old`.
+
 ## 7. Integrations
 
 - Plugins: imported to-dos become `TODO` activities matched by `(company, external_key)`;
@@ -401,6 +443,6 @@ migration function.
 App, web, library, cli, tui, desktop, doc: **1.0.0**. The first release is the pre-release
 `v1.0.0-alfa-1` (Debian `1.0.0~alfa-1-1`; the update check treats it as a beta), then
 betas `v1.0.0-beta-N`. Room
-`VERSION = 22`, wire `SCHEMA = 3` with `WINDOW` reset (no older schema accepted),
-interchange `VERSION = 2`. Branch `feature/activity-1.0` in every repository, merged into
+`VERSION = 23` (22 up to 1.0.0-beta-1), wire `SCHEMA = 4` (3 up to 1.0.0-beta-1) with
+`WINDOW` reset (no older schema accepted), interchange `VERSION = 2`. Branch `feature/activity-1.0` in every repository, merged into
 `next` and then `main` at the release.

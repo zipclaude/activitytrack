@@ -114,6 +114,7 @@ class Exporter(private val db: ActivityTrackDatabase) {
 						status = e.status.name,
 						kind = e.kind.name,
 						closedUtc = e.closedUtcMs?.let { Instant.ofEpochMilli(it).toString() },
+						completedUtc = e.completedUtcMs?.let { Instant.ofEpochMilli(it).toString() },
 						externalKey = e.externalKey,
 						dueDate = e.dueEpochDay?.let { d -> LocalDate.ofEpochDay(d).toString() },
 						dueTime = e.dueTimeMin?.let { m -> "%02d:%02d".format(m / 60, m % 60) },

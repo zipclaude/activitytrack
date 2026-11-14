@@ -7,7 +7,8 @@ import java.time.Instant
 /*
  * The stored state of an activity the commands depend on (1.1): [mode] is
  * the kind of the open segment, null when none is open (only RUNNING may
- * have one); [closedAt] and [deletedAt] as `closed_utc_ms`, `deleted_utc_ms`.
+ * have one); [closedAt], [deletedAt] and [completedAt] as `closed_utc_ms`,
+ * `deleted_utc_ms`, `completed_utc_ms` (declared complete, 2.4, issue #189).
  */
 data class ActivityState(
 	val kind: ActivityKind,
@@ -15,6 +16,7 @@ data class ActivityState(
 	val mode: SegmentKind? = null,
 	val closedAt: Instant? = null,
 	val deletedAt: Instant? = null,
+	val completedAt: Instant? = null,
 ) {
 	init {
 		require(mode == null || status == ActivityStatus.RUNNING) { "an open segment ($mode) needs RUNNING, not $status" }
@@ -45,7 +47,7 @@ sealed interface ActivityCommand {
 	/* TODO -> CLOSED: a task ticked off, the planned segments go */
 	data object Tick : ActivityCommand
 
-	/* CLOSED -> RUNNING: open [kind] at [at]; the gap stays a gap */
+	/* CLOSED -> RUNNING: open [kind] at [at]; the gap stays a gap; a declared completion goes */
 	data class Reopen(val kind: SegmentKind, val at: Instant) : ActivityCommand
 
 	/* any -> the same, deleted ("eliminata", restorable) */
@@ -179,8 +181,25 @@ object ActivityStateMachine {
 		return ActivityTransition(ActivityState(ActivityKind.ACTIVITY, ActivityStatus.RUNNING, kind), open = OpenSegment(kind, at))
 	}
 
+	/*
+	 * "Completa" (2.4, 3, issue #189): an activity made of travel only is
+	 * declared complete. Allowed for a CLOSED, not deleted ACTIVITY shown
+	 * INCOMPLETE that has no real WORK segment (one with work and no client
+	 * is fixed by giving it a client) and is not declared complete yet.
+	 * EntryRepository.complete sets `completed_utc_ms = now`. A required
+	 * plugin field still left empty keeps it incomplete.
+	 */
+	fun canComplete(a: ActivitySnapshot): Boolean =
+		a.kind == ActivityKind.ACTIVITY && a.status == ActivityStatus.CLOSED && a.deletedAt == null && a.completedAt == null &&
+			!ActivityDisplay.complete(a) && a.real.none { it.kind == SegmentKind.WORK }
+
+	/* "Annulla completamento": offered while the completion is set (not deleted); EntryRepository.uncomplete clears it. */
+	fun canUncomplete(a: ActivitySnapshot): Boolean =
+		a.kind == ActivityKind.ACTIVITY && a.deletedAt == null && a.completedAt != null
+
+	/* leaving CLOSED (reopen) clears the closing time and a declared completion (issue #189) */
 	private fun runningIn(state: ActivityState, kind: SegmentKind) =
-		state.copy(status = ActivityStatus.RUNNING, mode = kind, closedAt = null)
+		state.copy(status = ActivityStatus.RUNNING, mode = kind, closedAt = null, completedAt = null)
 }
 
 /*

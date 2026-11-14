@@ -101,6 +101,19 @@ class InterchangeTest {
 		assertTrue(again.conflicts.isEmpty(), "conflicts: ${again.conflicts}")
 	}
 
+	/* issue #189: a travel-only activity declared complete keeps its completion through a file */
+	@Test
+	fun declaredCompletionTravels() = runBlocking<Unit> {
+		val entries = EntryRepository(a, clock)
+		val trip = entries.start(StartRequest(SegmentKind.TRAVEL, null, startUtcMs = clock.millis() - 3_600_000, endUtcMs = clock.millis() - 1_800_000))
+		entries.complete(trip)
+		val uid = entries.find(trip)!!.uid
+		val x = viaXml(export(a))
+		assertEquals(clock.instant().toString(), x.entries.single { it.key == uid }.completedUtc)
+		Importer(b, clock).import(x)
+		assertEquals(clock.millis(), EntryRepository(b, clock).findByUid(uid!!)?.completedUtcMs)
+	}
+
 	@Test
 	fun tagFilterKeepsOnlyTaggedEntries() = runBlocking<Unit> {
 		val tagged = Exporter(a).build(ExportFilter(zone = ZoneId.of("UTC"), tag = "remoto"), "test", clock.instant())

@@ -289,6 +289,35 @@ class MigrationTest {
 		}
 	}
 
+	/*
+	 * 22 -> 23 (issues #189, #185): the declared completion of an activity and
+	 * the description of an attachment, both empty; the rows and the sync
+	 * triggers stay (an ADD COLUMN rebuilds nothing).
+	 */
+	@Test
+	fun v22ToV23AddsCompletionAndAttachmentDescription() {
+		helper.createDatabase(DB, 22).use { db ->
+			SyncSchema.onCreate(ActivityTrackDatabase.SupportSql(db))
+			db.execSQL("INSERT INTO time_entry (id, uid, status, kind, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms, priority) VALUES (1, 'e1', 'CLOSED', 'ACTIVITY', 'Europe/Rome', 0, 1, 2, 0)")
+			db.execSQL("INSERT INTO attachment (id, entry_id, kind, rel_path, mime, created_utc_ms, uid, sha256, has_file) VALUES (1, 1, 'PHOTO', 'a/1.jpg', 'image/jpeg', 3, 'a1', '', 0)")
+			db.execSQL("UPDATE sync_state SET enabled = 1")
+			db.execSQL("DELETE FROM sync_change")
+		}
+		helper.runMigrationsAndValidate(DB, 23, false, ActivityTrackDatabase.MIGRATION_22_23).use { db ->
+			db.query("SELECT completed_utc_ms FROM time_entry WHERE id = 1").use { c -> c.moveToFirst(); assertTrue(c.isNull(0)) }
+			db.query("SELECT description, rel_path FROM attachment WHERE id = 1").use { c ->
+				c.moveToFirst()
+				assertTrue(c.isNull(0))
+				assertEquals("a/1.jpg", c.getString(1))
+			}
+			db.execSQL("UPDATE attachment SET description = 'Quadro elettrico' WHERE id = 1")
+			db.query("SELECT type, uid FROM sync_change").use { c ->
+				c.moveToFirst()
+				assertEquals(listOf("attachment", "a1"), listOf(c.getString(0), c.getString(1)))
+			}
+		}
+	}
+
 	private companion object {
 		const val DB = "migration-test.db"
 	}

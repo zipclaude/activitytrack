@@ -37,6 +37,8 @@ a version 1 file that one of those imported does not find its to-dos.
   company (app used without companies, policy `fields.company.visible: false`).
 - Instants: ISO-8601 UTC (`2026-10-17T07:00:00Z`) with `zone` apart; dates
   `yyyy-mm-dd`; times `HH:MM`; amounts decimal strings in EUR (`"12.50"`).
+- Attachments (photos, voice notes, files) and their descriptions do not travel in this
+  format; an expense says only whether it has a receipt (`receipt`).
 - Location samples never travel in this format, nor in the sync. Site coordinates are
   optional master data. The only file carrying samples is the explicit GPX / KML track
   export (issue #155), which is not an interchange file and is not imported.
@@ -116,6 +118,7 @@ required, quantity, unit and unitCost in EUR optional).
 | `absenceKind` | ABSENCE, HOLIDAY, LEAVE, SICK; only with kind ABSENCE |
 | `priority` | 0 none (default), 1 low, 2 medium, 3 high, 4 urgent, 5 emergency (version 1 to-dos: 1 the highest, converted P1→5 … P5→1) |
 | `deletedUtc` / `closedUtc` | ISO instants: in the bin (restorable) / when it was closed |
+| `completedUtc` | ISO instant: a CLOSED activity (of travel only) declared complete (ACTIVITY-MODEL.md 2.4, issue #189); optional, ignored on any other status; an older reader ignores it |
 | `externalKey` | key in the management system; with the company, the match of an imported activity |
 | `dueDate` / `dueTime` | the deadline: local date, optional hh:mm |
 | `plannedDate` / `plannedTime` / `durationMin` | the plan: local date, optional hh:mm, optional 1..1440 (needs the time) |

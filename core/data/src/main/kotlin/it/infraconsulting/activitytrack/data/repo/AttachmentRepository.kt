@@ -53,6 +53,18 @@ class AttachmentRepository(
 		}
 	}
 
+	/*
+	 * The description of a photo, voice note or file (issue #185): trimmed,
+	 * blank = none. Synced as a field of the attachment record; the entry is
+	 * not touched (the description is the attachment's, not the activity's).
+	 */
+	suspend fun setDescription(id: Long, description: String?) {
+		val a = dao.attachment(id) ?: throw ValidationException(ValidationException.Reason.NOT_FOUND, "attachment $id")
+		val text = description?.trim()?.ifEmpty { null }
+		if (text != a.description)
+			dao.setAttachmentDescription(id, text)
+	}
+
 	/* Document URI to open the file; null when it was removed outside the app. */
 	suspend fun uriOf(tree: Uri, a: AttachmentEntity): Uri? = dir.resolve(tree, a.relPath)
 

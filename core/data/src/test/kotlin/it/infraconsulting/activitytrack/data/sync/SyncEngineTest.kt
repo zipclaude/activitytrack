@@ -198,6 +198,35 @@ class SyncEngineTest {
 		assertEquals(JsonArray(listOf(JsonPrimitive("rete"))), b.records.read("entry", e)!!["tags"])
 	}
 
+	/* schema 4: a declared completion (issue #189) and an attachment's description (issue #185) reach the other phone, and their clearing too */
+	@Test
+	fun completionAndAttachmentDescriptionTravel() {
+		val a = phone()
+		val acme = company(a, "Acme")
+		val e = entry(a, acme, "Trasferta")
+		val att = SyncIds.random()
+		a.sql.exec(
+			"INSERT INTO attachment (entry_id, kind, rel_path, mime, created_utc_ms, uid, sha256, has_file) VALUES ((SELECT id FROM time_entry WHERE uid = ?), 'PHOTO', '', 'image/jpeg', 1, ?, '', 0)",
+			e, att,
+		)
+		sync(a)
+		/* set by the server (read-only for phones), as ActivityTrack Web answers */
+		server.records.getValue("attachment" to att).fields["hasFile"] = JsonPrimitive(false)
+		a.sql.exec("UPDATE time_entry SET completed_utc_ms = 5000 WHERE uid = ?", e)
+		a.sql.exec("UPDATE attachment SET description = 'Cantiere' WHERE uid = ?", att)
+		sync(a)
+		assertEquals(JsonPrimitive(5000), server.records["entry" to e]!!.fields["completedUtcMs"])
+		assertEquals(JsonPrimitive("Cantiere"), server.records["attachment" to att]!!.fields["description"])
+		val b = phone()
+		sync(b)
+		assertEquals(5000L, b.one("SELECT completed_utc_ms FROM time_entry WHERE uid = ?", e))
+		assertEquals("Cantiere", b.one("SELECT description FROM attachment WHERE uid = ?", att))
+		b.sql.exec("UPDATE time_entry SET completed_utc_ms = NULL WHERE uid = ?", e)
+		sync(b)
+		sync(a)
+		assertEquals(null, a.one("SELECT completed_utc_ms FROM time_entry WHERE uid = ?", e))
+	}
+
 	/*
 	 * After a migration of the data (ACTIVITY-MODEL.md 6, a restored older
 	 * backup too) the next sync is a full realignment: the migration reset the
@@ -260,6 +289,7 @@ class SyncEngineTest {
 		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 5)", todo)
 		db.exec("PRAGMA foreign_keys = OFF")
 		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		ActivityTrackDatabase.migrate22To23(db)
 		db.exec("PRAGMA foreign_keys = ON")
 		/* the server's migrated copies, each with something else */
 		for ((uid, text) in listOf(clean to "server clean", dirty to "server dirty", todo to "server todo")) {
@@ -307,6 +337,7 @@ class SyncEngineTest {
 		db.exec("UPDATE time_entry SET activity = 'local' WHERE id = 1")
 		db.exec("PRAGMA foreign_keys = OFF")
 		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		ActivityTrackDatabase.migrate22To23(db)
 		db.exec("PRAGMA foreign_keys = ON")
 		/* the server's migrated copy, its notes edited from another device since */
 		val r = a.records.read("entry", e)!!.toMutableMap()
@@ -351,6 +382,7 @@ class SyncEngineTest {
 		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 5)", mine)
 		db.exec("PRAGMA foreign_keys = OFF")
 		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		ActivityTrackDatabase.migrate22To23(db)
 		db.exec("PRAGMA foreign_keys = ON")
 		val link = a.one("SELECT uid FROM external_ref WHERE entry_id = 1") as String
 		assertEquals(todo, a.one("SELECT value FROM external_ref WHERE uid = ?", link))
@@ -400,6 +432,7 @@ class SyncEngineTest {
 		db.exec("INSERT INTO segment (entry_id, kind, start_utc_ms, end_utc_ms, zone_id, source, uid) VALUES (1, 'WORK', 10, NULL, 'Europe/Rome', 'AUTO', ?)", seg)
 		db.exec("PRAGMA foreign_keys = OFF")
 		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		ActivityTrackDatabase.migrate22To23(db)
 		db.exec("PRAGMA foreign_keys = ON")
 		assertEquals("K-1", a.one("SELECT external_key FROM time_entry WHERE uid = ?", e))
 		assertNull(a.one("SELECT id FROM time_entry WHERE uid = ?", todo))
@@ -486,6 +519,7 @@ class SyncEngineTest {
 		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 7)", todo)
 		db.exec("PRAGMA foreign_keys = OFF")
 		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		ActivityTrackDatabase.migrate22To23(db)
 		db.exec("PRAGMA foreign_keys = ON")
 		val t = a.records.read("entry", todo)!!.toMutableMap()
 		t["status"] = JsonPrimitive("TODO")
@@ -529,6 +563,7 @@ class SyncEngineTest {
 		db.exec("INSERT INTO sync_change (type, uid, op, changed_utc_ms) VALUES ('todo', ?, 'upsert', 5)", todo)
 		db.exec("PRAGMA foreign_keys = OFF")
 		ActivityModelMigration.migrate21To22(db, java.time.ZoneId.of("Europe/Rome"))
+		ActivityTrackDatabase.migrate22To23(db)
 		db.exec("PRAGMA foreign_keys = ON")
 		assertEquals("K-1", a.one("SELECT external_key FROM time_entry WHERE uid = ?", todo))
 		server.put("company", acme, a.records.read("company", acme)!!)

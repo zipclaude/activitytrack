@@ -99,6 +99,40 @@ class ActivityStateMachineTest {
 		refused(todo, Reopen(WORK, at))
 	}
 
+	/* issue #189: reopening forgets a declared completion; the other commands keep it */
+	@Test
+	fun reopenForgetsTheCompletion() {
+		val completed = closed.copy(completedAt = now)
+		assertEquals(running(WORK), go(completed, Reopen(TRAVEL, at)).next.copy(mode = WORK))
+		assertEquals(completed.copy(deletedAt = now), go(completed, Delete).next)
+		assertEquals(completed, go(completed.copy(deletedAt = now), Restore).next)
+	}
+
+	/* issue #189: "Completa" for a closed travel-only activity shown incomplete; "Annulla completamento" while it is set */
+	@Test
+	fun completeOnlyTravelOnly() {
+		val h = Instant.parse("2026-11-10T16:00:00Z")
+		val travel = ActivitySegment(TRAVEL, h, h.plusSeconds(1800))
+		val work = ActivitySegment(WORK, h.plusSeconds(1800), h.plusSeconds(3600))
+		val trip = ActivitySnapshot(ACTIVITY, CLOSED, listOf(travel), closedAt = h.plusSeconds(1800))
+		assertTrue(ActivityStateMachine.canComplete(trip))
+		/* a client changes nothing: without work it is incomplete */
+		assertTrue(ActivityStateMachine.canComplete(trip.copy(hasClient = true, missingRequired = true)))
+		val done = trip.copy(completedAt = now)
+		assertFalse(ActivityStateMachine.canComplete(done))
+		assertTrue(ActivityStateMachine.canUncomplete(done))
+		assertFalse(ActivityStateMachine.canUncomplete(trip))
+		assertFalse(ActivityStateMachine.canUncomplete(done.copy(deletedAt = now)))
+		/* work without a client gets a client instead; a task ticked off is complete already */
+		assertFalse(ActivityStateMachine.canComplete(trip.copy(segments = listOf(travel, work))))
+		assertFalse(ActivityStateMachine.canComplete(trip.copy(segments = emptyList())))
+		/* planned segments are no work */
+		assertTrue(ActivityStateMachine.canComplete(trip.copy(segments = listOf(travel, work.copy(planned = true)))))
+		assertFalse(ActivityStateMachine.canComplete(trip.copy(status = RUNNING)))
+		assertFalse(ActivityStateMachine.canComplete(trip.copy(deletedAt = now)))
+		assertFalse(ActivityStateMachine.canComplete(trip.copy(kind = ABSENCE)))
+	}
+
 	@Test
 	fun deleteAndRestoreKeepEverythingElse() {
 		val del = go(running(WORK), Delete)

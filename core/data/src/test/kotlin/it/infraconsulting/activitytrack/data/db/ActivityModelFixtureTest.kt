@@ -117,6 +117,10 @@ class ActivityModelFixtureTest {
 		migrate21To22(c)
 		val fresh = JdbcSql.create(22).also { open += it; SyncSchema.onCreate(sql(it)) }
 		assertEquals(JdbcSql.shape(fresh), JdbcSql.shape(c))
+		/* and on to the current schema, as a restore in this app does (22 -> 23, issues #189, #185) */
+		ActivityTrackDatabase.migrate22To23(sql(c))
+		val current = JdbcSql.create(23).also { open += it; SyncSchema.onCreate(sql(it)) }
+		assertEquals(JdbcSql.shape(current), JdbcSql.shape(c))
 	}
 
 	/*

@@ -122,6 +122,8 @@ data class XEntry(
 	/* ISO instants: deleted (restorable), closed */
 	val deletedUtc: String? = null,
 	val closedUtc: String? = null,
+	/* ISO instant: declared complete (a closed activity of travel only, issue #189) */
+	val completedUtc: String? = null,
 	/* key in the management system: an imported TODO activity is matched by it */
 	val externalKey: String? = null,
 	val dueDate: String? = null,

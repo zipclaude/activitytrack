@@ -156,8 +156,12 @@ anonymous travel, ABSENCE via `AbsencePlanner`), the commands of
 `ActivityStateMachine`, travel from work, the return trip, delete to the bin
 and purge, rounded stored times and closing up to 24 hours ahead (only
 with editable times). Without `concurrentEntries` a start suspends every
-other running activity, a paused one too. Wire schema 3, interchange version 2.
-`ActivityTrackDatabase.VERSION` is the single source.
+other running activity, a paused one too. Schema 23 (`MIGRATION_22_23`, two
+nullable columns added in place, the triggers kept): `time_entry.completed_utc_ms`,
+an activity of travel only declared complete (issue #189,
+`EntryRepository.complete`/`uncomplete`), and `attachment.description`
+(issue #185, `AttachmentRepository.setDescription`). Wire schema 4, interchange
+version 2. `ActivityTrackDatabase.VERSION` is the single source.
 
 ## 5. Domain logic (`:core:domain`, implemented in M0)
 

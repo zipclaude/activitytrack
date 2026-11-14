@@ -33,7 +33,7 @@ class ActivityStatesTest {
 	@Test
 	fun everySharedCase() {
 		val cases = doc["cases"]!!.jsonArray.map { it.jsonObject }
-		assertTrue(cases.size >= 26, "cases: ${cases.size}")
+		assertTrue(cases.size >= 31, "cases: ${cases.size}")
 		val failures = cases.mapNotNull { c ->
 			val expect = c["expect"]!!.jsonObject
 			val want = Displayed(DisplayState.valueOf(expect.str("state")!!), instant(expect.str("since")))
@@ -60,6 +60,7 @@ class ActivityStatesTest {
 			dueDay = due?.str("day")?.let(LocalDate::parse),
 			dueMin = due?.int("timeMin"),
 			missingRequired = c["missingRequired"]?.jsonPrimitive?.boolean ?: false,
+			completedAt = instant(a.str("completedAt")),
 		)
 	}
 

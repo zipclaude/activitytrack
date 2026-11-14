@@ -12,11 +12,11 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 
 ### Compatibility
 
-- Database: Room schema 22, migrated once from 21 (or older) on the first start; there is no way back to 0.9 but the backup made before the upgrade (a 1.0 backup cannot be restored by 0.9).
-- Sync: wire schema 3 with the window reset; the server refuses an app or a PC interface of 0.9 with `upgrade_required` ("Aggiorna l'app per sincronizzare"): app, server and interfaces must all be 1.0; after its migration each node's first sync is a full realignment.
-- Wire records: the types `todo` and `absence` are gone; `entry` drops `todoUid` and gains `kind`, `deletedUtcMs`, `closedUtcMs`, `externalKey`, the plan, due and priority fields and `absenceKind`, with the new `status` values (TODO, RUNNING, CLOSED); `segment` gains `planned`.
+- Database: Room schema 23 (22 in 1.0.0-beta-1, which a later pre-release migrates in place), migrated once from 21 (or older) on the first start; there is no way back to 0.9 but the backup made before the upgrade (a 1.0 backup cannot be restored by 0.9).
+- Sync: wire schema 4 (3 in alfa-1, alfa-2 and beta-1) with the window reset; the server refuses an app or a PC interface of 0.9, or of a 1.0 pre-release up to beta-1, with `upgrade_required` ("Aggiorna l'app per sincronizzare"), and a newer app gets `server_too_old` from a beta-1 server: app, server and interfaces must all be updated together; after its migration each node's first sync is a full realignment.
+- Wire records: the types `todo` and `absence` are gone; `entry` drops `todoUid` and gains `kind`, `deletedUtcMs`, `closedUtcMs`, `externalKey`, the plan, due and priority fields, `absenceKind` and (schema 4) `completedUtcMs`, with the new `status` values (TODO, RUNNING, CLOSED); `segment` gains `planned`; `attachment` gains (schema 4) `description`.
 - Data model: the `todo` table (and `todo_id`) and the `absence` table are gone: a to-do is an activity with status `TODO`, an absence an activity of kind `ABSENCE`; entry statuses ACTIVE/SUSPENDED/TO_COMPLETE/CLOSED become RUNNING/CLOSED.
-- Interchange: format version 2 (no `todos`, `absences`, `todoKey`), which 0.9 cannot read; version 1 files are still imported through the migration.
+- Interchange: format version 2 (no `todos`, `absences`, `todoKey`; an entry may carry `completedUtc`), which 0.9 cannot read; version 1 files are still imported through the migration.
 - Interchange version 1: a to-do's uid is now derived from its company key and key (issue #177), so importing again after 1.0 an old file that a 1.0 pre-release (alfa-1, alfa-2) had imported does not find the to-dos it created, and makes them again.
 - Priority: the scale is reversed, 0 none, 1 low … 5 emergency; the old P1…P5 (1 the highest) are converted once (P1→5 … P5→1) in the database, in version 1 files and by the server; a plugin feeding the old scale must map it (`map` transform).
 - Plugin descriptors: `@todo` becomes `@activity` and the export hook `todoDone` becomes `activityClosed`; the old names are still read as aliases (`PluginParser`, `Expr`); `@activity.activities` lists the activity's description and those of the activities pointing at it with a UUID reference.
@@ -33,6 +33,8 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - Displayed states with one icon and colour each (to-do, planned, late, work, travel, pause, suspended, done, incomplete, absence, deleted), the same on the Home, the detail, the agenda, widgets, the tile and notifications; "In <stato> dalle" tells since when.
 - The bin: a deleted activity can be restored, or deleted for good from there.
 - A ticked task can be unticked; "Annulla" after a tick or a done.
+- An activity made of travel only can be declared complete ("Completa", and "Annulla completamento"); it is then done unless a field the management system requires is empty (issue #189).
+- Photos, voice notes and files have a description, synced with the attachment (issue #185).
 - Return trip on stop: an activity with an outbound trip offers to start the return trip, to stop, or to stop adding a return trip as long as the outbound one (with its km and its two ends swapped).
 - Closing ahead: with editable times a stop, or the end of the last segment, may lie up to 24 hours ahead.
 - Saving rounded times (Settings → Arrotondamento): the action buttons store instants rounded to the quanta of the report rules.

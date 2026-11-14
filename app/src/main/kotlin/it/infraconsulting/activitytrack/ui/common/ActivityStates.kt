@@ -70,4 +70,5 @@ fun TimeEntryEntity.snapshot(segments: List<SegmentEntity>, missingRequired: Boo
 	dueDay = dueEpochDay?.let(LocalDate::ofEpochDay),
 	dueMin = dueTimeMin,
 	missingRequired = missingRequired,
+	completedAt = completedUtcMs?.let(Instant::ofEpochMilli),
 )

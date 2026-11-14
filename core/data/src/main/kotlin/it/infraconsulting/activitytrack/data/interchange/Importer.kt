@@ -276,6 +276,7 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 				"plan".takeIf { existing.planEpochDay != planDay || existing.planStartMin != planTime || existing.durationMin != duration },
 				"priority".takeIf { existing.priority != Priority.of(x.priority).value },
 				"deleted".takeIf { (existing.deletedUtcMs != null) != (x.deletedUtc != null) },
+				"completed".takeIf { (existing.completedUtcMs != null) != (x.completedUtc != null) },
 			)
 			if (diff.isEmpty()) r.same("entries") else r.conflict("entries", x.key, diff.joinToString())
 			return
@@ -313,6 +314,8 @@ class Importer(private val db: ActivityTrackDatabase, private val clock: Clock) 
 				notes = x.notes, zoneId = zone.id, createdUtcMs = real.minOfOrNull { it.startUtcMs } ?: now, updatedUtcMs = now,
 				deletedUtcMs = instant(x.deletedUtc),
 				closedUtcMs = if (status == ActivityStatus.CLOSED) instant(x.closedUtc) ?: real.mapNotNull { it.endUtcMs }.maxOrNull() ?: now else null,
+				/* a declared completion belongs to a closed activity only (2.4, issue #189) */
+				completedUtcMs = if (status == ActivityStatus.CLOSED && kind == ActivityKind.ACTIVITY) instant(x.completedUtc) else null,
 				externalKey = externalKey, dueEpochDay = due, dueTimeMin = dueTime,
 				planEpochDay = planDay, planStartMin = planTime, durationMin = duration, priority = Priority.of(x.priority).value,
 				absenceKind = if (kind == ActivityKind.ABSENCE) AbsenceKind.of(x.absenceKind) ?: AbsenceKind.ABSENCE else null,

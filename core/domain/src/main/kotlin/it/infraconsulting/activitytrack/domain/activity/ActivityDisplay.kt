@@ -38,7 +38,9 @@ data class ActivitySegment(
 /*
  * What the displayed state depends on, independent of persistence:
  * [hasClient] a client is set, [plan] and [dueDay]/[dueMin] the to-do
- * fields, [missingRequired] a field the company's plugin requires is empty.
+ * fields, [missingRequired] a field the company's plugin requires is empty,
+ * [completedAt] when it was declared complete (`completed_utc_ms`, 2.4,
+ * issue #189).
  */
 data class ActivitySnapshot(
 	val kind: ActivityKind,
@@ -51,6 +53,7 @@ data class ActivitySnapshot(
 	val dueDay: LocalDate? = null,
 	val dueMin: Int? = null,
 	val missingRequired: Boolean = false,
+	val completedAt: Instant? = null,
 ) {
 	val real: List<ActivitySegment> get() = segments.filter { !it.planned }
 	val planned: List<ActivitySegment> get() = segments.filter { it.planned }
@@ -111,10 +114,14 @@ object ActivityDisplay {
 
 	/*
 	 * A CLOSED activity is complete (2.4) with no real segment at all (a task
-	 * ticked off), or with a client, a WORK segment and every required field.
+	 * ticked off), or with a client, a WORK segment and every required field,
+	 * or declared complete ([completedAt], travel only, issue #189) with every
+	 * required field: those go to the management system.
 	 */
 	fun complete(a: ActivitySnapshot): Boolean {
 		val real = a.real
-		return real.isEmpty() || (a.hasClient && real.any { it.kind == SegmentKind.WORK } && !a.missingRequired)
+		return real.isEmpty() ||
+			(a.completedAt != null && !a.missingRequired) ||
+			(a.hasClient && real.any { it.kind == SegmentKind.WORK } && !a.missingRequired)
 	}
 }

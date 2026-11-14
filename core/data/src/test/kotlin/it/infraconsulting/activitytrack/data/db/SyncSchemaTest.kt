@@ -169,6 +169,28 @@ class SyncSchemaTest {
 		assertEquals(listOf(listOf("entry", "e-11", "upsert")), changes(c))
 	}
 
+	/*
+	 * 22 -> 23 (issues #189, #185): the schema Room expects for 23 with every
+	 * trigger, the rows kept with the new columns empty, and a change of them
+	 * logged for the sync.
+	 */
+	@Test
+	fun migration22To23GivesTheSchemaRoomExpectsAndKeepsTheTriggers() {
+		val c = create(22).also { SyncSchema.onCreate(sql(it)) }
+		exec(c, "INSERT INTO time_entry (id, uid, status, kind, zone_id, unanswered_reminders, created_utc_ms, updated_utc_ms, priority) VALUES (1, 'e-1', 'CLOSED', 'ACTIVITY', 'Europe/Rome', 0, 1, 2, 0)")
+		exec(c, "INSERT INTO attachment (id, entry_id, kind, rel_path, mime, created_utc_ms, uid, sha256, has_file) VALUES (1, 1, 'PHOTO', 'a/1.jpg', 'image/jpeg', 3, 'a-1', '', 0)")
+		exec(c, "UPDATE sync_state SET enabled = 1")
+		exec(c, "PRAGMA foreign_keys = OFF")
+		ActivityTrackDatabase.migrate22To23(sql(c))
+		exec(c, "PRAGMA foreign_keys = ON")
+		assertEquals(shape(create(23).also { SyncSchema.onCreate(sql(it)) }), shape(c))
+		assertEquals(listOf(listOf(null, null)), rows(c, "SELECT t.completed_utc_ms, a.description FROM time_entry t JOIN attachment a ON a.entry_id = t.id"))
+		assertEquals(emptyList(), changes(c))
+		exec(c, "UPDATE time_entry SET completed_utc_ms = 5 WHERE id = 1")
+		exec(c, "UPDATE attachment SET description = 'Quadro elettrico' WHERE id = 1")
+		assertEquals(listOf(listOf("entry", "e-1", "upsert"), listOf("attachment", "a-1", "upsert")), changes(c))
+	}
+
 	@Test
 	fun everyTableWithAUidIsSynced() {
 		val withUid = rows(create(ActivityTrackDatabase.VERSION), "SELECT m.name FROM sqlite_master m, pragma_table_info(m.name) p WHERE m.type = 'table' AND p.name = 'uid' AND m.name NOT LIKE 'sync_%'")

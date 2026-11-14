@@ -126,6 +126,8 @@ object SyncMapping {
 				text("externalKey", nullable = true), date("dueDate", "due_epoch_day", nullable = true), int("dueTimeMin", nullable = true),
 				date("planDate", "plan_epoch_day", nullable = true), int("planStartMin", nullable = true), int("durationMin", nullable = true),
 				int("priority"), text("absenceKind", nullable = true),
+				/* schema 4: declared complete (issue #189) */
+				instant("completedUtcMs", nullable = true),
 			),
 			lists = listOf(FoldedList("tags", "entry_tag", "entry_id", "tag")),
 			localDefaults = mapOf("unanswered_reminders" to 0L),
@@ -145,6 +147,8 @@ object SyncMapping {
 			listOf(
 				ref("entryUid", "entry", "entry_id", nullable = false), text("kind"), text("mime"), text("transcript", nullable = true),
 				instant("createdUtcMs"), text("sha256"), int("size", nullable = true), WireField("hasFile", "has_file", WireKind.BOOL, readOnly = true),
+				/* schema 4: what the photo, voice note or file is (issue #185) */
+				text("description", nullable = true),
 			),
 			parent = "entryUid",
 			/* the file travels apart (issue #116): empty until downloaded */

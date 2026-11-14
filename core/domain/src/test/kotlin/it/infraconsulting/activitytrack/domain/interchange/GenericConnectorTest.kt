@@ -30,6 +30,12 @@ class GenericConnectorTest {
 				refs = listOf("INC0012", "https://example.org/t/1"),
 				tags = listOf("remoto", "urgente"),
 			),
+			/* a trip alone, declared complete (issue #189) */
+			XEntry(
+				key = "6f1c0f4e-0000-4000-8000-000000000002", status = "CLOSED", zone = "Europe/Rome",
+				closedUtc = "2026-10-17T12:00:00Z", completedUtc = "2026-10-17T12:05:00Z",
+				segments = listOf(XSegment("TRAVEL", "2026-10-17T11:00:00Z", "2026-10-17T12:00:00Z")),
+			),
 		),
 		absences = listOf(XAbsence("2026-10-19", "LATE_ENTRY", "10:30")),
 		daysOff = listOf(XDayOff("2026-12-07", "Sant'Ambrogio")),

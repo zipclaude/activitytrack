@@ -888,6 +888,69 @@ class RepositoryTest {
 		entries.setActivity(todo, "Patched")
 	}
 
+	/* issue #189: a travel-only activity is declared complete; uncomplete and reopen clear it; one with work is not */
+	@Test
+	fun travelOnlyIsDeclaredComplete() = runBlocking<Unit> {
+		val trip = entries.startTravel()
+		clock.advance(30)
+		entries.stop(trip)
+		assertNull(entries.find(trip)?.completedUtcMs)
+		entries.complete(trip)
+		assertEquals(clock.millis(), entries.find(trip)?.completedUtcMs)
+		/* once only */
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.complete(trip) })
+		entries.uncomplete(trip)
+		assertNull(entries.find(trip)?.completedUtcMs)
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.uncomplete(trip) })
+		entries.complete(trip)
+		clock.advance(5)
+		entries.reopen(trip, SegmentKind.TRAVEL)
+		assertNull(entries.find(trip)?.completedUtcMs)
+		/* running: nothing to declare */
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.complete(trip) })
+		clock.advance(5)
+		entries.stop(trip)
+		/* other commands keep it: a declared completion survives the bin */
+		entries.complete(trip)
+		val at = entries.find(trip)?.completedUtcMs
+		entries.delete(trip)
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.uncomplete(trip) })
+		entries.restore(trip)
+		assertEquals(at, entries.find(trip)?.completedUtcMs)
+		/* an activity with work is never declared complete (without a client it gets one instead) */
+		val work = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Con lavoro"))
+		clock.advance(30)
+		entries.stop(work)
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.complete(work) })
+		/* a task ticked off is complete already */
+		val task = entries.saveTodo(null, TodoRequest(acme, activity = "Call back"))
+		entries.tick(task)
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.complete(task) })
+	}
+
+	/* issue #185: the description of an attachment, trimmed, blank = none; the activity is not touched */
+	@Test
+	fun attachmentDescription() = runBlocking<Unit> {
+		val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+		val attachments = AttachmentRepository(db, it.infraconsulting.activitytrack.data.storage.UserDataDir(ctx), clock)
+		val id = entries.start(StartRequest(SegmentKind.WORK, client, activity = "Quadro"))
+		val att = db.entryDao().insertAttachment(
+			it.infraconsulting.activitytrack.data.db.AttachmentEntity(
+				entryId = id, kind = it.infraconsulting.activitytrack.data.db.AttachmentKind.AUDIO, relPath = "x.m4a", mime = "audio/mp4",
+				createdUtcMs = clock.millis(),
+			),
+		)
+		val updated = entries.find(id)!!.updatedUtcMs
+		clock.advance(10)
+		attachments.setDescription(att, "  Nota sul quadro elettrico ")
+		assertEquals("Nota sul quadro elettrico", db.entryDao().attachment(att)?.description)
+		assertEquals("x.m4a", db.entryDao().attachment(att)?.relPath)
+		assertEquals(updated, entries.find(id)!!.updatedUtcMs)
+		attachments.setDescription(att, "   ")
+		assertNull(db.entryDao().attachment(att)?.description)
+		assertEquals(Reason.NOT_FOUND, reason { attachments.setDescription(att + 100, "x") })
+	}
+
 	/* the Home "Chiuse" tab: a ticked task has no segment end, it is listed by when it was closed; untick takes it out */
 	@Test
 	fun tickedTasksAreListedByClosingTime() = runBlocking<Unit> {

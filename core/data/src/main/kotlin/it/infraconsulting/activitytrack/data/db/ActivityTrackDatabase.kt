@@ -88,13 +88,13 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		const val FILE_NAME = "activitytrack.db"
 
 		/* bump together with an AutoMigration or Migration, and commit the new schema */
-		const val VERSION = 22
+		const val VERSION = 23
 
 		/* The database lives in app-private storage; daily backups go to the user data directory. */
 		fun build(context: Context): ActivityTrackDatabase =
 			Room.databaseBuilder(context.applicationContext, ActivityTrackDatabase::class.java, FILE_NAME)
 				.setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-				.addMigrations(MIGRATION_15_16, MIGRATION_21_22)
+				.addMigrations(MIGRATION_15_16, MIGRATION_21_22, MIGRATION_22_23)
 				.addCallback(Seed)
 				.build()
 
@@ -110,6 +110,21 @@ abstract class ActivityTrackDatabase : RoomDatabase() {
 		 */
 		val MIGRATION_21_22 = object : Migration(21, 22) {
 			override fun migrate(db: SupportSQLiteDatabase) = ActivityModelMigration.migrate21To22(SupportSql(db), java.time.ZoneId.systemDefault())
+		}
+
+		/*
+		 * Two nullable columns (issues #189, #185): plain SQL, so the JVM test
+		 * (SyncSchemaTest) runs the very statements; ADD COLUMN keeps the
+		 * tables and their sync triggers.
+		 */
+		val MIGRATION_22_23 = object : Migration(22, 23) {
+			override fun migrate(db: SupportSQLiteDatabase) = migrate22To23(SupportSql(db))
+		}
+
+		/* 22 -> 23: when an activity was declared complete (#189), the description of an attachment (#185) */
+		fun migrate22To23(db: SyncSchema.Sql) {
+			db.exec("ALTER TABLE `time_entry` ADD COLUMN `completed_utc_ms` INTEGER")
+			db.exec("ALTER TABLE `attachment` ADD COLUMN `description` TEXT")
 		}
 	}
 

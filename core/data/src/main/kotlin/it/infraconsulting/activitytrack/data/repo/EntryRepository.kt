@@ -16,6 +16,8 @@ import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
 import it.infraconsulting.activitytrack.domain.activity.AbsencePlanner
 import it.infraconsulting.activitytrack.domain.activity.ActivityCommand
 import it.infraconsulting.activitytrack.domain.activity.ActivityKind
+import it.infraconsulting.activitytrack.domain.activity.ActivitySegment
+import it.infraconsulting.activitytrack.domain.activity.ActivitySnapshot
 import it.infraconsulting.activitytrack.domain.activity.ActivityState
 import it.infraconsulting.activitytrack.domain.activity.ActivityStateMachine
 import it.infraconsulting.activitytrack.domain.activity.ActivityStatus
@@ -447,8 +449,31 @@ class EntryRepository(
 		val e = load(entryId)
 		if (!canUntick(e, dao.segments(entryId)))
 			throw ValidationException(Reason.NOT_ALLOWED, "activity $entryId cannot go back to TODO")
-		dao.updateEntry(e.copy(status = ActivityStatus.TODO, mode = null, closedUtcMs = null, updatedUtcMs = clock.millis()))
+		/* leaving CLOSED clears a declared completion (issue #189), as reopen does */
+		dao.updateEntry(e.copy(status = ActivityStatus.TODO, mode = null, closedUtcMs = null, completedUtcMs = null, updatedUtcMs = clock.millis()))
 		verify(entryId)
+	}
+
+	/*
+	 * "Completa" (ACTIVITY-MODEL.md 2.4, 3, issue #189): a closed activity made
+	 * of travel only, shown incomplete, is declared complete now; refused
+	 * otherwise (canComplete). A required plugin field left empty still keeps it
+	 * incomplete.
+	 */
+	suspend fun complete(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (!canComplete(e, dao.segments(entryId)))
+			throw ValidationException(Reason.NOT_ALLOWED, "activity $entryId cannot be declared complete")
+		val now = clock.millis()
+		dao.updateEntry(e.copy(completedUtcMs = now, updatedUtcMs = now))
+	}
+
+	/* "Annulla completamento": the declared completion goes (canUncomplete); the activity is judged by 2.4 again */
+	suspend fun uncomplete(entryId: Long) = db.withTransaction {
+		val e = load(entryId)
+		if (!canUncomplete(e))
+			throw ValidationException(Reason.NOT_ALLOWED, "activity $entryId is not declared complete")
+		dao.updateEntry(e.copy(completedUtcMs = null, updatedUtcMs = clock.millis()))
 	}
 
 	/*
@@ -752,6 +777,7 @@ class EntryRepository(
 				mode = n.mode,
 				closedUtcMs = n.closedAt?.toEpochMilli(),
 				deletedUtcMs = n.deletedAt?.toEpochMilli(),
+				completedUtcMs = n.completedAt?.toEpochMilli(),
 				lastConfirmedUtcMs = if (opened != null) minOf(nowMs, opened.at.toEpochMilli()) else e.lastConfirmedUtcMs,
 				unansweredReminders = if (opened != null) 0 else e.unansweredReminders,
 				updatedUtcMs = nowMs,
@@ -806,6 +832,7 @@ class EntryRepository(
 
 	private fun state(e: TimeEntryEntity) = ActivityState(
 		e.kind, e.status, e.mode, e.closedUtcMs?.let(Instant::ofEpochMilli), e.deletedUtcMs?.let(Instant::ofEpochMilli),
+		e.completedUtcMs?.let(Instant::ofEpochMilli),
 	)
 
 	/* ---------------------------------------------------------------- TODO activities (was TodoRepository) */
@@ -1283,7 +1310,7 @@ class EntryRepository(
 		segments.filter { !it.planned }.forEach { dao.deleteSegment(it.id) }
 		dao.updateEntry(
 			e.copy(
-				status = ActivityStatus.TODO, mode = null, closedUtcMs = null, plannedEndUtcMs = null, lastConfirmedUtcMs = null,
+				status = ActivityStatus.TODO, mode = null, closedUtcMs = null, completedUtcMs = null, plannedEndUtcMs = null, lastConfirmedUtcMs = null,
 				unansweredReminders = 0, updatedUtcMs = clock.millis(),
 			),
 		)
@@ -1405,3 +1432,26 @@ fun manualSegmentKinds(e: TimeEntryEntity, editableTimes: Boolean): List<Segment
 /* "Untick" (3): an activity, closed, not deleted, without real segments goes back to TODO. */
 fun canUntick(e: TimeEntryEntity, segments: List<SegmentEntity>): Boolean =
 	e.kind == ActivityKind.ACTIVITY && e.status == ActivityStatus.CLOSED && e.deletedUtcMs == null && segments.none { !it.planned }
+
+/*
+ * "Completa" (issue #189, ActivityStateMachine.canComplete): [e] closed, not
+ * deleted, of kind ACTIVITY, shown incomplete, with no real WORK segment and
+ * not declared complete yet. A required plugin field does not change the
+ * answer: without work such an activity is incomplete anyway.
+ */
+fun canComplete(e: TimeEntryEntity, segments: List<SegmentEntity>): Boolean =
+	ActivityStateMachine.canComplete(completionSnapshot(e, segments))
+
+/* "Annulla completamento" (issue #189): offered while the completion is set. */
+fun canUncomplete(e: TimeEntryEntity): Boolean =
+	ActivityStateMachine.canUncomplete(completionSnapshot(e, emptyList()))
+
+private fun completionSnapshot(e: TimeEntryEntity, segments: List<SegmentEntity>) = ActivitySnapshot(
+	kind = e.kind,
+	status = e.status,
+	segments = segments.map { ActivitySegment(it.kind, Instant.ofEpochMilli(it.startUtcMs), it.endUtcMs?.let(Instant::ofEpochMilli), it.planned) },
+	deletedAt = e.deletedUtcMs?.let(Instant::ofEpochMilli),
+	closedAt = e.closedUtcMs?.let(Instant::ofEpochMilli),
+	hasClient = e.clientId != null,
+	completedAt = e.completedUtcMs?.let(Instant::ofEpochMilli),
+)

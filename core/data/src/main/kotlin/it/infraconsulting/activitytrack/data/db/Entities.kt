@@ -311,6 +311,8 @@ data class TimeEntryEntity(
 	@ColumnInfo(defaultValue = "0") val priority: Int = 0,
 	/* set iff kind = ABSENCE */
 	@ColumnInfo(name = "absence_kind") val absenceKind: AbsenceKind? = null,
+	/* schema 23 (issue #189): declared complete ("Completa", travel only); CLOSED only, cleared on leaving CLOSED */
+	@ColumnInfo(name = "completed_utc_ms") val completedUtcMs: Long? = null,
 )
 
 @Entity(
@@ -400,6 +402,8 @@ data class AttachmentEntity(
 	val size: Long? = null,
 	/* the server has the file; with an empty rel_path the file waits to be downloaded */
 	@ColumnInfo(name = "has_file", defaultValue = "0") val hasFile: Boolean = false,
+	/* schema 23 (issue #185): what the photo, voice note or file is, typed by the user */
+	val description: String? = null,
 )
 
 @Entity(

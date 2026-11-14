@@ -8,8 +8,11 @@ package it.infraconsulting.activitytrack.domain.sync
  * travels changes; the server keeps speaking the two schemas before.
  */
 object WireVersion {
-	/* 3: activity model 1.0 (ACTIVITY-MODEL.md 6.2); the server reset its window, older apps get UPGRADE_REQUIRED */
-	const val SCHEMA = 3
+	/*
+	 * 3: activity model 1.0 (ACTIVITY-MODEL.md 6.2); the server reset its window, older apps get UPGRADE_REQUIRED.
+	 * 4: entry completedUtcMs (issue #189), attachment description (issue #185); the window reset again (6.2)
+	 */
+	const val SCHEMA = 4
 	const val APP_HEADER = "X-ActivityTrack-App"
 	const val SCHEMA_HEADER = "X-ActivityTrack-Schema"
 

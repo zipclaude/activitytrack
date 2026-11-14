@@ -317,6 +317,10 @@ interface EntryDao {
 	@Query("DELETE FROM attachment WHERE id = :id")
 	suspend fun deleteAttachment(id: Long)
 
+	/* the description of an attachment (issue #185); the column alone, so the file fields the sync sets stay */
+	@Query("UPDATE attachment SET description = :description WHERE id = :id")
+	suspend fun setAttachmentDescription(id: Long, description: String?): Int
+
 	/* Samples taken after a backdated transition belong to the segment opened by it. */
 	@Query("UPDATE location_sample SET segment_id = :segmentId WHERE entry_id = :entryId AND ts_utc_ms >= :fromUtcMs")
 	suspend fun retagSamples(entryId: Long, segmentId: Long, fromUtcMs: Long)
