@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
 /* How a Lavoro activity begins (ACTIVITY-MODEL.md 3, creation): now, from a time already passed, or a past one recorded whole. */
@@ -260,11 +261,12 @@ class StartViewModel(
 		return latestAt(min, Instant.now(), ZoneId.systemDefault()).toEpochMilli()
 	}
 
-	/* Changing the company filter drops a client of another company. */
-	fun setCompany(companyId: Long?) = _form.update { f ->
-		val keep = f.clientId?.let { id -> allChoices.value.firstOrNull { it.id == id } }
-			?.takeIf { companyId == null || it.companyId == companyId }
-		f.copy(companyId = companyId, clientId = keep?.id, clientTouched = true)
+	/* Changing the company filter drops a client of another company; the company's only client fills an empty field (issue #182). */
+	fun setCompany(companyId: Long?) {
+		val before = _form.value.clientId
+		val after = _form.updateAndGet { f -> f.copy(companyId = companyId, clientId = ClientPicker.afterCompany(companyId, f.clientId, allChoices.value), clientTouched = true) }.clientId
+		if (after != null && after != before)
+			viewModelScope.launch { applyDefaults(after) }
 	}
 
 	fun setClient(clientId: Long?) {

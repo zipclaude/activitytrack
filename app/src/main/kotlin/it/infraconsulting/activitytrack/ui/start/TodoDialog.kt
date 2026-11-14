@@ -30,6 +30,8 @@ import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.activity.Priority
 import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.domain.policy.Field
+import it.infraconsulting.activitytrack.domain.start.ClientChoice
+import it.infraconsulting.activitytrack.domain.start.ClientPicker
 import it.infraconsulting.activitytrack.domain.todo.TodoPlan
 import it.infraconsulting.activitytrack.domain.todo.alignedDue
 import it.infraconsulting.activitytrack.domain.todo.startsAfterDue
@@ -274,9 +276,8 @@ fun TodoDialog(initial: TimeEntryEntity? = null, onClose: () -> Unit) {
 				importance = Importance.REQUIRED, colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 			) { co ->
 				picked = co
-				/* a client of another company goes */
-				if (clients.firstOrNull { it.id == clientId }?.companyId != co)
-					clientId = null
+				/* a client of another company goes; the company's only client fills an empty field (issue #182) */
+				clientId = ClientPicker.afterCompany(co, clientId, clients.map { ClientChoice(it.id, it.companyId, it.name, it.archived, null) })
 			}
 		} }
 		if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), { addClient = true }, masterData = true) { PolicyField(Field.CLIENT) {

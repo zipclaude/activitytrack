@@ -53,6 +53,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - After the upgrade the first sync realigns with the server: the server's version wins for each record, except the changes not synced, which are pushed. When the phone and the server made different activities of the same to-do, the phone is the source of trust, unless a policy signed by the server is in force on the phone; a PC interface never is.
 - "Scarta" on a sync error never deletes an activity that holds work and never reached the server.
 - `entries.source = "plannedOnly"`: activities start only from a planned or assigned to-do.
+- Choosing a company with a single client (not archived) on the start screen or in the to-do dialog fills the empty client field with it (#182).
 - The time grid (to-do plan, absence, segments) scrolls through the 24 hours by dragging the hour labels, besides the Prima/Dopo arrows (#181).
 - Lavoro is right of Viaggio wherever the two show side by side (Home, start screen, the running activity's buttons, notification, widget, the reopen question): the button used most under the right thumb (#180).
 
