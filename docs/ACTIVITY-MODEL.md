@@ -392,9 +392,11 @@ migration function.
 
 ## 8. User interface (summary; the owner's proposal is the detailed reference)
 
-- Home: without running activities, four buttons (Da fare, Lavoro, Viaggio, Assenza) in
+- Home: without running activities, four buttons (Da fare, Viaggio, Lavoro, Assenza) in
   the panel; with one, the activity as today and the four buttons top right on a dark grey
-  circle. No "Sospendi".
+  circle. No "Sospendi". Wherever travel and work show side by side (Home, start screen,
+  running buttons, notification, widget, reopen question) Lavoro is right of Viaggio, under
+  the right thumb (issue #180).
 - Detail dialog, top to bottom: state in the home's style ("In <stato> dalle", icon and
   colour, total work time on the right); timeline; the actions of section 3 allowed in
   that state; company, client, description, role, segments (split button Lavoro ·

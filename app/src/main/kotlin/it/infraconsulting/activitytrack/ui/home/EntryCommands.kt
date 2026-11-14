@@ -87,8 +87,9 @@ internal fun TimeEntryEntity.machineState() = ActivityState(
 
 /*
  * The buttons offered for [e] and its [segments], in this order: pause,
- * resume (the kind open before the pause), the other of work and travel,
- * stop. From a pause: Riprendi, Viaggio, Ferma.
+ * travel, work, stop, where the kind open before the pause is "Riprendi"
+ * (travel left of work wherever they show together, issue #180). From a
+ * pause after work: Viaggio, Riprendi, Ferma.
  */
 fun runActions(e: TimeEntryEntity, segments: List<SegmentEntity>): List<RunAction> {
 	val allowed = ActivityStateMachine.allowed(e.machineState())
@@ -98,11 +99,9 @@ fun runActions(e: TimeEntryEntity, segments: List<SegmentEntity>): List<RunActio
 	return buildList {
 		if (allowed.any { it is ActivityCommand.Switch && it.kind == SegmentKind.PAUSE })
 			add(RunAction.Pause)
-		if (back != null && canGo(back))
-			add(RunAction.Go(back, resume = true))
-		for (k in listOf(SegmentKind.WORK, SegmentKind.TRAVEL))
-			if (k != back && canGo(k))
-				add(RunAction.Go(k))
+		for (k in listOf(SegmentKind.TRAVEL, SegmentKind.WORK))
+			if (canGo(k))
+				add(RunAction.Go(k, resume = k == back))
 		if (allowed.any { it is ActivityCommand.Stop })
 			add(RunAction.Stop)
 	}
@@ -257,8 +256,8 @@ fun rememberReopen(vm: QuickActioner, titleOf: (Long) -> String): (TimeEntryEnti
 			text = { Text(stringResource(R.string.reopen_text)) },
 			confirmButton = {
 				Row {
-					TextButton(onClick = { asking = null; vm.reopen(e, SegmentKind.WORK) }) { Text(stringResource(R.string.cmd_work)) }
 					TextButton(onClick = { asking = null; vm.reopen(e, SegmentKind.TRAVEL) }) { Text(stringResource(R.string.cmd_travel)) }
+					TextButton(onClick = { asking = null; vm.reopen(e, SegmentKind.WORK) }) { Text(stringResource(R.string.cmd_work)) }
 				}
 			},
 			dismissButton = { TextButton(onClick = { asking = null }) { Text(stringResource(R.string.action_cancel)) } },

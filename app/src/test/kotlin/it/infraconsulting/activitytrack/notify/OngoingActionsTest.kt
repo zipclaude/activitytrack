@@ -23,8 +23,9 @@ class OngoingActionsTest {
 	@Test
 	fun actionsFollowTheMode() {
 		assertEquals(listOf(QuickAction.PAUSE, QuickAction.TRAVEL, QuickAction.STOP), ongoingActions(running(SegmentKind.WORK)))
-		assertEquals(listOf(QuickAction.WORK, QuickAction.TRAVEL, QuickAction.STOP), ongoingActions(running(SegmentKind.PAUSE)))
-		assertEquals(listOf(QuickAction.WORK, QuickAction.TRAVEL, QuickAction.STOP), ongoingActions(running(null)))
+		/* travel left of work (issue #180) */
+		assertEquals(listOf(QuickAction.TRAVEL, QuickAction.WORK, QuickAction.STOP), ongoingActions(running(SegmentKind.PAUSE)))
+		assertEquals(listOf(QuickAction.TRAVEL, QuickAction.WORK, QuickAction.STOP), ongoingActions(running(null)))
 	}
 
 	/* every action offered on the notification must be legal for the state machine */

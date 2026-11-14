@@ -175,10 +175,11 @@ class HomeListTest {
 	}
 
 	@Test
-	fun pauseOffersResumeInTheKindBeforeThenTheOtherThenStop() {
+	fun pauseOffersResumeInTheKindBeforeTravelLeftOfWorkThenStop() {
+		/* issue #180: travel left of work, whichever is "Riprendi" */
 		val e = running(SegmentKind.PAUSE)
 		val afterWork = listOf(seg(1, SegmentKind.WORK, t0, t0 + 3_600_000), seg(1, SegmentKind.PAUSE, t0 + 3_600_000, null))
-		assertEquals(listOf(RunAction.Go(SegmentKind.WORK, resume = true), RunAction.Go(SegmentKind.TRAVEL), RunAction.Stop), runActions(e, afterWork))
+		assertEquals(listOf(RunAction.Go(SegmentKind.TRAVEL), RunAction.Go(SegmentKind.WORK, resume = true), RunAction.Stop), runActions(e, afterWork))
 		val afterTravel = listOf(seg(1, SegmentKind.TRAVEL, t0, t0 + 3_600_000), seg(1, SegmentKind.PAUSE, t0 + 3_600_000, null))
 		assertEquals(listOf(RunAction.Go(SegmentKind.TRAVEL, resume = true), RunAction.Go(SegmentKind.WORK), RunAction.Stop), runActions(e, afterTravel))
 	}
@@ -187,7 +188,7 @@ class HomeListTest {
 	fun suspendedOffersResumeTravelStop() {
 		val e = running(null)
 		val s = listOf(seg(1, SegmentKind.WORK, t0, t0 + 3_600_000))
-		assertEquals(listOf(RunAction.Go(SegmentKind.WORK, resume = true), RunAction.Go(SegmentKind.TRAVEL), RunAction.Stop), runActions(e, s))
+		assertEquals(listOf(RunAction.Go(SegmentKind.TRAVEL), RunAction.Go(SegmentKind.WORK, resume = true), RunAction.Stop), runActions(e, s))
 	}
 
 	@Test

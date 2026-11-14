@@ -59,5 +59,6 @@ fun ongoingActions(e: TimeEntryEntity): List<QuickAction> {
 			else -> null
 		}
 	}.toSet()
-	return listOf(QuickAction.PAUSE, QuickAction.WORK, QuickAction.TRAVEL, QuickAction.STOP).filter { it in found }
+	/* travel left of work, as on the Home (issue #180) */
+	return listOf(QuickAction.PAUSE, QuickAction.TRAVEL, QuickAction.WORK, QuickAction.STOP).filter { it in found }
 }

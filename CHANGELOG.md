@@ -29,7 +29,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 
 - The to-do is a state of the activity: "Da fare" (planned, late), "In corso", "Chiusa", "Assenza", "Eliminata"; a to-do may carry planned segments, drawn dashed, which never count in totals and give way to the real ones when it starts.
 - Absences are activities of kind Assenza, Ferie, Permesso or Malattia, with one segment per working day (following the work schedule, lunch breaks and days off) or with the times given; reports count them apart, by kind.
-- Four creation buttons on the Home: Da fare, Lavoro (now, already started, or past with its segments), Viaggio, Assenza.
+- Four creation buttons on the Home: Da fare, Viaggio, Lavoro (now, already started, or past with its segments), Assenza.
 - Displayed states with one icon and colour each (to-do, planned, late, work, travel, pause, suspended, done, incomplete, absence, deleted), the same on the Home, the detail, the agenda, widgets, the tile and notifications; "In <stato> dalle" tells since when.
 - The bin: a deleted activity can be restored, or deleted for good from there.
 - A ticked task can be unticked; "Annulla" after a tick or a done.
@@ -53,6 +53,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - After the upgrade the first sync realigns with the server: the server's version wins for each record, except the changes not synced, which are pushed. When the phone and the server made different activities of the same to-do, the phone is the source of trust, unless a policy signed by the server is in force on the phone; a PC interface never is.
 - "Scarta" on a sync error never deletes an activity that holds work and never reached the server.
 - `entries.source = "plannedOnly"`: activities start only from a planned or assigned to-do.
+- Lavoro is right of Viaggio wherever the two show side by side (Home, start screen, the running activity's buttons, notification, widget, the reopen question): the button used most under the right thumb (#180).
 
 Various bug fixes.
 

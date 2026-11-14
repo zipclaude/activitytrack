@@ -250,13 +250,14 @@ fun StartScreen(
 				) { Text(stringResource(R.string.action_save), style = MaterialTheme.typography.titleMedium) }
 			else
 				Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-					StartButton(R.string.cmd_work, DisplayState.WORK, f.ready && f.hasClient && pending.isEmpty(), Modifier.weight(1f)) {
-						vm.requestStart(SegmentKind.WORK, onBack)
-					}
+					/* Lavoro right of Viaggio (issue #180) */
 					if (enabled(Feature.TRAVEL))
 						StartButton(R.string.cmd_travel, DisplayState.TRAVEL, f.ready && pending.isEmpty(), Modifier.weight(1f)) {
 							vm.requestStart(SegmentKind.TRAVEL, onBack)
 						}
+					StartButton(R.string.cmd_work, DisplayState.WORK, f.ready && f.hasClient && pending.isEmpty(), Modifier.weight(1f)) {
+						vm.requestStart(SegmentKind.WORK, onBack)
+					}
 				}
 		}
 	}
