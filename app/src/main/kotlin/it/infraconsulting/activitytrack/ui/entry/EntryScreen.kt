@@ -550,8 +550,9 @@ private fun ActivityFields(
 				colorOf = { id -> companies.firstOrNull { it.id == id }?.color },
 			) { id ->
 				setCompany(id)
-				if (id != null && clients.firstOrNull { it.id == clientId }?.companyId != id)
-					setClient(null)
+				val next = clientAfterCompany(id, clientId, clients)
+				if (next != clientId)
+					setClient(next)
 			}
 		}
 	if (fieldShown(Field.CLIENT)) WithAddButton(stringResource(R.string.quick_client), onAddClient, masterData = true) { PolicyField(Field.CLIENT) {
@@ -606,6 +607,20 @@ private fun ActivityFields(
 			importance = fieldImportance(Field.ROLE, Importance.IMPORTANT),
 		) { setRole(it) }
 	} }
+}
+
+/*
+ * The client once [companyId] is picked: the current one if it is of that
+ * company (or no company is picked), else none, and then the company's only
+ * client when it has exactly one not archived (issue #182: "se un'azienda
+ * ha un solo cliente, quando la seleziono compila anche il campo cliente se
+ * vuoto"). Pure, unit-tested.
+ */
+internal fun clientAfterCompany(companyId: Long?, clientId: Long?, clients: List<it.infraconsulting.activitytrack.data.db.ClientEntity>): Long? {
+	if (companyId == null)
+		return clientId
+	val kept = clientId?.takeIf { id -> clients.firstOrNull { it.id == id }?.companyId == companyId }
+	return kept ?: clients.filter { it.companyId == companyId && !it.archived }.singleOrNull()?.id
 }
 
 /*

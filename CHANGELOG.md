@@ -56,6 +56,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - After the upgrade the first sync realigns with the server: the server's version wins for each record, except the changes not synced, which are pushed. When the phone and the server made different activities of the same to-do, the phone is the source of trust, unless a policy signed by the server is in force on the phone; a PC interface never is.
 - "Scarta" on a sync error never deletes an activity that holds work and never reached the server.
 - `entries.source = "plannedOnly"`: activities start only from a planned or assigned to-do.
+- In the activity's detail, picking a company that has only one client (not archived) fills the client field when it is empty (issue #182).
 
 Various bug fixes.
 

@@ -128,4 +128,28 @@ class EntryDetailTest {
 		assertTrue(segmentDeletable(work.copy(kind = SegmentKind.ABSENCE), editableTimes = false))
 		assertFalse(segmentDeletable(work.copy(endUtcMs = null), editableTimes = true))
 	}
+
+	@Test
+	fun soleClientFilledWithItsCompany() {
+		/* issue #182: a company with one client (not archived) fills the empty client field */
+		val c = it.infraconsulting.activitytrack.data.db.ClientEntity(id = 1, companyId = 10, name = "Solo")
+		val clients = listOf(
+			c,
+			c.copy(id = 2, companyId = 20, name = "A"), c.copy(id = 3, companyId = 20, name = "B"),
+			c.copy(id = 4, companyId = 30, name = "Attivo"), c.copy(id = 5, companyId = 30, name = "Archiviato", archived = true),
+		)
+		assertEquals(1L, clientAfterCompany(10, null, clients))
+		/* two clients: the field stays empty */
+		assertNull(clientAfterCompany(20, null, clients))
+		/* an archived one does not count */
+		assertEquals(4L, clientAfterCompany(30, null, clients))
+		/* a client of another company goes, and the sole one comes */
+		assertEquals(1L, clientAfterCompany(10, 2, clients))
+		/* a client of that company stays */
+		assertEquals(3L, clientAfterCompany(20, 3, clients))
+		assertEquals(5L, clientAfterCompany(30, 5, clients))
+		/* "none" as company keeps the client */
+		assertEquals(2L, clientAfterCompany(null, 2, clients))
+		assertNull(clientAfterCompany(40, null, clients))
+	}
 }
