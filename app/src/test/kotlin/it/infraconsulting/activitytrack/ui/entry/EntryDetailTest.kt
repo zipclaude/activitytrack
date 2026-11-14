@@ -117,4 +117,15 @@ class EntryDetailTest {
 		assertEquals(listOf(0..3, 4..4), actionRows(5, 4))
 		assertEquals(emptyList(), actionRows(0, 4))
 	}
+
+	@Test
+	fun segmentSwipeDeletesWhatTheDialogWould() {
+		/* issue #183: closed and editable; a planned one and an absence day always; never the running one */
+		val work = SegmentEntity(entryId = 0, kind = SegmentKind.WORK, startUtcMs = 0, endUtcMs = 60_000, zoneId = "UTC")
+		assertTrue(segmentDeletable(work, editableTimes = true))
+		assertFalse(segmentDeletable(work, editableTimes = false))
+		assertTrue(segmentDeletable(work.copy(planned = true), editableTimes = false))
+		assertTrue(segmentDeletable(work.copy(kind = SegmentKind.ABSENCE), editableTimes = false))
+		assertFalse(segmentDeletable(work.copy(endUtcMs = null), editableTimes = true))
+	}
 }

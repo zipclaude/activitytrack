@@ -47,10 +47,11 @@ import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
-import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
+import it.infraconsulting.activitytrack.ui.common.RowIcon
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
+import it.infraconsulting.activitytrack.ui.common.SmallListRow
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.parseDecimal
@@ -139,11 +140,16 @@ fun ExpensesSection(entryId: Long) {
 	if (items.isNotEmpty())
 		Column(modifier = Modifier.padding(bottom = 8.dp)) {
 			SectionHeader(stringResource(R.string.expenses))
+			/* small rows, a swipe or a tap asks to delete (issue #183) */
 			for (e in items)
-				ClickableRow(
-					"${formatEur(e.amountCents)} · ${e.description}",
-					if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
-				) { deleting = e }
+				SmallListRow(
+					title = e.description,
+					subtitle = if (e.attachmentId != null) stringResource(R.string.att_receipt) else null,
+					trailing = formatEur(e.amountCents),
+					leading = { RowIcon(R.drawable.ic_euro, MAGENTA) },
+					onClick = { deleting = e },
+					onDelete = { deleting = e },
+				)
 		}
 	deleting?.let { e ->
 		ConfirmDialog(stringResource(R.string.confirm_delete, "${formatEur(e.amountCents)} · ${e.description}"), { deleting = null }) {

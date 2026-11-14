@@ -49,12 +49,13 @@ import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
-import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.DialogAction
 import it.infraconsulting.activitytrack.ui.common.DialogButtonKind
 import it.infraconsulting.activitytrack.ui.common.DialogButtons
 import it.infraconsulting.activitytrack.ui.common.Importance
+import it.infraconsulting.activitytrack.ui.common.RowIcon
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
+import it.infraconsulting.activitytrack.ui.common.SmallListRow
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.clockOf
 import it.infraconsulting.activitytrack.ui.common.reasonText
@@ -125,19 +126,38 @@ fun AttachmentsSection(entryId: Long, zone: ZoneId) {
 	val error by vm.error.collectAsState()
 	val context = LocalContext.current
 	var selected by remember { mutableStateOf<AttachmentEntity?>(null) }
+	var deleting by remember { mutableStateOf<AttachmentEntity?>(null) }
 
 	if (items.isNotEmpty() || error != null)
 		Column(modifier = Modifier.padding(bottom = 8.dp)) {
 			SectionHeader(stringResource(R.string.attachments))
 			for (a in items)
-				ClickableRow(kindLabel(a.kind), attachmentSubtitle(a.description, clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone))) {
-					vm.clearError()
-					selected = a
-				}
+				/* small rows: a tap opens the dialog, a swipe asks to delete (issue #183) */
+				SmallListRow(
+					title = kindLabel(a.kind),
+					subtitle = attachmentSubtitle(a.description, clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)),
+					leading = { val (icon, color) = attachmentIcon(a.kind); RowIcon(icon, color) },
+					onClick = { vm.clearError(); selected = a },
+					onDelete = { vm.clearError(); deleting = a },
+				)
 			error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
 		}
 
 	selected?.let { a -> AttachmentDialog(a, vm, context) { selected = null } }
+	deleting?.let { a ->
+		ConfirmDialog(stringResource(R.string.confirm_delete, kindLabel(a.kind)), { deleting = null }) {
+			deleting = null
+			vm.delete(a)
+		}
+	}
+}
+
+/* the icon and colour of the add button that makes this kind of attachment */
+private fun attachmentIcon(kind: AttachmentKind): Pair<Int, androidx.compose.ui.graphics.Color> = when (kind) {
+	AttachmentKind.PHOTO -> R.drawable.ic_camera to PURPLE
+	AttachmentKind.AUDIO -> R.drawable.ic_mic to TEAL
+	AttachmentKind.FILE -> R.drawable.ic_attach to INDIGO
+	AttachmentKind.RECEIPT -> R.drawable.ic_euro to it.infraconsulting.activitytrack.ui.common.MAGENTA
 }
 
 /* The description, when set, over the time the attachment was made (issue #185). */

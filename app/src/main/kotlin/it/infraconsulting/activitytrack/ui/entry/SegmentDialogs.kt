@@ -70,20 +70,23 @@ fun segmentStyle(kind: SegmentKind): CommandStyle = when (kind) {
 
 /* The kind's badge: filled for a real segment, a dashed ring for a planned one (1.2). */
 @Composable
-internal fun SegmentBadge(kind: SegmentKind, planned: Boolean) {
+internal fun SegmentBadge(kind: SegmentKind, planned: Boolean, small: Boolean = false) {
 	val style = segmentStyle(kind)
+	/* [small]: the size of the icons of the small rows (issue #183) */
+	val box = if (small) 26.dp else 32.dp
+	val icon = if (small) 16.dp else 20.dp
 	if (planned)
 		Box(
-			Modifier.size(32.dp).drawBehind {
+			Modifier.size(box).drawBehind {
 				drawCircle(style.container, style = Stroke(width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
 			},
 			contentAlignment = Alignment.Center,
 		) {
-			Icon(painterResource(style.icon), contentDescription = null, tint = style.container, modifier = Modifier.size(18.dp))
+			Icon(painterResource(style.icon), contentDescription = null, tint = style.container, modifier = Modifier.size(icon - 2.dp))
 		}
 	else
-		Box(Modifier.size(32.dp).background(style.container, CircleShape), contentAlignment = Alignment.Center) {
-			Icon(painterResource(style.icon), contentDescription = null, tint = style.content, modifier = Modifier.size(20.dp))
+		Box(Modifier.size(box).background(style.container, CircleShape), contentAlignment = Alignment.Center) {
+			Icon(painterResource(style.icon), contentDescription = null, tint = style.content, modifier = Modifier.size(icon))
 		}
 }
 

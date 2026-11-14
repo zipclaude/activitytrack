@@ -24,10 +24,11 @@ import it.infraconsulting.activitytrack.data.repo.ValidationException
 import it.infraconsulting.activitytrack.data.repo.ValidationException.Reason
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
-import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.Importance
+import it.infraconsulting.activitytrack.ui.common.RowIcon
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
+import it.infraconsulting.activitytrack.ui.common.SmallListRow
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.parseDecimal
@@ -44,6 +45,9 @@ class MaterialsViewModel(private val repo: MaterialRepository) : ActionViewModel
 	fun deleteMaterial(m: MaterialEntity, done: () -> Unit) = run(done) { repo.deleteMaterial(m.id) }
 	fun invalid(r: Reason) = fail(r)
 }
+
+/* the material colour: none of the command or other add colours */
+internal val MATERIAL_COLOR = androidx.compose.ui.graphics.Color(0xFF5D4037)
 
 @Composable
 internal fun materialsViewModel() = appViewModel(key = "materials") { MaterialsViewModel(it.materials) }
@@ -73,15 +77,29 @@ fun MaterialsSection(entryId: Long) {
 	val vm = materialsViewModel()
 	val lines by remember(entryId) { vm.lines(entryId) }.collectAsState(emptyList())
 	var editing by remember { mutableStateOf<EntryMaterialEntity?>(null) }
+	var deleting by remember { mutableStateOf<EntryMaterialEntity?>(null) }
 	if (lines.isEmpty())
 		return
 	Column(modifier = Modifier.padding(bottom = 8.dp)) {
 		val total = lines.mapNotNull { it.totalCents }.sum()
 		SectionHeader(stringResource(R.string.materials) + if (total > 0) " · " + formatEur(total) else "")
+		/* small rows: a tap edits, a swipe asks to delete (issue #183) */
 		for (l in lines)
-			ClickableRow(l.description, lineDetail(l).ifEmpty { null }) { vm.clearError(); editing = l }
+			SmallListRow(
+				title = l.description,
+				subtitle = lineDetail(l).ifEmpty { null },
+				leading = { RowIcon(R.drawable.ic_menu_inventory, MATERIAL_COLOR) },
+				onClick = { vm.clearError(); editing = l },
+				onDelete = { vm.clearError(); deleting = l },
+			)
 	}
 	editing?.let { l -> MaterialLineDialog(l, vm) { editing = null } }
+	deleting?.let { l ->
+		ConfirmDialog(stringResource(R.string.confirm_delete, l.description), { deleting = null }) {
+			deleting = null
+			vm.delete(l) {}
+		}
+	}
 }
 
 /* "Material" from the add row at the top of the entry screen, outside the lazy list (issue #41). */

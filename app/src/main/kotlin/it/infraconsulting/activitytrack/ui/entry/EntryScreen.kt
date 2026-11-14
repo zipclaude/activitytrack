@@ -73,9 +73,8 @@ import it.infraconsulting.activitytrack.domain.tag.Tags
 import it.infraconsulting.activitytrack.location.CurrentPosition
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.appViewModel
-import it.infraconsulting.activitytrack.ui.common.AddButton
+import it.infraconsulting.activitytrack.ui.common.AddIconButton
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
-import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.DateField
 import it.infraconsulting.activitytrack.ui.common.DialogAction
 import it.infraconsulting.activitytrack.ui.common.DialogButtonKind
@@ -95,7 +94,9 @@ import it.infraconsulting.activitytrack.ui.common.QuickClientDialog
 import it.infraconsulting.activitytrack.ui.common.QuickPresetDialog
 import it.infraconsulting.activitytrack.ui.common.QuickRoleDialog
 import it.infraconsulting.activitytrack.ui.common.ScreenScaffold
+import it.infraconsulting.activitytrack.ui.common.RowIcon
 import it.infraconsulting.activitytrack.ui.common.SearchableChoiceField
+import it.infraconsulting.activitytrack.ui.common.SmallListRow
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.TEAL
 import it.infraconsulting.activitytrack.ui.common.TagDialog
@@ -218,6 +219,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 	/* the "add" row asks the sections below (issue #37) */
 	var addRequest by remember { mutableStateOf<AddRequest?>(null) }
 	var deletingRef by remember { mutableStateOf<ExternalRefEntity?>(null) }
+	var deletingSegment by remember { mutableStateOf<SegmentEntity?>(null) }
 	var newRef by remember { mutableStateOf("") }
 
 	/* the place proposed (site, else municipality) while the field is still empty */
@@ -310,7 +312,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			if (segments.isEmpty())
 				item { EmptyText() }
 			items(segments.sortedBy { it.startUtcMs }, key = { "s${it.id}" }) { s ->
-				SegmentRow(s, zone) {
+				SegmentRow(s, zone, onDelete = if (segmentDeletable(s, editableTimes)) ({ vm.clearError(); deletingSegment = s }) else null) {
 					/*
 					 * segments can be edited or deleted with editable times on
 					 * (backlog 11, M17), the running one too, its start only
@@ -333,7 +335,7 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					AddChoice(AddRequest.PHOTO, R.string.short_photo, R.drawable.ic_camera, PURPLE).takeIf { policy.enabled(Feature.ATTACHMENTS) },
 					AddChoice(AddRequest.VOICE, R.string.short_voice, R.drawable.ic_mic, TEAL).takeIf { policy.enabled(Feature.VOICE_NOTES) },
 					AddChoice(AddRequest.FILE, R.string.short_file, R.drawable.ic_attach, INDIGO).takeIf { policy.enabled(Feature.ATTACHMENTS) },
-					AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, TEAL_DARK).takeIf { policy.enabled(Feature.MATERIALS) },
+					AddChoice(AddRequest.MATERIAL, R.string.short_material, R.drawable.ic_menu_inventory, MATERIAL_COLOR).takeIf { policy.enabled(Feature.MATERIALS) },
 				)
 				if (choices.isNotEmpty())
 					item(key = "add") {
@@ -382,16 +384,23 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					item(key = "tags") { TagsSection(vm) }
 				if (policy.field(Field.REFS).visible) {
 					item(key = "refsHeader") { SectionHeader(fieldLabel(Field.REFS, R.string.external_refs)) }
+					val refsEnabled = policy.field(Field.REFS).enabled
 					items(refs, key = { "r${it.id}" }) { r ->
-						ClickableRow(r.value, refKindLabel(r.kind)) { if (policy.field(Field.REFS).enabled) deletingRef = r }
+						SmallListRow(
+							title = r.value,
+							subtitle = refKindLabel(r.kind),
+							leading = { RowIcon(if (r.kind == ExternalRefKind.URL) R.drawable.ic_menu_public else R.drawable.ic_menu_label, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary) },
+							onClick = if (refsEnabled) ({ deletingRef = r }) else null,
+							onDelete = if (refsEnabled) ({ deletingRef = r }) else null,
+						)
 					}
-					if (policy.field(Field.REFS).enabled)
+					if (refsEnabled)
 						item(key = "refsNew") {
-							Row(Modifier.padding(horizontal = 16.dp)) {
+							Row(Modifier.padding(start = 16.dp, end = 4.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
 								Column(Modifier.weight(1f)) {
 									TextInput(stringResource(R.string.external_ref_new), newRef, { newRef = it })
 								}
-								AddButton { vm.addRef(newRef) { newRef = "" } }
+								AddIconButton(stringResource(R.string.action_add), enabled = newRef.isNotBlank()) { vm.addRef(newRef) { newRef = "" } }
 							}
 						}
 				}
@@ -483,6 +492,12 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 			onConfirm = { vm.setSegmentNote(s.id, note) { editingNote = null } },
 		) {
 			TextInput(stringResource(R.string.segment_note), note, { note = it }, importance = Importance.OPTIONAL)
+		}
+	}
+	deletingSegment?.let { s ->
+		ConfirmDialog(stringResource(R.string.confirm_delete_segment), { deletingSegment = null }) {
+			deletingSegment = null
+			vm.deleteSegment(s.id)
 		}
 	}
 	deletingRef?.let { r ->
@@ -620,21 +635,39 @@ private fun SegmentSplitButton(kinds: List<SegmentKind>, enabled: Boolean, onAdd
 	}
 }
 
-/* A segment: kind, times, length, km, manual, note; a planned one with a dashed badge (1.2). */
+/*
+ * A swipe deletes what the segment dialog could delete (issue #183): a
+ * closed segment that is planned, an absence day, or any with editable
+ * times; never the running one.
+ */
+internal fun segmentDeletable(s: SegmentEntity, editableTimes: Boolean): Boolean =
+	s.endUtcMs != null && (s.planned || s.kind == SegmentKind.ABSENCE || editableTimes)
+
+/*
+ * A segment as a small row (issue #183): kind and times, then km, manual,
+ * note; its length on the right; a planned one with a dashed badge (1.2).
+ */
 @Composable
-private fun SegmentRow(s: SegmentEntity, zone: ZoneId, onClick: () -> Unit) {
+private fun SegmentRow(s: SegmentEntity, zone: ZoneId, onDelete: (() -> Unit)?, onClick: () -> Unit) {
 	val end = s.endUtcMs
 	val start = java.time.Instant.ofEpochMilli(s.startUtcMs).atZone(zone).toLocalDate()
 	val day = if (start == LocalDate.now(zone)) "" else start.format(java.time.format.DateTimeFormatter.ofPattern("d/MM "))
 	val range = day + clockOf(s.startUtcMs, zone) + " – " + (end?.let { clockOf(it, zone) } ?: "…")
 	val extra = listOfNotNull(
-		end?.let { hmOf(it - s.startUtcMs) },
 		(s.kmDeclared ?: s.kmEstimated)?.let { "%.1f km".format(it) },
 		if (s.planned) stringResource(R.string.detail_planned) else null,
 		if (!s.planned && s.source == SegmentSource.MANUAL && s.kind != SegmentKind.ABSENCE) stringResource(R.string.segment_manual) else null,
 		s.note,
 	).joinToString(" · ")
-	ClickableRow("${kindLabel(s.kind)}  $range", extra, leading = { SegmentBadge(s.kind, s.planned) }, onClick = onClick)
+	SmallListRow(
+		title = "${kindLabel(s.kind)}  $range",
+		subtitle = extra.ifEmpty { null },
+		trailing = end?.let { hmOf(it - s.startUtcMs) },
+		leading = { SegmentBadge(s.kind, s.planned, small = true) },
+		onClick = onClick,
+		onDelete = onDelete,
+		dimmed = s.planned,
+	)
 }
 
 /*
@@ -684,7 +717,7 @@ private fun TagsSection(vm: EntryViewModel) {
 			Column(Modifier.weight(1f)) {
 				TextInput(stringResource(if (free) R.string.tag_new else R.string.tag_pick), text, { text = it; refused = emptyList() }, importance = Importance.OPTIONAL)
 			}
-			AddButton {
+			AddIconButton(stringResource(R.string.action_add), enabled = text.isNotBlank()) {
 				add(Tags.parse(text))
 				text = ""
 			}
@@ -740,8 +773,5 @@ fun locationLabel(k: LocationKind) = stringResource(
 
 /* What the "add" row asks the expense and attachment sections for. */
 enum class AddRequest { EXPENSE, PHOTO, VOICE, FILE, MATERIAL }
-
-/* the material button: none of the command or other add colours */
-private val TEAL_DARK = androidx.compose.ui.graphics.Color(0xFF5D4037)
 
 private data class AddChoice(val request: AddRequest, val label: Int, val icon: Int, val color: androidx.compose.ui.graphics.Color)
