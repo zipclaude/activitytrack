@@ -837,4 +837,8 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <!-- settings: stored times -->
   <string name="set_round_stored">Salva i valori arrotondati</string>
   <string name="set_round_stored_hint">I pulsanti Avvia, Cambia, Termina e Riapri salvano orari arrotondati; gli orari digitati a mano restano esatti. Richiede orari liberamente modificabili.</string>
+  <!-- absence without working hours (issue #188) -->
+  <string name="err_no_working_day">Nessun giorno lavorativo nell\'intervallo: indica un orario.</string>
+  <string name="create_absence_hint_whole_days">Senza orario e senza orario di lavoro impostato: ogni giorno dell\'intervallo, intero.</string>
+  <string name="agenda_whole_day">Intero giorno</string>
 </resources>

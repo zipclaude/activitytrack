@@ -837,4 +837,8 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <!-- settings: stored times -->
   <string name="set_round_stored">Guardar los valores redondeados</string>
   <string name="set_round_stored_hint">Los botones Iniciar, Cambiar, Terminar y Reabrir guardan horas redondeadas; las horas escritas a mano quedan exactas. Requiere horarios editables libremente.</string>
+  <!-- absence without working hours (issue #188) -->
+  <string name="err_no_working_day">Ningún día laborable en el rango: indica un horario.</string>
+  <string name="create_absence_hint_whole_days">Sin horario y sin horario de trabajo configurado: cada día del rango, entero.</string>
+  <string name="agenda_whole_day">Todo el día</string>
 </resources>

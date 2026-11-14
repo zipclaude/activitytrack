@@ -47,13 +47,16 @@ fun absenceKindName(k: AbsenceKind): Int = when (k) {
  * "Assenza" (ACTIVITY-MODEL.md 3.1): Azienda (none = every company), the
  * kind (the description: Assenza, Ferie, Permesso, Malattia), Note, from
  * and to day, an optional start and end time (a "permesso"). Without times
- * the segments follow the working hours of each working day.
+ * the segments follow the working hours of each working day, or, with no
+ * working hours set, cover each day whole (issue #188).
  */
 @Composable
 fun AbsenceDialog(onClose: () -> Unit) {
 	val c = (LocalContext.current.applicationContext as ActivityTrackApp).container
 	val scope = rememberCoroutineScope()
 	val companies by c.masterData.companies.collectAsState(emptyList())
+	/* without working hours a day without times is a whole day (issue #188) */
+	val noSchedule = c.masterData.schedule.collectAsState(null).value?.none { it.startMin < it.endMin } == true
 	var error by remember { mutableStateOf<Reason?>(null) }
 	var companyId by remember { mutableStateOf<Long?>(null) }
 	var kind by remember { mutableStateOf(AbsenceKind.ABSENCE) }
@@ -133,7 +136,13 @@ fun AbsenceDialog(onClose: () -> Unit) {
 			importance = Importance.OPTIONAL,
 		)
 		Text(
-			stringResource(if (start.isBlank()) R.string.create_absence_hint_days else R.string.create_absence_hint_times),
+			stringResource(
+				when {
+					start.isNotBlank() -> R.string.create_absence_hint_times
+					noSchedule -> R.string.create_absence_hint_whole_days
+					else -> R.string.create_absence_hint_days
+				},
+			),
 			style = MaterialTheme.typography.bodySmall,
 		)
 	}

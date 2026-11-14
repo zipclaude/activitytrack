@@ -408,6 +408,7 @@ fun reasonText(reason: Reason): String = stringResource(
 		Reason.END_REQUIRED -> R.string.err_end_required
 		Reason.FUTURE_TIME -> R.string.err_future_time
 		Reason.BEFORE_SEGMENT -> R.string.err_before_segment
+		Reason.NO_WORKING_DAY -> R.string.err_no_working_day
 		else -> R.string.err_generic
 	},
 )

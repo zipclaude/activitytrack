@@ -9,6 +9,8 @@ import java.time.ZoneId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AbsencePlannerTest {
 	private val rome = ZoneId.of("Europe/Rome")
@@ -108,6 +110,63 @@ class AbsencePlannerTest {
 		/* the whole day: 25 hours */
 		val w = AbsencePlanner.plan(d("2026-10-25"), d("2026-10-25"), 0, 1440, emptyList(), emptyList(), noDaysOff, rome).single()
 		assertEquals(Duration.ofHours(25), Duration.between(w.start, w.end))
+	}
+
+	/*
+	 * Issue #188: a fresh install seeds the lunch breaks but no working hours, so
+	 * a holiday on Thursday 19 and Friday 20 November 2026 had nothing to cover
+	 * and the dialog said "Data non valida".
+	 */
+	@Test
+	fun withoutWorkingHoursThePlanIsEmpty() {
+		val seededLunch = (1..5).map { DayWindow(it, 750, 840) }
+		assertEquals(emptyList(), AbsencePlanner.plan(d("2026-11-19"), d("2026-11-20"), null, null, emptyList(), seededLunch, noDaysOff, rome))
+	}
+
+	@Test
+	fun withoutWorkingHoursEveryDayIsAWholeDay() {
+		val seededLunch = (1..5).map { DayWindow(it, 750, 840) }
+		val got = AbsencePlanner.planOrWholeDays(d("2026-11-19"), d("2026-11-22"), null, null, emptyList(), seededLunch, noDaysOff, rome)
+		assertEquals(
+			listOf(
+				"2026-11-19/0 2026-11-18T23:00:00Z-2026-11-19T22:59:00Z",
+				"2026-11-20/0 2026-11-19T23:00:00Z-2026-11-20T22:59:00Z",
+				"2026-11-21/0 2026-11-20T23:00:00Z-2026-11-21T22:59:00Z",
+				"2026-11-22/0 2026-11-21T23:00:00Z-2026-11-22T22:59:00Z",
+			),
+			got.map(::row),
+		)
+		assertTrue(got.all { AbsencePlanner.isWholeDay(it.day, it.start, it.end, rome) })
+		/* a day off still says it is not worked */
+		val off = AbsencePlanner.planOrWholeDays(d("2026-11-19"), d("2026-11-20"), null, null, emptyList(), emptyList(), { it == d("2026-11-20") }, rome)
+		assertEquals(listOf(d("2026-11-19")), off.map { it.day })
+		/* windows that are no window count as none */
+		val empty = listOf(DayWindow(1, 600, 600))
+		assertEquals(2, AbsencePlanner.planOrWholeDays(d("2026-11-19"), d("2026-11-20"), null, null, empty, emptyList(), noDaysOff, rome).size)
+		/* with times: those times on every day of the range */
+		val times = AbsencePlanner.planOrWholeDays(d("2026-11-21"), d("2026-11-22"), 540, 600, emptyList(), emptyList(), noDaysOff, rome)
+		assertEquals(listOf("2026-11-21/0 2026-11-21T08:00:00Z-2026-11-21T09:00:00Z", "2026-11-22/0 2026-11-22T08:00:00Z-2026-11-22T09:00:00Z"), times.map(::row))
+	}
+
+	@Test
+	fun withWorkingHoursTheScheduleRuleStays() {
+		/* Saturday and Sunday: no working day, nothing to record */
+		assertEquals(emptyList(), AbsencePlanner.planOrWholeDays(d("2026-11-14"), d("2026-11-15"), null, null, schedule, lunch, noDaysOff, rome))
+		assertEquals(
+			AbsencePlanner.plan(d("2026-11-12"), d("2026-11-16"), null, null, schedule, lunch, noDaysOff, rome),
+			AbsencePlanner.planOrWholeDays(d("2026-11-12"), d("2026-11-16"), null, null, schedule, lunch, noDaysOff, rome),
+		)
+	}
+
+	@Test
+	fun wholeDayOnDstDays() {
+		/* 00:00-23:59 on the wall clock: 22 h 59 min in spring, 24 h 59 min in autumn */
+		val spring = AbsencePlanner.wholeDay(d("2026-03-29"), rome)
+		assertEquals(Duration.ofMinutes(22 * 60 + 59), Duration.between(spring.start, spring.end))
+		val autumn = AbsencePlanner.wholeDay(d("2026-10-25"), rome)
+		assertEquals(Duration.ofMinutes(24 * 60 + 59), Duration.between(autumn.start, autumn.end))
+		assertTrue(AbsencePlanner.isWholeDay(d("2026-10-25"), autumn.start, autumn.end, rome))
+		assertFalse(AbsencePlanner.isWholeDay(d("2026-10-25"), autumn.start, autumn.end.plusSeconds(60), rome))
 	}
 
 	@Test

@@ -16,6 +16,8 @@ import it.infraconsulting.activitytrack.AppContainer
 import it.infraconsulting.activitytrack.R
 import it.infraconsulting.activitytrack.domain.calendar.CalendarEvents
 import it.infraconsulting.activitytrack.data.repo.isAbsence
+import it.infraconsulting.activitytrack.domain.activity.AbsenceKind
+import it.infraconsulting.activitytrack.ui.start.absenceKindName
 import it.infraconsulting.activitytrack.data.repo.plan
 import it.infraconsulting.activitytrack.domain.calendar.EventLabels
 import it.infraconsulting.activitytrack.domain.calendar.EventTags
@@ -135,6 +137,8 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			context.getString(R.string.cmd_work), context.getString(R.string.cmd_travel),
 			context.getString(R.string.cmd_pause), context.getString(R.string.external_refs), "km",
 			EventTags.ITALIAN,
+			absence = context.getString(R.string.state_absence),
+			absenceKinds = AbsenceKind.entries.associate { it.name to context.getString(absenceKindName(it)) },
 		)
 		val report = container.reports.report(from, to, zone, s.rounding, s.carryOverMin)
 		val entries = container.reports.entriesAround(from, to, zone).associateBy { it.entry.id }
@@ -144,6 +148,7 @@ class CalendarSync(private val context: Context, private val container: AppConta
 			entries.mapNotNull { (id, e) -> e.entry.uid?.let { id to it } }.toMap(),
 			entries.mapValues { it.value.entry.companyId },
 			labels,
+			zone,
 		) + CalendarEvents.planTodos(plannedTodos(zone, from), labels)
 		withContext(Dispatchers.IO) {
 			val windowStart = from.atStartOfDay(zone).toInstant().toEpochMilli()

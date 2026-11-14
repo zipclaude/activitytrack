@@ -1,10 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.calendar
 
+import it.infraconsulting.activitytrack.domain.activity.AbsencePlanner
 import it.infraconsulting.activitytrack.domain.export.EntryMeta
 import it.infraconsulting.activitytrack.domain.report.DayTotals
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 /* Localised words of the event description (the domain has no resources). */
 data class EventLabels(
@@ -14,6 +17,9 @@ data class EventLabels(
 	val refs: String,
 	val km: String,
 	val tags: EventTags = EventTags(),
+	/* an absence's title by its kind (ABSENCE, HOLIDAY, LEAVE, SICK); [absence] without one */
+	val absence: String = "",
+	val absenceKinds: Map<String, String> = emptyMap(),
 )
 
 /*
@@ -68,7 +74,8 @@ data class PlannedEvent(
  * lines as the reports (day attribution, rounding), shown from the entry
  * start (a running entry ends "now"); title "Client – Activity"; the
  * description carries rounded work/travel/pause, km, references and notes,
- * the location the locality. No coordinates.
+ * the location the locality. No coordinates. With [zone], the absences
+ * too (issue #188).
  */
 object CalendarEvents {
 	fun plan(
@@ -77,7 +84,46 @@ object CalendarEvents {
 		uids: Map<Long, String>,
 		companies: Map<Long, Long?>,
 		labels: EventLabels,
+		zone: ZoneId? = null,
 	): List<PlannedEvent> = days.flatMap { d ->
+		lines(d, meta, uids, companies, labels) + if (zone == null) emptyList() else absences(d, meta, uids, companies, labels, zone)
+	}
+
+	/*
+	 * The absences of a day (issue #188): "Ferie" etc. from the first to the
+	 * last segment, an all-day event when the day is covered 00:00-23:59.
+	 */
+	private fun absences(
+		d: DayTotals,
+		meta: Map<Long, EntryMeta>,
+		uids: Map<Long, String>,
+		companies: Map<Long, Long?>,
+		labels: EventLabels,
+		zone: ZoneId,
+	): List<PlannedEvent> = d.absences.mapNotNull { a ->
+		val m = meta[a.entryId] ?: return@mapNotNull null
+		val uid = uids[a.entryId] ?: return@mapNotNull null
+		val allDay = AbsencePlanner.isWholeDay(d.day, a.firstStart, a.lastEnd, zone)
+		val utc = ZoneOffset.UTC
+		PlannedEvent(
+			key = "$uid/${d.day}",
+			companyId = companies[a.entryId],
+			start = if (allDay) d.day.atStartOfDay(utc).toInstant() else a.firstStart,
+			end = if (allDay) d.day.plusDays(1).atStartOfDay(utc).toInstant() else maxOf(a.lastEnd, a.firstStart.plusSeconds(60)),
+			title = m.absenceKind?.let { labels.absenceKinds[it] } ?: labels.absence.ifBlank { m.company },
+			description = m.notes,
+			location = null,
+			allDay = allDay,
+		)
+	}
+
+	private fun lines(
+		d: DayTotals,
+		meta: Map<Long, EntryMeta>,
+		uids: Map<Long, String>,
+		companies: Map<Long, Long?>,
+		labels: EventLabels,
+	): List<PlannedEvent> =
 		d.lines.mapNotNull { l ->
 			val m = meta[l.entryId] ?: return@mapNotNull null
 			val uid = uids[l.entryId] ?: return@mapNotNull null
@@ -110,7 +156,6 @@ object CalendarEvents {
 				location = m.locality.ifBlank { null },
 			)
 		}
-	}
 
 	/* Planned to-dos: "Client – Title", notes, references and the planned tag. */
 	fun planTodos(todos: List<TodoEvent>, labels: EventLabels): List<PlannedEvent> = todos.map { t ->

@@ -51,6 +51,57 @@ object AbsencePlanner {
 		return out
 	}
 
+	/*
+	 * An absence recorded now (issue #188): [plan] while working hours exist;
+	 * without any (a fresh install seeds none), no weekday can be told from a
+	 * working one, so every day of the range that is not a day off is taken:
+	 * a whole day ([wholeDay]) without times, the times given with them.
+	 * [plan] alone stays the rule of the data migration (shared cases, 6).
+	 */
+	fun planOrWholeDays(
+		from: LocalDate,
+		to: LocalDate,
+		startMin: Int?,
+		endMin: Int?,
+		schedule: List<DayWindow>,
+		lunchBreaks: List<DayWindow>,
+		isDayOff: (LocalDate) -> Boolean,
+		zone: ZoneId,
+	): List<AbsenceInterval> {
+		if (schedule.any { it.startMin < it.endMin })
+			return plan(from, to, startMin, endMin, schedule, lunchBreaks, isDayOff, zone)
+		/* the checks of plan; with no schedule it only ever applies times to a single day */
+		require(!to.isBefore(from)) { "last day $to before the first $from" }
+		require((startMin == null) == (endMin == null)) { "a start needs an end and vice versa: $startMin, $endMin" }
+		require(startMin == null || (startMin in 0 until 1440 && endMin!! in startMin + 1..1440)) { "times out of range: $startMin-$endMin" }
+		val out = ArrayList<AbsenceInterval>()
+		var day = from
+		while (!day.isAfter(to)) {
+			if (startMin == null) {
+				if (!isDayOff(day))
+					out += wholeDay(day, zone)
+			} else if (from == to || !isDayOff(day)) {
+				val a = day.atMinute(startMin, zone)
+				val b = day.atMinute(endMin!!, zone)
+				if (b.isAfter(a))
+					out += AbsenceInterval(day, 0, a, b)
+			}
+			day = day.plusDays(1)
+		}
+		return out
+	}
+
+	/* the last minute of a whole-day absence: 00:00-23:59 (owner, issue #188) */
+	const val WHOLE_DAY_END_MIN = 1439
+
+	/* [day] from 00:00 to 23:59 local wall clock */
+	fun wholeDay(day: LocalDate, zone: ZoneId): AbsenceInterval =
+		AbsenceInterval(day, 0, day.atMinute(0, zone), day.atMinute(WHOLE_DAY_END_MIN, zone))
+
+	/* a segment from [start] to [end] is the whole [day] (shown as all-day in the agenda and the calendar) */
+	fun isWholeDay(day: LocalDate, start: Instant, end: Instant, zone: ZoneId): Boolean =
+		start == day.atMinute(0, zone) && end == day.atMinute(WHOLE_DAY_END_MIN, zone)
+
 	/* a day with working hours that is not a day off */
 	fun isWorkingDay(day: LocalDate, schedule: List<DayWindow>, isDayOff: (LocalDate) -> Boolean): Boolean =
 		!isDayOff(day) && schedule.any { it.dayOfWeek == day.dayOfWeek.value && it.startMin < it.endMin }

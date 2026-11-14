@@ -2,6 +2,7 @@
 package it.infraconsulting.activitytrack.domain.calendar
 
 import it.infraconsulting.activitytrack.domain.export.EntryMeta
+import it.infraconsulting.activitytrack.domain.report.AbsenceDayLine
 import it.infraconsulting.activitytrack.domain.report.DayTotals
 import it.infraconsulting.activitytrack.domain.report.EntryDayLine
 import java.time.Duration
@@ -86,5 +87,34 @@ class CalendarEventsTest {
 	fun entriesWithoutUidAreLeftOut() {
 		val days = listOf(DayTotals(day, Duration.ZERO, Duration.ZERO, listOf(line(3, 30))))
 		assertEquals(emptyList(), CalendarEvents.plan(days, mapOf(3L to meta("Bank")), emptyMap(), emptyMap(), labels))
+	}
+
+	@Test
+	fun absencesWholeDayIsAllDay() {
+		/* issue #188: a holiday 00:00-23:59 on Thursday 19 November 2026 in Rome, a leave 09:00-11:00 the next day */
+		val rome = java.time.ZoneId.of("Europe/Rome")
+		val thu = java.time.LocalDate.of(2026, 11, 19)
+		val fri = thu.plusDays(1)
+		val s0 = thu.atStartOfDay(rome).toInstant()
+		val s1 = fri.atTime(9, 0).atZone(rome).toInstant()
+		val days = listOf(
+			DayTotals(thu, Duration.ZERO, Duration.ZERO, emptyList(), listOf(AbsenceDayLine(4, thu, s0, s0.plusSeconds(1439 * 60), Duration.ofMinutes(1439)))),
+			DayTotals(fri, Duration.ZERO, Duration.ZERO, emptyList(), listOf(AbsenceDayLine(5, fri, s1, s1.plusSeconds(7200), Duration.ofHours(2)))),
+		)
+		val kinds = labels.copy(absence = "Assenza", absenceKinds = mapOf("HOLIDAY" to "Ferie"))
+		val metas = mapOf(4L to meta("").copy(absenceKind = "HOLIDAY"), 5L to meta("").copy(absenceKind = "LEAVE", notes = "Dentista"))
+		val uids = mapOf(4L to "a-4", 5L to "a-5")
+		/* without a zone the absences stay out, as before */
+		assertEquals(emptyList(), CalendarEvents.plan(days, metas, uids, emptyMap(), kinds))
+		val (h, l) = CalendarEvents.plan(days, metas, uids, emptyMap(), kinds, rome)
+		assertEquals("a-4/2026-11-19", h.key)
+		assertEquals("Ferie", h.title)
+		assertEquals(true, h.allDay)
+		assertEquals(java.time.Instant.parse("2026-11-19T00:00:00Z"), h.start)
+		assertEquals(java.time.Instant.parse("2026-11-20T00:00:00Z"), h.end)
+		assertEquals("Assenza", l.title)
+		assertEquals(false, l.allDay)
+		assertEquals(s1, l.start)
+		assertEquals("Dentista", l.description)
 	}
 }

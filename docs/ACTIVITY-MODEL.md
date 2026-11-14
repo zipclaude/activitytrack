@@ -168,6 +168,15 @@ An absence is an activity of kind `ABSENCE` with one `ABSENCE` segment per day:
   working hours. A window that is empty or inverted on the real clock (inside the
   spring-forward gap, e.g. Europe/Rome 2026-03-29 02:00-03:00 or 02:30-03:00) gives no
   segment;
+- with no working hours at all (no `work_schedule` window: a fresh install seeds none),
+  no weekday can be told from a working one (owner, issue #188): without times every day
+  of the range that is not a `day_off` is a **whole day**, one segment 00:00-23:59 local
+  wall clock, shown as an all-day item in the agenda and as an all-day event in the
+  external calendar; with times, those times on every such day. This rule applies to the
+  absences recorded in the app only (`AbsencePlanner.planOrWholeDays`), not to the data
+  migration (6), whose output for the shared cases stays that of `AbsencePlanner.plan`;
+- a range with nothing to record is refused with "Nessun giorno lavorativo
+  nell'intervallo: indica un orario.";
 - reports count absence segments apart from work, travel and pause.
 
 ### 3.2 Return trip on stop (owner, 2026-11-11)

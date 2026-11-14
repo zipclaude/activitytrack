@@ -848,4 +848,8 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <!-- settings: stored times -->
   <string name="set_round_stored">Save rounded values</string>
   <string name="set_round_stored_hint">The Start, Switch, Stop and Reopen buttons store rounded times; times typed by hand stay exact. Needs freely editable times.</string>
+  <!-- absence without working hours (issue #188) -->
+  <string name="err_no_working_day">No working day in the range: give a time.</string>
+  <string name="create_absence_hint_whole_days">Without a time and with no working hours set: each day of the range, whole.</string>
+  <string name="agenda_whole_day">All day</string>
 </resources>

@@ -836,4 +836,8 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <!-- settings: stored times -->
   <string name="set_round_stored">Gerundete Werte speichern</string>
   <string name="set_round_stored_hint">Die Schaltflächen Start, Wechsel, Stopp und Wiedereröffnen speichern gerundete Zeiten; von Hand eingegebene Zeiten bleiben exakt. Braucht frei änderbare Zeiten.</string>
+  <!-- absence without working hours (issue #188) -->
+  <string name="err_no_working_day">Kein Arbeitstag im Zeitraum: gib eine Uhrzeit an.</string>
+  <string name="create_absence_hint_whole_days">Ohne Uhrzeit und ohne eingestellte Arbeitszeit: jeder Tag des Zeitraums, ganz.</string>
+  <string name="agenda_whole_day">Ganztägig</string>
 </resources>
