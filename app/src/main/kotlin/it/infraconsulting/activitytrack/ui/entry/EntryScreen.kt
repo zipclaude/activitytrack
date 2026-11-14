@@ -34,7 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -78,6 +77,9 @@ import it.infraconsulting.activitytrack.ui.common.AddButton
 import it.infraconsulting.activitytrack.ui.common.ChoiceField
 import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.DateField
+import it.infraconsulting.activitytrack.ui.common.DialogAction
+import it.infraconsulting.activitytrack.ui.common.DialogButtonKind
+import it.infraconsulting.activitytrack.ui.common.DialogButtons
 import it.infraconsulting.activitytrack.ui.common.DictationInput
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.EmptyText
@@ -430,8 +432,14 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 					Text(stringResource(R.string.overlap_hint), style = MaterialTheme.typography.bodySmall)
 				}
 			},
-			confirmButton = { TextButton(onClick = vm::confirmOverlap) { Text(stringResource(R.string.action_confirm)) } },
-			dismissButton = { TextButton(onClick = vm::cancelOverlap) { Text(stringResource(R.string.action_cancel)) } },
+			confirmButton = {
+				DialogButtons(
+					listOf(
+						DialogAction(stringResource(R.string.action_cancel), onClick = vm::cancelOverlap),
+						DialogAction(stringResource(R.string.action_confirm), DialogButtonKind.PRIMARY, onClick = vm::confirmOverlap),
+					),
+				)
+			},
 		)
 	}
 	val deletion by vm.deletion.collectAsState()
@@ -447,11 +455,13 @@ private fun EntryForm(initial: TimeEntryEntity, vm: EntryViewModel, onBack: () -
 				}
 			},
 			confirmButton = {
-				TextButton(onClick = { vm.deleteEntry(onBack) }) {
-					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-				}
+				DialogButtons(
+					listOf(
+						DialogAction(stringResource(R.string.action_cancel), onClick = vm::cancelDelete),
+						DialogAction(stringResource(R.string.action_delete), DialogButtonKind.DANGER) { vm.deleteEntry(onBack) },
+					),
+				)
 			},
-			dismissButton = { TextButton(onClick = vm::cancelDelete) { Text(stringResource(R.string.action_cancel)) } },
 		)
 	}
 	/* outside the lazy list: always composed, whatever is scrolled into view */

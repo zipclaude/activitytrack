@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,7 +35,10 @@ import it.infraconsulting.activitytrack.domain.model.QuickAction
 import it.infraconsulting.activitytrack.domain.model.SegmentKind
 import it.infraconsulting.activitytrack.domain.policy.Field
 import it.infraconsulting.activitytrack.domain.time.atMinute
+import it.infraconsulting.activitytrack.ui.common.ButtonsDialog
 import it.infraconsulting.activitytrack.ui.common.CommandStyle
+import it.infraconsulting.activitytrack.ui.common.DialogAction
+import it.infraconsulting.activitytrack.ui.common.DialogButtonKind
 import it.infraconsulting.activitytrack.ui.common.DateField
 import it.infraconsulting.activitytrack.ui.common.EditDialog
 import it.infraconsulting.activitytrack.ui.common.Importance
@@ -284,14 +285,12 @@ private fun SegmentGrid(
 
 @Composable
 internal fun ConfirmDialog(text: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
-	AlertDialog(
-		onDismissRequest = onDismiss,
+	ButtonsDialog(
+		onDismiss = onDismiss,
 		text = { Text(text) },
-		confirmButton = {
-			TextButton(onClick = onConfirm) {
-				Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-			}
-		},
-		dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+		actions = listOf(
+			DialogAction(stringResource(R.string.action_cancel), onClick = onDismiss),
+			DialogAction(stringResource(R.string.action_delete), DialogButtonKind.DANGER, onClick = onConfirm),
+		),
 	)
 }

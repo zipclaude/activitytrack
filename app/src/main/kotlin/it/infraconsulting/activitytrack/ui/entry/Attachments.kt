@@ -19,7 +19,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +50,9 @@ import it.infraconsulting.activitytrack.data.settings.SettingsRepository
 import it.infraconsulting.activitytrack.ui.ActionViewModel
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.ui.common.ClickableRow
+import it.infraconsulting.activitytrack.ui.common.DialogAction
+import it.infraconsulting.activitytrack.ui.common.DialogButtonKind
+import it.infraconsulting.activitytrack.ui.common.DialogButtons
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
 import it.infraconsulting.activitytrack.ui.common.clockOf
 import it.infraconsulting.activitytrack.ui.common.reasonText
@@ -134,11 +136,14 @@ fun AttachmentsSection(entryId: Long, zone: ZoneId) {
 		AlertDialog(
 			onDismissRequest = { selected = null },
 			title = { Text(kindLabel(a.kind)) },
-			confirmButton = { TextButton(onClick = { vm.open(context, a); selected = null }) { Text(stringResource(R.string.action_open)) } },
-			dismissButton = {
-				TextButton(onClick = { vm.delete(a); selected = null }) {
-					Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-				}
+			/* two buttons, not bare texts (issue #186) */
+			confirmButton = {
+				DialogButtons(
+					listOf(
+						DialogAction(stringResource(R.string.action_delete), DialogButtonKind.DANGER_OUTLINED) { vm.delete(a); selected = null },
+						DialogAction(stringResource(R.string.action_open), DialogButtonKind.PRIMARY) { vm.open(context, a); selected = null },
+					),
+				)
 			},
 		)
 	}
@@ -261,14 +266,19 @@ private fun VoiceRecorderDialog(onDone: (File) -> Unit, onCancel: () -> Unit) {
 			)
 		},
 		confirmButton = {
-			if (recorder != null)
-				TextButton(onClick = {
-					runCatching { recorder.stop() }
-					saved = true
-					onDone(file)
-				}) { Text(stringResource(R.string.att_stop_save)) }
+			DialogButtons(
+				listOfNotNull(
+					DialogAction(stringResource(R.string.action_cancel), onClick = onCancel),
+					recorder?.let { r ->
+						DialogAction(stringResource(R.string.att_stop_save), DialogButtonKind.PRIMARY) {
+							runCatching { r.stop() }
+							saved = true
+							onDone(file)
+						}
+					},
+				),
+			)
 		},
-		dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) } },
 	)
 }
 

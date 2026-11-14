@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -63,12 +62,11 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, clearabl
 		DatePickerDialog(
 			onDismissRequest = { open = false },
 			confirmButton = {
-				TextButton(onClick = {
+				OkCancel(onCancel = { open = false }) {
 					state.selectedDateMillis?.let { onChange(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate().toString()) }
 					open = false
-				}) { Text(stringResource(R.string.action_ok)) }
+				}
 			},
-			dismissButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.action_cancel)) } },
 		) { DatePicker(state = state) }
 	}
 }
@@ -120,13 +118,12 @@ fun TimeField(
 		AlertDialog(
 			onDismissRequest = { open = false },
 			confirmButton = {
-				TextButton(onClick = {
+				OkCancel(onCancel = { open = false }) {
 					val picked = state.hour * 60 + state.minute
 					onChange(formatMin(if (endOfDay && picked == 0) 1440 else picked))
 					open = false
-				}) { Text(stringResource(R.string.action_ok)) }
+				}
 			},
-			dismissButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.action_cancel)) } },
 			text = { TimePicker(state = state) },
 		)
 	}
@@ -185,12 +182,11 @@ fun DateTimeField(
 		DatePickerDialog(
 			onDismissRequest = { pickDate = false },
 			confirmButton = {
-				TextButton(onClick = {
+				OkCancel(onCancel = { pickDate = false }) {
 					pickDate = false
 					pickTime = state.selectedDateMillis?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate().toString() }
-				}) { Text(stringResource(R.string.action_ok)) }
+				}
 			},
-			dismissButton = { TextButton(onClick = { pickDate = false }) { Text(stringResource(R.string.action_cancel)) } },
 		) { DatePicker(state = state) }
 	}
 	pickTime?.let { day ->
@@ -200,7 +196,7 @@ fun DateTimeField(
 			/* without a time the date stays, with the proposed time */
 			onDismissRequest = { onChange(day, formatMin(start)); pickTime = null },
 			confirmButton = {
-				TextButton(onClick = { onChange(day, formatMin(state.hour * 60 + state.minute)); pickTime = null }) { Text(stringResource(R.string.action_ok)) }
+				DialogButtons(listOf(DialogAction(stringResource(R.string.action_ok), DialogButtonKind.PRIMARY) { onChange(day, formatMin(state.hour * 60 + state.minute)); pickTime = null }))
 			},
 			text = { TimePicker(state = state) },
 		)
@@ -240,5 +236,16 @@ private fun PickerTextField(label: String, shown: String, icon: Int, onOpen: () 
 			}
 		},
 		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+/* Annulla and OK of the date and time pickers, as buttons (issue #186). */
+@Composable
+private fun OkCancel(onCancel: () -> Unit, onOk: () -> Unit) {
+	DialogButtons(
+		listOf(
+			DialogAction(stringResource(R.string.action_cancel), onClick = onCancel),
+			DialogAction(stringResource(R.string.action_ok), DialogButtonKind.PRIMARY, onClick = onOk),
+		),
 	)
 }

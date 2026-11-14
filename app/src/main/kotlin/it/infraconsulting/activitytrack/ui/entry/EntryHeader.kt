@@ -17,12 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,6 +57,9 @@ import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.ui.LocalCompact
 import it.infraconsulting.activitytrack.ui.common.CommandIconButton
 import it.infraconsulting.activitytrack.ui.common.CommandStyle
+import it.infraconsulting.activitytrack.ui.common.DialogAction
+import it.infraconsulting.activitytrack.ui.common.DialogButtonKind
+import it.infraconsulting.activitytrack.ui.common.DialogButtons
 import it.infraconsulting.activitytrack.ui.common.StatePill
 import it.infraconsulting.activitytrack.ui.common.TimeField
 import it.infraconsulting.activitytrack.ui.common.clockOf
@@ -284,8 +285,14 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 			onDismissRequest = vm::cancelTravel,
 			title = { Text(stringResource(R.string.travel_done_question)) },
 			text = { Text(stringResource(R.string.detail_travel_hint)) },
-			confirmButton = { TextButton(onClick = { vm.answerTravel(true) }) { Text(stringResource(R.string.action_yes)) } },
-			dismissButton = { TextButton(onClick = { vm.answerTravel(false) }) { Text(stringResource(R.string.action_no)) } },
+			confirmButton = {
+				DialogButtons(
+					listOf(
+						DialogAction(stringResource(R.string.action_no)) { vm.answerTravel(false) },
+						DialogAction(stringResource(R.string.action_yes), DialogButtonKind.PRIMARY) { vm.answerTravel(true) },
+					),
+				)
+			},
 		)
 
 	val stop by vm.stopPrompt.collectAsState()
@@ -321,8 +328,8 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 					}
 				}
 			},
-			confirmButton = {},
-			dismissButton = { TextButton(onClick = vm::cancelStop) { Text(stringResource(R.string.action_cancel)) } },
+			/* the choices are buttons already; Annulla is one too, full width under them (issue #186) */
+			confirmButton = { DialogButtons(listOf(DialogAction(stringResource(R.string.action_cancel), onClick = vm::cancelStop))) },
 		)
 	}
 
@@ -333,12 +340,16 @@ internal fun CommandDialogs(vm: EntryViewModel, zone: ZoneId) {
 			title = { Text(stringResource(if (kind == SegmentKind.TRAVEL) R.string.detail_reopen_travel else R.string.detail_reopen_work)) },
 			text = { Text(stringResource(R.string.detail_reopen_text)) },
 			confirmButton = {
-				Button(
-					onClick = vm::reopen,
-					colors = ButtonDefaults.buttonColors(containerColor = segmentStyle(kind).container, contentColor = segmentStyle(kind).content),
-				) { Text(stringResource(R.string.cmd_reopen)) }
+				DialogButtons(
+					listOf(
+						DialogAction(stringResource(R.string.action_cancel), onClick = vm::cancelReopen),
+						DialogAction(
+							stringResource(R.string.cmd_reopen), DialogButtonKind.PRIMARY,
+							container = segmentStyle(kind).container, content = segmentStyle(kind).content, onClick = vm::reopen,
+						),
+					),
+				)
 			},
-			dismissButton = { TextButton(onClick = vm::cancelReopen) { Text(stringResource(R.string.action_cancel)) } },
 		)
 	}
 }

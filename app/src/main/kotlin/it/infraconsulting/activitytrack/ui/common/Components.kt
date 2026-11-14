@@ -126,15 +126,15 @@ fun EditDialog(
 					Text(reasonText(error), color = MaterialTheme.colorScheme.error)
 			}
 		},
-		confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_save)) } },
-		dismissButton = {
-			Row {
-				if (onDelete != null)
-					TextButton(onClick = onDelete) {
-						Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-					}
-				TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-			}
+		/* buttons like the detail's Annulla / Salva (issue #186); Elimina in the error colour, alone above them */
+		confirmButton = {
+			DialogButtons(
+				listOfNotNull(
+					onDelete?.let { DialogAction(stringResource(R.string.action_delete), DialogButtonKind.DANGER_OUTLINED, onClick = it) },
+					DialogAction(stringResource(R.string.action_cancel), onClick = onDismiss),
+					DialogAction(stringResource(R.string.action_save), DialogButtonKind.PRIMARY, onClick = onConfirm),
+				),
+			)
 		},
 	)
 }

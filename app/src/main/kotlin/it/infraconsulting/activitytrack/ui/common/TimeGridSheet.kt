@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -237,12 +236,18 @@ fun TimeGridSheet(
 					Text(stringResource(R.string.grid_others), style = MaterialTheme.typography.bodySmall)
 				}
 			}
-			Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-				onExact?.let { TextButton(onClick = it) { Text(stringResource(R.string.grid_exact)) } }
-				Spacer(Modifier.weight(1f))
-				TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-				Button(onClick = { sel?.let { if (point) onPick(it.first, it.first) else onPick(it.first, it.last + 1) } }, enabled = sel != null) { Text(stringResource(R.string.action_ok)) }
-			}
+			/* "Ora esatta", Annulla, OK: equal buttons in one row (issue #186) */
+			DialogButtons(
+				listOfNotNull(
+					onExact?.let { DialogAction(stringResource(R.string.grid_exact), onClick = it) },
+					DialogAction(stringResource(R.string.action_cancel), onClick = onDismiss),
+					DialogAction(stringResource(R.string.action_ok), DialogButtonKind.PRIMARY, enabled = sel != null) {
+						sel?.let { if (point) onPick(it.first, it.first) else onPick(it.first, it.last + 1) }
+					},
+				),
+				modifier = Modifier.padding(top = 8.dp),
+				perRow = 3,
+			)
 		}
 	}
 }

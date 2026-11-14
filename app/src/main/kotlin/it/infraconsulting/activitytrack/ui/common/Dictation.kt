@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -144,14 +143,16 @@ private fun DictationDialog(onText: (String) -> Unit, onCancel: () -> Unit) {
 			}
 		},
 		confirmButton = {
-			if (error == null)
-				TextButton(onClick = { holder[0]?.stopListening() }) { Text(stringResource(R.string.dictation_done)) }
-			else
-				TextButton(onClick = { error = null; partial = ""; session++ }) {
-					Text(stringResource(R.string.dictation_retry))
-				}
+			DialogButtons(
+				listOf(
+					DialogAction(stringResource(R.string.action_cancel), onClick = onCancel),
+					if (error == null)
+						DialogAction(stringResource(R.string.dictation_done), DialogButtonKind.PRIMARY) { holder[0]?.stopListening() }
+					else
+						DialogAction(stringResource(R.string.dictation_retry), DialogButtonKind.PRIMARY) { error = null; partial = ""; session++ },
+				),
+			)
 		},
-		dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) } },
 	)
 }
 
