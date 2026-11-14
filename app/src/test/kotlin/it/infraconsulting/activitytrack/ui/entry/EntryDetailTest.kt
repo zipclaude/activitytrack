@@ -96,4 +96,12 @@ class EntryDetailTest {
 		/* without the travel feature no "reopen with travel" */
 		assertFalse(DetailCommand.Reopen(SegmentKind.TRAVEL) in detailCommands(closed, listOf(travel), travel = false, canDelete = true))
 	}
+
+	@Test
+	fun attachmentRowShowsTheDescription() {
+		/* issue #185: the description over the time, none when blank */
+		assertEquals("Contatore\n10:30 · 2026-11-14", attachmentSubtitle(" Contatore ", "10:30 · 2026-11-14"))
+		assertEquals("10:30 · 2026-11-14", attachmentSubtitle("  ", "10:30 · 2026-11-14"))
+		assertEquals("10:30 · 2026-11-14", attachmentSubtitle(null, "10:30 · 2026-11-14"))
+	}
 }

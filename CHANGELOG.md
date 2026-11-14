@@ -34,7 +34,7 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - The bin: a deleted activity can be restored, or deleted for good from there.
 - A ticked task can be unticked; "Annulla" after a tick or a done.
 - An activity made of travel only can be declared complete ("Completa" among the actions of its detail, undone by "Annulla completamento"); it is then done unless a field the management system requires is empty (issue #189).
-- Photos, voice notes and files have a description, synced with the attachment (issue #185).
+- Photos, voice notes and files have a description, typed in the dialog that opens when the attachment is tapped and shown under it in the list; synced with the attachment (issue #185).
 - Return trip on stop: an activity with an outbound trip offers to start the return trip, to stop, or to stop adding a return trip as long as the outbound one (with its km and its two ends swapped).
 - Closing ahead: with editable times a stop, or the end of the last segment, may lie up to 24 hours ahead.
 - Saving rounded times (Settings → Arrotondamento): the action buttons store instants rounded to the quanta of the report rules.

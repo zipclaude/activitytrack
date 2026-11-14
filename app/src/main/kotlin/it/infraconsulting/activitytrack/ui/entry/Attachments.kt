@@ -53,7 +53,9 @@ import it.infraconsulting.activitytrack.ui.common.ClickableRow
 import it.infraconsulting.activitytrack.ui.common.DialogAction
 import it.infraconsulting.activitytrack.ui.common.DialogButtonKind
 import it.infraconsulting.activitytrack.ui.common.DialogButtons
+import it.infraconsulting.activitytrack.ui.common.Importance
 import it.infraconsulting.activitytrack.ui.common.SectionHeader
+import it.infraconsulting.activitytrack.ui.common.TextInput
 import it.infraconsulting.activitytrack.ui.common.clockOf
 import it.infraconsulting.activitytrack.ui.common.reasonText
 import java.io.File
@@ -82,6 +84,9 @@ class AttachmentsViewModel(
 	}
 
 	fun delete(a: AttachmentEntity) = run { storage { repo.delete(tree(), a) } }
+
+	/* what the photo, voice note or file is (issue #185): trimmed, blank = none */
+	fun setDescription(a: AttachmentEntity, text: String, done: () -> Unit = {}) = run(done) { repo.setDescription(a.id, text) }
 
 	fun open(context: Context, a: AttachmentEntity) = run {
 		/* synced from the server, file not here yet (issue #116): fetch it now */
@@ -125,28 +130,61 @@ fun AttachmentsSection(entryId: Long, zone: ZoneId) {
 		Column(modifier = Modifier.padding(bottom = 8.dp)) {
 			SectionHeader(stringResource(R.string.attachments))
 			for (a in items)
-				ClickableRow(kindLabel(a.kind), clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone)) {
+				ClickableRow(kindLabel(a.kind), attachmentSubtitle(a.description, clockOf(a.createdUtcMs, zone) + " · " + dateOf(a.createdUtcMs, zone))) {
 					vm.clearError()
 					selected = a
 				}
 			error?.let { Text(reasonText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
 		}
 
-	selected?.let { a ->
-		AlertDialog(
-			onDismissRequest = { selected = null },
-			title = { Text(kindLabel(a.kind)) },
-			/* two buttons, not bare texts (issue #186) */
-			confirmButton = {
-				DialogButtons(
-					listOf(
-						DialogAction(stringResource(R.string.action_delete), DialogButtonKind.DANGER_OUTLINED) { vm.delete(a); selected = null },
-						DialogAction(stringResource(R.string.action_open), DialogButtonKind.PRIMARY) { vm.open(context, a); selected = null },
-					),
-				)
-			},
-		)
-	}
+	selected?.let { a -> AttachmentDialog(a, vm, context) { selected = null } }
+}
+
+/* The description, when set, over the time the attachment was made (issue #185). */
+internal fun attachmentSubtitle(description: String?, time: String): String =
+	description?.trim()?.takeIf { it.isNotEmpty() }?.let { "$it\n$time" } ?: time
+
+/*
+ * A tap on an attachment (issues #185, #186): its description, typed and
+ * saved here, and buttons to delete it (asked first: the file goes), open
+ * it (keeping a description typed), close or save.
+ */
+@Composable
+private fun AttachmentDialog(a: AttachmentEntity, vm: AttachmentsViewModel, context: Context, onClose: () -> Unit) {
+	var text by remember(a.id) { mutableStateOf(a.description.orEmpty()) }
+	var deleting by remember(a.id) { mutableStateOf(false) }
+	val changed = text.trim() != a.description.orEmpty()
+	AlertDialog(
+		onDismissRequest = onClose,
+		title = { Text(kindLabel(a.kind)) },
+		text = {
+			Column(Modifier.padding(top = 8.dp)) {
+				TextInput(stringResource(R.string.field_description), text, { text = it }, singleLine = false, importance = Importance.OPTIONAL)
+			}
+		},
+		confirmButton = {
+			DialogButtons(
+				listOf(
+					DialogAction(stringResource(R.string.action_delete), DialogButtonKind.DANGER_OUTLINED) { deleting = true },
+					DialogAction(stringResource(R.string.action_open)) {
+						if (changed) vm.setDescription(a, text)
+						vm.open(context, a)
+						onClose()
+					},
+					DialogAction(stringResource(R.string.action_cancel), onClick = onClose),
+					DialogAction(stringResource(R.string.action_save), DialogButtonKind.PRIMARY) {
+						if (changed) vm.setDescription(a, text, onClose) else onClose()
+					},
+				),
+			)
+		},
+	)
+	if (deleting)
+		ConfirmDialog(stringResource(R.string.confirm_delete, kindLabel(a.kind)), { deleting = false }) {
+			deleting = false
+			vm.delete(a)
+			onClose()
+		}
 }
 
 @Composable
