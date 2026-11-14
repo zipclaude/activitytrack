@@ -56,7 +56,9 @@ private val GAP = 3.dp
  * Time selection on a grid of 5-minute cells (backlog 3, mockup B chosen
  * by the owner on 2026-10-19), as a bottom sheet. [range]: touch the first
  * cell and drag to the last, or tap the first and then the last (also
- * after moving the window); otherwise one tap picks a time. [busy] minutes
+ * after moving the window); otherwise one tap picks a time. The window of
+ * twelve hours moves with the arrows or by dragging the hour labels up or
+ * down (issue #181: the grid itself takes the drags). [busy] minutes
  * are hatched (other activities). [onExact] offers the clock for minutes
  * off the 5-minute grid. [onPick] gets start and end minute (end exclusive;
  * for a single time end = start + 5).
@@ -87,6 +89,8 @@ fun TimeGridSheet(
 	val work = schedule.filter { it.dayOfWeek == day.dayOfWeek.value }.takeIf { it.isNotEmpty() }
 		?.let { s -> s.minOf { it.startMin } to s.maxOf { it.endMin } }
 	var first by remember { mutableStateOf(TimeGrid.windowFor(initial?.first ?: java.time.LocalTime.now().let { it.hour * 60 })) }
+	/* the gesture below lives across window moves: it reads the window through this */
+	val firstNow by androidx.compose.runtime.rememberUpdatedState(first)
 	/* the schedule arrives after the first frame: move once, only when nothing is selected */
 	var placed by remember { mutableStateOf(initial != null) }
 	androidx.compose.runtime.LaunchedEffect(work) {
@@ -132,7 +136,8 @@ fun TimeGridSheet(
 					Text(formatDuration(sel.last + 1 - sel.first), color = MaterialTheme.colorScheme.onSurfaceVariant)
 			}
 			Text(
-				stringResource(if (range && allowPoint) R.string.grid_hint_point_or_range else if (range) R.string.grid_hint_range else R.string.grid_hint_single),
+				stringResource(if (range && allowPoint) R.string.grid_hint_point_or_range else if (range) R.string.grid_hint_range else R.string.grid_hint_single) +
+					" " + stringResource(R.string.grid_hint_scroll),
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 			)
@@ -155,7 +160,7 @@ fun TimeGridSheet(
 					)
 			}
 			Box(
-				Modifier.fillMaxWidth().pointerInput(first, range, labelWidth) {
+				Modifier.fillMaxWidth().pointerInput(range, labelWidth) {
 					val labelPx = labelWidth.toPx()
 					val rowPx = (ROW_HEIGHT + GAP).toPx()
 					fun cellAt(o: Offset): Int {
@@ -166,13 +171,25 @@ fun TimeGridSheet(
 						else
 							(o.y / rowPx).toInt().coerceIn(0, TimeGrid.WINDOW_HOURS - 1)
 						val col = ((o.x - labelPx) / ((size.width - labelPx) / 12f)).toInt().coerceIn(0, 11)
-						return (first + row) * 12 + col
+						return (firstNow + row) * 12 + col
 					}
 					awaitEachGesture {
 						val down = awaitFirstDown()
-						/* the hour labels are left to the sheet's scroll: on a short screen (landscape) that column scrolls */
-						if (down.position.x < labelPx)
+						/* a drag on the hour labels scrolls the hours (issue #181) */
+						if (down.position.x < labelPx) {
+							down.consume()
+							val from = firstNow
+							/* the measured pitch of a row (a large font makes rows taller), else the nominal one */
+							val pitch = rowTops[1]?.first?.let { b -> rowTops[0]?.first?.let { a -> b - a } } ?: rowPx
+							while (true) {
+								val change = awaitPointerEvent().changes.firstOrNull() ?: break
+								if (!change.pressed)
+									break
+								change.consume()
+								first = TimeGrid.dragged(from, change.position.y - down.position.y, pitch)
+							}
 							return@awaitEachGesture
+						}
 						down.consume()
 						val anchor = cellAt(down.position)
 						var last = anchor

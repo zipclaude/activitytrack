@@ -840,4 +840,6 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="err_no_working_day">Kein Arbeitstag im Zeitraum: gib eine Uhrzeit an.</string>
   <string name="create_absence_hint_whole_days">Ohne Uhrzeit und ohne eingestellte Arbeitszeit: jeder Tag des Zeitraums, ganz.</string>
   <string name="agenda_whole_day">Ganztägig</string>
+  <!-- time grid: scrolling the hours (issue #181) -->
+  <string name="grid_hint_scroll">Zieh die Stunden links, um zu blättern.</string>
 </resources>

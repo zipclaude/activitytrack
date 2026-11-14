@@ -841,4 +841,6 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="err_no_working_day">Ningún día laborable en el rango: indica un horario.</string>
   <string name="create_absence_hint_whole_days">Sin horario y sin horario de trabajo configurado: cada día del rango, entero.</string>
   <string name="agenda_whole_day">Todo el día</string>
+  <!-- time grid: scrolling the hours (issue #181) -->
+  <string name="grid_hint_scroll">Arrastra las horas de la izquierda para desplazarte.</string>
 </resources>

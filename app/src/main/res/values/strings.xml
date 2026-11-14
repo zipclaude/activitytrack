@@ -852,4 +852,6 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="err_no_working_day">No working day in the range: give a time.</string>
   <string name="create_absence_hint_whole_days">Without a time and with no working hours set: each day of the range, whole.</string>
   <string name="agenda_whole_day">All day</string>
+  <!-- time grid: scrolling the hours (issue #181) -->
+  <string name="grid_hint_scroll">Drag the hours on the left to scroll.</string>
 </resources>
