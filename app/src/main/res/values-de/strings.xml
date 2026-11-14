@@ -850,4 +850,10 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="set_propose_navigation">Beim Start einer Reise die Navigation anbieten</string>
   <string name="set_propose_navigation_hint">Wenn eine geplante Tätigkeit als Reise beginnt und ihr Ort ein Standort des Kunden, der Firma oder das Zuhause ist, mehr als 20 km entfernt.</string>
   <string name="nav_ask">Navigation nach «%1$s» starten?</string>
+  <!-- sync screen: versions (issue #194) -->
+  <string name="sync_app_version">App</string>
+  <string name="sync_server_version">Server</string>
+  <string name="sync_schema">Protokoll %1$d</string>
+  <string name="sync_schema_min">mindestens</string>
+  <string name="sync_server_version_unknown">noch unbekannt: erscheint nach einer Synchronisierung</string>
 </resources>

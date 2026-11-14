@@ -862,4 +862,10 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="set_propose_navigation">Offer the navigator when a travel starts</string>
   <string name="set_propose_navigation_hint">When a planned activity starts as a travel and its place is a site of its client, of its company or home, more than 20 km away.</string>
   <string name="nav_ask">Start the navigator to «%1$s»?</string>
+  <!-- sync screen: versions (issue #194) -->
+  <string name="sync_app_version">App</string>
+  <string name="sync_server_version">Server</string>
+  <string name="sync_schema">protocol %1$d</string>
+  <string name="sync_schema_min">oldest</string>
+  <string name="sync_server_version_unknown">not known yet: shown after a sync</string>
 </resources>

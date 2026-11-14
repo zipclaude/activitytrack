@@ -851,4 +851,10 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="set_propose_navigation">Proponer el navegador al iniciar un viaje</string>
   <string name="set_propose_navigation_hint">Cuando una actividad planificada empieza como viaje y su lugar es una sede del cliente, de la empresa o casa, a más de 20 km.</string>
   <string name="nav_ask">¿Iniciar el navegador hacia «%1$s»?</string>
+  <!-- sync screen: versions (issue #194) -->
+  <string name="sync_app_version">App</string>
+  <string name="sync_server_version">Servidor</string>
+  <string name="sync_schema">protocolo %1$d</string>
+  <string name="sync_schema_min">mínimo</string>
+  <string name="sync_server_version_unknown">aún desconocida: aparece tras una sincronización</string>
 </resources>
