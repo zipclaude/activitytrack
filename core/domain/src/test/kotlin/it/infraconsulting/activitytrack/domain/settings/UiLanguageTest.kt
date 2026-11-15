@@ -1,39 +1,55 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.domain.settings
 
+import it.infraconsulting.activitytrack.domain.policy.Feature
 import it.infraconsulting.activitytrack.domain.policy.PolicyParser
 import it.infraconsulting.activitytrack.domain.policy.PolicyResult
+import it.infraconsulting.activitytrack.domain.policy.UiPolicy
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /* The interface language (issue #196): policy, else the user's choice, else the system's, else English. */
 class UiLanguageTest {
+	private val none = UiPolicy()
+
 	@Test
 	fun policyWinsOverTheUserWhichWinsOverTheSystem() {
-		assertEquals("de", UiLanguage.effective("de", "es"))
-		assertEquals("es", UiLanguage.effective(null, "es"))
-		assertNull(UiLanguage.effective(null, ""))
+		assertEquals("de", UiLanguage.effective(UiPolicy("de"), "es"))
+		assertEquals("es", UiLanguage.effective(none, "es"))
+		assertNull(UiLanguage.effective(none, ""))
+		assertNull(UiLanguage.forced(none))
+	}
+
+	/* a policy with a wrong language forces English: over the user's choice and over the system language */
+	@Test
+	fun aWrongPolicyLanguageForcesEnglish() {
+		val wrong = UiPolicy(languageInvalid = true)
+		assertEquals("en", UiLanguage.forced(wrong))
+		assertEquals("en", UiLanguage.effective(wrong, "es"))
+		assertEquals("en", UiLanguage.effective(wrong, ""))
+		assertEquals("en", UiLanguage.shown(wrong, "de", listOf("it")))
 	}
 
 	@Test
-	fun anInvalidValueIsIgnored() {
-		assertEquals("es", UiLanguage.effective("fr", "es"))
-		assertNull(UiLanguage.effective("fr", "xx"))
+	fun anUnsupportedUserValueIsIgnored() {
+		assertNull(UiLanguage.effective(none, "xx"))
 		assertEquals("", AppSettings(language = "fr").validated().language)
 		assertEquals("de", AppSettings(language = "de").validated().language)
 	}
 
 	@Test
 	fun anUnsupportedSystemLanguageGivesEnglish() {
-		assertEquals("en", UiLanguage.shown(null, "", listOf("fr-FR", "ja")))
-		assertEquals("en", UiLanguage.shown(null, "", emptyList()))
+		assertEquals("en", UiLanguage.shown(none, "", listOf("fr-FR", "ja")))
+		assertEquals("en", UiLanguage.shown(none, "", emptyList()))
 		/* the first of the system's languages the app has */
-		assertEquals("it", UiLanguage.shown(null, "", listOf("fr-FR", "it_IT", "de")))
-		assertEquals("de", UiLanguage.shown(null, "", listOf("DE-at")))
-		assertEquals("es", UiLanguage.shown(null, "es", listOf("fr")))
-		assertEquals("it", UiLanguage.shown("it", "es", listOf("fr")))
+		assertEquals("it", UiLanguage.shown(none, "", listOf("fr-FR", "it_IT", "de")))
+		assertEquals("de", UiLanguage.shown(none, "", listOf("DE-at")))
+		assertEquals("es", UiLanguage.shown(none, "es", listOf("fr")))
+		assertEquals("it", UiLanguage.shown(UiPolicy("it"), "es", listOf("fr")))
 	}
 
 	@Test
@@ -41,11 +57,29 @@ class UiLanguageTest {
 		assertEquals(PolicyParser.UI_LANGUAGES, UiLanguage.SUPPORTED.toSet())
 	}
 
+	/* the policy stays valid with a wrong ui.language: only the language is affected */
 	@Test
-	fun aPolicyWithAnInvalidLanguageIsRefused() {
-		fun parse(lang: String) = PolicyParser.parse("""{ "format": "activitytrack-policy", "schema": 1, "ui": { "language": $lang } }""")
-		assertIs<PolicyResult.Invalid>(parse("\"fr\""))
-		assertIs<PolicyResult.Invalid>(parse("5"))
-		assertEquals("de", assertIs<PolicyResult.Valid>(parse("\"de\"")).policy.ui.language)
+	fun aWrongLanguageDoesNotInvalidateThePolicy() {
+		fun ui(lang: String) = assertIs<PolicyResult.Valid>(
+			PolicyParser.parse("""{ "format": "activitytrack-policy", "schema": 1, "id": "acme", "features": { "planning": false }, "ui": { "language": $lang } }"""),
+			lang,
+		).policy.also { assertEquals("acme", it.id); assertFalse(it.enabled(Feature.PLANNING)) }.ui
+		assertEquals(UiPolicy("de"), ui("\"de\""))
+		for (wrong in listOf("\"fr\"", "\"\"", "\"DE\"", "5", "true", "[\"it\"]", "{}")) {
+			val u = ui(wrong)
+			assertNull(u.language, wrong)
+			assertTrue(u.languageInvalid, wrong)
+		}
+		/* absent or null: no language forced */
+		assertFalse(assertIs<PolicyResult.Valid>(PolicyParser.parse("""{ "format": "activitytrack-policy", "schema": 1, "ui": {} }""")).policy.ui.languageInvalid)
+		assertEquals(none, assertIs<PolicyResult.Valid>(PolicyParser.parse("""{ "format": "activitytrack-policy", "schema": 1 }""")).policy.ui)
+		assertEquals(none, ui("null"))
+	}
+
+	/* the rest of ui stays checked: an unknown key or a ui that is not an object are still errors */
+	@Test
+	fun theRestOfUiIsStillChecked() {
+		assertIs<PolicyResult.Invalid>(PolicyParser.parse("""{ "format": "activitytrack-policy", "schema": 1, "ui": { "lang": "it" } }"""))
+		assertIs<PolicyResult.Invalid>(PolicyParser.parse("""{ "format": "activitytrack-policy", "schema": 1, "ui": "it" }"""))
 	}
 }

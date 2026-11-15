@@ -79,7 +79,7 @@ class ActivityTrackApp : Application() {
 			}
 		}
 		/*
-		 * The interface language (issue #196): the policy's ui.language, else the user's choice (Settings, or the
+		 * The interface language (issue #196): the policy's ui.language (English when it is wrong), else the user's choice (Settings, or the
 		 * system's per-app language), else the system's; an unsupported system language gives the default English
 		 * resources. Applied through the per-app language API, so the system settings show it too.
 		 */
@@ -87,7 +87,7 @@ class ActivityTrackApp : Application() {
 		appScope.launch {
 			/* a language picked in the system settings before the app had its own setting becomes the user's choice */
 			container.settings.adoptLanguage(lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language.orEmpty())
-			combine(container.settings.settings.map { it.language }, container.policies.current.map { it.ui.language }, ::Pair)
+			combine(container.settings.settings.map { it.language }, container.policies.current.map { it.ui }, ::Pair)
 				.map { (user, policy) -> UiLanguage.effective(policy, user).orEmpty() }
 				.distinctUntilChanged()
 				.collect { tag ->
@@ -100,7 +100,7 @@ class ActivityTrackApp : Application() {
 			override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
 				val tag = lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language.orEmpty()
 				appScope.launch {
-					val forced = container.policies.current.value.ui.language?.takeIf { it in UiLanguage.SUPPORTED }
+					val forced = UiLanguage.forced(container.policies.current.value.ui)
 					if (forced != null) {
 						/* the policy wins over the system's setting too */
 						if (tag != forced)

@@ -102,4 +102,6 @@ data class IntegrationPolicy(
 
 data class UiPolicy(
 	val language: String? = null,			/* forced UI language, e.g. "it" */
+	/* ui.language is there but not a supported language: the rest of the policy holds, the language is English (issue #196) */
+	val languageInvalid: Boolean = false,
 )

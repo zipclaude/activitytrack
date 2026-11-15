@@ -104,10 +104,13 @@ object PolicyParser {
 				},
 				ui = obj(o["ui"], "ui")?.let { u ->
 					keys(u, "ui", setOf("language"))
-					UiPolicy(string(u["language"], "ui.language")?.also {
-						if (it !in UI_LANGUAGES)
-							error("ui.language", "must be one of ${UI_LANGUAGES.joinToString()}")
-					})
+					/* a wrong language does not invalidate the policy: it forces English (UiLanguage.forced) */
+					val l = u["language"]
+					val value = (l as? JsonPrimitive)?.takeIf { it.isString }?.content
+					UiPolicy(
+						language = value?.takeIf { it in UI_LANGUAGES },
+						languageInvalid = l != null && l !is JsonNull && (value == null || value !in UI_LANGUAGES),
+					)
 				} ?: UiPolicy(),
 			)
 		}

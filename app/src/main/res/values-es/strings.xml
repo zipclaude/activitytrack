@@ -402,6 +402,7 @@
   <string name="set_widget_todo_window">Widget de tareas: periodo</string>
   <string name="set_language">Idioma</string>
   <string name="language_system">Predeterminado del sistema</string>
+  <string name="language_forced_invalid">Forzado a inglés por una política con un valor no válido</string>
   <string name="display_normal">Normal</string>
   <string name="display_compact">Compacta</string>
   <string name="quick_company">Nueva empresa</string>

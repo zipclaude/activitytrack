@@ -413,6 +413,7 @@
   <string name="set_widget_todo_window">To-dos widget: window</string>
   <string name="set_language">Language</string>
   <string name="language_system">System default</string>
+  <string name="language_forced_invalid">Forced to English by a policy with an invalid value</string>
   <string name="display_normal">Normal</string>
   <string name="display_compact">Compact</string>
   <string name="quick_company">New company</string>

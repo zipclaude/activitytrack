@@ -306,7 +306,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 			when (section) {
 				SettingsSection.DISPLAY -> {
 					/* the system's, or one of ours, each named in its own language; a policy's ui.language wins and locks it (issue #196) */
-					val forcedLanguage = LocalPolicy.current.ui.language?.takeIf { it in UiLanguage.SUPPORTED }
+					val forcedLanguage = UiLanguage.forced(LocalPolicy.current.ui)
 					PolicySetting("language", forceLocked = forcedLanguage != null) {
 						ChoiceField(
 							stringResource(R.string.set_language),
@@ -315,6 +315,8 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 							},
 							forcedLanguage ?: language,
 						) { language = it }
+						if (LocalPolicy.current.ui.languageInvalid)
+							Text(stringResource(R.string.language_forced_invalid), style = MaterialTheme.typography.bodySmall)
 					}
 					PolicySetting("compactDisplay") {
 						ChoiceField(
