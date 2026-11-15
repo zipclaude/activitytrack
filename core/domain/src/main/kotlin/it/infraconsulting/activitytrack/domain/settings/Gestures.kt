@@ -77,6 +77,15 @@ object Gestures {
 		}
 	}
 
+	/*
+	 * The bin (issue #190, owner: "da una ripristina e dall'altra elimina
+	 * definitivamente"): whatever gestures are configured, the swipe toward
+	 * the start restores and the one toward the end deletes for good; when
+	 * the policy forbids deleting for good, both sides restore.
+	 */
+	fun binActions(toEnd: Boolean, canPurge: Boolean): List<TodoAction> =
+		listOf(if (toEnd && canPurge) TodoAction.PURGE else TodoAction.RESTORE)
+
 	private val BACK = setOf(TodoSwipe.POSTPONE_OR_IGNORE, TodoSwipe.POSTPONE, TodoSwipe.IGNORE)
 
 	/*

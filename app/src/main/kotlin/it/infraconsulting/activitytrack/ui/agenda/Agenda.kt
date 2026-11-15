@@ -549,7 +549,7 @@ private fun ListView(d: AgendaData, locale: Locale, onOpenEntry: (Long) -> Unit,
 					val snooze = swipes.todos.settings.collectAsState().value?.planSnoozeMin ?: 30
 					SwipeCard(
 						toStart = todoSwipeActions(t.todo, g.todoToStart, swipes.todos, snooze, swipes.onStartTodo, swipes.onReplan),
-						toEnd = todoSwipeActions(t.todo, g.todoToEnd, swipes.todos, snooze, swipes.onStartTodo, swipes.onReplan),
+						toEnd = todoSwipeActions(t.todo, g.todoToEnd, swipes.todos, snooze, swipes.onStartTodo, swipes.onReplan, toEnd = true),
 						fullSwipe = g.fullSwipe,
 						shape = RectangleShape,
 					) {

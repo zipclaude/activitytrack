@@ -67,4 +67,12 @@ class GesturesTest {
 		assertEquals(null, EntrySwipe.parse("nonsense"))
 		assertEquals(null, EntrySwipe.parse(null))
 	}
+
+	@Test
+	fun theBinRestoresOneWayAndDeletesTheOtherWhateverTheGestures() {
+		assertEquals(listOf(TodoAction.RESTORE), Gestures.binActions(toEnd = false, canPurge = true))
+		assertEquals(listOf(TodoAction.PURGE), Gestures.binActions(toEnd = true, canPurge = true))
+		/* deleting for good forbidden by the policy: both sides restore */
+		assertEquals(listOf(TodoAction.RESTORE), Gestures.binActions(toEnd = true, canPurge = false))
+	}
 }

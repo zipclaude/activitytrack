@@ -353,12 +353,18 @@ internal fun todoSwipeActions(
 	onReplan: (TimeEntryEntity) -> Unit,
 	/* asks before deleting [t] for good (the bin, issue #190); null = not offered */
 	onPurge: ((TimeEntryEntity) -> Unit)? = null,
+	/* the direction of the swipe: in the bin it decides restore or delete for good */
+	toEnd: Boolean = false,
 ): List<SwipeAction> {
 	val grey = MaterialTheme.colorScheme.outline
 	val policy = LocalPolicy.current
 	val canIgnore = policy.enabled(Feature.IGNORE_TODOS)
 	val canPurge = policy.enabled(purgeFeature(t))
-	return Gestures.todoActions(swipe, ignored = t.deletedUtcMs != null, planned = t.plan() != null, done = t.status == ActivityStatus.CLOSED)
+	val actions = if (t.deletedUtcMs != null && t.status != ActivityStatus.CLOSED)
+		Gestures.binActions(toEnd, canPurge && onPurge != null)
+	else
+		Gestures.todoActions(swipe, ignored = t.deletedUtcMs != null, planned = t.plan() != null, done = t.status == ActivityStatus.CLOSED)
+	return actions
 		.filter { canIgnore || (it != TodoAction.IGNORE && it != TodoAction.RESTORE) }
 		.filter { it != TodoAction.PURGE || canPurge }.mapNotNull { a ->
 		when (a) {
@@ -395,7 +401,7 @@ fun TodoSwipeCard(
 	val purge: (TimeEntryEntity) -> Unit = { vm.clearError(); purging = true }
 	SwipeCard(
 		toStart = todoSwipeActions(t, g.todoToStart, vm, snooze, onStart, onReplan, purge),
-		toEnd = todoSwipeActions(t, g.todoToEnd, vm, snooze, onStart, onReplan, purge),
+		toEnd = todoSwipeActions(t, g.todoToEnd, vm, snooze, onStart, onReplan, purge, toEnd = true),
 		fullSwipe = g.fullSwipe,
 		shape = CardDefaults.shape,
 	) { TodoCard(t, clientName, band, planned, onClick) }
