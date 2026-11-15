@@ -93,8 +93,11 @@ internal fun closedBoundary(window: Int, carryOverMin: Int, now: Instant, zone: 
  */
 enum class HomeShow { TODO, MISSING, DONE }
 
-/* The groups of the Home list, in this order. */
-enum class HomeSection { LATE, INCOMPLETE, TODAY, NEXT, EARLIER, NO_DATE }
+/*
+ * The groups of the Home list, in this order: the list is the time line, so what has no date sits
+ * between the next days and the earlier ones (issue #195), never after the done ones.
+ */
+enum class HomeSection { LATE, INCOMPLETE, TODAY, NEXT, NO_DATE, EARLIER }
 
 /* One row of the Home list: an activity and the state it shows. */
 internal data class HomeItem(val card: EntryCard, val displayed: Displayed) {

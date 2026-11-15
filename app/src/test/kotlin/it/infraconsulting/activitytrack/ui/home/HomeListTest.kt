@@ -89,12 +89,29 @@ class HomeListTest {
 			absences = listOf(absence(20, day, day)),
 		)
 		assertEquals(
-			listOf(HomeSection.LATE, HomeSection.INCOMPLETE, HomeSection.TODAY, HomeSection.NEXT, HomeSection.EARLIER, HomeSection.NO_DATE),
+			listOf(HomeSection.LATE, HomeSection.INCOMPLETE, HomeSection.TODAY, HomeSection.NEXT, HomeSection.NO_DATE, HomeSection.EARLIER),
 			all.map { it.first },
 		)
 		/* today: the absence of the day, then the to-dos by time, then what was done, newest first */
 		assertEquals(listOf("entry-20", "entry-2", "entry-11"), keys(all)[HomeSection.TODAY])
 		assertEquals(listOf("entry-12"), keys(all)[HomeSection.EARLIER])
+	}
+
+	/* issue #195: "show all": the undated activities sit between the next days and the earlier ones (the done), not after them */
+	@Test
+	fun undatedActivitiesSitBetweenNextAndEarlier() {
+		val all = sections(
+			todos = listOf(todo(1, day.plusDays(2), 9 * 60), todo(2)),
+			closed = listOf(closed(10, at(day.minusDays(2), 10), complete = true)),
+			window = 0,
+		)
+		assertEquals(listOf(HomeSection.NEXT, HomeSection.NO_DATE, HomeSection.EARLIER), all.map { it.first })
+		assertEquals(listOf("entry-2"), keys(all)[HomeSection.NO_DATE])
+		/* the display order is the declaration order of the sections */
+		assertEquals(
+			listOf(HomeSection.LATE, HomeSection.INCOMPLETE, HomeSection.TODAY, HomeSection.NEXT, HomeSection.NO_DATE, HomeSection.EARLIER),
+			HomeSection.entries,
+		)
 	}
 
 	@Test
