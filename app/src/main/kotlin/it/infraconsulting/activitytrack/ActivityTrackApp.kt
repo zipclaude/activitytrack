@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import it.infraconsulting.activitytrack.domain.settings.UiLanguage
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import android.app.Application
@@ -76,16 +78,38 @@ class ActivityTrackApp : Application() {
 				container.sync.canEditCentral = info == null || info.profile in it.infraconsulting.activitytrack.sync.SyncAccount.CENTRAL_EDITORS
 			}
 		}
-		/* a UI language forced by the policy (ui.language, issue #48) */
+		/*
+		 * The interface language (issue #196): the policy's ui.language, else the user's choice (Settings, or the
+		 * system's per-app language), else the system's; an unsupported system language gives the default English
+		 * resources. Applied through the per-app language API, so the system settings show it too.
+		 */
+		val lm = getSystemService(android.app.LocaleManager::class.java)
 		appScope.launch {
-			container.policies.current.map { it.ui.language }.distinctUntilChanged().collect { lang ->
-				if (lang != null) {
-					val lm = getSystemService(android.app.LocaleManager::class.java)
-					if (lm.applicationLocales.toLanguageTags() != lang)
-						lm.applicationLocales = android.os.LocaleList.forLanguageTags(lang)
+			/* a language picked in the system settings before the app had its own setting becomes the user's choice */
+			container.settings.adoptLanguage(lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language.orEmpty())
+			combine(container.settings.settings.map { it.language }, container.policies.current.map { it.ui.language }, ::Pair)
+				.map { (user, policy) -> UiLanguage.effective(policy, user).orEmpty() }
+				.distinctUntilChanged()
+				.collect { tag ->
+					if (lm.applicationLocales.toLanguageTags() != tag)
+						lm.applicationLocales = android.os.LocaleList.forLanguageTags(tag)
+				}
+		}
+		/* a language picked in the system settings is the user's choice, unless a policy forces one */
+		registerReceiver(object : android.content.BroadcastReceiver() {
+			override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+				val tag = lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language.orEmpty()
+				appScope.launch {
+					val forced = container.policies.current.value.ui.language?.takeIf { it in UiLanguage.SUPPORTED }
+					if (forced != null) {
+						/* the policy wins over the system's setting too */
+						if (tag != forced)
+							lm.applicationLocales = android.os.LocaleList.forLanguageTags(forced)
+					} else if (container.settings.current().language != tag)
+						container.settings.update { it.copy(language = tag) }
 				}
 			}
-		}
+		}, android.content.IntentFilter(android.content.Intent.ACTION_APPLICATION_LOCALE_CHANGED), android.content.Context.RECEIVER_NOT_EXPORTED)
 		/* a new policy.json in the data folder (issue #48) */
 		appScope.launch { it.infraconsulting.activitytrack.policy.PolicyLoader.check(this@ActivityTrackApp) }
 		/* the daily check of newer releases (SYNC.md §12.4), for an app not from a store */

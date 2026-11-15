@@ -93,7 +93,7 @@ the same CN too (`<name>.json.sig`).
 | `entries` | `{ "source": "free" \| "plannedOnly" }`: activities start anywhere, or only from a to-do activity (status TODO: planned or assigned, e.g. a management system's tickets); `"todosOnly"` (before 1.0) is read as `"plannedOnly"` |
 | `masterData` | `{ "source": "user" \| "importOnly" }`: companies, clients and contacts created in the app, or only by imports and plugins; with ActivityTrack Web the central master data count as imported (issue #115): `importOnly` = only central ones, imports and plugins |
 | `export` | `{ "formats": ["csv", "json", "xml"] }`: the export formats offered |
-| `ui` | `{ "language": "it" \| "en" \| "de" \| "es" }`: the app's language, forced |
+| `ui` | `{ "language": "it" \| "en" \| "de" \| "es" }`: the app's language, forced: it wins over the language chosen in Settings, which wins over the system's; an unsupported value makes the policy invalid |
 
 ## 4. Features
 

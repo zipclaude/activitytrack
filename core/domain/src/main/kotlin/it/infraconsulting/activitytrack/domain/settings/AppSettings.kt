@@ -46,6 +46,8 @@ data class AppSettings(
 	val rounding: ReportRounding = ReportRounding.DEFAULT,
 	/* speech recognition language, independent of the phone language (owner decision 2026-10-17) */
 	val dictationLanguage: String = "it-IT",
+	/* the app's language chosen by the user: "" = the system's, else one of UiLanguage.SUPPORTED (a policy's ui.language wins) */
+	val language: String = "",
 	/*
 	 * External calendar sync (M5): device calendar ids, valid on this phone
 	 * only (never exported). A company's calendar replaces the generic one.
@@ -182,6 +184,7 @@ data class AppSettings(
 		tiles = tiles.copy(endpoint = tiles.endpoint.trim()),
 		rounding = ReportRounding(rule(rounding.work), rule(rounding.travel), rule(rounding.pause)),
 		dictationLanguage = dictationLanguage.takeIf { it in DICTATION_LANGUAGES } ?: "it-IT",
+		language = language.takeIf { it in UiLanguage.SUPPORTED } ?: "",
 		workSampleMin = workSampleMin.takeIf { it in WORK_SAMPLE_MIN } ?: 5,
 		travelSampleSec = travelSampleSec.takeIf { it in TRAVEL_SAMPLE_SEC } ?: 60,
 	)

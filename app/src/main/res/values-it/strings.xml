@@ -400,6 +400,8 @@
   <string name="sec_display">Visualizzazione</string>
   <string name="set_display">Aspetto</string>
   <string name="set_widget_todo_window">Widget «Da fare»: intervallo</string>
+  <string name="set_language">Lingua</string>
+  <string name="language_system">Predefinita del sistema</string>
   <string name="display_normal">Normale</string>
   <string name="display_compact">Compatta</string>
   <string name="quick_company">Nuova azienda</string>

@@ -400,6 +400,8 @@
   <string name="sec_display">Visualización</string>
   <string name="set_display">Aspecto</string>
   <string name="set_widget_todo_window">Widget de tareas: periodo</string>
+  <string name="set_language">Idioma</string>
+  <string name="language_system">Predeterminado del sistema</string>
   <string name="display_normal">Normal</string>
   <string name="display_compact">Compacta</string>
   <string name="quick_company">Nueva empresa</string>

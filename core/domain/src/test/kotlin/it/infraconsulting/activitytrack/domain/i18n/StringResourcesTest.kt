@@ -71,6 +71,13 @@ class StringResourcesTest {
 		assertEquals((languages + "en").sorted(), config.sorted(), "res/xml/locales_config.xml")
 	}
 
+	/* the app's languages are the policy's (ui.language) and the settings' */
+	@Test
+	fun theLanguagesAreThoseOfThePolicyAndTheSettings() {
+		assertEquals((languages + "en").sorted(), it.infraconsulting.activitytrack.domain.settings.UiLanguage.SUPPORTED.sorted())
+		assertEquals((languages + "en").sorted(), it.infraconsulting.activitytrack.domain.policy.PolicyParser.UI_LANGUAGES.sorted())
+	}
+
 	@Test
 	fun noStringIsMissingOrStale() {
 		for (l in languages) {

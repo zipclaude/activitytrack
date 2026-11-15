@@ -71,14 +71,15 @@ fun canCreateMasterData(): Boolean = LocalPolicy.current.masterData == it.infrac
 /*
  * A setting the policy may fix (issue #48, owner answer 3): hidden ones
  * are not drawn; locked ones show their value greyed, not changeable,
- * with a padlock and "set by the policy".
+ * with a padlock and "set by the policy". [forceLocked]: locked by something
+ * else of the policy than the setting's own entry (the language: ui.language).
  */
 @Composable
-fun PolicySetting(key: String, content: @Composable () -> Unit) {
+fun PolicySetting(key: String, forceLocked: Boolean = false, content: @Composable () -> Unit) {
 	val p = LocalPolicy.current.settings[key]
 	if (p?.hidden == true)
 		return
-	if (p?.locked != true) {
+	if (p?.locked != true && !forceLocked) {
 		content()
 		return
 	}

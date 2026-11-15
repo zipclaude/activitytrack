@@ -399,6 +399,8 @@
   <string name="sec_display">Anzeige</string>
   <string name="set_display">Darstellung</string>
   <string name="set_widget_todo_window">Widget „Aufgaben“: Zeitraum</string>
+  <string name="set_language">Sprache</string>
+  <string name="language_system">Systemstandard</string>
   <string name="display_normal">Normal</string>
   <string name="display_compact">Kompakt</string>
   <string name="quick_company">Neue Firma</string>

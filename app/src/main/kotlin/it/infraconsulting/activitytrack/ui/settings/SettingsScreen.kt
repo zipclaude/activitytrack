@@ -54,6 +54,7 @@ import it.infraconsulting.activitytrack.domain.rounding.ReportRounding
 import it.infraconsulting.activitytrack.domain.rounding.RoundingMode
 import it.infraconsulting.activitytrack.domain.rounding.RoundingRule
 import it.infraconsulting.activitytrack.domain.settings.AppSettings
+import it.infraconsulting.activitytrack.domain.settings.UiLanguage
 import it.infraconsulting.activitytrack.domain.settings.OnlineService
 import it.infraconsulting.activitytrack.ui.appViewModel
 import it.infraconsulting.activitytrack.domain.update.UpdateSource
@@ -201,6 +202,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 	var tilesOn by remember { mutableStateOf(initial.tiles.enabled) }
 	var offlineMapsOn by remember { mutableStateOf(initial.offlineMapsEnabled) }
 	var dictation by remember { mutableStateOf(initial.dictationLanguage) }
+	var language by remember { mutableStateOf(initial.language) }
 	var trackMap by remember { mutableStateOf(initial.trackMapEnabled) }
 	var proposeNavigation by remember { mutableStateOf(initial.proposeNavigation) }
 	var workSample by remember { mutableStateOf(initial.workSampleMin) }
@@ -257,6 +259,7 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		tiles = OnlineService(tilesOn, text[F.TILES].orEmpty()),
 		offlineMapsEnabled = offlineMapsOn,
 		dictationLanguage = dictation,
+		language = language,
 		trackMapEnabled = trackMap,
 		proposeNavigation = proposeNavigation,
 		workSampleMin = workSample,
@@ -302,6 +305,17 @@ private fun SettingsForm(initial: AppSettings, vm: SettingsViewModel, section: S
 		) {
 			when (section) {
 				SettingsSection.DISPLAY -> {
+					/* the system's, or one of ours, each named in its own language; a policy's ui.language wins and locks it (issue #196) */
+					val forcedLanguage = LocalPolicy.current.ui.language?.takeIf { it in UiLanguage.SUPPORTED }
+					PolicySetting("language", forceLocked = forcedLanguage != null) {
+						ChoiceField(
+							stringResource(R.string.set_language),
+							listOf("" to stringResource(R.string.language_system)) + UiLanguage.SUPPORTED.map { tag ->
+								tag to java.util.Locale.forLanguageTag(tag).let { it.getDisplayLanguage(it).replaceFirstChar(Char::titlecase) }
+							},
+							forcedLanguage ?: language,
+						) { language = it }
+					}
 					PolicySetting("compactDisplay") {
 						ChoiceField(
 							stringResource(R.string.set_display),
