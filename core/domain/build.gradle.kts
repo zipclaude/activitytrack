@@ -30,8 +30,13 @@ dependencies {
 	testImplementation(libs.junit4)
 }
 
-/* tests read the published plugins and the docs (issue #48): changes there run them again */
+/*
+ * tests read the published plugins and the docs (issue #48), and the app's resources and sources
+ * (StringResourcesTest, issue #196): changes there run them again
+ */
 tasks.test {
 	inputs.dir(rootProject.file("plugins"))
 	inputs.dir(rootProject.file("docs"))
+	inputs.dir(rootProject.file("app/src"))
+	inputs.dir(rootProject.file("core/data/src"))
 }
