@@ -143,7 +143,15 @@ class StringResourcesTest {
 		.filter { it.isFile && it.extension in setOf("kt", "xml", "kts") && !(it.name == "strings.xml" && it.parentFile.name.startsWith("values")) }
 		.toList()
 
-	private fun unused(keys: Collection<String>, text: String) = keys.filter { !Regex("\\b" + Regex.escape(it) + "\\b").containsMatchIn(text) }.sorted()
+	/*
+	 * A use is a reference to the resource: R.string.x, R.plurals.x, R.array.x in the code, @string/x (@plurals/x,
+	 * @array/x) in the manifest and the other resources. The bare name does not count: "tags" or "priority" are
+	 * words of the code too. Nothing looks a string up by name (no getIdentifier).
+	 */
+	private fun unused(keys: Collection<String>, text: String): List<String> {
+		val used = Regex("(?:\\bR\\.(?:string|plurals|array)\\.|@(?:string|plurals|array)/)(\\w+)").findAll(text).map { it.groupValues[1] }.toSet()
+		return keys.filter { it !in used }.sorted()
+	}
 
 	/* a string nothing refers to is a leftover of a removed screen: remove it from every language */
 	@Test
@@ -158,6 +166,10 @@ class StringResourcesTest {
 		assertEquals(emptyList(), files.filter { it.name == "StringResourcesTest.kt" || "/src/test/" in it.invariantSeparatorsPath })
 		assertTrue(files.any { it.name == "HomeList.kt" } && files.any { it.name == "AndroidManifest.xml" })
 		assertEquals(listOf("no_such_string"), unused(listOf("nav_ask", "no_such_string"), "stringResource(R.string.nav_ask, x)"))
+		/* a word of the code is not a use, nor is a longer name that starts with it */
+		assertEquals(listOf("tags"), unused(listOf("tags", "tags_free"), "val tags = c.tags; Text(stringResource(R.string.tags_free))"))
+		assertEquals(emptyList(), unused(listOf("app_name", "export_done", "kinds"), "android:label=\"@string/app_name\" R.plurals.export_done R.array.kinds"))
+		assertTrue(sources().none { "getIdentifier" in it.readText() }, "a string looked up by name: count it as a use")
 	}
 
 	/* shared by the language and the English: names, units, and words that are the same */
