@@ -243,7 +243,7 @@ are written back at every read, so they cannot drift.
 | `roundingPauseMinimumMin` | minutes | 0–60 |
 | `gestureTodoToStart` | text | START, START_OR_DONE, POSTPONE_OR_IGNORE, POSTPONE, IGNORE, DONE, REPLAN, NONE |
 | `gestureTodoToEnd` | text | as above |
-| `gestureEntryToStart` | text | PAUSE_RESUME, STOP_OR_SUSPEND, STOP, SUSPEND, NONE |
+| `gestureEntryToStart` | text | PAUSE_RESUME, STOP, NONE |
 | `gestureEntryToEnd` | text | as above |
 | `gesturePastToStart` | text | COMPLETE, REOPEN, NONE (stopped entries on the Home list) |
 | `gesturePastToEnd` | text | as above |
