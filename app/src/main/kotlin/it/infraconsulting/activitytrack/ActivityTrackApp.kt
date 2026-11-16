@@ -86,7 +86,8 @@ class ActivityTrackApp : Application() {
 		val lm = getSystemService(android.app.LocaleManager::class.java)
 		appScope.launch {
 			/*
-			 * a language picked in the system settings before the app had its own setting becomes the user's choice;
+			 * a language picked in the system settings before the app had its own setting, or later while the app
+			 * was not running (the broadcast below reaches only a running app), becomes the user's choice;
 			 * the policy read from the database: `current` is still the app as shipped this early, and a language the
 			 * policy forced would be taken for the user's (and the user's applied for a moment at every start)
 			 */

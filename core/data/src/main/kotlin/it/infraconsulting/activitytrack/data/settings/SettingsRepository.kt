@@ -62,13 +62,16 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 	 * Once, at the first start with the language setting: the [system]'s per-app language becomes the user's
 	 * choice (UiLanguage.adopted; not under a policy that forces one, [ui]). A marker of its own says it was
 	 * done: every write stores the language, so the key being there says nothing.
+	 * At every later start a per-app language changed in the system settings while the app was not running
+	 * becomes the choice (UiLanguage.atStart): without this the app would put its stored one back.
 	 */
 	suspend fun adoptLanguage(system: String, ui: UiPolicy) {
 		store.edit { p ->
 			if (p[K.languageAdopted] != true) {
 				p[K.languageAdopted] = true
 				p[K.language] = UiLanguage.adopted(p[K.language].orEmpty(), system, ui)
-			}
+			} else
+				p[K.language] = UiLanguage.atStart(p[K.language].orEmpty(), system, ui)
 		}
 	}
 

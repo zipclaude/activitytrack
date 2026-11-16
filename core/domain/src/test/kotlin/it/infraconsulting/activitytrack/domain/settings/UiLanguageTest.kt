@@ -48,6 +48,22 @@ class UiLanguageTest {
 		assertEquals("es", UiLanguage.adopted("es", "de", UiPolicy("de")))
 	}
 
+	/* a later start: a per-app language changed in the system settings while the app was not running is the choice */
+	@Test
+	fun aSystemChoiceMadeWhileTheAppWasNotRunningIsKept() {
+		assertEquals("en", UiLanguage.atStart("it", "en", none))
+		assertEquals("en", UiLanguage.atStart("", "en", none))
+		/* put back to the system's language */
+		assertEquals("", UiLanguage.atStart("de", "", none))
+		assertEquals("de", UiLanguage.atStart("de", "de", none))
+		/* a language the app does not have is not a choice */
+		assertEquals("de", UiLanguage.atStart("de", "fr", none))
+		/* under a policy the per-app language is the policy's: the user's stored choice stays for when it goes */
+		assertEquals("it", UiLanguage.atStart("it", "de", UiPolicy("de")))
+		assertEquals("it", UiLanguage.atStart("it", "en", UiPolicy(languageInvalid = true)))
+		assertEquals("", UiLanguage.atStart("", "de", UiPolicy("de")))
+	}
+
 	@Test
 	fun anUnsupportedUserValueIsIgnored() {
 		assertNull(UiLanguage.effective(none, "xx"))

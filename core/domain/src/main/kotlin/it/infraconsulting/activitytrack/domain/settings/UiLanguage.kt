@@ -26,6 +26,18 @@ object UiLanguage {
 		else -> system.takeIf { it in SUPPORTED }.orEmpty()
 	}
 
+	/*
+	 * The user's choice at a later start of the app: the [system]'s per-app language when it differs from the
+	 * [stored] one. The app keeps the two equal while it runs, so a difference is a language picked (or put
+	 * back to the system's, "") in the system settings while the app was not running, when no broadcast
+	 * reaches it. Not while a policy forces a language: the per-app language is then the policy's.
+	 */
+	fun atStart(stored: String, system: String, ui: UiPolicy): String = when {
+		forced(ui) != null -> stored
+		system.isEmpty() || system in SUPPORTED -> system
+		else -> stored
+	}
+
 	/* the language tag to apply, or null to follow the system; the user's choice counts when it is supported */
 	fun effective(ui: UiPolicy, user: String): String? = forced(ui) ?: user.takeIf { it in SUPPORTED }
 
