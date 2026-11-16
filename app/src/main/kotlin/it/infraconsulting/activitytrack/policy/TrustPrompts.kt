@@ -18,7 +18,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -123,7 +122,6 @@ private fun TrustAlert(
 	onLater: () -> Unit,
 ) {
 	var full by remember(fingerprint) { mutableStateOf(false) }
-	val context = LocalContext.current
 	AlertDialog(
 		onDismissRequest = onLater,
 		properties = DialogProperties(dismissOnClickOutside = false),
@@ -136,7 +134,7 @@ private fun TrustAlert(
 					for (l in lines.take(MAX_LINES))
 						Text(l, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
 					if (lines.size > MAX_LINES)
-						Text(context.getString(R.string.policy_more_errors, lines.size - MAX_LINES), style = MaterialTheme.typography.bodySmall)
+						Text(stringResource(R.string.policy_more_errors, lines.size - MAX_LINES), style = MaterialTheme.typography.bodySmall)
 				}
 				Text(stringResource(R.string.trust_fingerprint), fontWeight = FontWeight.Bold)
 				SelectionContainer {

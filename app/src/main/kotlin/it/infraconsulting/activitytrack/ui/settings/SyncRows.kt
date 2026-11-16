@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack.ui.settings
 
+import androidx.compose.ui.platform.LocalResources
 import it.infraconsulting.activitytrack.domain.sync.WireVersion
 import android.Manifest
 import android.content.pm.ApplicationInfo
@@ -51,6 +52,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SyncRows() {
 	val context = LocalContext.current
+	val resources = LocalResources.current
 	val app = context.applicationContext as ActivityTrackApp
 	val account = app.syncAccount
 	val info by account.info.collectAsState()
@@ -97,7 +99,7 @@ fun SyncRows() {
 		if (granted) {
 			scanning = true
 		} else {
-			message = context.getString(R.string.sync_camera_denied)
+			message = resources.getString(R.string.sync_camera_denied)
 			failed = true
 		}
 	}
@@ -193,7 +195,7 @@ fun SyncRows() {
 					scope.launch {
 						try {
 							val done = account.pair(p)
-							message = context.getString(R.string.sync_paired_ok, done.org)
+							message = resources.getString(R.string.sync_paired_ok, done.org)
 							failed = false
 						} catch (e: PairException) {
 							message = errorText(e)
@@ -217,7 +219,7 @@ fun SyncRows() {
 					scope.launch {
 						/* never work: an activity the server never had, with real segments (issue #176) */
 						if (!app.container.sync.discard(pr.type, pr.uid)) {
-							message = context.getString(R.string.sync_discard_refused)
+							message = resources.getString(R.string.sync_discard_refused)
 							failed = true
 						}
 					}

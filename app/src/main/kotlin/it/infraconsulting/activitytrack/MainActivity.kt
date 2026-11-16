@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package it.infraconsulting.activitytrack
 
+import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
@@ -11,6 +12,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import it.infraconsulting.activitytrack.ui.common.Undo
@@ -224,6 +226,8 @@ private fun Navigator(deepLink: Screen?, consumeDeepLink: () -> Unit) {
 private fun UndoHost(modifier: Modifier) {
 	val host = remember { SnackbarHostState() }
 	val context = LocalContext.current
+	/* read at every event: the effect below outlives a change of language */
+	val resources by rememberUpdatedState(LocalResources.current)
 	val scope = rememberCoroutineScope()
 	val container = (context.applicationContext as ActivityTrackApp).container
 	LaunchedEffect(Unit) {
@@ -232,8 +236,8 @@ private fun UndoHost(modifier: Modifier) {
 	LaunchedEffect(Unit) {
 		Undo.events.collectLatest { e ->
 			val result = host.showSnackbar(
-				message = context.getString(e.message, e.arg),
-				actionLabel = context.getString(R.string.action_undo),
+				message = resources.getString(e.message, e.arg),
+				actionLabel = resources.getString(R.string.action_undo),
 				duration = SnackbarDuration.Long,
 			)
 			if (result == SnackbarResult.ActionPerformed)
