@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Shape of the Material Icons "close" (Google, Apache License 2.0). -->
 <!-- Optional date/time field: clear the value. Tinted by the text field. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

@@ -34,6 +34,7 @@ The whole workflow is in
 - English for code, comments, commits and docs; Italian with the maintainer.
   The UI is Italian first (strings en/it/de/es).
 - Indentation: tabs (`.editorconfig`).
+- A new file starts with the two SPDX lines of the others (`SPDX-License-Identifier`, `SPDX-FileCopyrightText`): see the README's License section.
 - **Never use npm**, not even to fetch tools.
 - Ask before guessing on ambiguous requirements; answers come as numbered
   lists matching numbered questions. The work queue is the GitLab issues.

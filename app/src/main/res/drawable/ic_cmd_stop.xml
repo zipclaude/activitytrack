@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Shape of the Material Icons "stop" (Google, Apache License 2.0). -->
 <!-- Stop: media stop. Tinted by the caller. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

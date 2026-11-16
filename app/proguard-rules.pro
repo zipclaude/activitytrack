@@ -1,1 +1,3 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 # Room and Compose ship their own consumer rules; nothing project-specific yet.

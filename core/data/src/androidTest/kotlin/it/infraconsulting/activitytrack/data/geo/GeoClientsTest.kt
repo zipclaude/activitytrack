@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> */
 package it.infraconsulting.activitytrack.data.geo
 
 import androidx.test.ext.junit.runners.AndroidJUnit4

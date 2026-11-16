@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 #
 # Writes docs/samples/activity-migration.json: the `before` tables of every case are written
 # here by hand, the `after` tables are produced by scripts/activity_migration.py and were

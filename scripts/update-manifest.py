@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 """
 The update manifest of ActivityTrack (docs/UPDATES.md, issue #1): assemble it from the GitLab releases of
 a tag in the six repositories, sign it with the release key, check it.

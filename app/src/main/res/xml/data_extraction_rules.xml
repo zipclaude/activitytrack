@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> -->
 <!-- No cloud backup and no device-to-device transfer: the daily SAF backup is
      the only copy of the data (DESIGN §8.2). -->
 <data-extraction-rules>

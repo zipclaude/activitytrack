@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> -->
 <!-- Debug builds only: plain http to a development ActivityTrack Web server on
      the computer (adb reverse → localhost, the emulator's 10.0.2.2), issue #113.
      Release builds keep the platform default: no cleartext. -->

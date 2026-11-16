@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 #
 # Invented sample data for the manual's screenshots (owner, 2026-10-19: no
 # real data in the documentation). Builds a Room database of the current

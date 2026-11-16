@@ -10,7 +10,7 @@ Documentation: [SPEC.md](SPEC.md) (functional rules),
 [docs/INSTRUCTIONS.md](docs/INSTRUCTIONS.md) (requirements and decisions),
 [docs/DESIGN.md](docs/DESIGN.md) (technical design).
 
-License: GPL-3.0-or-later (see [LICENSE](LICENSE)).
+License: GPL-3.0-or-later (see [LICENSE](LICENSE) and [License](#license) below).
 
 ## Layout
 
@@ -41,4 +41,19 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - Indentation: tabs (see `.editorconfig`); English for code, comments and docs.
 - Timestamps stored as UTC epoch milliseconds plus the IANA zone id;
   rounding is applied only in reports and exports.
-- Every source file starts with `SPDX-License-Identifier: GPL-3.0-or-later`.
+- Every file that can carry a comment starts with `SPDX-License-Identifier` and `SPDX-FileCopyrightText`
+  (see [License](#license)).
+
+## License
+
+Copyright © 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>.
+
+ActivityTrack is free software under the GNU General Public License, version 3 or (at your option) any later version (`GPL-3.0-or-later`, text in [LICENSE](LICENSE)), without any warranty. Every file that can carry a comment starts with its `SPDX-License-Identifier` and `SPDX-FileCopyrightText` lines; the others (JSON, test data, images) are under the same licence.
+
+What comes from other authors keeps its licence:
+
+- the icons in `app/src/main/res/drawable` marked `Apache-2.0` have the shape of Material Icons (Google);
+- `gradlew`, `gradlew.bat` and `gradle/wrapper` are Gradle's (Apache-2.0);
+- the Noto Sans glyphs in `app/src/main/assets/fonts` are under the SIL Open Font License 1.1 (`OFL.txt`).
+
+The APK also holds the libraries the application is built with (AndroidX, Kotlin, ZXing, MapLibre Native): `app/src/main/assets/licenses/THIRD-PARTY.txt` lists them, the licence texts are beside it, and the screen **More → About and licences** shows them. A new library goes into that list (`LicenceNoticesTest` checks it).

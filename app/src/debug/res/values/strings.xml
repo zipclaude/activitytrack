@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> -->
 <!--
   Debug build (installed with adb for device tests): its own name and data
   folder, so it coexists with the release from GitLab (owner, 2026-10-18).

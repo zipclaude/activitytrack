@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Shape of the Material Icons "priority_high" (Google, Apache License 2.0). -->
 <!-- Activity state LATE: an exclamation mark (ACTIVITY-MODEL.md 2.2). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

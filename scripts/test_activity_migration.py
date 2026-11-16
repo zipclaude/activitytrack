@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 # Runs docs/samples/activity-migration.json through scripts/activity_migration.py:
 #   python3 -I -m unittest        (from scripts/)    or    python3 -I scripts/test_activity_migration.py
 

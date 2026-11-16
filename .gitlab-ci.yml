@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 # CI of ActivityTrack on GitLab (free plan: the shared runners' minutes are limited,
 # so no pipeline starts on its own, except the one of a merge request into next, see workflow
 # below: "Run pipeline" by hand or the pipelines API, on a branch or on a tag). A pipeline run on

@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 """The release order of update-manifest.py must be the app's (UpdateCheckTest.kt) and the PC library's.
 
 python3 -I scripts/test_update_manifest.py

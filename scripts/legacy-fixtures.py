@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 #
 # Old-version databases and backups for the device / restore tests of the 1.0 migration
 # (docs/ACTIVITY-MODEL.md 6.1): the cases of docs/samples/activity-migration.json loaded

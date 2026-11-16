@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 #
 # Makes offline map files for a phone without ActivityTrack Web (issue #155,
 # docs/OFFLINE-MAPS.md): copy them into the `maps` folder of the data folder and

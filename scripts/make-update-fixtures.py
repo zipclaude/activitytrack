@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 """
 The TEST keys and manifests of core/domain/src/test/resources/update (issue #1): an app key (RSA,
 self-signed), a server key (EC, self-signed), a CA with two EC signers ("ACME, Inc. Updates", "Other

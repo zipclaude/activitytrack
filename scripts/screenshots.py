@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 #
 # Screenshots of the manual (owner, 2026-10-19), from the debug app on a
 # connected phone, with invented sample data and the app language of each

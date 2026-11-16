@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 """Reference implementation of the ActivityTrack 1.0 data migration (DB 21 -> 22).
 
 Spec: docs/ACTIVITY-MODEL.md section 6 (steps 1-5), 3.1 (absence segments), 5 (priority).

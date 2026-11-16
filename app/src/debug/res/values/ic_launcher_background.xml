@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> -->
 <!-- Debug build: orange launcher icon, told apart from the release at a glance (owner, 2026-10-18). -->
 <resources>
   <color name="ic_launcher_background">#E65100</color>

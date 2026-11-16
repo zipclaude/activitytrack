@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it>
 # Versions verified against official release pages on 2026-10-15
 # (androidx.test on 2026-10-16).
 [versions]

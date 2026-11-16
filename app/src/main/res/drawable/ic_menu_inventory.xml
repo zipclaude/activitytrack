@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- Menu icon (Material Icons "inventory_2", Apache License 2.0); tinted by the row or button. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
