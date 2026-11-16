@@ -627,7 +627,7 @@ Inviate: %5$d, aggiornate: %6$d, cancellate: %7$d</string>
   <string name="sync_intro">Associa il telefono a un server ActivityTrack Web: i dati restano sincronizzati nei due sensi e puoi lavorare anche dal browser.</string>
   <string name="sync_scan">Inquadra il codice QR</string>
   <string name="sync_paste">Incolla il collegamento</string>
-  <string name="sync_scan_hint">Inquadra il codice QR della pagina web (Telefoni → Associa un telefono).</string>
+  <string name="sync_scan_hint">Inquadra il codice QR della pagina web (Dispositivi → Associa un dispositivo).</string>
   <string name="sync_camera_denied">Per leggere il codice serve la fotocamera; in alternativa incolla il collegamento.</string>
   <string name="sync_confirm_title">Associare a questo server?</string>
   <string name="sync_confirm_replace">Ora il telefono è associato a %1$s: quell\'associazione termina.</string>

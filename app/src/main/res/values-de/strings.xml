@@ -626,7 +626,7 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_intro">Kopple dieses Telefon mit einem ActivityTrack-Web-Server: Die Daten bleiben in beide Richtungen synchron, und du kannst auch im Browser arbeiten.</string>
   <string name="sync_scan">QR-Code scannen</string>
   <string name="sync_paste">Link einfügen</string>
-  <string name="sync_scan_hint">Richte die Kamera auf den QR-Code der Webseite (Telefone → Telefon koppeln).</string>
+  <string name="sync_scan_hint">Richte die Kamera auf den QR-Code der Webseite (Geräte → Gerät koppeln).</string>
   <string name="sync_camera_denied">Zum Lesen des Codes wird die Kamera benötigt; alternativ den Link einfügen.</string>
   <string name="sync_confirm_title">Mit diesem Server koppeln?</string>
   <string name="sync_confirm_replace">Das Telefon ist mit %1$s gekoppelt: Diese Kopplung endet.</string>

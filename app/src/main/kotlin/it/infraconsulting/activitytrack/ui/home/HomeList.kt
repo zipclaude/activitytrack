@@ -134,7 +134,7 @@ private val DEFAULT_SHOW = setOf(HomeShow.TODO, HomeShow.MISSING)
 
 private fun showLabel(s: HomeShow): Int = when (s) {
 	HomeShow.TODO -> R.string.home_show_todo
-	HomeShow.MISSING -> R.string.state_incomplete
+	HomeShow.MISSING -> R.string.home_sec_incomplete
 	HomeShow.DONE -> R.string.home_tab_closed
 }
 

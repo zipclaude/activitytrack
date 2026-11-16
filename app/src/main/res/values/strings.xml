@@ -638,7 +638,7 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="sync_intro">Pair this phone with an ActivityTrack Web server: the data stay in sync both ways, and you can also work from the browser.</string>
   <string name="sync_scan">Scan the QR code</string>
   <string name="sync_paste">Paste the link</string>
-  <string name="sync_scan_hint">Point at the QR code on the web page (Phones → Pair a phone).</string>
+  <string name="sync_scan_hint">Point at the QR code on the web page (Devices → Pair a device).</string>
   <string name="sync_camera_denied">The camera is needed to read the code; you can paste the link instead.</string>
   <string name="sync_confirm_title">Pair with this server?</string>
   <string name="sync_confirm_replace">The phone is now paired with %1$s: that pairing ends.</string>

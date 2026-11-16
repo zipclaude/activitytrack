@@ -627,7 +627,7 @@ Enviadas: %5$d, actualizadas: %6$d, borradas: %7$d</string>
   <string name="sync_intro">Vincula este teléfono a un servidor ActivityTrack Web: los datos se mantienen sincronizados en ambos sentidos y también puedes trabajar desde el navegador.</string>
   <string name="sync_scan">Escanear el código QR</string>
   <string name="sync_paste">Pegar el enlace</string>
-  <string name="sync_scan_hint">Apunta al código QR de la página web (Teléfonos → Vincular un teléfono).</string>
+  <string name="sync_scan_hint">Apunta al código QR de la página web (Dispositivos → Vincular un dispositivo).</string>
   <string name="sync_camera_denied">Para leer el código se necesita la cámara; también puedes pegar el enlace.</string>
   <string name="sync_confirm_title">¿Vincular con este servidor?</string>
   <string name="sync_confirm_replace">El teléfono está vinculado a %1$s: esa vinculación termina.</string>
