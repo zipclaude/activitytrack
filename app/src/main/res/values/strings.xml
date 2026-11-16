@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> -->
 <resources>
   <string name="app_name" translatable="false">ActivityTrack</string>
   <!-- suggested data folder; the debug build uses its own (coexisting installs) -->
@@ -875,4 +877,9 @@ Sent: %5$d, updated: %6$d, deleted: %7$d</string>
   <string name="sync_schema">protocol %1$d</string>
   <string name="sync_schema_min">oldest</string>
   <string name="sync_server_version_unknown">not known yet: shown after a sync</string>
+  <string name="about_title">About and licences</string>
+  <string name="about_licence">Free software: you may use, study, share and change it under the GNU General Public License, version 3 or later. It comes without any warranty.</string>
+  <string name="about_source">Source code</string>
+  <string name="about_licences">Licences</string>
+  <string name="about_third_party">Components of other authors</string>
 </resources>

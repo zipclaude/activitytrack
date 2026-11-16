@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> */
 package it.infraconsulting.activitytrack.ui
 
 import androidx.compose.runtime.Composable
@@ -54,6 +55,8 @@ sealed interface Screen {
 	data object Todos : Screen
 	/* swipe gestures (M10) */
 	data object Gestures : Screen
+	/* about and licences (issue #198) */
+	data object About : Screen
 	/* start flow pre-filled from a to-do */
 	data class StartFromTodo(val todoId: Long) : Screen
 	/* to-dos with one open for editing (re-plan from the reminder) */
@@ -84,7 +87,7 @@ sealed interface Screen {
 	companion object {
 		/* lazy: an eager map would read the data objects during Screen's own class init (null cycle) */
 		private val objects by lazy {
-			listOf(Home, Agenda, More, Start, Day, Export, Tracks, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures, Contacts, Materials)
+			listOf(Home, Agenda, More, Start, Day, Export, Tracks, Settings, MasterData, Companies, Clients, Roles, Presets, Places, Schedule, DaysOff, QuickExpense, Todos, Gestures, About, Contacts, Materials)
 				.associateBy { it.key() }
 		}
 

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> -->
 <resources>
   <string name="ch_ongoing">Laufende Tätigkeiten</string>
   <string name="ch_confirm">Tätigkeitsbestätigung</string>
@@ -863,4 +865,9 @@ Gesendet: %5$d, aktualisiert: %6$d, gelöscht: %7$d</string>
   <string name="sync_schema">Protokoll %1$d</string>
   <string name="sync_schema_min">mindestens</string>
   <string name="sync_server_version_unknown">noch unbekannt: erscheint nach einer Synchronisierung</string>
+  <string name="about_title">Info und Lizenzen</string>
+  <string name="about_licence">Freie Software: Du darfst sie unter der GNU General Public License, Version 3 oder später, nutzen, untersuchen, weitergeben und ändern. Sie wird ohne jede Gewährleistung bereitgestellt.</string>
+  <string name="about_source">Quellcode</string>
+  <string name="about_licences">Lizenzen</string>
+  <string name="about_third_party">Komponenten anderer Autoren</string>
 </resources>

@@ -42,6 +42,8 @@ until the release (details in docs/ACTIVITY-MODEL.md).
 - Priority 0–5 with labels (Nessuna, Bassa, Media, Alta, Urgente, Emergenza) in a drop-down.
 - A to-do's plan (day, time, duration) and due date on the activity, with its reminder; "Pianifica" from the start of a to-do.
 - Restoring a backup of any earlier version migrates it as an upgrade does.
+- More → "About and licences": the version, the copyright, the licence of the app and, with their
+  texts, the licences of the libraries, icons and fonts in the package (#198).
 
 ### Behaviour
 

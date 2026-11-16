@@ -1,0 +1,81 @@
+ActivityTrack: components of other authors in this application
+
+ActivityTrack itself is Copyright (C) 2026 Flavio Visentin
+<flavio-activitytrack@infraconsulting.it> and is free software under the GNU
+General Public License, version 3 or (at your option) any later version; its
+source code is at https://gitlab.com/activitytrack/activitytrack
+
+The application package also contains the components below, each under its
+own licence. The texts of the licences are in this same folder of the
+application (assets/licenses, assets/fonts) and on the screen "About and
+licences".
+
+
+AndroidX (Jetpack): Core, Activity, Lifecycle, Compose, Material 3, Room,
+SQLite, WorkManager, DataStore, Glance, CameraX, Media3 and the libraries
+they need
+  Copyright The Android Open Source Project
+  Apache License 2.0 (Apache-2.0.txt)
+  https://android.googlesource.com/platform/frameworks/support
+
+Kotlin standard library, kotlinx.coroutines, kotlinx.serialization,
+JetBrains annotations
+  Copyright JetBrains s.r.o. and Kotlin Programming Language contributors
+  Apache License 2.0 (Apache-2.0.txt)
+  https://github.com/JetBrains/kotlin  https://github.com/Kotlin
+
+ZXing core (the reader of the pairing QR code)
+  Copyright ZXing authors
+  Apache License 2.0 (Apache-2.0.txt)
+  https://github.com/zxing/zxing
+
+MapLibre Native for Android (the maps), with its geojson, turf and gestures
+libraries
+  Copyright MapLibre contributors, MapTiler.com, Mapbox
+  BSD 2-Clause License; the libraries it contains under their own licences
+  (MapLibre-Native-Android.md, as published by MapLibre)
+  https://github.com/maplibre/maplibre-native
+
+Libraries the ones above bring with them: Guava, Gson, Dagger, Error Prone
+annotations, J2ObjC annotations, AutoValue annotations (Google); OkHttp, Okio
+(Square); Timber (Jake Wharton); JSR 305 annotations; javax.inject,
+jakarta.inject; JSpecify
+  Copyright their authors
+  Apache License 2.0 (Apache-2.0.txt)
+
+Checker Framework qualifiers
+  Copyright 2004-present by the Checker Framework developers
+  MIT License:
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+
+Material Icons (part of the icons: the files in res/drawable that say so)
+  Google
+  Apache License 2.0 (Apache-2.0.txt)
+  https://github.com/google/material-design-icons
+
+Noto Sans (the glyphs of the place names on the offline map)
+  Copyright 2022 The Noto Project Authors (https://github.com/notofonts)
+  SIL Open Font License 1.1 (assets/fonts/OFL.txt)
+  Glyph files from https://github.com/protomaps/basemaps-assets
+
+Map data, not in the package but shown by the application:
+  (C) OpenStreetMap contributors, Open Database License
+  https://www.openstreetmap.org/copyright
+  Offline basemaps: Protomaps, https://protomaps.com

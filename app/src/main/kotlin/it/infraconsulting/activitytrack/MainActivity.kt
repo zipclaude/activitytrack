@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> */
 package it.infraconsulting.activitytrack
 
 import androidx.compose.ui.platform.LocalResources
@@ -80,6 +81,7 @@ import it.infraconsulting.activitytrack.ui.masterdata.ScheduleScreen
 import it.infraconsulting.activitytrack.ui.rememberBackStack
 import it.infraconsulting.activitytrack.ui.report.DayScreen
 import it.infraconsulting.activitytrack.ui.report.ExportScreen
+import it.infraconsulting.activitytrack.ui.settings.AboutScreen
 import it.infraconsulting.activitytrack.ui.settings.GesturesScreen
 import it.infraconsulting.activitytrack.ui.settings.SettingsScreen
 import it.infraconsulting.activitytrack.ui.settings.SettingsSection
@@ -321,6 +323,7 @@ private fun Destination(top: Screen, back: () -> Unit, open: (Screen) -> Unit, s
 		Screen.Settings -> SettingsScreen(back, onOpen = open)
 		is Screen.SettingsPage -> SettingsScreen(back, SettingsSection.entries.firstOrNull { it.name == top.name } ?: SettingsSection.DISPLAY)
 		Screen.Gestures -> GesturesScreen(back)
+		Screen.About -> AboutScreen(back)
 		Screen.MasterData -> MasterDataScreen(back, open)
 		Screen.Companies -> CompaniesScreen(back) { open(Screen.Company(it)) }
 		is Screen.Company -> CompanyScreen(top.id, back)

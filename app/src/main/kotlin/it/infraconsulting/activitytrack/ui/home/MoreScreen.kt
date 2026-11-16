@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-FileCopyrightText: 2026 Flavio Visentin <flavio-activitytrack@infraconsulting.it> */
 package it.infraconsulting.activitytrack.ui.home
 
 import it.infraconsulting.activitytrack.ui.common.LocalPolicy
@@ -28,6 +29,7 @@ fun MoreScreen(onOpen: (Screen) -> Unit) {
 				Triple(Screen.Tracks, R.string.track_title, R.drawable.ic_menu_place).takeIf { policy.enabled(Feature.LOCATION) },
 				Triple(Screen.MasterData, R.string.md_title, R.drawable.ic_menu_folder),
 				Triple(Screen.Settings, R.string.settings_title, R.drawable.ic_menu_settings),
+				Triple(Screen.About, R.string.about_title, R.drawable.ic_menu_info),
 			)
 			items(rows) { (screen, label, icon) -> ClickableRow(stringResource(label), icon = icon) { onOpen(screen) } }
 		}
