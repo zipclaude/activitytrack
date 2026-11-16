@@ -180,7 +180,7 @@ class StringResourcesTest {
 			"set_endpoint", "cmd_stop", "action_no", "att_file", "field_km", "ref_ticket", "ref_url", "ref_uuid", "nav_home", "nav_agenda",
 			"nav_report", "action_ok", "home_filter_tag", "color_lime", "color_magenta", "order_alpha", "todo_window_24h", "short_file",
 			"backup_section", "contact_email", "ch_policy", "trust_policy_name", "sync_server", "sync_rec_other", "tag_edit", "sample_min",
-			"sample_sec", "offline_map_item", "sync_app_version", "sync_server_version",
+			"sample_sec", "offline_map_item", "sync_app_version", "sync_server_version", "home_sec_incomplete",
 		),
 		"de" to listOf(
 			"field_name", "field_radius", "field_text", "round_minimum", "cmd_pause", "field_km", "ref_ticket", "ref_url", "ref_uuid",

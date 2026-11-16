@@ -204,7 +204,7 @@ private fun CompanyChip(
 internal fun sectionLabel(s: HomeSection): String = stringResource(
 	when (s) {
 		HomeSection.LATE -> R.string.state_late
-		HomeSection.INCOMPLETE -> R.string.state_incomplete
+		HomeSection.INCOMPLETE -> R.string.home_sec_incomplete
 		HomeSection.TODAY -> R.string.day_today
 		HomeSection.NEXT -> R.string.home_sec_next
 		HomeSection.EARLIER -> R.string.home_sec_earlier

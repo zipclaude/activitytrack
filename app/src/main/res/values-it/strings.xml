@@ -367,6 +367,7 @@
   <string name="home_show_all">Tutti</string>
   <string name="home_show_only_todo">Solo da fare</string>
   <string name="home_show_only_done">Solo fatte</string>
+  <string name="home_sec_incomplete">Incomplete</string>
   <string name="home_sec_next">Prossimi giorni</string>
   <string name="home_sec_earlier">Giorni precedenti</string>
   <string name="home_list_empty">Niente da mostrare con questi filtri</string>

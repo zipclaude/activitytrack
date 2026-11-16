@@ -366,6 +366,7 @@
   <string name="home_show_all">Alle</string>
   <string name="home_show_only_todo">Nur Aufgaben</string>
   <string name="home_show_only_done">Nur erledigt</string>
+  <string name="home_sec_incomplete">Unvollständig</string>
   <string name="home_sec_next">Nächste Tage</string>
   <string name="home_sec_earlier">Früher</string>
   <string name="home_list_empty">Nichts mit diesen Filtern</string>

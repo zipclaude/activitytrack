@@ -367,6 +367,7 @@
   <string name="home_show_all">Todos</string>
   <string name="home_show_only_todo">Solo pendientes</string>
   <string name="home_show_only_done">Solo hechas</string>
+  <string name="home_sec_incomplete">Incompletas</string>
   <string name="home_sec_next">Próximos días</string>
   <string name="home_sec_earlier">Anteriores</string>
   <string name="home_list_empty">Nada que mostrar con estos filtros</string>

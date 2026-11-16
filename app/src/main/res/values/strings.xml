@@ -378,6 +378,7 @@
   <string name="home_show_all">All</string>
   <string name="home_show_only_todo">Only to-dos</string>
   <string name="home_show_only_done">Only done</string>
+  <string name="home_sec_incomplete">Incomplete</string>
   <string name="home_sec_next">Next days</string>
   <string name="home_sec_earlier">Earlier</string>
   <string name="home_list_empty">Nothing to show with these filters</string>
