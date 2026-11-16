@@ -134,17 +134,30 @@ class StringResourcesTest {
 		}
 	}
 
+	/*
+	 * The files where a use of a string counts: the sources and resources of the app, not the tests (this
+	 * file names the strings in its lists below, and a string only a test names is unused) nor the strings.
+	 */
+	private fun sources(): List<File> = File("../..").walkTopDown()
+		.onEnter { it.name !in setOf("build", ".git", ".gradle", ".claude", "node_modules", "test", "androidTest") }
+		.filter { it.isFile && it.extension in setOf("kt", "xml", "kts") && !(it.name == "strings.xml" && it.parentFile.name.startsWith("values")) }
+		.toList()
+
+	private fun unused(keys: Collection<String>, text: String) = keys.filter { !Regex("\\b" + Regex.escape(it) + "\\b").containsMatchIn(text) }.sorted()
+
 	/* a string nothing refers to is a leftover of a removed screen: remove it from every language */
 	@Test
 	fun everyStringIsUsed() {
-		val code = StringBuilder()
-		File("../..").walkTopDown()
-			.onEnter { it.name != "build" && it.name != ".git" && it.name != ".gradle" && it.name != ".claude" && it.name != "node_modules" }
-			.filter { it.isFile && (it.extension == "kt" || it.extension == "xml" || it.extension == "kts") && !(it.name == "strings.xml" && it.parentFile.name.startsWith("values")) }
-			.forEach { code.append(it.readText()).append('\n') }
-		val text = code.toString()
-		val unused = base.keys.filter { !Regex("\\b" + Regex.escape(it) + "\\b").containsMatchIn(text) }
-		assertEquals(emptyList(), unused.sorted())
+		assertEquals(emptyList(), unused(base.keys, sources().joinToString("\n") { it.readText() }))
+	}
+
+	/* the check itself: no test file is scanned (the lists of this one would make their strings used), the app's code is */
+	@Test
+	fun theUnusedCheckDoesNotReadTheTests() {
+		val files = sources()
+		assertEquals(emptyList(), files.filter { it.name == "StringResourcesTest.kt" || "/src/test/" in it.invariantSeparatorsPath })
+		assertTrue(files.any { it.name == "HomeList.kt" } && files.any { it.name == "AndroidManifest.xml" })
+		assertEquals(listOf("no_such_string"), unused(listOf("nav_ask", "no_such_string"), "stringResource(R.string.nav_ask, x)"))
 	}
 
 	/* shared by the language and the English: names, units, and words that are the same */
