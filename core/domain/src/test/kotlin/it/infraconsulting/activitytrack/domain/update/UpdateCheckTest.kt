@@ -29,6 +29,12 @@ class UpdateCheckTest {
 	}
 
 	@Test
+	fun aReleaseCandidateFollowsTheBetasAndPrecedesItsRelease() {
+		val ordered = listOf("1.0.0-alfa-1", "1.0.0-beta-3", "1.0.0-beta-10", "1.0.0-rc-1", "1.0.0-rc-2", "1.0.0-rc-10", "1.0.0", "1.0.1-rc-1", "1.0.1")
+		assertEquals(ordered, ordered.reversed().sortedWith { a, b -> Versions.compare(a, b) })
+	}
+
+	@Test
 	fun versionSchemeOfTheWorkflow() {
 		/* a security patch has a fourth number; betas are -beta-N, compared by number; a beta precedes its release */
 		val ordered = listOf("0.9.9", "0.9.9.1", "0.9.9.2", "0.9.10-beta-1", "0.9.10-beta-2", "0.9.10-beta-10", "0.9.10", "0.9.10.1", "0.10.0")

@@ -31,6 +31,10 @@ class VersionOrderTests(unittest.TestCase):
     def test_a_number_sorts_before_a_word_like_in_the_app(self):
         self.assertOrdered(["1.0.0-1", "1.0.0-beta", "1.0.0"])
 
+    def test_a_release_candidate_follows_the_betas_and_precedes_its_release(self):
+        self.assertOrdered(["1.0.0-alfa-1", "1.0.0-beta-3", "1.0.0-beta-10", "1.0.0-rc-1", "1.0.0-rc-2", "1.0.0-rc-10", "1.0.0", "1.0.1-rc-1", "1.0.1"])
+        self.assertEqual("beta", um.channel_of("1.0.0-rc-1"))
+
     def test_channels(self):
         self.assertEqual(["prod", "beta", "test", "dev"],
                          [um.channel_of(v) for v in ("0.9.10", "0.9.10-beta-1", "0.9.10-test-1", "0.9.10-dev.2")])
