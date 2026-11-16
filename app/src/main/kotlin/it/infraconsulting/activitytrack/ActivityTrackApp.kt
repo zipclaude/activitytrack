@@ -85,9 +85,14 @@ class ActivityTrackApp : Application() {
 		 */
 		val lm = getSystemService(android.app.LocaleManager::class.java)
 		appScope.launch {
-			/* a language picked in the system settings before the app had its own setting becomes the user's choice */
-			container.settings.adoptLanguage(lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language.orEmpty())
-			combine(container.settings.settings.map { it.language }, container.policies.current.map { it.ui }, ::Pair)
+			/*
+			 * a language picked in the system settings before the app had its own setting becomes the user's choice;
+			 * the policy read from the database: `current` is still the app as shipped this early, and a language the
+			 * policy forced would be taken for the user's (and the user's applied for a moment at every start)
+			 */
+			val ui = container.policies.now().ui
+			container.settings.adoptLanguage(lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language.orEmpty(), ui)
+			combine(container.settings.settings.map { it.language }, container.policies.stored.map { it.ui }, ::Pair)
 				.map { (user, policy) -> UiLanguage.effective(policy, user).orEmpty() }
 				.distinctUntilChanged()
 				.collect { tag ->
@@ -100,7 +105,7 @@ class ActivityTrackApp : Application() {
 			override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
 				val tag = lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language.orEmpty()
 				appScope.launch {
-					val forced = UiLanguage.forced(container.policies.current.value.ui)
+					val forced = UiLanguage.forced(container.policies.now().ui)
 					if (forced != null) {
 						/* the policy wins over the system's setting too */
 						if (tag != forced)

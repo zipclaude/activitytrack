@@ -28,6 +28,9 @@ class PolicyRepository(private val db: ActivityTrackDatabase, private val clock:
 
 	val inForce: Flow<PolicyRecordEntity?> = dao.observeInForce()
 
+	/* [current] without its first "app as shipped": starts with the stored policy, for what must not act on the placeholder */
+	val stored: Flow<Policy> = dao.observeInForce().map { r -> r?.text?.let(::parsed) ?: Policy.NONE }
+
 	fun history(limit: Int = 20): Flow<List<PolicyRecordEntity>> = dao.observeHistory(limit)
 
 	suspend fun gateState(): PolicyGate.State = PolicyGate.State(dao.latest()?.fingerprint, dao.pinnedCn())

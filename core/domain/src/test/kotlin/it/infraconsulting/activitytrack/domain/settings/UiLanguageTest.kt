@@ -34,6 +34,20 @@ class UiLanguageTest {
 		assertEquals("en", UiLanguage.shown(wrong, "de", listOf("it")))
 	}
 
+	/* first start with the setting: the system's per-app language becomes the user's choice, unless it is the policy's doing */
+	@Test
+	fun aPolicyLanguageIsNotAdoptedAsTheUsersChoice() {
+		assertEquals("de", UiLanguage.adopted("", "de", none))
+		assertEquals("", UiLanguage.adopted("", "", none))
+		assertEquals("", UiLanguage.adopted("", "fr", none))
+		/* the per-app language was written by the policy (valid or wrong value) */
+		assertEquals("", UiLanguage.adopted("", "de", UiPolicy("de")))
+		assertEquals("", UiLanguage.adopted("", "en", UiPolicy(languageInvalid = true)))
+		/* a choice already stored stays, whatever the system and the policy say */
+		assertEquals("es", UiLanguage.adopted("es", "de", none))
+		assertEquals("es", UiLanguage.adopted("es", "de", UiPolicy("de")))
+	}
+
 	@Test
 	fun anUnsupportedUserValueIsIgnored() {
 		assertNull(UiLanguage.effective(none, "xx"))

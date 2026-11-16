@@ -15,6 +15,17 @@ object UiLanguage {
 	/* what the policy forces: its language, English for a wrong one, null when it has none */
 	fun forced(ui: UiPolicy): String? = if (ui.languageInvalid) "en" else ui.language?.takeIf { it in SUPPORTED }
 
+	/*
+	 * The user's choice to store at the first start with this setting: the [stored] one if any, else the
+	 * [system]'s per-app language. Not while a policy forces a language: the per-app language is then the
+	 * policy's, not a choice of the user, and would stay after the policy goes.
+	 */
+	fun adopted(stored: String, system: String, ui: UiPolicy): String = when {
+		stored in SUPPORTED -> stored
+		forced(ui) != null -> ""
+		else -> system.takeIf { it in SUPPORTED }.orEmpty()
+	}
+
 	/* the language tag to apply, or null to follow the system; the user's choice counts when it is supported */
 	fun effective(ui: UiPolicy, user: String): String? = forced(ui) ?: user.takeIf { it in SUPPORTED }
 

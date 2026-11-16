@@ -30,6 +30,7 @@ import it.infraconsulting.activitytrack.domain.settings.AppSettings
 import it.infraconsulting.activitytrack.domain.settings.GestureSettings
 import it.infraconsulting.activitytrack.domain.settings.OnlineService
 import it.infraconsulting.activitytrack.domain.settings.UiLanguage
+import it.infraconsulting.activitytrack.domain.policy.UiPolicy
 import java.io.IOException
 import java.time.Duration
 import kotlinx.coroutines.flow.Flow
@@ -57,11 +58,18 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 
 	suspend fun current(): AppSettings = settings.first()
 
-	/* the language chosen before the app had its own setting (the system's per-app one) is kept once; false when one is stored */
-	suspend fun adoptLanguage(tag: String): Boolean {
-		var adopted = false
-		store.edit { p -> if (K.language !in p) { p[K.language] = tag.takeIf { it in UiLanguage.SUPPORTED }.orEmpty(); adopted = true } }
-		return adopted
+	/*
+	 * Once, at the first start with the language setting: the [system]'s per-app language becomes the user's
+	 * choice (UiLanguage.adopted; not under a policy that forces one, [ui]). A marker of its own says it was
+	 * done: every write stores the language, so the key being there says nothing.
+	 */
+	suspend fun adoptLanguage(system: String, ui: UiPolicy) {
+		store.edit { p ->
+			if (p[K.languageAdopted] != true) {
+				p[K.languageAdopted] = true
+				p[K.language] = UiLanguage.adopted(p[K.language].orEmpty(), system, ui)
+			}
+		}
 	}
 
 	suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -87,6 +95,7 @@ class SettingsRepository(context: Context, private val policy: StateFlow<Policy>
 		val rootUri = stringPreferencesKey("root_uri")
 		val dictationLanguage = stringPreferencesKey("dictation_language")
 		val language = stringPreferencesKey("ui_language")
+		val languageAdopted = booleanPreferencesKey("ui_language_adopted")
 		val calendarId = longPreferencesKey("calendar_id")
 		/* "companyId:calendarId,..." */
 		val companyCalendars = stringPreferencesKey("company_calendars")
