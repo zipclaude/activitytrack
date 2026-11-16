@@ -139,7 +139,8 @@ class StringResourcesTest {
 	 * file names the strings in its lists below, and a string only a test names is unused) nor the strings.
 	 */
 	private fun sources(): List<File> = File("../..").walkTopDown()
-		.onEnter { it.name !in setOf("build", ".git", ".gradle", ".claude", "node_modules", "test", "androidTest") }
+		/* no hidden folder either: in CI the Android SDK and the Gradle home are inside the project (.android-sdk, .gradle-home) */
+		.onEnter { it.name == ".." || (!it.name.startsWith(".") && it.name !in setOf("build", "node_modules", "test", "androidTest")) }
 		.filter { it.isFile && it.extension in setOf("kt", "xml", "kts") && !(it.name == "strings.xml" && it.parentFile.name.startsWith("values")) }
 		.toList()
 
@@ -165,6 +166,7 @@ class StringResourcesTest {
 		val files = sources()
 		assertEquals(emptyList(), files.filter { it.name == "StringResourcesTest.kt" || "/src/test/" in it.invariantSeparatorsPath })
 		assertTrue(files.any { it.name == "HomeList.kt" } && files.any { it.name == "AndroidManifest.xml" })
+		assertEquals(emptyList(), files.filter { f -> f.invariantSeparatorsPath.split("/").any { it.startsWith(".") && it != ".." } })
 		assertEquals(listOf("no_such_string"), unused(listOf("nav_ask", "no_such_string"), "stringResource(R.string.nav_ask, x)"))
 		/* a word of the code is not a use, nor is a longer name that starts with it */
 		assertEquals(listOf("tags"), unused(listOf("tags", "tags_free"), "val tags = c.tags; Text(stringResource(R.string.tags_free))"))
