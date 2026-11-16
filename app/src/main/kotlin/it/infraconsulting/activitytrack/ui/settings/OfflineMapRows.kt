@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -24,7 +25,6 @@ import it.infraconsulting.activitytrack.maps.MapOrigin
 import it.infraconsulting.activitytrack.maps.OfflineMapError
 import it.infraconsulting.activitytrack.maps.OfflineMapPhase
 import it.infraconsulting.activitytrack.maps.OfflineMapState
-import java.util.Locale
 
 /*
  * Settings → Location → Offline maps (issue #155): the maps on the phone, those ActivityTrack
@@ -47,7 +47,7 @@ fun OfflineMapRows(rootUri: String?) {
 		Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
 			Text(
 				stringResource(
-					R.string.offline_map_item, m.name, String.format(Locale.getDefault(), "%.1f", m.bytes / 1e6),
+					R.string.offline_map_item, m.name, String.format(LocalConfiguration.current.locales[0], "%.1f", m.bytes / 1e6),
 					stringResource(if (m.origin == MapOrigin.SERVER) R.string.offline_map_from_server else R.string.offline_map_from_folder),
 				),
 				modifier = Modifier.weight(1f),

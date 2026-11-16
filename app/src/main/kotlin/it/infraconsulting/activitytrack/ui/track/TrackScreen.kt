@@ -33,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -226,7 +227,7 @@ fun TrackScreen(entryId: Long?, onBack: () -> Unit, onOpenEntry: (Long) -> Unit)
 			)
 	}
 
-	val locale = Locale.getDefault()
+	val locale = LocalConfiguration.current.locales[0]
 	val title = periodLabel(ui, entryId != null, locale)
 	ScreenScaffold(title = stringResource(R.string.track_title), onBack = onBack) { padding ->
 		Column(modifier = Modifier.fillMaxSize().padding(padding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -377,7 +378,7 @@ private fun EntryRow(e: TrackEntry, locale: Locale, onClick: () -> Unit) {
 @Composable
 private fun summary(tracks: List<TrackEntry>): String {
 	val km = tracks.mapNotNull { it.km }.sum()
-	return stringResource(R.string.track_summary, tracks.size, tracks.sumOf { it.points.size }, "%.1f".format(Locale.getDefault(), km))
+	return stringResource(R.string.track_summary, tracks.size, tracks.sumOf { it.points.size }, "%.1f".format(LocalConfiguration.current.locales[0], km))
 }
 
 @Composable
