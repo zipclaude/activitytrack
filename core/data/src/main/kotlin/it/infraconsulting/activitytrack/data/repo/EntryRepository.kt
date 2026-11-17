@@ -444,16 +444,35 @@ class EntryRepository(
 		command(entryId, ActivityCommand.Stop(at(atUtcMs)), exact = atUtcMs != null)
 	}
 
-	/* TODO -> CLOSED: a task ticked off, the planned segments go */
-	suspend fun tick(entryId: Long) = db.withTransaction { command(entryId, ActivityCommand.Tick, exact = true) }
+	/*
+	 * The planned segments a tick removed, kept for its "Annulla" (issue #197): in memory, as long as the
+	 * snackbar that offers it, and only the latest few ticks.
+	 */
+	private val tickedPlans: MutableMap<Long, List<SegmentEntity>> = java.util.Collections.synchronizedMap(
+		object : LinkedHashMap<Long, List<SegmentEntity>>() {
+			override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, List<SegmentEntity>>?) = size > MAX_TICKED_PLANS
+		},
+	)
 
-	/* CLOSED without real segments -> TODO: a task ticked off by mistake (3, "untick") */
+	/* TODO -> CLOSED: a task ticked off, the planned segments go (untick puts them back) */
+	suspend fun tick(entryId: Long) = db.withTransaction {
+		val plan = dao.segments(entryId).filter { it.planned }
+		command(entryId, ActivityCommand.Tick, exact = true)
+		if (plan.isNotEmpty()) tickedPlans[entryId] = plan else tickedPlans.remove(entryId)
+	}
+
+	/*
+	 * CLOSED without real segments -> TODO: a task ticked off by mistake (3, "untick"). The planned
+	 * segments the tick removed come back (issue #197), as new records: the server keeps a tombstone
+	 * for the uid of each one it was told to delete, and refuses an update of it.
+	 */
 	suspend fun untick(entryId: Long) = db.withTransaction {
 		val e = load(entryId)
 		if (!canUntick(e, dao.segments(entryId)))
 			throw ValidationException(Reason.NOT_ALLOWED, "activity $entryId cannot go back to TODO")
 		/* leaving CLOSED clears a declared completion (issue #189), as reopen does */
 		dao.updateEntry(e.copy(status = ActivityStatus.TODO, mode = null, closedUtcMs = null, completedUtcMs = null, updatedUtcMs = clock.millis()))
+		tickedPlans.remove(entryId)?.forEach { dao.insertSegment(it.copy(id = 0, uid = SyncIds.random())) }
 		verify(entryId)
 	}
 
@@ -1327,6 +1346,8 @@ class EntryRepository(
 		const val RUNNING_END = Long.MAX_VALUE
 		/* the longest absence: a year (issue #158) */
 		const val MAX_ABSENCE_DAYS = 366
+		/* the ticks whose plan is kept for an "Annulla" (issue #197) */
+		const val MAX_TICKED_PLANS = 8
 	}
 
 	private suspend fun load(entryId: Long): TimeEntryEntity =

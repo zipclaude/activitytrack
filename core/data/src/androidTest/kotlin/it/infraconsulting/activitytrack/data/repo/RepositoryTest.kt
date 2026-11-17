@@ -995,6 +995,38 @@ class RepositoryTest {
 		assertEquals("TODO", state(untouched))
 	}
 
+	/* issue #197: "Annulla" after a tick puts the plan back, as new segments (the server keeps a tombstone of each old uid) */
+	@Test
+	fun untickRestoresThePlannedSegments() = runBlocking<Unit> {
+		val h = 3_600_000L
+		val t0 = clock.millis()
+		val todo = entries.saveTodo(
+			null,
+			TodoRequest(
+				acme, client, "Patch",
+				planned = listOf(SegmentInput(SegmentKind.WORK, t0 + h, t0 + 2 * h), SegmentInput(SegmentKind.TRAVEL, t0 + 3 * h, t0 + 4 * h)),
+			),
+		)
+		val before = db.entryDao().segments(todo)
+		assertEquals(2, before.size)
+		entries.tick(todo)
+		assertEquals(emptyList(), db.entryDao().segments(todo))
+		entries.untick(todo)
+		val after = db.entryDao().segments(todo)
+		assertEquals("TODO", state(todo))
+		assertEquals(before.map { Triple(it.kind, it.startUtcMs, it.endUtcMs) }, after.map { Triple(it.kind, it.startUtcMs, it.endUtcMs) })
+		assertEquals(listOf(true, true), after.map { it.planned })
+		assertEquals(emptySet(), before.map { it.uid }.toSet() intersect after.map { it.uid }.toSet())
+		/* a to-do without a plan comes back without one; a second untick has nothing more to restore */
+		val plain = entries.saveTodo(null, TodoRequest(acme, activity = "Plain"))
+		entries.tick(plain)
+		entries.untick(plain)
+		assertEquals(emptyList(), db.entryDao().segments(plain))
+		entries.tick(todo)
+		entries.untick(todo)
+		assertEquals(2, db.entryDao().segments(todo).size)
+	}
+
 	/* 4.1, 4.2: rounded stored times and closing up to 24 hours ahead, only with editable times */
 	@Test
 	fun roundedTimesAndFutureClose() = runBlocking<Unit> {
