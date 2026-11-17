@@ -445,20 +445,25 @@ class EntryRepository(
 	}
 
 	/*
-	 * The planned segments a tick removed, kept for its "Annulla" (issue #197): in memory, as long as the
-	 * snackbar that offers it, and only the latest few ticks.
+	 * The planned segments a tick removed and when, kept for its "Annulla" (issue #197): in memory, for the
+	 * few minutes of an undo (a later untick, from the closed tab, starts without the old plan) and only
+	 * for the latest few ticks.
 	 */
-	private val tickedPlans: MutableMap<Long, List<SegmentEntity>> = java.util.Collections.synchronizedMap(
-		object : LinkedHashMap<Long, List<SegmentEntity>>() {
-			override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, List<SegmentEntity>>?) = size > MAX_TICKED_PLANS
+	private class TickedPlan(val atMs: Long, val segments: List<SegmentEntity>)
+
+	private val tickedPlans: MutableMap<Long, TickedPlan> = java.util.Collections.synchronizedMap(
+		object : LinkedHashMap<Long, TickedPlan>() {
+			override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, TickedPlan>?) = size > MAX_TICKED_PLANS
 		},
 	)
 
 	/* TODO -> CLOSED: a task ticked off, the planned segments go (untick puts them back) */
-	suspend fun tick(entryId: Long) = db.withTransaction {
-		val plan = dao.segments(entryId).filter { it.planned }
-		command(entryId, ActivityCommand.Tick, exact = true)
-		if (plan.isNotEmpty()) tickedPlans[entryId] = plan else tickedPlans.remove(entryId)
+	suspend fun tick(entryId: Long) {
+		db.withTransaction {
+			val plan = dao.segments(entryId).filter { it.planned }
+			command(entryId, ActivityCommand.Tick, exact = true)
+			if (plan.isNotEmpty()) tickedPlans[entryId] = TickedPlan(clock.millis(), plan) else tickedPlans.remove(entryId)
+		}
 	}
 
 	/*
@@ -466,14 +471,17 @@ class EntryRepository(
 	 * segments the tick removed come back (issue #197), as new records: the server keeps a tombstone
 	 * for the uid of each one it was told to delete, and refuses an update of it.
 	 */
-	suspend fun untick(entryId: Long) = db.withTransaction {
+	suspend fun untick(entryId: Long): Unit = db.withTransaction {
 		val e = load(entryId)
 		if (!canUntick(e, dao.segments(entryId)))
 			throw ValidationException(Reason.NOT_ALLOWED, "activity $entryId cannot go back to TODO")
 		/* leaving CLOSED clears a declared completion (issue #189), as reopen does */
 		dao.updateEntry(e.copy(status = ActivityStatus.TODO, mode = null, closedUtcMs = null, completedUtcMs = null, updatedUtcMs = clock.millis()))
-		tickedPlans.remove(entryId)?.forEach { dao.insertSegment(it.copy(id = 0, uid = SyncIds.random())) }
+		val kept = tickedPlans[entryId]?.takeIf { clock.millis() - it.atMs <= UNDO_WINDOW_MS }
+		kept?.segments?.forEach { dao.insertSegment(it.copy(id = 0, uid = SyncIds.random())) }
 		verify(entryId)
+		/* only now: a refused untick leaves the plan for the retry */
+		tickedPlans.remove(entryId)
 	}
 
 	/*
@@ -1348,6 +1356,8 @@ class EntryRepository(
 		const val MAX_ABSENCE_DAYS = 366
 		/* the ticks whose plan is kept for an "Annulla" (issue #197) */
 		const val MAX_TICKED_PLANS = 8
+		/* how long after a tick its plan is put back by untick: the snackbar lasts seconds */
+		const val UNDO_WINDOW_MS = 10 * 60_000L
 	}
 
 	private suspend fun load(entryId: Long): TimeEntryEntity =

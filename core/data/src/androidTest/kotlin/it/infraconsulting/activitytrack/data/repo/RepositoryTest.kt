@@ -1017,14 +1017,23 @@ class RepositoryTest {
 		assertEquals(before.map { Triple(it.kind, it.startUtcMs, it.endUtcMs) }, after.map { Triple(it.kind, it.startUtcMs, it.endUtcMs) })
 		assertEquals(listOf(true, true), after.map { it.planned })
 		assertEquals(emptySet(), before.map { it.uid }.toSet() intersect after.map { it.uid }.toSet())
-		/* a to-do without a plan comes back without one; a second untick has nothing more to restore */
+		/* a to-do without a plan comes back without one; untick of a to-do that is not ticked is refused */
 		val plain = entries.saveTodo(null, TodoRequest(acme, activity = "Plain"))
 		entries.tick(plain)
 		entries.untick(plain)
 		assertEquals(emptyList(), db.entryDao().segments(plain))
+		assertEquals(Reason.NOT_ALLOWED, reason { entries.untick(todo) })
+		assertEquals(2, db.entryDao().segments(todo).size)
+		/* ticked again, the plan is the one it has now */
 		entries.tick(todo)
 		entries.untick(todo)
 		assertEquals(2, db.entryDao().segments(todo).size)
+		/* an untick long after the tick (from the closed tab) does not bring an old plan back */
+		entries.tick(todo)
+		clock.advance(11)
+		entries.untick(todo)
+		assertEquals("TODO", state(todo))
+		assertEquals(emptyList(), db.entryDao().segments(todo))
 	}
 
 	/* 4.1, 4.2: rounded stored times and closing up to 24 hours ahead, only with editable times */
